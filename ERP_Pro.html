@@ -51,6 +51,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 #content { flex:1;overflow-y:auto;padding:22px; }
 .section { display:none; } .section.active { display:block; }
 .kpi-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px; }
+.period-bar { display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap; }
+.per-tabs { display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px; }
+.per-tab { padding:6px 14px;border:none;background:none;border-radius:6px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all 0.15s; }
+.per-tab:hover { color:var(--text); } .per-tab.active { background:#1a1714;color:#faf7f2; }
 .kpi-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .kpi-card::before { content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--card-accent,#1a1714); }
 .kpi-label { font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px; }
@@ -211,14 +215,24 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   <div id="content">
 
     <div class="section active" id="section-dashboard">
+      <div class="period-bar">
+        <div class="per-tabs">
+          <button class="per-tab" id="per-mes" onclick="setPerModo('mes')">Mês</button>
+          <button class="per-tab" id="per-ano" onclick="setPerModo('ano')">Ano</button>
+          <button class="per-tab" id="per-tudo" onclick="setPerModo('tudo')">Tudo</button>
+        </div>
+        <select class="form-control" id="per-mes-sel" style="width:auto;min-width:130px" onchange="onPerChange()"></select>
+        <select class="form-control" id="per-ano-sel" style="width:auto;min-width:90px" onchange="onPerChange()"></select>
+        <span id="per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
+      </div>
       <div class="kpi-grid">
-        <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Vendas do Mês</div><div class="kpi-value" id="kpi-vendas">R$0</div><div class="kpi-sub" id="kpi-vsub">pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Clientes Ativos</div><div class="kpi-value" id="kpi-clientes">0</div><div class="kpi-sub" id="kpi-csub">cadastrados</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Itens em Estoque</div><div class="kpi-value" id="kpi-estoque">0</div><div class="kpi-sub" id="kpi-esub">unidades totais</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Saldo Financeiro</div><div class="kpi-value" id="kpi-saldo">R$0</div><div class="kpi-sub">saldo atual</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Vendas do Período</div><div class="kpi-value" id="kpi-vendas">R$0</div><div class="kpi-sub" id="kpi-vsub">pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Entradas</div><div class="kpi-value" id="kpi-entradas">R$0</div><div class="kpi-sub">recebido no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Saídas</div><div class="kpi-value" id="kpi-saidas">R$0</div><div class="kpi-sub">pago no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Resultado</div><div class="kpi-value" id="kpi-resultado">R$0</div><div class="kpi-sub" id="kpi-rsub">entradas − saídas</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
       </div>
       <div class="charts-grid">
-        <div class="chart-card"><div class="chart-title">Vendas Mensais <span style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><canvas id="chart-vendas" height="180"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Evolução de Vendas <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><canvas id="chart-vendas" height="180"></canvas></div>
         <div class="chart-card"><div class="chart-title">Status dos Pedidos</div><canvas id="chart-status" height="180"></canvas></div>
       </div>
       <div class="bottom-grid">
@@ -562,31 +576,62 @@ function actionBtns(fnE,fnD){if(!canEdit())return '';return '<div class="row-act
 
 /* ================= DASHBOARD ================= */
 let chVendas=null,chStatus=null;
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+let PER={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
+function perYears(){const ys=new Set([new Date().getFullYear()]);
+ DB.vendas.forEach(v=>{const y=+String(v.data).slice(0,4);if(y)ys.add(y);});
+ DB.financeiro.forEach(f=>{const y=+String(f.data).slice(0,4);if(y)ys.add(y);});
+ return [...ys].sort((a,b)=>b-a);}
+function inPer(dateStr){if(PER.modo==='tudo')return true;const s=String(dateStr||'');
+ if(PER.modo==='ano')return s.slice(0,4)===String(PER.ano);
+ return s.slice(0,7)===PER.ano+'-'+String(PER.mes+1).padStart(2,'0');}
+function setPerModo(m){PER.modo=m;renderDashboard();}
+function onPerChange(){PER.mes=+$('per-mes-sel').value;PER.ano=+$('per-ano-sel').value;renderDashboard();}
 function renderDashboard(){
- const ym=today().slice(0,7);
- const vMes=DB.vendas.filter(v=>String(v.data).slice(0,7)===ym&&v.status!=='Cancelado');
- $('kpi-vendas').textContent=fmtK(vMes.reduce((s,v)=>s+Number(v.total||0),0));
- $('kpi-vsub').textContent=vMes.length+' pedido(s) no mês';
- const cAtivos=DB.clientes.filter(c=>c.status==='Ativo').length;
- $('kpi-clientes').textContent=cAtivos;$('kpi-csub').textContent=DB.clientes.length+' cadastrados';
- const un=DB.produtos.reduce((s,p)=>s+Number(p.est||0),0);
- const m3=DB.madeiras.reduce((s,m)=>s+madM3(m),0);
- $('kpi-estoque').textContent=un;$('kpi-esub').textContent=fmtN(m3,3)+' m³ de madeira';
- $('kpi-saldo').textContent=fmtK(saldoFin());
+ $('per-mes-sel').innerHTML=MESES.map((m,i)=>'<option value="'+i+'"'+(i===PER.mes?' selected':'')+'>'+m+'</option>').join('');
+ $('per-ano-sel').innerHTML=perYears().map(y=>'<option value="'+y+'"'+(y===PER.ano?' selected':'')+'>'+y+'</option>').join('');
+ ['mes','ano','tudo'].forEach(m=>$('per-'+m).classList.toggle('active',PER.modo===m));
+ $('per-mes-sel').style.display=PER.modo==='mes'?'':'none';
+ $('per-ano-sel').style.display=PER.modo==='tudo'?'none':'';
+ $('per-label').textContent='📅 '+(PER.modo==='tudo'?'Todo o período':PER.modo==='ano'?('Ano '+PER.ano):(MESES[PER.mes]+'/'+PER.ano));
+
+ const vPer=DB.vendas.filter(v=>inPer(v.data)&&v.status!=='Cancelado');
+ const pagos=DB.financeiro.filter(f=>f.status==='Pago'&&inPer(f.data));
+ const entradas=pagos.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
+ const saidas=pagos.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
+ const resultado=entradas-saidas;
+ $('kpi-vendas').textContent=fmtK(vPer.reduce((s,v)=>s+Number(v.total||0),0));
+ $('kpi-vsub').textContent=vPer.length+' pedido(s)';
+ $('kpi-entradas').textContent=fmtK(entradas);
+ $('kpi-saidas').textContent=fmtK(saidas);
+ $('kpi-resultado').textContent=fmtK(resultado);
+ $('kpi-resultado').style.color=resultado>=0?'var(--success)':'var(--danger)';
+ $('kpi-rsub').textContent=resultado>=0?'superávit no período':'déficit no período';
+
  const crit=DB.produtos.filter(p=>Number(p.est)<=Number(p.min));
  $('dash-estoque').innerHTML=crit.length?crit.slice(0,6).map(p=>'<tr><td>'+esc(p.nome)+'</td><td class="mono" style="color:var(--danger);font-weight:700">'+p.est+'</td><td class="mono">'+p.min+'</td></tr>').join(''):'<tr><td colspan="3" style="color:var(--text-muted)">Nenhum item crítico 👍</td></tr>';
- $('dash-fin').innerHTML=DB.financeiro.slice(0,6).map(f=>'<tr><td>'+esc(f.desc)+'</td><td><span class="badge '+(f.tipo==='Entrada'?'badge-success':'badge-danger')+'">'+f.tipo+'</span></td><td class="mono">'+fmt(f.val)+'</td></tr>').join('')||'<tr><td colspan="3" style="color:var(--text-muted)">Sem lançamentos</td></tr>';
+ const finList=DB.financeiro.filter(f=>inPer(f.data)).slice(0,7);
+ $('dash-fin').innerHTML=finList.map(f=>'<tr><td>'+esc(f.desc)+'</td><td><span class="badge '+(f.tipo==='Entrada'?'badge-success':'badge-danger')+'">'+f.tipo+'</span></td><td class="mono">'+fmt(f.val)+'</td></tr>').join('')||'<tr><td colspan="3" style="color:var(--text-muted)">Sem lançamentos no período</td></tr>';
+
  if(!window.Chart)return;
- const labels=[],vals=[];const now=new Date();
- for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const k=d.toISOString().slice(0,7);
+ let labels=[],vals=[];
+ if(PER.modo==='tudo'){const anos=perYears().slice().sort((a,b)=>a-b);
+  anos.forEach(y=>{labels.push(String(y));vals.push(DB.vendas.filter(v=>String(v.data).slice(0,4)===String(y)&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));});
+  $('chart-vendas-sub').textContent='por ano';}
+ else if(PER.modo==='ano'){for(let m=0;m<12;m++){const k=PER.ano+'-'+String(m+1).padStart(2,'0');labels.push(MESES[m].slice(0,3));
+  vals.push(DB.vendas.filter(v=>String(v.data).slice(0,7)===k&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));}
+  $('chart-vendas-sub').textContent='meses de '+PER.ano;}
+ else{for(let i=5;i>=0;i--){const d=new Date(PER.ano,PER.mes-i,1);const k=d.toISOString().slice(0,7);
   labels.push(d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','')+'/'+String(d.getFullYear()).slice(2));
   vals.push(DB.vendas.filter(v=>String(v.data).slice(0,7)===k&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));}
+  $('chart-vendas-sub').textContent='6 meses até '+MESES[PER.mes].slice(0,3)+'/'+String(PER.ano).slice(2);}
  if(chVendas)chVendas.destroy();
  chVendas=new Chart($('chart-vendas'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:'#c8a96e',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'R$'+(v/1000)+'k'}}},responsive:true}});
- const sts={};DB.vendas.forEach(v=>sts[v.status]=(sts[v.status]||0)+1);
+ const sts={};vPer.forEach(v=>sts[v.status]=(sts[v.status]||0)+1);
  if(chStatus)chStatus.destroy();
  const cores={'Pendente':'#a07830','Confirmado':'#c8a96e','Enviado':'#7a6f62','Entregue':'#3d6b4f','Cancelado':'#b54040'};
- chStatus=new Chart($('chart-status'),{type:'doughnut',data:{labels:Object.keys(sts),datasets:[{data:Object.values(sts),backgroundColor:Object.keys(sts).map(k=>cores[k]||'#1a1714')}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}}},cutout:'65%'}});}
+ const stKeys=Object.keys(sts);
+ chStatus=new Chart($('chart-status'),{type:'doughnut',data:{labels:stKeys.length?stKeys:['Sem pedidos'],datasets:[{data:stKeys.length?Object.values(sts):[1],backgroundColor:stKeys.length?stKeys.map(k=>cores[k]||'#1a1714'):['#e0d9ce']}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}}},cutout:'65%'}});}
 function saldoFin(){return DB.financeiro.filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
 
 /* ================= CLIENTES ================= */
