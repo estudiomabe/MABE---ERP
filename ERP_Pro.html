@@ -284,6 +284,16 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 
     <!-- RELATÓRIOS -->
     <div class="section" id="section-relatorios">
+      <div class="period-bar">
+        <div class="per-tabs">
+          <button class="per-tab" id="rel-per-mes" onclick="setRelModo('mes')">Mês</button>
+          <button class="per-tab" id="rel-per-ano" onclick="setRelModo('ano')">Ano</button>
+          <button class="per-tab" id="rel-per-tudo" onclick="setRelModo('tudo')">Tudo</button>
+        </div>
+        <select class="form-control" id="rel-per-mes-sel" style="width:auto;min-width:130px" onchange="onRelChange()"></select>
+        <select class="form-control" id="rel-per-ano-sel" style="width:auto;min-width:90px" onchange="onRelChange()"></select>
+        <span id="rel-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
+      </div>
       <div class="stat-row">
         <div class="stat-box"><div class="stat-value" id="rel-fat" style="color:var(--success)">R$ 0</div><div class="stat-label">Faturamento (vendas)</div></div>
         <div class="stat-box"><div class="stat-value" id="rel-margem">0%</div><div class="stat-label">Margem média (orçamentos)</div></div>
@@ -294,7 +304,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">📊 Margem por Orçamento</div></div><table><thead><tr><th>Descrição</th><th>Preço</th><th>Custo</th><th>Lucro</th><th>Margem</th></tr></thead><tbody id="tb-rel-margem"></tbody></table></div>
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">🏆 Top Clientes</div></div><table><thead><tr><th>Cliente</th><th>Pedidos</th><th>Total Comprado</th></tr></thead><tbody id="tb-rel-clientes"></tbody></table></div>
       </div>
-      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">🪵 Madeira por Espécie</div></div><table><thead><tr><th>Espécie</th><th>Peças</th><th>Volume (m³)</th><th>Valor</th><th>Situação</th></tr></thead><tbody id="tb-rel-madeiras"></tbody></table></div>
+      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">🪵 Madeira por Espécie <span style="font-size:11px;color:var(--text-muted);font-weight:400">— estoque atual</span></div></div><table><thead><tr><th>Espécie</th><th>Peças</th><th>Volume (m³)</th><th>Valor</th><th>Situação</th></tr></thead><tbody id="tb-rel-madeiras"></tbody></table></div>
     </div>
 
     <!-- ORÇAMENTOS -->
@@ -581,12 +591,24 @@ let PER={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function perYears(){const ys=new Set([new Date().getFullYear()]);
  DB.vendas.forEach(v=>{const y=+String(v.data).slice(0,4);if(y)ys.add(y);});
  DB.financeiro.forEach(f=>{const y=+String(f.data).slice(0,4);if(y)ys.add(y);});
+ DB.orcamentos.forEach(o=>{const y=+String(o.data).slice(0,4);if(y)ys.add(y);});
  return [...ys].sort((a,b)=>b-a);}
-function inPer(dateStr){if(PER.modo==='tudo')return true;const s=String(dateStr||'');
- if(PER.modo==='ano')return s.slice(0,4)===String(PER.ano);
- return s.slice(0,7)===PER.ano+'-'+String(PER.mes+1).padStart(2,'0');}
+function matchPer(dateStr,p){if(p.modo==='tudo')return true;const s=String(dateStr||'');
+ if(p.modo==='ano')return s.slice(0,4)===String(p.ano);
+ return s.slice(0,7)===p.ano+'-'+String(p.mes+1).padStart(2,'0');}
+function inPer(dateStr){return matchPer(dateStr,PER);}
+function syncPerBar(pre,p){
+ $(pre+'-mes-sel').innerHTML=MESES.map((m,i)=>'<option value="'+i+'"'+(i===p.mes?' selected':'')+'>'+m+'</option>').join('');
+ $(pre+'-ano-sel').innerHTML=perYears().map(y=>'<option value="'+y+'"'+(y===p.ano?' selected':'')+'>'+y+'</option>').join('');
+ ['mes','ano','tudo'].forEach(m=>$(pre+'-'+m).classList.toggle('active',p.modo===m));
+ $(pre+'-mes-sel').style.display=p.modo==='mes'?'':'none';
+ $(pre+'-ano-sel').style.display=p.modo==='tudo'?'none':'';
+ $(pre+'-label').textContent='📅 '+(p.modo==='tudo'?'Todo o período':p.modo==='ano'?('Ano '+p.ano):(MESES[p.mes]+'/'+p.ano));}
 function setPerModo(m){PER.modo=m;renderDashboard();}
 function onPerChange(){PER.mes=+$('per-mes-sel').value;PER.ano=+$('per-ano-sel').value;renderDashboard();}
+let REL={modo:'tudo',ano:new Date().getFullYear(),mes:new Date().getMonth()};
+function setRelModo(m){REL.modo=m;renderRelatorios();}
+function onRelChange(){REL.mes=+$('rel-per-mes-sel').value;REL.ano=+$('rel-per-ano-sel').value;renderRelatorios();}
 function renderDashboard(){
  $('per-mes-sel').innerHTML=MESES.map((m,i)=>'<option value="'+i+'"'+(i===PER.mes?' selected':'')+'>'+m+'</option>').join('');
  $('per-ano-sel').innerHTML=perYears().map(y=>'<option value="'+y+'"'+(y===PER.ano?' selected':'')+'>'+y+'</option>').join('');
@@ -957,11 +979,12 @@ function delCompra(id){if(!guard())return;const c=DB.compras.find(x=>x.id===id);
  DB.compras=DB.compras.filter(x=>x.id!==id);commit('excluir','Compras','OC-'+pad(c.num));toast('Ordem excluída.','info');}
 
 /* ================= RELATÓRIOS ================= */
-function renderRelatorios(){const vendasOk=DB.vendas.filter(v=>v.status!=='Cancelado');
+function renderRelatorios(){syncPerBar('rel-per',REL);
+ const vendasOk=DB.vendas.filter(v=>v.status!=='Cancelado'&&matchPer(v.data,REL));
  const fat=vendasOk.reduce((s,v)=>s+Number(v.total||0),0);
  $('rel-fat').textContent=fmtK(fat);
  $('rel-ticket').textContent=vendasOk.length?fmtK(fat/vendasOk.length):'R$ 0';
- const orcV=DB.orcamentos.filter(o=>Number(o.preco)>0);
+ const orcV=DB.orcamentos.filter(o=>Number(o.preco)>0&&matchPer(o.data,REL));
  const margens=orcV.map(o=>Number(o.lucro)/Number(o.preco)*100);
  $('rel-margem').textContent=margens.length?fmtN(margens.reduce((a,b)=>a+b,0)/margens.length,1)+'%':'0%';
  const m3=DB.madeiras.reduce((s,m)=>s+madM3(m),0);
