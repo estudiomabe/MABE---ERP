@@ -112,6 +112,7 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .stock-bar-fill { height:100%;border-radius:2px; }
 .row-actions { display:flex;gap:4px;opacity:0;transition:opacity 0.15s; } tr:hover .row-actions { opacity:1; }
 .modal-overlay { position:fixed;inset:0;background:rgba(26,23,20,0.4);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity 0.2s; }
+#modal-rec-senha { z-index:9500; }
 .modal-overlay.open { opacity:1;pointer-events:all; }
 .modal { background:var(--surface);border:1px solid var(--border);border-radius:16px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;transform:scale(0.95) translateY(8px);transition:transform 0.2s;box-shadow:0 20px 60px rgba(0,0,0,0.12); }
 .modal-overlay.open .modal { transform:scale(1) translateY(0); } .modal-lg { width:680px; }
@@ -201,6 +202,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
       <div class="form-group"><label class="form-label">Usuário</label><input type="text" class="form-control" id="login-user" placeholder="seu.usuario" autocomplete="username"></div>
       <div class="form-group"><label class="form-label">Senha</label><input type="password" class="form-control" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;padding:11px" onclick="doLogin()">Entrar</button>
+      <p style="text-align:center;margin-top:2px"><a href="#" onclick="event.preventDefault();openRecSenha()" style="font-size:12px;color:var(--text-muted);text-decoration:underline">Esqueci minha senha</a></p>
       <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:6px">Primeiro acesso: <strong>admin</strong> / <strong>admin123</strong></p>
     </div>
   </div>
@@ -453,7 +455,39 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 <div class="modal-overlay" id="modal-vendas"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="mv-title">Nova Venda</div><button class="modal-close" onclick="closeModal('modal-vendas')">✕</button></div><div class="modal-body"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="vnd-cli"></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens da Venda</label><button class="btn btn-ghost btn-sm" onclick="addItemVenda()">+ Adicionar</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-vendas')">Cancelar</button><button class="btn btn-primary" onclick="saveVenda()">Salvar Venda</button></div></div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="fin-cat"></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-fornecedores"><div class="modal"><div class="modal-header"><div class="modal-title" id="mfor-title">Novo Fornecedor</div><button class="modal-close" onclick="closeModal('modal-fornecedores')">✕</button></div><div class="modal-body"><input type="hidden" id="for-id"><div class="form-grid"><div class="form-group"><label class="form-label">Razão Social *</label><input type="text" class="form-control" id="for-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CNPJ</label><input type="text" class="form-control" id="for-cnpj"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="for-tel"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="for-email"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="for-cidade"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="for-status"><option>Ativo</option><option>Inativo</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-fornecedores')">Cancelar</button><button class="btn btn-primary" onclick="saveFornecedor()">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-usuarios"><div class="modal"><div class="modal-header"><div class="modal-title" id="mu-title">Novo Usuário</div><button class="modal-close" onclick="closeModal('modal-usuarios')">✕</button></div><div class="modal-body"><input type="hidden" id="usr-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="usr-nome"></div><div class="form-group"><label class="form-label">Login *</label><input type="text" class="form-control" id="usr-login"></div></div><div class="form-group"><label class="form-label">Senha *</label><input type="password" class="form-control" id="usr-senha" placeholder="Mínimo 6 caracteres"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Perfil</label><select class="form-control" id="usr-perfil"><option value="Admin">Admin</option><option value="Operador">Operador</option><option value="Visualizador">Visualizador</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="usr-status"><option>Ativo</option><option>Inativo</option></select></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-usuarios')">Cancelar</button><button class="btn btn-primary" onclick="saveUsuario()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-usuarios"><div class="modal"><div class="modal-header"><div class="modal-title" id="mu-title">Novo Usuário</div><button class="modal-close" onclick="closeModal('modal-usuarios')">✕</button></div><div class="modal-body"><input type="hidden" id="usr-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="usr-nome"></div><div class="form-group"><label class="form-label">Login *</label><input type="text" class="form-control" id="usr-login"></div></div><div class="form-group"><label class="form-label">Senha *</label><input type="password" class="form-control" id="usr-senha" placeholder="Mínimo 6 caracteres"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Perfil</label><select class="form-control" id="usr-perfil"><option value="Admin">Admin</option><option value="Operador">Operador</option><option value="Visualizador">Visualizador</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="usr-status"><option>Ativo</option><option>Inativo</option></select></div></div>
+<div style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:2px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">🔐 Recuperação de senha (opcional, mas recomendado)</div><div class="form-grid">
+<div class="form-group"><label class="form-label">Pergunta de segurança</label><input type="text" class="form-control" id="usr-pergunta" list="perguntas-sugeridas" placeholder="Ex: Nome do primeiro cliente da Mabe?"><datalist id="perguntas-sugeridas"><option value="Nome da sua mãe?"><option value="Nome do primeiro cliente da Mabe?"><option value="Cidade onde você nasceu?"><option value="Nome do seu primeiro animal de estimação?"><option value="Modelo do seu primeiro carro?"></datalist></div>
+<div class="form-group"><label class="form-label">Resposta</label><input type="text" class="form-control" id="usr-resposta" placeholder="Resposta (não diferencia maiúsculas)"></div>
+</div></div>
+</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-usuarios')">Cancelar</button><button class="btn btn-primary" onclick="saveUsuario()">Salvar</button></div></div></div>
+
+<!-- MODAL RECUPERAÇÃO DE SENHA -->
+<div class="modal-overlay" id="modal-rec-senha"><div class="modal"><div class="modal-header"><div class="modal-title">🔐 Recuperar senha</div><button class="modal-close" onclick="closeModal('modal-rec-senha')">✕</button></div><div class="modal-body">
+ <div id="rec-step-1">
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Informe seu usuário para continuar.</p>
+  <div class="form-group"><label class="form-label">Usuário</label><input type="text" class="form-control" id="rec-login" placeholder="seu.usuario" onkeydown="if(event.key==='Enter')recAvancarStep1()"></div>
+  <div id="rec-err-1" class="login-err" style="margin-top:12px"></div>
+ </div>
+ <div id="rec-step-2" style="display:none">
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Responda sua pergunta de segurança.</p>
+  <div class="form-group"><label class="form-label" id="rec-pergunta-txt">Pergunta</label><input type="text" class="form-control" id="rec-resposta" placeholder="Sua resposta" onkeydown="if(event.key==='Enter')recAvancarStep2()"></div>
+  <div id="rec-err-2" class="login-err" style="margin-top:12px"></div>
+ </div>
+ <div id="rec-step-3" style="display:none">
+  <p style="font-size:13px;color:var(--success);margin-bottom:14px">✔ Identidade confirmada. Defina sua nova senha.</p>
+  <div class="form-grid">
+   <div class="form-group"><label class="form-label">Nova senha</label><input type="password" class="form-control" id="rec-nova-senha" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')recFinalizar()"></div>
+   <div class="form-group"><label class="form-label">Confirmar nova senha</label><input type="password" class="form-control" id="rec-nova-senha-2" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')recFinalizar()"></div>
+  </div>
+  <div id="rec-err-3" class="login-err" style="margin-top:12px"></div>
+ </div>
+</div><div class="modal-footer">
+ <button class="btn btn-ghost" onclick="closeModal('modal-rec-senha')">Cancelar</button>
+ <button class="btn btn-primary" id="rec-btn-1" onclick="recAvancarStep1()">Continuar</button>
+ <button class="btn btn-primary" id="rec-btn-2" style="display:none" onclick="recAvancarStep2()">Verificar</button>
+ <button class="btn btn-primary" id="rec-btn-3" style="display:none" onclick="recFinalizar()">Redefinir senha</button>
+</div></div></div>
 <div class="modal-overlay" id="modal-compras"><div class="modal"><div class="modal-header"><div class="modal-title" id="mcmp-title">Nova Ordem de Compra</div><button class="modal-close" onclick="closeModal('modal-compras')">✕</button></div><div class="modal-body"><input type="hidden" id="cmp-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Fornecedor *</label><select class="form-control" id="cmp-for"></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="cmp-data"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Total (R$)</label><input type="number" class="form-control" id="cmp-total" step="0.01"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cmp-status"><option>Pendente</option><option>Confirmado</option><option>Recebido</option><option>Cancelado</option></select></div></div><div class="form-group"><label class="form-label">Observações / Itens</label><input type="text" class="form-control" id="cmp-obs" placeholder="Ex: 12 pranchas Tauari 5x30x300"></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-compras')">Cancelar</button><button class="btn btn-primary" onclick="saveCompra()">Salvar</button></div></div></div>
 
 <!-- MODAL MADEIRAS -->
@@ -1000,21 +1034,53 @@ function renderRelatorios(){syncPerBar('rel-per',REL);
 function renderUsuarios(){$('tb-usuarios').innerHTML=DB.usuarios.map(u=>{const chip={'Admin':'chip-admin','Operador':'chip-operador','Visualizador':'chip-visualizador'}[u.perfil];
  return '<tr><td class="mono">'+esc(u.login)+'</td><td><strong>'+esc(u.nome)+'</strong></td><td><span class="'+chip+'">'+u.perfil+'</span></td><td class="mono" style="font-size:11px">'+esc(u.ultimo||'—')+'</td><td><span class="badge '+(u.status==='Ativo'?'badge-success':'badge-muted')+'">'+u.status+'</span></td><td>'+(isAdmin()?actionBtns("editUsuario('"+u.id+"')","delUsuario('"+u.id+"')"):'')+'</td></tr>';}).join('');}
 function openUsuario(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
- ['usr-id','usr-nome','usr-login','usr-senha'].forEach(i=>$(i).value='');$('usr-perfil').value='Operador';$('usr-status').value='Ativo';$('mu-title').textContent='Novo Usuário';openModal('modal-usuarios');}
+ ['usr-id','usr-nome','usr-login','usr-senha','usr-pergunta','usr-resposta'].forEach(i=>$(i).value='');$('usr-senha').placeholder='Mínimo 6 caracteres';$('usr-perfil').value='Operador';$('usr-status').value='Ativo';$('mu-title').textContent='Novo Usuário';openModal('modal-usuarios');}
 function editUsuario(id){if(!isAdmin())return;const u=DB.usuarios.find(x=>x.id===id);if(!u)return;
- $('usr-id').value=u.id;$('usr-nome').value=u.nome;$('usr-login').value=u.login;$('usr-senha').value='';$('usr-senha').placeholder='Deixe vazio para manter';$('usr-perfil').value=u.perfil;$('usr-status').value=u.status;$('mu-title').textContent='Editar Usuário';openModal('modal-usuarios');}
+ $('usr-id').value=u.id;$('usr-nome').value=u.nome;$('usr-login').value=u.login;$('usr-senha').value='';$('usr-senha').placeholder='Deixe vazio para manter';$('usr-perfil').value=u.perfil;$('usr-status').value=u.status;
+ $('usr-pergunta').value=u.pergunta||'';$('usr-resposta').value=u.resposta||'';
+ $('mu-title').textContent='Editar Usuário';openModal('modal-usuarios');}
 function saveUsuario(){if(!isAdmin())return;const nome=$('usr-nome').value.trim(),login=$('usr-login').value.trim(),senha=$('usr-senha').value;
+ const pergunta=$('usr-pergunta').value.trim(),resposta=$('usr-resposta').value.trim();
  if(!nome||!login){toast('Informe nome e login.','error');return;}
  const id=$('usr-id').value;
  if(!id&&senha.length<6){toast('Senha deve ter no mínimo 6 caracteres.','error');return;}
+ if((pergunta&&!resposta)||(!pergunta&&resposta)){toast('Preencha a pergunta e a resposta juntas, ou deixe as duas vazias.','error');return;}
  if(DB.usuarios.some(u=>u.login===login&&u.id!==id)){toast('Login já existe.','error');return;}
  if(id){const u=DB.usuarios.find(x=>x.id===id);
   const admins=DB.usuarios.filter(x=>x.perfil==='Admin'&&x.status==='Ativo');
   if(u.perfil==='Admin'&&admins.length===1&&($('usr-perfil').value!=='Admin'||$('usr-status').value!=='Ativo')){toast('Não é possível remover o último administrador.','error');return;}
-  u.nome=nome;u.login=login;if(senha)u.senha=senha;u.perfil=$('usr-perfil').value;u.status=$('usr-status').value;
+  u.nome=nome;u.login=login;if(senha)u.senha=senha;u.perfil=$('usr-perfil').value;u.status=$('usr-status').value;u.pergunta=pergunta;u.resposta=resposta;
   commit('editar','Usuários',login);}
- else{DB.usuarios.push({id:uid(),login,senha,nome,perfil:$('usr-perfil').value,status:$('usr-status').value,ultimo:''});commit('criar','Usuários',login);}
+ else{DB.usuarios.push({id:uid(),login,senha,nome,perfil:$('usr-perfil').value,status:$('usr-status').value,ultimo:'',pergunta,resposta});commit('criar','Usuários',login);}
  closeModal('modal-usuarios');toast('Usuário salvo!','success');}
+
+/* ================= RECUPERAÇÃO DE SENHA ================= */
+let RECUSER=null;
+function openRecSenha(){RECUSER=null;$('rec-login').value='';$('rec-resposta').value='';$('rec-nova-senha').value='';$('rec-nova-senha-2').value='';
+ ['rec-err-1','rec-err-2','rec-err-3'].forEach(i=>{$(i).textContent='';$(i).classList.remove('show');});
+ $('rec-step-1').style.display='block';$('rec-step-2').style.display='none';$('rec-step-3').style.display='none';
+ $('rec-btn-1').style.display='inline-flex';$('rec-btn-2').style.display='none';$('rec-btn-3').style.display='none';
+ openModal('modal-rec-senha');setTimeout(()=>$('rec-login').focus(),50);}
+function recErro(id,msg){$(id).textContent=msg;$(id).classList.add('show');}
+function recAvancarStep1(){const login=$('rec-login').value.trim();
+ const u=DB.usuarios.find(x=>x.login===login&&x.status==='Ativo');
+ if(!u||!u.pergunta||!u.resposta){recErro('rec-err-1','Usuário não encontrado ou sem pergunta de segurança cadastrada. Peça a um administrador para redefinir sua senha em Usuários.');return;}
+ RECUSER=u.id;$('rec-pergunta-txt').textContent=u.pergunta;
+ $('rec-step-1').style.display='none';$('rec-step-2').style.display='block';
+ $('rec-btn-1').style.display='none';$('rec-btn-2').style.display='inline-flex';
+ setTimeout(()=>$('rec-resposta').focus(),50);}
+function recAvancarStep2(){const u=DB.usuarios.find(x=>x.id===RECUSER);if(!u)return;
+ const resp=$('rec-resposta').value.trim();
+ if(resp.toLowerCase()!==String(u.resposta||'').trim().toLowerCase()){recErro('rec-err-2','Resposta incorreta. Tente novamente.');return;}
+ $('rec-step-2').style.display='none';$('rec-step-3').style.display='block';
+ $('rec-btn-2').style.display='none';$('rec-btn-3').style.display='inline-flex';
+ setTimeout(()=>$('rec-nova-senha').focus(),50);}
+function recFinalizar(){const u=DB.usuarios.find(x=>x.id===RECUSER);if(!u)return;
+ const s1=$('rec-nova-senha').value,s2=$('rec-nova-senha-2').value;
+ if(s1.length<6){recErro('rec-err-3','A senha deve ter no mínimo 6 caracteres.');return;}
+ if(s1!==s2){recErro('rec-err-3','As senhas não coincidem.');return;}
+ u.senha=s1;log('editar','Usuários','Senha redefinida via recuperação: '+u.login);saveDB();
+ closeModal('modal-rec-senha');toast('Senha redefinida! Faça login com a nova senha.','success');}
 function delUsuario(id){if(!isAdmin())return;const u=DB.usuarios.find(x=>x.id===id);
  if(u.id===USER.id){toast('Você não pode excluir seu próprio usuário.','error');return;}
  if(!confirm('Excluir usuário "'+u.login+'"?'))return;
