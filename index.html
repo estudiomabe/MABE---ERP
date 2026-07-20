@@ -272,7 +272,19 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 
     <div class="section" id="section-clientes"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Clientes — CRM</div></div><table><thead><tr><th>#</th><th>Nome</th><th>Email</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-clientes"></tbody></table></div></div>
     <div class="section" id="section-produtos"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Produtos & Estoque</div></div><table><thead><tr><th>#</th><th>Produto</th><th>Categoria</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-produtos"></tbody></table></div></div>
-    <div class="section" id="section-vendas"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos de Venda</div></div><table><thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div></div>
+    <div class="section" id="section-vendas">
+      <div class="period-bar">
+        <div class="per-tabs">
+          <button class="per-tab" id="vnd-per-mes" onclick="setVndModo('mes')">Mês</button>
+          <button class="per-tab" id="vnd-per-ano" onclick="setVndModo('ano')">Ano</button>
+          <button class="per-tab" id="vnd-per-tudo" onclick="setVndModo('tudo')">Tudo</button>
+        </div>
+        <select class="form-control" id="vnd-per-mes-sel" style="width:auto;min-width:130px" onchange="onVndChange()"></select>
+        <select class="form-control" id="vnd-per-ano-sel" style="width:auto;min-width:90px" onchange="onVndChange()"></select>
+        <span id="vnd-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
+      </div>
+      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos de Venda</div></div><table><thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
+    </div>
 
     <div class="section" id="section-financeiro">
       <div class="stat-row">
@@ -339,6 +351,16 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
     <!-- ORÇAMENTOS -->
     <div class="section" id="section-orcamentos">
       <div id="orc-lista-view">
+        <div class="period-bar">
+          <div class="per-tabs">
+            <button class="per-tab" id="orc-per-mes" onclick="setOrcModo('mes')">Mês</button>
+            <button class="per-tab" id="orc-per-ano" onclick="setOrcModo('ano')">Ano</button>
+            <button class="per-tab" id="orc-per-tudo" onclick="setOrcModo('tudo')">Tudo</button>
+          </div>
+          <select class="form-control" id="orc-per-mes-sel" style="width:auto;min-width:130px" onchange="onOrcChange()"></select>
+          <select class="form-control" id="orc-per-ano-sel" style="width:auto;min-width:90px" onchange="onOrcChange()"></select>
+          <span id="orc-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
+        </div>
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Orçamentos — Mabe</div></div>
         <table><thead><tr><th>#</th><th>Tipo</th><th>Descrição</th><th>Cliente</th><th>Data</th><th>Preço</th><th>Lucro</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-orcamentos"></tbody></table></div>
       </div>
@@ -722,6 +744,12 @@ function onPerChange(){PER.mes=+$('per-mes-sel').value;PER.ano=+$('per-ano-sel')
 let REL={modo:'tudo',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function setRelModo(m){REL.modo=m;renderRelatorios();}
 function onRelChange(){REL.mes=+$('rel-per-mes-sel').value;REL.ano=+$('rel-per-ano-sel').value;renderRelatorios();}
+let PER_VND={modo:'tudo',ano:new Date().getFullYear(),mes:new Date().getMonth()};
+function setVndModo(m){PER_VND.modo=m;renderVendas();}
+function onVndChange(){PER_VND.mes=+$('vnd-per-mes-sel').value;PER_VND.ano=+$('vnd-per-ano-sel').value;renderVendas();}
+let PER_ORC={modo:'tudo',ano:new Date().getFullYear(),mes:new Date().getMonth()};
+function setOrcModo(m){PER_ORC.modo=m;renderOrcamentos();}
+function onOrcChange(){PER_ORC.mes=+$('orc-per-mes-sel').value;PER_ORC.ano=+$('orc-per-ano-sel').value;renderOrcamentos();}
 function renderDashboard(){
  $('per-mes-sel').innerHTML=MESES.map((m,i)=>'<option value="'+i+'"'+(i===PER.mes?' selected':'')+'>'+m+'</option>').join('');
  $('per-ano-sel').innerHTML=perYears().map(y=>'<option value="'+y+'"'+(y===PER.ano?' selected':'')+'>'+y+'</option>').join('');
@@ -824,8 +852,10 @@ function delMadeira(id){if(!guard())return;const m=DB.madeiras.find(x=>x.id===id
  DB.madeiras=DB.madeiras.filter(x=>x.id!==id);commit('excluir','Madeiras',m.especie);syncSheets('madeiras','delete',{id});toast('Madeira excluída.','info');}
 
 /* ================= VENDAS ================= */
-function renderVendas(){$('tb-vendas').innerHTML=DB.vendas.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
- return '<tr><td class="mono">V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+(v.itens||[]).length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</td></tr>';}).join('')||emptyRow(8,'Nenhuma venda registrada');}
+function renderVendas(){syncPerBar('vnd-per',PER_VND);
+ const lista=DB.vendas.filter(v=>matchPer(v.data,PER_VND));
+ $('tb-vendas').innerHTML=lista.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
+ return '<tr><td class="mono">V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+(v.itens||[]).length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</td></tr>';}).join('')||emptyRow(8,'Nenhuma venda no período selecionado');}
 function prodOptions(sel){return '<option value="">— Produto —</option>'+DB.produtos.map(p=>'<option value="'+p.id+'" data-preco="'+(p.preco||p.custo||0)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.nome)+' ('+p.est+' '+esc(p.un||'un')+')</option>').join('');}
 function addItemVenda(it){const wrap=$('vnd-itens');const row=document.createElement('div');
  row.style.cssText='display:grid;grid-template-columns:2fr 70px 100px 100px 30px;gap:6px;align-items:center';
@@ -855,11 +885,12 @@ function delVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===id);if
  DB.vendas=DB.vendas.filter(x=>x.id!==id);commit('excluir','Vendas','V-'+pad(v.num));syncSheets('vendas','delete',{id});toast('Venda excluída (estoque devolvido).','info');}
 
 /* ================= ORÇAMENTOS ================= */
-function renderOrcamentos(){orcShow('lista');
- $('tb-orcamentos').innerHTML=DB.orcamentos.map(o=>{const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
+function renderOrcamentos(){orcShow('lista');syncPerBar('orc-per',PER_ORC);
+ const lista=DB.orcamentos.filter(o=>matchPer(o.data,PER_ORC));
+ $('tb-orcamentos').innerHTML=lista.map(o=>{const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
   const tipoL={'sob_medida':'🔨 Sob medida','catalogo':'📦 Catálogo','novo_produto':'🆕 Novo produto'}[o.tipo]||o.tipo;
   const prodBtn=(o.status==='Aprovado'&&!o.opId&&canEdit())?'<button class="btn btn-primary btn-sm" title="Enviar para produção" onclick="orcParaProducao(\''+o.id+'\')">▶ Produzir</button>':'';
-  return '<tr><td class="mono">ORC-'+pad(o.num)+'</td><td>'+tipoL+'</td><td><strong>'+esc(o.desc)+'</strong></td><td>'+esc(cliName(o.cliId))+'</td><td class="mono">'+fmtD(o.data)+'</td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td><td class="mono" style="color:var(--success)">'+fmt(o.lucro)+'</td><td><span class="badge '+stB+'">'+o.status+'</span></td><td><div class="row-actions">'+prodBtn+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editOrcamento(\''+o.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delOrcamento(\''+o.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(9,'Nenhum orçamento criado');}
+  return '<tr><td class="mono">ORC-'+pad(o.num)+'</td><td>'+tipoL+'</td><td><strong>'+esc(o.desc)+'</strong></td><td>'+esc(cliName(o.cliId))+'</td><td class="mono">'+fmtD(o.data)+'</td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td><td class="mono" style="color:var(--success)">'+fmt(o.lucro)+'</td><td><span class="badge '+stB+'">'+o.status+'</span></td><td><div class="row-actions">'+prodBtn+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editOrcamento(\''+o.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delOrcamento(\''+o.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(9,'Nenhum orçamento no período selecionado');}
 function orcShow(view){['lista','tipo','form','catalogo'].forEach(v=>{$('orc-'+v+'-view').style.display=v===view?'block':'none';});}
 function novoOrcamento(){orcShow('tipo');}
 function fecharFormOrc(){renderOrcamentos();}
