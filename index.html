@@ -121,7 +121,7 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .modal-close { width:30px;height:30px;border-radius:50%;border:none;background:var(--surface2);color:var(--text-muted);cursor:pointer;font-size:16px;transition:all 0.15s; }
 .modal-close:hover { background:var(--surface3);color:var(--text); }
 .modal-body { padding:22px; } .modal-footer { padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px; }
-.form-grid { display:grid;gap:14px; } .form-2 { grid-template-columns:1fr 1fr; }
+.form-grid { display:grid;gap:14px;min-width:0;grid-template-columns:minmax(0,1fr); } .form-2 { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } .form-group { min-width:0; }
 .form-group { display:flex;flex-direction:column;gap:5px; }
 .form-label { font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px; }
 .form-control { background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color 0.15s;width:100%; }
@@ -143,6 +143,31 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 .toast { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 15px;min-width:260px;display:flex;align-items:center;gap:10px;font-size:13px;animation:slideIn 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.1); }
 .toast.success { border-left:3px solid var(--success); } .toast.error { border-left:3px solid var(--danger); } .toast.info { border-left:3px solid var(--primary); }
 @keyframes slideIn { from { opacity:0;transform:translateX(20px); } to { opacity:1;transform:translateX(0); } }
+.table-wrapper { overflow-x:auto; }
+#vnd-itens, #orc-materiais { overflow-x:auto; }
+#sidebar-backdrop { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:150; }
+@media (max-width:860px) {
+  #btn-menu { display:inline-flex !important; }
+  #sidebar { transform:translateX(-100%);transition:transform 0.25s ease;z-index:200; }
+  #sidebar.open { transform:translateX(0); }
+  #sidebar.open ~ #sidebar-backdrop { display:block; }
+  #main { margin-left:0; }
+  #topbar { flex-wrap:wrap;height:auto;min-height:58px;padding:10px 14px;row-gap:8px; }
+  .topbar-title { order:1;flex:1 1 auto; }
+  #btn-new { order:2; }
+  .search-box { order:3;flex:1 1 100%;width:100%; }
+  #content { padding:14px; }
+  .kpi-grid { grid-template-columns:repeat(2,1fr); }
+  .charts-grid, .bottom-grid, .form-2 { grid-template-columns:minmax(0,1fr); }
+  .orc-tipo-grid, .orc-cols-2, .mad-dim-grid { grid-template-columns:minmax(0,1fr) !important; }
+  .stat-row { flex-direction:column; }
+  .pcp-stats { grid-template-columns:repeat(2,1fr); }
+  .modal, .modal-lg { width:94vw; }
+  #vnd-itens>div, #orc-materiais>div { grid-template-columns:minmax(110px,2fr) 55px 70px 65px 24px !important; }
+}
+@media (max-width:460px) {
+  .kpi-grid, .pcp-stats { grid-template-columns:1fr; }
+}
 </style>
 </head>
 <body>
@@ -188,6 +213,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
     </div>
   </div>
 </nav>
+<div id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
 <div id="login-screen">
   <div class="login-box">
@@ -210,6 +236,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 
 <div id="main">
   <div id="topbar">
+    <button id="btn-menu" class="btn btn-ghost" onclick="toggleSidebar()" style="display:none;padding:7px 10px" aria-label="Abrir menu">☰</button>
     <div class="topbar-title" id="page-title">Dashboard</div>
     <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Buscar..." id="global-search" oninput="handleSearch(this.value)"></div>
     <button class="btn btn-primary" id="btn-new" onclick="openNew()" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo</button>
@@ -317,7 +344,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
       </div>
       <div id="orc-tipo-view" style="display:none">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px"><button class="btn btn-ghost btn-sm" onclick="fecharFormOrc()">← Voltar</button><h2 style="font-size:16px;font-weight:700">Novo Orçamento — Escolha o tipo</h2></div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:800px">
+        <div class="orc-tipo-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:800px">
           <div onclick="selecionarTipoOrc('sob_medida')" style="cursor:pointer;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:28px 22px;text-align:center;transition:all 0.15s" onmouseover="this.style.borderColor='#1a1714'" onmouseout="this.style.borderColor='var(--border)'"><div style="font-size:36px;margin-bottom:12px">🔨</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Sob Medida</div><div style="font-size:12px;color:var(--text-muted);line-height:1.5">Projeto personalizado com rateio de CF, MDO e materiais</div></div>
           <div onclick="selecionarTipoOrc('catalogo')" style="cursor:pointer;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:28px 22px;text-align:center;transition:all 0.15s" onmouseover="this.style.borderColor='#1a1714'" onmouseout="this.style.borderColor='var(--border)'"><div style="font-size:36px;margin-bottom:12px">📦</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Produto de Catálogo</div><div style="font-size:12px;color:var(--text-muted);line-height:1.5">Produto já cadastrado no catálogo da Mabe</div></div>
           <div onclick="selecionarTipoOrc('novo_produto')" style="cursor:pointer;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:28px 22px;text-align:center;transition:all 0.15s" onmouseover="this.style.borderColor='#1a1714'" onmouseout="this.style.borderColor='var(--border)'"><div style="font-size:36px;margin-bottom:12px">🆕</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">Criar Produto</div><div style="font-size:12px;color:var(--text-muted);line-height:1.5">Precifica e cadastra novo produto no catálogo</div></div>
@@ -329,7 +356,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <div><h2 style="font-size:16px;font-weight:700" id="orc-form-title">Novo Orçamento</h2><div id="orc-tipo-badge" style="font-size:11px;color:var(--text-muted);margin-top:2px"></div></div>
           <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="imprimirOrcamento()">🖨️ Imprimir</button><button class="btn btn-primary btn-sm" id="btn-salvar-orc" onclick="saveOrcamento()">💾 Salvar</button></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="orc-cols-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <div style="display:flex;flex-direction:column;gap:14px">
             <div class="config-card" style="margin:0"><div class="config-title">📋 Dados</div><div class="form-grid">
               <input type="hidden" id="orc-id"><input type="hidden" id="orc-tipo">
@@ -494,7 +521,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 <!-- MODAL MADEIRAS -->
 <div class="modal-overlay" id="modal-madeiras"><div class="modal"><div class="modal-header"><div class="modal-title" id="mmad-title">Nova Madeira</div><button class="modal-close" onclick="closeModal('modal-madeiras')">✕</button></div><div class="modal-body"><input type="hidden" id="mad-id"><div class="form-grid">
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Espécie *</label><input type="text" class="form-control" id="mad-especie" placeholder="Ex: Tauari, Freijó, Cumaru"></div><div class="form-group"><label class="form-label">Tipo</label><select class="form-control" id="mad-tipo"><option>Prancha</option><option>Tábua</option><option>Viga</option><option>Sarrafo</option><option>Bloco</option><option>Demolição</option></select></div></div>
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px"><div class="form-group"><label class="form-label">Espessura (cm)</label><input type="number" class="form-control" id="mad-esp" step="0.1" min="0" oninput="calcMadPrev()"></div><div class="form-group"><label class="form-label">Largura (cm)</label><input type="number" class="form-control" id="mad-larg" step="0.1" min="0" oninput="calcMadPrev()"></div><div class="form-group"><label class="form-label">Comprimento (cm)</label><input type="number" class="form-control" id="mad-comp" step="1" min="0" oninput="calcMadPrev()"></div></div>
+<div class="mad-dim-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px"><div class="form-group"><label class="form-label">Espessura (cm)</label><input type="number" class="form-control" id="mad-esp" step="0.1" min="0" oninput="calcMadPrev()"></div><div class="form-group"><label class="form-label">Largura (cm)</label><input type="number" class="form-control" id="mad-larg" step="0.1" min="0" oninput="calcMadPrev()"></div><div class="form-group"><label class="form-label">Comprimento (cm)</label><input type="number" class="form-control" id="mad-comp" step="1" min="0" oninput="calcMadPrev()"></div></div>
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Qtd. Peças</label><input type="number" class="form-control" id="mad-qtd" min="0" oninput="calcMadPrev()"></div><div class="form-group"><label class="form-label">Custo (R$/m³)</label><input type="number" class="form-control" id="mad-custo" step="0.01" min="0" oninput="calcMadPrev()"></div></div>
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Umidade (%)</label><input type="number" class="form-control" id="mad-umidade" step="0.5" min="0" placeholder="Ideal ≤ 12%"></div><div class="form-group"><label class="form-label">Estoque Mínimo (m³)</label><input type="number" class="form-control" id="mad-min" step="0.01" min="0"></div></div>
 <div class="form-group"><label class="form-label">Fornecedor</label><select class="form-control" id="mad-forn"><option value="">—</option></select></div>
@@ -631,6 +658,8 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos de Venda',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
 const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','produtos','madeiras','financeiro','fornecedores','compras','usuarios'];
 let CUR='dashboard';
+function toggleSidebar(){$('sidebar').classList.toggle('open');}
+function closeSidebar(){$('sidebar').classList.remove('open');}
 function navigate(sec){CUR=sec;
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
  const el=$('section-'+sec); if(el)el.classList.add('active');
@@ -638,6 +667,7 @@ function navigate(sec){CUR=sec;
  $('page-title').textContent=TITLES[sec]||sec;
  $('btn-new').style.display=(NEWABLE.includes(sec)&&canEdit())?'inline-flex':'none';
  $('global-search').value='';
+ closeSidebar();
  renderSection(sec);}
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
