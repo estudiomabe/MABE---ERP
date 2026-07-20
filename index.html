@@ -721,6 +721,11 @@ function actionBtns(fnE,fnD){if(!canEdit())return '';return '<div class="row-act
 
 /* ================= DASHBOARD ================= */
 let chVendas=null,chStatus=null;
+function ticksRegua(maxValor){
+ const seq=[1,2,3,5];const ticks=[];let expo=3;
+ while(true){const potencia=Math.pow(10,expo);
+  for(const s of seq){const v=s*potencia;ticks.push(v);if(v>=maxValor&&ticks.length>=5)return ticks;}
+  expo++;if(expo>9)return ticks;}}
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 let PER={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function perYears(){const ys=new Set([new Date().getFullYear()]);
@@ -789,7 +794,8 @@ function renderDashboard(){
   vals.push(DB.vendas.filter(v=>String(v.data).slice(0,7)===k&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));}
   $('chart-vendas-sub').textContent='6 meses até '+MESES[PER.mes].slice(0,3)+'/'+String(PER.ano).slice(2);}
  if(chVendas)chVendas.destroy();
- chVendas=new Chart($('chart-vendas'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:'#c8a96e',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'R$'+(v/1000)+'k'}}},responsive:true}});
+ const ticksVendas=ticksRegua(Math.max(...vals,1));
+ chVendas=new Chart($('chart-vendas'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:'#c8a96e',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{type:'logarithmic',min:1000,max:ticksVendas[ticksVendas.length-1],afterBuildTicks:axis=>{axis.ticks=ticksVendas.map(v=>({value:v}));},ticks:{autoSkip:false,font:{size:9},callback:v=>v>=1000?(v/1000)+'k':v}}},responsive:true}});
  const sts={};vPer.forEach(v=>sts[v.status]=(sts[v.status]||0)+1);
  if(chStatus)chStatus.destroy();
  const cores={'Pendente':'#a07830','Confirmado':'#c8a96e','Enviado':'#7a6f62','Entregue':'#3d6b4f','Cancelado':'#b54040'};
