@@ -416,17 +416,17 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
     <div class="section" id="section-configuracoes">
       <div class="config-card">
         <div class="config-title">🔗 Conexão com Google Sheets</div>
-        <div class="info-box">Backup automático: toda vez que você salvar algo no ERP (cliente, venda, orçamento...), ele também grava numa aba correspondente da sua planilha. É só backup/consulta — o ERP nunca lê dados de volta da planilha, então edite sempre por aqui.</div>
+        <div class="info-box">Toda vez que você salvar algo no ERP (cliente, venda, orçamento...), ele grava numa aba correspondente da sua planilha. E toda vez que o ERP é aberto (login), ele busca a versão mais recente da planilha — assim, se alguém salvou algo em outro computador/celular, você já abre vendo os dados atualizados. <strong>Não é tempo real:</strong> se duas pessoas estiverem com o ERP aberto ao mesmo tempo, ainda pode haver conflito.</div>
         <div class="step-list">
-          <div class="step-item"><div class="step-num">1</div><div class="step-text">Abra a planilha <strong>TESTE ERP.xlsx</strong> (ou faça upload dela no seu Google Drive) e converta para <strong>Google Sheets</strong></div></div>
+          <div class="step-item"><div class="step-num">1</div><div class="step-text">Abra a planilha <strong>Planilha_ERP_MABE.xlsx</strong> (ou faça upload dela no seu Google Drive) e converta para <strong>Google Sheets</strong> — ela precisa ter as abas: clientes, produtos, madeiras, vendas, orçamentos, pcp, entregas, ferramentas, financeiro, fornecedores, compras, historico e config</div></div>
           <div class="step-item"><div class="step-num">2</div><div class="step-text">Na planilha: <strong>Extensões → Apps Script</strong></div></div>
           <div class="step-item"><div class="step-num">3</div><div class="step-text">Apague o conteúdo padrão, cole o conteúdo do arquivo <code>Apps_Script_ERP.gs</code> (na pasta do projeto) e salve</div></div>
-          <div class="step-item"><div class="step-num">4</div><div class="step-text"><strong>Implantar → Nova implantação</strong> → tipo "App da Web" → Executar como <strong>eu</strong> → Acesso <strong>qualquer pessoa</strong> → Implantar → Copie a URL</div></div>
+          <div class="step-item"><div class="step-num">4</div><div class="step-text"><strong>Implantar → Nova implantação</strong> → tipo "App da Web" → Executar como <strong>eu</strong> → Acesso <strong>qualquer pessoa</strong> → Implantar → Copie a URL. (Se já tinha implantado antes, use <strong>Gerenciar implantações → editar → Nova versão</strong> em vez de criar uma implantação nova.)</div></div>
           <div class="step-item"><div class="step-num">5</div><div class="step-text">Cole a URL abaixo, clique em <strong>Salvar & Testar</strong> e depois em <strong>Sincronizar tudo agora</strong> para enviar os dados já existentes</div></div>
         </div>
         <div style="margin-top:18px">
           <div class="form-group" style="margin-bottom:12px"><label class="form-label">URL do Apps Script</label><input type="text" class="form-control" id="sheets-url" placeholder="https://script.google.com/macros/s/..."></div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="saveConfig()">Salvar & Testar</button><button class="btn btn-ghost" onclick="syncFullDatabase()">🔄 Sincronizar tudo agora</button><button class="btn btn-ghost" onclick="loadDemoData()">Carregar Demo</button><span id="conn-status" style="font-size:12px;color:var(--text-muted)"></span></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="saveConfig()">Salvar & Testar</button><button class="btn btn-ghost" onclick="syncFullDatabase()">🔄 Sincronizar tudo agora</button><button class="btn btn-ghost" onclick="buscarAtualizacoesManual()">⬇️ Buscar atualizações da planilha</button><button class="btn btn-ghost" onclick="loadDemoData()">Carregar Demo</button><span id="conn-status" style="font-size:12px;color:var(--text-muted)"></span></div>
         </div>
       </div>
       <div class="config-card">
@@ -581,6 +581,31 @@ function syncFullDatabase(){if(!guard())return;const url=DB.config.sheetsUrl;
   fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({entity:ent,action,data:rec})})
    .then(r=>r.json()).then(r=>{if(r&&r.ok)done++;else fail++;}).catch(()=>fail++).finally(next);};
  next();}
+
+/* ---- Buscar (ler) dados da planilha — para outro dispositivo enxergar o que já foi salvo ---- */
+function desserializar(v){if(typeof v==='string'&&v.length&&(v[0]==='{'||v[0]==='[')){try{return JSON.parse(v);}catch(e){return v;}}return v;}
+function normalizarRegistros(arr){return (arr||[]).map(r=>{const o={};for(const k in r)o[k]=desserializar(r[k]);return o;});}
+function maiorNum(arr){return (arr||[]).reduce((m,r)=>Math.max(m,Number(r.num)||0),0);}
+const MAPA_ABA_DB={clientes:'clientes',produtos:'produtos',madeiras:'madeiras',vendas:'vendas',orcamentos:'orcamentos',entregas:'entregas',ferramentas:'ferramentas',financeiro:'financeiro',fornecedores:'fornecedores',compras:'compras',pcp:'producao'};
+function carregarDaPlanilha(silencioso){
+ const url=DB.config.sheetsUrl;if(!url)return Promise.resolve(false);
+ return fetch(url).then(r=>r.json()).then(r=>{
+  if(!r||!r.ok||!r.dados){if(!silencioso)toast('Não foi possível ler a planilha (verifique a URL).','error');return false;}
+  const d=r.dados;
+  Object.entries(MAPA_ABA_DB).forEach(([aba,dbKey])=>{if(Array.isArray(d[aba]))DB[dbKey]=normalizarRegistros(d[aba]);});
+  if(Array.isArray(d.historico)){DB.historico=normalizarRegistros(d.historico).reverse();if(DB.historico.length>400)DB.historico.length=400;}
+  if(d.config&&typeof d.config==='object'){Object.keys(d.config).forEach(k=>{if(DB.config.cf[k]!==undefined)DB.config.cf[k]=Number(d.config[k])||0;});}
+  DB.seq.venda=Math.max(DB.seq.venda,maiorNum(DB.vendas)+1);
+  DB.seq.orc=Math.max(DB.seq.orc,maiorNum(DB.orcamentos)+1);
+  DB.seq.op=Math.max(DB.seq.op,maiorNum(DB.producao)+1);
+  DB.seq.compra=Math.max(DB.seq.compra,maiorNum(DB.compras)+1);
+  saveDB();if(CUR){renderSection(CUR);updateBadges();}
+  if(!silencioso)toast('Dados atualizados a partir da planilha!','success');
+  return true;
+ }).catch(()=>{if(!silencioso)toast('Não foi possível conectar à planilha.','error');return false;});}
+function buscarAtualizacoesManual(){if(!DB.config.sheetsUrl){toast('Configure a URL do Apps Script primeiro.','error');return;}
+ if(!confirm('Isso vai substituir os dados locais pelos dados atuais da planilha. Alterações feitas aqui que ainda não foram sincronizadas podem ser perdidas. Continuar?'))return;
+ toast('Buscando atualizações da planilha…','info');carregarDaPlanilha(false);}
 const canEdit=()=>USER&&USER.perfil!=='Visualizador';
 const isAdmin=()=>USER&&USER.perfil==='Admin';
 function guard(){if(!canEdit()){toast('Perfil Visualizador: sem permissão para editar.','error');return false;}return true;}
@@ -599,7 +624,8 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  $('sidebar-avatar').textContent=ini;$('sidebar-username').textContent=USER.nome;$('sidebar-role').textContent=USER.perfil;
  $('nav-usuarios').style.display=isAdmin()?'flex':'none';
  navigate('dashboard');updateBadges();
- if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');}
+ if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
+ if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});}
 
 /* ================= NAVEGAÇÃO ================= */
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos de Venda',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};

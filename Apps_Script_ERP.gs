@@ -1,22 +1,33 @@
 /**
  * Apps Script ERP — Estúdio MABE
  *
- * Backend de backup para o ERP (ERP_Pro.html). Recebe os registros salvos no
- * navegador e grava/atualiza/apaga a linha correspondente na aba certa desta
- * planilha, usando a coluna "id" (ou "campo", no caso da aba config) como
- * chave. É um backup one-way: o ERP nunca lê dados de volta daqui — edite
- * sempre pelo próprio ERP.
+ * Backend do ERP (ERP_Pro.html):
+ *  - doPost: recebe os registros salvos no navegador e grava/atualiza/apaga
+ *    a linha correspondente na aba certa, usando "id" (ou "campo", na aba
+ *    config) como chave.
+ *  - doGet: devolve o conteúdo de todas as abas em JSON, para o ERP carregar
+ *    ao abrir (ou quando a pessoa clicar em "Buscar atualizações da
+ *    planilha"). Assim, se o computador A salvar algo, e depois o celular B
+ *    abrir o ERP (ou clicar em atualizar), o celular B já vê os dados novos.
  *
- * COMO IMPLANTAR
+ * IMPORTANTE: isso NÃO é sincronização em tempo real. Cada dispositivo só
+ * busca a versão mais recente no momento em que abre o ERP ou clica em
+ * atualizar — se duas pessoas estiverem com o ERP aberto ao mesmo tempo e
+ * editarem juntas, ainda pode haver conflito (números de pedido duplicados,
+ * etc.). Para eliminar esse risco de vez, seria necessário um banco de dados
+ * de verdade (ex: Firebase) em vez de uma planilha.
+ *
+ * COMO IMPLANTAR / ATUALIZAR
  * 1. Abra a planilha no Google Sheets → Extensões → Apps Script.
- * 2. Apague o conteúdo padrão (Code.gs) e cole este arquivo inteiro.
+ * 2. Apague o conteúdo atual e cole este arquivo inteiro (se já tinha uma
+ *    versão anterior implantada, é só substituir o conteúdo e salvar — não
+ *    precisa apagar a implantação).
  * 3. Salve (ícone de disquete).
- * 4. Implantar → Nova implantação → tipo "App da Web".
- *    - Executar como: Eu (sua conta)
- *    - Quem tem acesso: Qualquer pessoa
- * 5. Autorize as permissões pedidas (é a sua própria conta acessando a sua
- *    própria planilha).
- * 6. Copie a URL gerada e cole em Configurações → "URL do Apps Script" no ERP.
+ * 4. Implantar → Gerenciar implantações → ✏️ (editar) → Nova versão → Implantar.
+ *    (Se ainda não implantou nenhuma vez: Implantar → Nova implantação →
+ *    tipo "App da Web" → Executar como "Eu" → Acesso "Qualquer pessoa".)
+ * 5. Copie a URL (ela não muda ao criar uma "nova versão", só ao criar uma
+ *    implantação nova) e cole em Configurações → "URL do Apps Script" no ERP.
  *
  * A planilha precisa ter uma aba para cada uma destas entidades, com o
  * cabeçalho (linha 1) igual ao nome dos campos usados no ERP:
@@ -24,11 +35,15 @@
  *   ferramentas, financeiro, fornecedores, compras, historico, config
  *
  * Todas usam "id" como chave, exceto "config", que usa "campo".
+ * A aba "usuarios" é ignorada de propósito (login/senha nunca saem do
+ * navegador, por segurança).
  */
 
 var CHAVE_POR_ENTIDADE = {
   config: 'campo'
 };
+
+var ENTIDADES_IGNORADAS_NA_LEITURA = ['usuarios'];
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -80,11 +95,14 @@ function doPost(e) {
       return v;
     });
 
-    if (linhaEncontrada > -1) {
-      aba.getRange(linhaEncontrada, 1, 1, valoresLinha.length).setValues([valoresLinha]);
-    } else {
-      aba.appendRow(valoresLinha);
-    }
+    var linhaAlvo = linhaEncontrada > -1 ? linhaEncontrada : aba.getLastRow() + 1;
+    var faixa = aba.getRange(linhaAlvo, 1, 1, valoresLinha.length);
+    // Força texto puro na linha antes de escrever, para o Sheets não
+    // "adivinhar" tipo (datas, telefones e CPF/CNPJ com zero à esquerda ou
+    // traços seriam corrompidos se o Sheets os tratasse como número/data).
+    faixa.setNumberFormat('@');
+    faixa.setValues([valoresLinha]);
+
     return saidaJson({ ok: true, upsert: true });
 
   } catch (erro) {
@@ -95,12 +113,55 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  var planilha = SpreadsheetApp.getActiveSpreadsheet();
-  return saidaJson({
-    ok: true,
-    planilha: planilha.getName(),
-    abas: planilha.getSheets().map(function (s) { return s.getName(); })
-  });
+  try {
+    var planilha = SpreadsheetApp.getActiveSpreadsheet();
+    var abas = planilha.getSheets();
+    var dados = {};
+
+    abas.forEach(function (aba) {
+      var nome = aba.getName();
+      if (ENTIDADES_IGNORADAS_NA_LEITURA.indexOf(nome) > -1) return;
+
+      var ultimaLinha = aba.getLastRow();
+      var ultimaColuna = aba.getLastColumn();
+      if (ultimaLinha < 2 || ultimaColuna < 1) { dados[nome] = (nome === 'config') ? {} : []; return; }
+
+      var cabecalhos = aba.getRange(1, 1, 1, ultimaColuna).getValues()[0];
+      var linhas = aba.getRange(2, 1, ultimaLinha - 1, ultimaColuna).getValues();
+
+      if (nome === 'config') {
+        var idxCampo = cabecalhos.indexOf('campo');
+        var idxValor = cabecalhos.indexOf('valor');
+        var configObj = {};
+        linhas.forEach(function (linha) {
+          var campo = linha[idxCampo];
+          if (campo === '' || campo === null) return;
+          configObj[campo] = linha[idxValor];
+        });
+        dados[nome] = configObj;
+        return;
+      }
+
+      dados[nome] = linhas
+        .filter(function (linha) { return linha.some(function (v) { return v !== '' && v !== null; }); })
+        .map(function (linha) {
+          var registro = {};
+          cabecalhos.forEach(function (campo, i) {
+            registro[campo] = linha[i] instanceof Date ? linha[i].toISOString() : linha[i];
+          });
+          return registro;
+        });
+    });
+
+    return saidaJson({
+      ok: true,
+      planilha: planilha.getName(),
+      abas: abas.map(function (s) { return s.getName(); }),
+      dados: dados
+    });
+  } catch (erro) {
+    return saidaJson({ ok: false, erro: String(erro) });
+  }
 }
 
 function encontrarLinhaPorChave(aba, idxChaveZeroBased, valorChave) {
