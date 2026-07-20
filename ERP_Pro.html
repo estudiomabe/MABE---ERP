@@ -91,7 +91,7 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .chip-operador { background:var(--surface3);color:var(--text);padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700; }
 .chip-visualizador { background:var(--surface2);color:var(--text-muted);padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700; }
 .hist-action-criar { color:var(--success); } .hist-action-editar { color:var(--warning); } .hist-action-excluir { color:var(--danger); }
-.kanban-board { display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:start; }
+.kanban-board { display:grid;grid-auto-flow:column;grid-auto-columns:minmax(190px,1fr);gap:12px;align-items:start;overflow-x:auto;padding-bottom:6px; }
 .kanban-col { background:var(--surface2);border-radius:var(--radius);padding:12px;min-height:200px; }
 .kanban-col-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:12px; }
 .kanban-col-title { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px; }
@@ -104,7 +104,7 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .kanban-card-prazo { font-size:10px;font-family:var(--mono); }
 .kanban-card-prazo.vencido { color:var(--danger);font-weight:700; } .kanban-card-prazo.hoje { color:var(--warning);font-weight:700; } .kanban-card-prazo.ok { color:var(--text-muted); }
 .pcp-etapa-btn { padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;border:none;cursor:pointer;transition:all 0.15s; }
-.pcp-stats { display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px; }
+.pcp-stats { display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px; }
 .pcp-stat { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04); }
 .pcp-stat-val { font-size:22px;font-weight:800;font-family:var(--mono); }
 .pcp-stat-label { font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px; }
@@ -522,7 +522,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 <div class="form-group"><label class="form-label">Peça / Projeto *</label><input type="text" class="form-control" id="op-titulo" placeholder="Ex: Mesa de reunião Freijó 3,00m"></div>
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente</label><select class="form-control" id="op-cli"><option value="">—</option></select></div><div class="form-group"><label class="form-label">Prazo de Entrega</label><input type="date" class="form-control" id="op-prazo"></div></div>
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Responsável</label><input type="text" class="form-control" id="op-resp"></div><div class="form-group"><label class="form-label">Prioridade</label><select class="form-control" id="op-prio"><option>Normal</option><option>Alta</option><option>Urgente</option></select></div></div>
-<div class="form-group"><label class="form-label">Etapa Atual</label><select class="form-control" id="op-etapa"><option value="0">📥 Fila</option><option value="1">🪚 Corte & Usinagem</option><option value="2">🔨 Montagem</option><option value="3">🎨 Acabamento</option><option value="4">📦 Pronto / Entrega</option></select></div>
+<div class="form-group"><label class="form-label">Etapa Atual</label><select class="form-control" id="op-etapa"><option value="0">📥 Fila</option><option value="1">🪚 Corte & Usinagem</option><option value="2">🔨 Montagem</option><option value="3">🎨 Acabamento</option><option value="4">🔁 Retrabalho</option><option value="5">📦 Pronto</option><option value="6">🚚 Entregue</option></select></div>
 <div class="form-group"><label class="form-label">Observações Técnicas</label><input type="text" class="form-control" id="op-obs" placeholder="Encaixes, acabamento, madeira, medidas..."></div>
 </div></div><div class="modal-footer"><button class="btn btn-danger" id="op-btn-del" style="margin-right:auto;display:none" onclick="delOPFromModal()">Excluir</button><button class="btn btn-ghost" onclick="closeModal('modal-producao')">Cancelar</button><button class="btn btn-primary" onclick="saveOP()">Salvar</button></div></div></div>
 
@@ -918,16 +918,17 @@ function imprimirOrcamento(){const t=computeOrc();const cli=cliName($('orc-cli')
  w.document.close();w.print();}
 
 /* ================= PRODUÇÃO (PCP) ================= */
-const ETAPAS=['📥 Fila','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','📦 Pronto / Entrega'];
+const ETAPAS=['📥 Fila','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','🔁 Retrabalho','📦 Pronto','🚚 Entregue'];
+const ETAPA_FINAL=ETAPAS.length-1;
 function renderPCP(){const t=today();const ativas=DB.producao.filter(o=>o.status!=='Concluída');
  const atras=ativas.filter(o=>o.prazo&&o.prazo<t).length;
  const ym=t.slice(0,7);const concMes=DB.producao.filter(o=>o.status==='Concluída'&&String(o.fim||'').slice(0,7)===ym).length;
- $('pcp-stats').innerHTML=[['Na fila',ativas.filter(o=>o.etapa==0).length,''],['Em produção',ativas.filter(o=>o.etapa>0&&o.etapa<4).length,''],['Prontas',ativas.filter(o=>o.etapa==4).length,''],['Atrasadas',atras,'color:var(--danger)'],['Concluídas (mês)',concMes,'color:var(--success)']].map(s=>'<div class="pcp-stat"><div class="pcp-stat-val" style="'+s[2]+'">'+s[1]+'</div><div class="pcp-stat-label">'+s[0]+'</div></div>').join('');
+ $('pcp-stats').innerHTML=[['Na fila',ativas.filter(o=>o.etapa==0).length,''],['Em produção',ativas.filter(o=>o.etapa>0&&o.etapa<4).length,''],['Retrabalho',ativas.filter(o=>o.etapa==4).length,'color:var(--warning)'],['Prontas',ativas.filter(o=>o.etapa==5).length,''],['Atrasadas',atras,'color:var(--danger)'],['Concluídas (mês)',concMes,'color:var(--success)']].map(s=>'<div class="pcp-stat"><div class="pcp-stat-val" style="'+s[2]+'">'+s[1]+'</div><div class="pcp-stat-label">'+s[0]+'</div></div>').join('');
  $('pcp-kanban').innerHTML=ETAPAS.map((et,i)=>{const cards=ativas.filter(o=>Number(o.etapa)===i);
   return '<div class="kanban-col"><div class="kanban-col-header"><span class="kanban-col-title">'+et+'</span><span class="kanban-count">'+cards.length+'</span></div>'
   +cards.map(o=>{const pcls=!o.prazo?'ok':o.prazo<t?'vencido':o.prazo===t?'hoje':'ok';
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
-   const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<4?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶</button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
+   const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶</button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
    return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(o.titulo)+'</div><div class="kanban-card-sub">'+esc(cliName(o.cliId))+(o.resp?' · '+esc(o.resp):'')+'</div><div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
   +'</div>';}).join('');}
 function openOP(){$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';$('op-prio').value='Normal';$('op-etapa').value='0';$('op-obs').value='';
@@ -944,7 +945,7 @@ function delOPFromModal(){const id=$('op-id').value;if(!id)return;const o=DB.pro
  if(!confirm('Excluir OP "'+o.titulo+'"?'))return;
  DB.producao=DB.producao.filter(x=>x.id!==id);closeModal('modal-producao');commit('excluir','Produção',o.titulo);syncSheets('pcp','delete',{id});toast('OP excluída.','info');}
 function moveOP(id,dir){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
- o.etapa=Math.max(0,Math.min(4,Number(o.etapa)+dir));commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);}
+ o.etapa=Math.max(0,Math.min(ETAPA_FINAL,Number(o.etapa)+dir));commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);}
 function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  o.status='Concluída';o.fim=today();
  if(!DB.entregas.some(e=>e.opId===o.id)){const cli=DB.clientes.find(c=>c.id===o.cliId);
