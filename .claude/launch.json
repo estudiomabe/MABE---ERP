@@ -7,7 +7,7 @@
       "runtimeArgs": [
         "-NoProfile",
         "-Command",
-        "$l=New-Object Net.HttpListener; $l.Prefixes.Add('http://localhost:8123/'); $l.Start(); Write-Host 'Serving on http://localhost:8123/'; while($true){ $ctx=$l.GetContext(); $b=[IO.File]::ReadAllBytes('C:\\Users\\mateu\\Documents\\Claude Code\\MABE - ERP\\ERP_Pro.html'); $ctx.Response.ContentType='text/html; charset=utf-8'; $ctx.Response.OutputStream.Write($b,0,$b.Length); $ctx.Response.Close() }"
+        "$l=New-Object Net.HttpListener; $l.Prefixes.Add('http://localhost:8123/'); $l.Start(); Write-Host 'Serving on http://localhost:8123/'; while($true){ $ctx=$l.GetContext(); $b=[IO.File]::ReadAllBytes('C:\\Users\\mateu\\Documents\\Claude Code\\MABE - ERP\\index.html'); $ctx.Response.ContentType='text/html; charset=utf-8'; $ctx.Response.OutputStream.Write($b,0,$b.Length); $ctx.Response.Close() }"
       ],
       "port": 8123
     }

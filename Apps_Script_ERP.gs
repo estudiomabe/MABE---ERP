@@ -1,7 +1,7 @@
 /**
  * Apps Script ERP — Estúdio MABE
  *
- * Backend do ERP (ERP_Pro.html):
+ * Backend do ERP (index.html):
  *  - doPost: recebe os registros salvos no navegador e grava/atualiza/apaga
  *    a linha correspondente na aba certa, usando "id" (ou "campo", na aba
  *    config) como chave.
