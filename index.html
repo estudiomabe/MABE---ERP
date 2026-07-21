@@ -685,7 +685,8 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  carregarOrcamentosSupabase();
  carregarProducaoSupabase();
  carregarEntregasSupabase();
- carregarComprasSupabase();}
+ carregarComprasSupabase();
+ carregarFinanceiroSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
@@ -711,7 +712,8 @@ function navigate(sec){CUR=sec;
  if(sec==='orcamentos')carregarOrcamentosSupabase();
  if(sec==='pcp')carregarProducaoSupabase();
  if(sec==='entregas')carregarEntregasSupabase();
- if(sec==='compras')carregarComprasSupabase();}
+ if(sec==='compras')carregarComprasSupabase();
+ if(sec==='financeiro')carregarFinanceiroSupabase();}
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
@@ -966,6 +968,7 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
   if(nova.status!=='Cancelado'){for(const it of nova.itens){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Math.max(0,Number(p.est)-it.qty);await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
    nova.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',nova.id);
    const finReg={id:uid(),tipo:'Entrada',data:nova.data,desc:'Pedido V-'+pad(nova.num)+' — '+cliName(cliId),cat:'Pedidos',val:total,status:nova.status==='Entregue'?'Pago':'Pendente'};
+   await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
    DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);}
   DB.vendas.unshift(nova);commit('criar','Pedidos','V-'+pad(nova.num)+' — '+fmt(total));syncSheets('vendas','upsert',nova);
  }
@@ -1273,6 +1276,14 @@ async function delFerramenta(id){if(!guard())return;const f=DB.ferramentas.find(
  DB.ferramentas=DB.ferramentas.filter(x=>x.id!==id);commit('excluir','Máquinas',f.nome);syncSheets('ferramentas','delete',{id});toast('Equipamento excluído.','info');}
 
 /* ================= FINANCEIRO ================= */
+function financeiroParaSupabase(f){return{id:f.id,tipo:f.tipo||null,data:f.data||null,descricao:f.desc||null,cat:f.cat||null,val:f.val||0,status:f.status||null};}
+function financeiroDeSupabase(row){return{id:row.id,tipo:row.tipo,data:row.data,desc:row.descricao||'',cat:row.cat||'',val:row.val,status:row.status};}
+async function carregarFinanceiroSupabase(){
+ const {data,error}=await supa.from('financeiro').select('*').order('data',{ascending:false});
+ if(error){toast('Erro ao carregar financeiro do Supabase: '+error.message,'error');return;}
+ DB.financeiro=(data||[]).map(financeiroDeSupabase);saveDB();
+ if(CUR==='financeiro')renderFinanceiro();
+ if(CUR==='dashboard')renderDashboard();}
 function renderFinanceiro(){const ym=today().slice(0,7);
  const pagos=DB.financeiro.filter(f=>f.status==='Pago');
  $('fin-saldo').textContent=fmtK(saldoFin());
@@ -1284,11 +1295,23 @@ function renderFinanceiro(){const ym=today().slice(0,7);
 function openFin(){$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';$('fin-cat').value='';$('fin-val').value='';$('fin-st').value='Pago';$('mf-title').textContent='Novo Lançamento';openModal('modal-financeiro');}
 function editFin(id){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
  $('fin-id').value=f.id;$('fin-tipo').value=f.tipo;$('fin-data').value=f.data;$('fin-desc').value=f.desc;$('fin-cat').value=f.cat||'';$('fin-val').value=f.val;$('fin-st').value=f.status;$('mf-title').textContent='Editar Lançamento';openModal('modal-financeiro');}
-function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').value.trim();if(!desc||num('fin-val')<=0){toast('Informe descrição e valor.','error');return;}
+async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').value.trim();if(!desc||num('fin-val')<=0){toast('Informe descrição e valor.','error');return;}
  const id=$('fin-id').value;const o={tipo:$('fin-tipo').value,data:$('fin-data').value||today(),desc,cat:$('fin-cat').value.trim(),val:num('fin-val'),status:$('fin-st').value};
- if(id){const f2=Object.assign(DB.financeiro.find(x=>x.id===id),o);commit('editar','Financeiro',desc);syncSheets('financeiro','upsert',f2);}else{const f2=Object.assign({id:uid()},o);DB.financeiro.unshift(f2);commit('criar','Financeiro',desc);syncSheets('financeiro','upsert',f2);}
+ if(id){
+  const f2=Object.assign(DB.financeiro.find(x=>x.id===id),o);
+  const {error}=await supa.from('financeiro').update(financeiroParaSupabase(f2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Financeiro',desc);syncSheets('financeiro','upsert',f2);
+ } else {
+  const f2=Object.assign({id:uid()},o);
+  const {error}=await supa.from('financeiro').insert(financeiroParaSupabase(f2));
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  DB.financeiro.unshift(f2);commit('criar','Financeiro',desc);syncSheets('financeiro','upsert',f2);
+ }
  closeModal('modal-financeiro');toast('Lançamento salvo!','success');}
-function delFin(id){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!confirm('Excluir lançamento "'+f.desc+'"?'))return;
+async function delFin(id){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!confirm('Excluir lançamento "'+f.desc+'"?'))return;
+ const {error}=await supa.from('financeiro').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.financeiro=DB.financeiro.filter(x=>x.id!==id);commit('excluir','Financeiro',f.desc);syncSheets('financeiro','delete',{id});toast('Lançamento excluído.','info');}
 
 /* ================= FORNECEDORES & COMPRAS ================= */
@@ -1326,6 +1349,8 @@ function renderCompras(){$('tb-compras').innerHTML=DB.compras.map(c=>{const stB=
  return '<tr><td class="mono">OC-'+pad(c.num)+'</td><td class="mono">'+fmtD(c.data)+'</td><td>'+esc(fornName(c.forId))+'</td><td class="mono" style="font-weight:700">'+fmt(c.total)+'</td><td><span class="badge '+stB+'">'+c.status+'</span></td><td style="font-size:12px;color:var(--text-muted)">'+esc(c.obs||'—')+'</td><td><div class="row-actions">'+lanc+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editCompra(\''+c.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delCompra(\''+c.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(7,'Nenhuma ordem de compra');}
 async function lancarCompra(id){if(!guard())return;const c=DB.compras.find(x=>x.id===id);
  const finReg={id:uid(),tipo:'Saída',data:c.data,desc:'OC-'+pad(c.num)+' — '+fornName(c.forId),cat:'Compras',val:c.total,status:c.status==='Recebido'?'Pago':'Pendente'};
+ const {error:erroFin}=await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
+ if(erroFin){toast('Erro ao lançar no Supabase: '+erroFin.message,'error');return;}
  DB.financeiro.unshift(finReg);
  c.lancado=true;
  const {error}=await supa.from('compras').update({lancado:true}).eq('id',id);
