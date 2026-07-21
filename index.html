@@ -607,7 +607,15 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  for(const k in d)if(DB[k]===undefined)DB[k]=d[k];
  if(!DB.config.cf)DB.config.cf=d.config.cf; if(!DB.seq)DB.seq=d.seq;}
 function saveDB(){localStorage.setItem(DKEY,JSON.stringify(DB));}
-function log(acao,modulo,detalhe){const h={id:uid(),dt:new Date().toLocaleString('pt-BR'),user:USER?USER.nome:'—',usuario:USER?USER.nome:'—',login:USER?USER.login:'',acao,modulo,detalhe};DB.historico.unshift(h);if(DB.historico.length>400)DB.historico.length=400;syncSheets('historico','upsert',h);}
+function log(acao,modulo,detalhe){const h={id:uid(),dt:new Date().toLocaleString('pt-BR'),user:USER?USER.nome:'—',usuario:USER?USER.nome:'—',login:USER?USER.login:'',acao,modulo,detalhe};DB.historico.unshift(h);if(DB.historico.length>400)DB.historico.length=400;syncSheets('historico','upsert',h);
+ supa.from('historico').insert(historicoParaSupabase(h)).then(({error})=>{if(error)console.error('Erro ao salvar histórico no Supabase:',error.message);});}
+function historicoParaSupabase(h){return{dt:h.dt,user_nome:h.user||h.usuario||null,acao:h.acao,modulo:h.modulo,detalhe:h.detalhe};}
+function historicoDeSupabase(row){return{id:uid(),dt:row.dt,user:row.user_nome||'—',usuario:row.user_nome||'—',login:'',acao:row.acao,modulo:row.modulo,detalhe:row.detalhe};}
+async function carregarHistoricoSupabase(){
+ const {data,error}=await supa.from('historico').select('*').order('id',{ascending:false}).limit(400);
+ if(error){toast('Erro ao carregar histórico do Supabase: '+error.message,'error');return;}
+ DB.historico=(data||[]).map(historicoDeSupabase);saveDB();
+ if(CUR==='historico')renderHistorico();}
 function commit(acao,modulo,det){log(acao,modulo,det);saveDB();renderSection(CUR);updateBadges();}
 
 /* ================= SINCRONIZAÇÃO COM GOOGLE SHEETS ================= */
@@ -686,7 +694,9 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  carregarProducaoSupabase();
  carregarEntregasSupabase();
  carregarComprasSupabase();
- carregarFinanceiroSupabase();}
+ carregarFinanceiroSupabase();
+ carregarConfigSupabase();
+ carregarHistoricoSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
@@ -713,7 +723,9 @@ function navigate(sec){CUR=sec;
  if(sec==='pcp')carregarProducaoSupabase();
  if(sec==='entregas')carregarEntregasSupabase();
  if(sec==='compras')carregarComprasSupabase();
- if(sec==='financeiro')carregarFinanceiroSupabase();}
+ if(sec==='financeiro')carregarFinanceiroSupabase();
+ if(sec==='configuracoes')carregarConfigSupabase();
+ if(sec==='historico')carregarHistoricoSupabase();}
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
@@ -1456,8 +1468,11 @@ function delUsuario(id){if(!isAdmin())return;const u=DB.usuarios.find(x=>x.id===
 
 /* ================= HISTÓRICO & CONFIG ================= */
 function renderHistorico(){$('tb-historico').innerHTML=DB.historico.slice(0,200).map(h=>'<tr><td class="mono" style="font-size:11px">'+esc(h.dt)+'</td><td>'+esc(h.user)+'</td><td class="hist-action-'+h.acao+'" style="font-weight:700;text-transform:capitalize">'+h.acao+'</td><td>'+esc(h.modulo)+'</td><td style="font-size:12px;color:var(--text-muted)">'+esc(h.detalhe)+'</td></tr>').join('')||emptyRow(5,'Sem registros');}
-function clearHistorico(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
- if(!confirm('Limpar todo o histórico?'))return;DB.historico=[];saveDB();renderHistorico();toast('Histórico limpo.','info');}
+async function clearHistorico(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ if(!confirm('Limpar todo o histórico?'))return;
+ const {error}=await supa.from('historico').delete().gte('id',0);
+ if(error){toast('Erro ao limpar histórico no Supabase: '+error.message,'error');return;}
+ DB.historico=[];saveDB();renderHistorico();toast('Histórico limpo.','info');}
 function renderConfig(){$('sheets-url').value=DB.config.sheetsUrl||'';const cf=DB.config.cf;
  $('cfg-aluguel').value=cf.aluguel;$('cfg-iptu').value=cf.iptu;$('cfg-agua').value=cf.agua;$('cfg-energia').value=cf.energia;$('cfg-contador').value=cf.contador;$('cfg-outros').value=cf.outros;
  $('cfg-hmes').value=cf.hmes;$('cfg-hsocio').value=cf.hsocio;$('cfg-haux').value=cf.haux;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;}
@@ -1467,11 +1482,19 @@ function saveConfig(){DB.config.sheetsUrl=$('sheets-url').value.trim();saveDB();
  pingSheets().then(r=>{if(r&&r.ok){st.textContent='✅ Conectado à planilha "'+(r.planilha||'')+'"!';st.style.color='var(--success)';}
   else{st.textContent='⚠️ URL respondeu, mas não reconheceu o formato esperado.';st.style.color='var(--warning)';}})
  .catch(()=>{st.textContent='❌ Não foi possível conectar. Confira a URL e a implantação do Apps Script.';st.style.color='var(--danger)';});}
-function saveCFConfig(){if(!guard())return;
+async function saveCFConfig(){if(!guard())return;
  DB.config.cf={aluguel:num('cfg-aluguel'),iptu:num('cfg-iptu'),agua:num('cfg-agua'),energia:num('cfg-energia'),contador:num('cfg-contador'),outros:num('cfg-outros'),hmes:num('cfg-hmes')||176,hsocio:num('cfg-hsocio'),haux:num('cfg-haux'),imposto:num('cfg-imposto'),markup:num('cfg-markup')};
  saveDB();log('editar','Configurações','Custos fixos padrão atualizados');saveDB();
+ const {error}=await supa.from('config').upsert(Object.entries(DB.config.cf).map(([campo,valor])=>({campo,valor})));
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
  Object.entries(DB.config.cf).forEach(([campo,valor])=>syncSheets('config','upsert',{campo,valor}));
  toast('Configurações de custo salvas!','success');}
+async function carregarConfigSupabase(){
+ const {data,error}=await supa.from('config').select('*');
+ if(error){toast('Erro ao carregar configurações do Supabase: '+error.message,'error');return;}
+ (data||[]).forEach(({campo,valor})=>{if(DB.config.cf[campo]!==undefined)DB.config.cf[campo]=Number(valor)||0;});
+ saveDB();
+ if(CUR==='configuracoes')renderConfig();}
 function exportData(){const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mabe_backup_'+today()+'.json';a.click();toast('Backup exportado!','success');}
 function confirmReset(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
