@@ -7,6 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='8' fill='%231a1714'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
   --bg: #f5f0e8; --surface: #faf7f2; --surface2: #ede8df; --surface3: #e0d9ce;
@@ -674,7 +675,8 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  $('nav-usuarios').style.display=isAdmin()?'flex':'none';
  navigate('dashboard');updateBadges();
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
- if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});}
+ if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
+ carregarClientesSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
@@ -690,7 +692,8 @@ function navigate(sec){CUR=sec;
  $('btn-new').style.display=(NEWABLE.includes(sec)&&canEdit())?'inline-flex':'none';
  $('global-search').value='';
  closeSidebar();
- renderSection(sec);}
+ renderSection(sec);
+ if(sec==='clientes')carregarClientesSupabase();}
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
@@ -803,17 +806,36 @@ function renderDashboard(){
  chStatus=new Chart($('chart-status'),{type:'doughnut',data:{labels:stKeys.length?stKeys:['Sem pedidos'],datasets:[{data:stKeys.length?Object.values(sts):[1],backgroundColor:stKeys.length?stKeys.map(k=>cores[k]||'#1a1714'):['#e0d9ce']}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}}},cutout:'65%'}});}
 function saldoFin(){return DB.financeiro.filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
 
+/* ================= SUPABASE ================= */
+const SUPA_URL='https://fzlkuceflazohljpnkgi.supabase.co';
+const SUPA_KEY='sb_publishable_R_Az0yk8mfqTUs_8uoK70Q_yNg8-TAU';
+const supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+function clienteDeSupabase(row){return{id:row.id,nome:row.nome,email:row.email||'',tel:row.tel||'',doc:row.doc||'',cidade:row.cidade||'',end:row.endereco||'',status:row.status||'Ativo'};}
+function clienteParaSupabase(c){return{id:c.id,nome:c.nome,email:c.email||null,tel:c.tel||null,doc:c.doc||null,cidade:c.cidade||null,endereco:c.end||null,status:c.status||'Ativo'};}
+async function carregarClientesSupabase(){
+ const {data,error}=await supa.from('clientes').select('*').order('nome');
+ if(error){toast('Erro ao carregar clientes do Supabase: '+error.message,'error');return;}
+ DB.clientes=(data||[]).map(clienteDeSupabase);saveDB();
+ if(CUR==='clientes')renderClientes();}
+
 /* ================= CLIENTES ================= */
 function renderClientes(){$('tb-clientes').innerHTML=DB.clientes.map((c,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(c.nome)+'</strong></td><td>'+esc(c.email||'—')+'</td><td>'+esc(c.tel||'—')+'</td><td class="mono">'+esc(c.doc||'—')+'</td><td>'+esc(c.cidade||'—')+'</td><td><span class="badge '+(c.status==='Ativo'?'badge-success':c.status==='Bloqueado'?'badge-danger':'badge-muted')+'">'+c.status+'</span></td><td>'+actionBtns("editCliente('"+c.id+"')","delCliente('"+c.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum cliente cadastrado');}
 function emptyRow(n,msg){return '<tr><td colspan="'+n+'" style="color:var(--text-muted);text-align:center;padding:26px">'+msg+'</td></tr>';}
 function openCliente(){['cli-id','cli-nome','cli-email','cli-tel','cli-doc','cli-cidade','cli-end'].forEach(i=>$(i).value='');$('cli-status').value='Ativo';$('mc-title').textContent='Novo Cliente';openModal('modal-clientes');}
 function editCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!c)return;
  $('cli-id').value=c.id;$('cli-nome').value=c.nome;$('cli-email').value=c.email||'';$('cli-tel').value=c.tel||'';$('cli-doc').value=c.doc||'';$('cli-cidade').value=c.cidade||'';$('cli-end').value=c.end||'';$('cli-status').value=c.status;$('mc-title').textContent='Editar Cliente';openModal('modal-clientes');}
-function saveCliente(){if(!guard())return;const nome=$('cli-nome').value.trim();if(!nome){toast('Informe o nome do cliente.','error');return;}
+async function saveCliente(){if(!guard())return;const nome=$('cli-nome').value.trim();if(!nome){toast('Informe o nome do cliente.','error');return;}
  const id=$('cli-id').value;const o={nome,email:$('cli-email').value.trim(),tel:$('cli-tel').value.trim(),doc:$('cli-doc').value.trim(),cidade:$('cli-cidade').value.trim(),end:$('cli-end').value.trim(),status:$('cli-status').value};
- if(id){const c2=Object.assign(DB.clientes.find(x=>x.id===id),o);commit('editar','Clientes',nome);syncSheets('clientes','upsert',c2);}else{const c2=Object.assign({id:uid()},o);DB.clientes.push(c2);commit('criar','Clientes',nome);syncSheets('clientes','upsert',c2);}
+ const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
+ const {error}=await supa.from('clientes').upsert(clienteParaSupabase(registro));
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ if(id){Object.assign(DB.clientes.find(x=>x.id===id),o);commit('editar','Clientes',nome);}
+ else{DB.clientes.push(registro);commit('criar','Clientes',nome);}
+ syncSheets('clientes','upsert',registro);
  closeModal('modal-clientes');toast('Cliente salvo!','success');}
-function delCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!confirm('Excluir cliente "'+c.nome+'"?'))return;
+async function delCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!confirm('Excluir cliente "'+c.nome+'"?'))return;
+ const {error}=await supa.from('clientes').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.clientes=DB.clientes.filter(x=>x.id!==id);commit('excluir','Clientes',c.nome);syncSheets('clientes','delete',{id});toast('Cliente excluído.','info');}
 
 /* ================= PRODUTOS ================= */
