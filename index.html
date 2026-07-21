@@ -682,7 +682,8 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  carregarMadeirasSupabase();
  carregarFerramentasSupabase();
  carregarVendasSupabase();
- carregarOrcamentosSupabase();}
+ carregarOrcamentosSupabase();
+ carregarProducaoSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
@@ -705,7 +706,8 @@ function navigate(sec){CUR=sec;
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas')carregarFerramentasSupabase();
  if(sec==='vendas')carregarVendasSupabase();
- if(sec==='orcamentos')carregarOrcamentosSupabase();}
+ if(sec==='orcamentos')carregarOrcamentosSupabase();
+ if(sec==='pcp')carregarProducaoSupabase();}
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
@@ -1075,7 +1077,10 @@ async function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.orcamentos=DB.orcamentos.filter(x=>x.id!==id);commit('excluir','Orçamentos',o.desc);syncSheets('orcamentos','delete',{id});toast('Orçamento excluído.','info');}
 async function orcParaProducao(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
- const op={id:uid(),num:DB.seq.op++,titulo:o.desc,cliId:o.cliId,prazo:o.validade||addDays(today(),30),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:o.obs||'',orcId:o.id};
+ const op={id:uid(),titulo:o.desc,cliId:o.cliId,prazo:o.validade||addDays(today(),30),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:o.obs||'',orcId:o.id};
+ const {data,error:erroOp}=await supa.from('producao').insert(opParaSupabase(op)).select().single();
+ if(erroOp){toast('Erro ao criar ordem de produção no Supabase: '+erroOp.message,'error');return;}
+ op.num=data.num;
  DB.producao.push(op);o.opId=op.id;
  const {error}=await supa.from('orcamentos').update({op_id:op.id}).eq('id',o.id);
  if(error){toast('Erro ao atualizar orçamento no Supabase: '+error.message,'error');return;}
@@ -1125,6 +1130,13 @@ function imprimirOrcamento(){const t=computeOrc();const cli=cliName($('orc-cli')
 /* ================= PRODUÇÃO (PCP) ================= */
 const ETAPAS=['📥 Fila','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','🔁 Retrabalho','📦 Pronto','🚚 Entregue'];
 const ETAPA_FINAL=ETAPAS.length-1;
+function opParaSupabase(o){const r={id:o.id,titulo:o.titulo,cli_id:o.cliId||null,prazo:o.prazo||null,resp:o.resp||null,prio:o.prio||null,etapa:o.etapa||0,status:o.status||'Ativa',obs:o.obs||null,orc_id:o.orcId||null,fim:o.fim||null};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
+function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim};}
+async function carregarProducaoSupabase(){
+ const {data,error}=await supa.from('producao').select('*').order('num',{ascending:false});
+ if(error){toast('Erro ao carregar produção do Supabase: '+error.message,'error');return;}
+ DB.producao=(data||[]).map(opDeSupabase);saveDB();
+ if(CUR==='pcp')renderPCP();}
 function renderPCP(){const t=today();const ativas=DB.producao.filter(o=>o.status!=='Concluída');
  const atras=ativas.filter(o=>o.prazo&&o.prazo<t).length;
  const ym=t.slice(0,7);const concMes=DB.producao.filter(o=>o.status==='Concluída'&&String(o.fim||'').slice(0,7)===ym).length;
@@ -1141,18 +1153,36 @@ function openOP(){$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',D
 function editOP(id){if(!canEdit())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  $('op-id').value=o.id;$('op-titulo').value=o.titulo;fillSel('op-cli',DB.clientes,c=>c.nome,o.cliId,'—');$('op-prazo').value=o.prazo||'';$('op-resp').value=o.resp||'';$('op-prio').value=o.prio||'Normal';$('op-etapa').value=String(o.etapa);$('op-obs').value=o.obs||'';
  $('op-btn-del').style.display='inline-flex';$('mop-title').textContent='Editar OP-'+pad(o.num||0);openModal('modal-producao');}
-function saveOP(){if(!guard())return;const titulo=$('op-titulo').value.trim();if(!titulo){toast('Informe a peça / projeto.','error');return;}
+async function saveOP(){if(!guard())return;const titulo=$('op-titulo').value.trim();if(!titulo){toast('Informe a peça / projeto.','error');return;}
  const id=$('op-id').value;const o={titulo,cliId:$('op-cli').value,prazo:$('op-prazo').value,resp:$('op-resp').value.trim(),prio:$('op-prio').value,etapa:Number($('op-etapa').value),obs:$('op-obs').value.trim()};
- if(id){const o2=Object.assign(DB.producao.find(x=>x.id===id),o);commit('editar','Produção',titulo);syncSheets('pcp','upsert',o2);}
- else{const n=Object.assign({id:uid(),num:DB.seq.op++,status:'Ativa'},o);DB.producao.push(n);commit('criar','Produção',titulo);syncSheets('pcp','upsert',n);}
+ if(id){
+  const o2=Object.assign(DB.producao.find(x=>x.id===id),o);
+  const {error}=await supa.from('producao').update(opParaSupabase(o2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Produção',titulo);syncSheets('pcp','upsert',o2);
+ }
+ else{
+  const n=Object.assign({id:uid(),status:'Ativa'},o);
+  const {data,error}=await supa.from('producao').insert(opParaSupabase(n)).select().single();
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  n.num=data.num;
+  DB.producao.push(n);commit('criar','Produção',titulo);syncSheets('pcp','upsert',n);
+ }
  closeModal('modal-producao');toast('Ordem de produção salva!','success');}
-function delOPFromModal(){const id=$('op-id').value;if(!id)return;const o=DB.producao.find(x=>x.id===id);
+async function delOPFromModal(){const id=$('op-id').value;if(!id)return;const o=DB.producao.find(x=>x.id===id);
  if(!confirm('Excluir OP "'+o.titulo+'"?'))return;
+ const {error}=await supa.from('producao').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.producao=DB.producao.filter(x=>x.id!==id);closeModal('modal-producao');commit('excluir','Produção',o.titulo);syncSheets('pcp','delete',{id});toast('OP excluída.','info');}
-function moveOP(id,dir){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
- o.etapa=Math.max(0,Math.min(ETAPA_FINAL,Number(o.etapa)+dir));commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);}
-function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
+async function moveOP(id,dir){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
+ o.etapa=Math.max(0,Math.min(ETAPA_FINAL,Number(o.etapa)+dir));
+ const {error}=await supa.from('producao').update({etapa:o.etapa}).eq('id',id);
+ if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
+ commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);}
+async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  o.status='Concluída';o.fim=today();
+ const {error}=await supa.from('producao').update({status:'Concluída',fim:o.fim}).eq('id',id);
+ if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
  if(!DB.entregas.some(e=>e.opId===o.id)){const cli=DB.clientes.find(c=>c.id===o.cliId);
   const novaEnt={id:uid(),opId:o.id,data:o.prazo||addDays(today(),3),cliId:o.cliId,peca:o.titulo,end:cli?cli.end||'':'',resp:o.resp||'',status:'Agendada',obs:''};
   DB.entregas.unshift(novaEnt);syncSheets('entregas','upsert',novaEnt);
