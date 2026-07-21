@@ -681,7 +681,8 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  carregarProdutosSupabase();
  carregarMadeirasSupabase();
  carregarFerramentasSupabase();
- carregarVendasSupabase();}
+ carregarVendasSupabase();
+ carregarOrcamentosSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
@@ -703,7 +704,8 @@ function navigate(sec){CUR=sec;
  if(sec==='produtos')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas')carregarFerramentasSupabase();
- if(sec==='vendas')carregarVendasSupabase();}
+ if(sec==='vendas')carregarVendasSupabase();
+ if(sec==='orcamentos')carregarOrcamentosSupabase();}
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
@@ -969,6 +971,13 @@ async function delVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===
  DB.vendas=DB.vendas.filter(x=>x.id!==id);commit('excluir','Pedidos','V-'+pad(v.num));syncSheets('vendas','delete',{id});toast('Pedido excluído (estoque devolvido).','info');}
 
 /* ================= ORÇAMENTOS ================= */
+function orcParaSupabase(o){const r={id:o.id,tipo:o.tipo||null,descricao:o.desc||null,cli_id:o.cliId||null,data:o.data||null,validade:o.validade||null,status:o.status||null,obs:o.obs||null,cf:o.cf||null,mdo:o.mdo||null,materiais:o.materiais||null,imposto:o.imposto||0,markup:o.markup||0,custo:o.custo||0,preco:o.preco||0,lucro:o.lucro||0,prod_id:o.prodId||null,qty:o.qty||null,desc_pct:o.descPct||0,op_id:o.opId||null};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
+function orcDeSupabase(row){return{id:row.id,num:row.num,tipo:row.tipo,desc:row.descricao,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',cf:row.cf,mdo:row.mdo,materiais:row.materiais||[],imposto:row.imposto,markup:row.markup,custo:row.custo,preco:row.preco,lucro:row.lucro,prodId:row.prod_id,qty:row.qty,descPct:row.desc_pct,opId:row.op_id};}
+async function carregarOrcamentosSupabase(){
+ const {data,error}=await supa.from('orcamentos').select('*').order('num',{ascending:false});
+ if(error){toast('Erro ao carregar orçamentos do Supabase: '+error.message,'error');return;}
+ DB.orcamentos=(data||[]).map(orcDeSupabase);saveDB();
+ if(CUR==='orcamentos')renderOrcamentos();}
 function renderOrcamentos(){orcShow('lista');syncPerBar('orc-per',PER_ORC);
  const lista=DB.orcamentos.filter(o=>matchPer(o.data,PER_ORC));
  $('tb-orcamentos').innerHTML=lista.map(o=>{const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
@@ -1028,15 +1037,24 @@ async function saveOrcamento(){if(!guard())return;const desc=$('orc-desc').value
   cf:{aluguel:num('cf-aluguel'),iptu:num('cf-iptu'),agua:num('cf-agua'),energia:num('cf-energia'),contador:num('cf-contador'),outros:num('cf-outros'),hmes:num('mdo-hmes')},
   mdo:{hsocio:num('mdo-hsocio'),haux:num('mdo-haux'),qhsocio:num('mdo-qhsocio'),qhaux:num('mdo-qhaux')},
   materiais:t.materiais,imposto:num('orc-imposto'),markup:num('orc-markup'),custo:t.custo,preco:t.preco,lucro:t.lucro};
- if(id){const o2=Object.assign(DB.orcamentos.find(x=>x.id===id),o);commit('editar','Orçamentos',desc);syncSheets('orcamentos','upsert',o2);}
- else{const n=Object.assign({id:uid(),num:DB.seq.orc++},o);
+ if(id){
+  const o2=Object.assign(DB.orcamentos.find(x=>x.id===id),o);
+  const {error}=await supa.from('orcamentos').update(orcParaSupabase(o2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Orçamentos',desc);syncSheets('orcamentos','upsert',o2);
+ }
+ else{
   if(tipo==='novo_produto'){const nome=$('np-nome').value.trim()||desc;
    const novoProd={id:uid(),nome,cat:'Móvel — Catálogo',un:$('np-un').value,preco:Math.round(t.preco*100)/100,custo:Math.round(t.custo*100)/100,est:num('np-est'),min:num('np-min')};
    const {error:erroProd}=await supa.from('produtos').upsert(novoProd);
    if(erroProd){toast('Erro ao cadastrar produto no Supabase: '+erroProd.message,'error');return;}
    DB.produtos.push(novoProd);syncSheets('produtos','upsert',novoProd);
    toast('Produto "'+nome+'" cadastrado no catálogo!','success');}
-  DB.orcamentos.unshift(n);commit('criar','Orçamentos','ORC-'+pad(n.num)+' — '+desc);syncSheets('orcamentos','upsert',n);}
+  const nova=Object.assign({id:uid()},o);
+  const {data,error}=await supa.from('orcamentos').insert(orcParaSupabase(nova)).select().single();
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  nova.num=data.num;
+  DB.orcamentos.unshift(nova);commit('criar','Orçamentos','ORC-'+pad(nova.num)+' — '+desc);syncSheets('orcamentos','upsert',nova);}
  toast('Orçamento salvo!','success');renderOrcamentos();}
 function editOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  if(o.tipo==='catalogo'){resetOrcCatalogo();
@@ -1052,11 +1070,15 @@ function editOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id
  $('orc-imposto').value=o.imposto;$('orc-markup').value=o.markup;
  $('orc-materiais').innerHTML='';(o.materiais||[]).forEach(m=>addMaterial(m.mode||'livre',m));
  $('orc-form-title').textContent='Editar ORC-'+pad(o.num);calcOrc();orcShow('form');}
-function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!confirm('Excluir orçamento "'+o.desc+'"?'))return;
+async function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!confirm('Excluir orçamento "'+o.desc+'"?'))return;
+ const {error}=await supa.from('orcamentos').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.orcamentos=DB.orcamentos.filter(x=>x.id!==id);commit('excluir','Orçamentos',o.desc);syncSheets('orcamentos','delete',{id});toast('Orçamento excluído.','info');}
-function orcParaProducao(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+async function orcParaProducao(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  const op={id:uid(),num:DB.seq.op++,titulo:o.desc,cliId:o.cliId,prazo:o.validade||addDays(today(),30),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:o.obs||'',orcId:o.id};
  DB.producao.push(op);o.opId=op.id;
+ const {error}=await supa.from('orcamentos').update({op_id:op.id}).eq('id',o.id);
+ if(error){toast('Erro ao atualizar orçamento no Supabase: '+error.message,'error');return;}
  commit('criar','Produção','OP-'+pad(op.num)+' criada do ORC-'+pad(o.num));
  syncSheets('pcp','upsert',op);syncSheets('orcamentos','upsert',o);
  toast('Ordem de produção criada! Veja em Produção (PCP).','success');}
@@ -1070,12 +1092,22 @@ function selecionarProdCatalogo(){const p=DB.produtos.find(x=>x.id===$('orc-cat-
 function calcCatalogo(){const p=DB.produtos.find(x=>x.id===$('orc-cat-prod').value);const qty=num('orc-cat-qty')||1,pct=num('orc-cat-desc-pct');
  const bruto=p?p.preco*qty:0;const desc=bruto*pct/100;
  $('cat-val-desc').textContent='- '+fmt(desc);$('cat-total').textContent=fmt(bruto-desc);return{bruto,desc,total:bruto-desc,p,qty,pct};}
-function saveOrcamentoCatalogo(){if(!guard())return;const c=calcCatalogo();if(!c.p){toast('Selecione um produto.','error');return;}
+async function saveOrcamentoCatalogo(){if(!guard())return;const c=calcCatalogo();if(!c.p){toast('Selecione um produto.','error');return;}
  const custo=Number(c.p.custo||0)*c.qty;
  const id=$('orc-cat-id').value;
  const o={tipo:'catalogo',desc:c.p.nome+(c.qty>1?' ×'+c.qty:''),prodId:c.p.id,qty:c.qty,descPct:c.pct,cliId:$('orc-cat-cli').value,data:$('orc-cat-data').value||today(),status:$('orc-cat-status').value,obs:$('orc-cat-obs').value.trim(),custo,preco:c.total,lucro:c.total-custo};
- if(id){const o2=Object.assign(DB.orcamentos.find(x=>x.id===id),o);commit('editar','Orçamentos',o.desc);syncSheets('orcamentos','upsert',o2);}
- else{const n=Object.assign({id:uid(),num:DB.seq.orc++},o);DB.orcamentos.unshift(n);commit('criar','Orçamentos',o.desc);syncSheets('orcamentos','upsert',n);}
+ if(id){
+  const o2=Object.assign(DB.orcamentos.find(x=>x.id===id),o);
+  const {error}=await supa.from('orcamentos').update(orcParaSupabase(o2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Orçamentos',o.desc);syncSheets('orcamentos','upsert',o2);
+ }
+ else{
+  const n=Object.assign({id:uid()},o);
+  const {data,error}=await supa.from('orcamentos').insert(orcParaSupabase(n)).select().single();
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  n.num=data.num;
+  DB.orcamentos.unshift(n);commit('criar','Orçamentos',o.desc);syncSheets('orcamentos','upsert',n);}
  toast('Orçamento salvo!','success');renderOrcamentos();}
 function imprimirOrcamento(){const t=computeOrc();const cli=cliName($('orc-cli').value);
  const rows=t.materiais.map(m=>'<tr><td>'+esc(m.desc||'—')+'</td><td style="text-align:right">'+fmtN(m.qty,3)+'</td><td style="text-align:right">'+fmt(m.custo)+'</td><td style="text-align:right">'+fmt(m.qty*m.custo)+'</td></tr>').join('');
