@@ -7,6 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='8' fill='%231a1714'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
   --bg: #f5f0e8; --surface: #faf7f2; --surface2: #ede8df; --surface3: #e0d9ce;
@@ -674,7 +675,16 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  $('nav-usuarios').style.display=isAdmin()?'flex':'none';
  navigate('dashboard');updateBadges();
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
- if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});}
+ if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
+ carregarClientesSupabase();
+ carregarFornecedoresSupabase();
+ carregarProdutosSupabase();
+ carregarMadeirasSupabase();
+ carregarFerramentasSupabase();
+ carregarVendasSupabase();
+ carregarOrcamentosSupabase();
+ carregarProducaoSupabase();
+ carregarEntregasSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
@@ -690,7 +700,16 @@ function navigate(sec){CUR=sec;
  $('btn-new').style.display=(NEWABLE.includes(sec)&&canEdit())?'inline-flex':'none';
  $('global-search').value='';
  closeSidebar();
- renderSection(sec);}
+ renderSection(sec);
+ if(sec==='clientes')carregarClientesSupabase();
+ if(sec==='fornecedores')carregarFornecedoresSupabase();
+ if(sec==='produtos')carregarProdutosSupabase();
+ if(sec==='madeiras')carregarMadeirasSupabase();
+ if(sec==='ferramentas')carregarFerramentasSupabase();
+ if(sec==='vendas')carregarVendasSupabase();
+ if(sec==='orcamentos')carregarOrcamentosSupabase();
+ if(sec==='pcp')carregarProducaoSupabase();
+ if(sec==='entregas')carregarEntregasSupabase();}
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
@@ -803,20 +822,44 @@ function renderDashboard(){
  chStatus=new Chart($('chart-status'),{type:'doughnut',data:{labels:stKeys.length?stKeys:['Sem pedidos'],datasets:[{data:stKeys.length?Object.values(sts):[1],backgroundColor:stKeys.length?stKeys.map(k=>cores[k]||'#1a1714'):['#e0d9ce']}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}}},cutout:'65%'}});}
 function saldoFin(){return DB.financeiro.filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
 
+/* ================= SUPABASE ================= */
+const SUPA_URL='https://fzlkuceflazohljpnkgi.supabase.co';
+const SUPA_KEY='sb_publishable_R_Az0yk8mfqTUs_8uoK70Q_yNg8-TAU';
+const supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+function clienteDeSupabase(row){return{id:row.id,nome:row.nome,email:row.email||'',tel:row.tel||'',doc:row.doc||'',cidade:row.cidade||'',end:row.endereco||'',status:row.status||'Ativo'};}
+function clienteParaSupabase(c){return{id:c.id,nome:c.nome,email:c.email||null,tel:c.tel||null,doc:c.doc||null,cidade:c.cidade||null,endereco:c.end||null,status:c.status||'Ativo'};}
+async function carregarClientesSupabase(){
+ const {data,error}=await supa.from('clientes').select('*').order('nome');
+ if(error){toast('Erro ao carregar clientes do Supabase: '+error.message,'error');return;}
+ DB.clientes=(data||[]).map(clienteDeSupabase);saveDB();
+ if(CUR==='clientes')renderClientes();}
+
 /* ================= CLIENTES ================= */
 function renderClientes(){$('tb-clientes').innerHTML=DB.clientes.map((c,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(c.nome)+'</strong></td><td>'+esc(c.email||'—')+'</td><td>'+esc(c.tel||'—')+'</td><td class="mono">'+esc(c.doc||'—')+'</td><td>'+esc(c.cidade||'—')+'</td><td><span class="badge '+(c.status==='Ativo'?'badge-success':c.status==='Bloqueado'?'badge-danger':'badge-muted')+'">'+c.status+'</span></td><td>'+actionBtns("editCliente('"+c.id+"')","delCliente('"+c.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum cliente cadastrado');}
 function emptyRow(n,msg){return '<tr><td colspan="'+n+'" style="color:var(--text-muted);text-align:center;padding:26px">'+msg+'</td></tr>';}
 function openCliente(){['cli-id','cli-nome','cli-email','cli-tel','cli-doc','cli-cidade','cli-end'].forEach(i=>$(i).value='');$('cli-status').value='Ativo';$('mc-title').textContent='Novo Cliente';openModal('modal-clientes');}
 function editCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!c)return;
  $('cli-id').value=c.id;$('cli-nome').value=c.nome;$('cli-email').value=c.email||'';$('cli-tel').value=c.tel||'';$('cli-doc').value=c.doc||'';$('cli-cidade').value=c.cidade||'';$('cli-end').value=c.end||'';$('cli-status').value=c.status;$('mc-title').textContent='Editar Cliente';openModal('modal-clientes');}
-function saveCliente(){if(!guard())return;const nome=$('cli-nome').value.trim();if(!nome){toast('Informe o nome do cliente.','error');return;}
+async function saveCliente(){if(!guard())return;const nome=$('cli-nome').value.trim();if(!nome){toast('Informe o nome do cliente.','error');return;}
  const id=$('cli-id').value;const o={nome,email:$('cli-email').value.trim(),tel:$('cli-tel').value.trim(),doc:$('cli-doc').value.trim(),cidade:$('cli-cidade').value.trim(),end:$('cli-end').value.trim(),status:$('cli-status').value};
- if(id){const c2=Object.assign(DB.clientes.find(x=>x.id===id),o);commit('editar','Clientes',nome);syncSheets('clientes','upsert',c2);}else{const c2=Object.assign({id:uid()},o);DB.clientes.push(c2);commit('criar','Clientes',nome);syncSheets('clientes','upsert',c2);}
+ const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
+ const {error}=await supa.from('clientes').upsert(clienteParaSupabase(registro));
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ if(id){Object.assign(DB.clientes.find(x=>x.id===id),o);commit('editar','Clientes',nome);}
+ else{DB.clientes.push(registro);commit('criar','Clientes',nome);}
+ syncSheets('clientes','upsert',registro);
  closeModal('modal-clientes');toast('Cliente salvo!','success');}
-function delCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!confirm('Excluir cliente "'+c.nome+'"?'))return;
+async function delCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!confirm('Excluir cliente "'+c.nome+'"?'))return;
+ const {error}=await supa.from('clientes').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.clientes=DB.clientes.filter(x=>x.id!==id);commit('excluir','Clientes',c.nome);syncSheets('clientes','delete',{id});toast('Cliente excluído.','info');}
 
 /* ================= PRODUTOS ================= */
+async function carregarProdutosSupabase(){
+ const {data,error}=await supa.from('produtos').select('*').order('nome');
+ if(error){toast('Erro ao carregar produtos do Supabase: '+error.message,'error');return;}
+ DB.produtos=data||[];saveDB();
+ if(CUR==='produtos')renderProdutos();}
 function renderProdutos(){$('tb-produtos').innerHTML=DB.produtos.map((p,i)=>{const est=Number(p.est||0),min=Number(p.min||0);
  const st=est<=min?['Crítico','badge-danger','var(--danger)']:est<=min*1.5?['Baixo','badge-warning','var(--warning)']:['OK','badge-success','var(--success)'];
  const pct=Math.min(100,min>0?est/(min*2)*100:100);
@@ -824,15 +867,27 @@ function renderProdutos(){$('tb-produtos').innerHTML=DB.produtos.map((p,i)=>{con
 function openProduto(){['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-un').value='un';$('mp-title').textContent='Novo Produto';openModal('modal-produtos');}
 function editProduto(id){if(!guard())return;const p=DB.produtos.find(x=>x.id===id);if(!p)return;
  $('prod-id').value=p.id;$('prod-nome').value=p.nome;$('prod-cat').value=p.cat||'';$('prod-un').value=p.un||'un';$('prod-preco').value=p.preco;$('prod-custo').value=p.custo;$('prod-est').value=p.est;$('prod-min').value=p.min;$('mp-title').textContent='Editar Produto';openModal('modal-produtos');}
-function saveProduto(){if(!guard())return;const nome=$('prod-nome').value.trim();if(!nome){toast('Informe o nome do produto.','error');return;}
+async function saveProduto(){if(!guard())return;const nome=$('prod-nome').value.trim();if(!nome){toast('Informe o nome do produto.','error');return;}
  const id=$('prod-id').value;const o={nome,cat:$('prod-cat').value.trim(),un:$('prod-un').value,preco:num('prod-preco'),custo:num('prod-custo'),est:num('prod-est'),min:num('prod-min')};
- if(id){const p2=Object.assign(DB.produtos.find(x=>x.id===id),o);commit('editar','Produtos',nome);syncSheets('produtos','upsert',p2);}else{const p2=Object.assign({id:uid()},o);DB.produtos.push(p2);commit('criar','Produtos',nome);syncSheets('produtos','upsert',p2);}
+ const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
+ const {error}=await supa.from('produtos').upsert(registro);
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ if(id){Object.assign(DB.produtos.find(x=>x.id===id),o);commit('editar','Produtos',nome);}
+ else{DB.produtos.push(registro);commit('criar','Produtos',nome);}
+ syncSheets('produtos','upsert',registro);
  closeModal('modal-produtos');toast('Produto salvo!','success');}
-function delProduto(id){if(!guard())return;const p=DB.produtos.find(x=>x.id===id);if(!confirm('Excluir produto "'+p.nome+'"?'))return;
+async function delProduto(id){if(!guard())return;const p=DB.produtos.find(x=>x.id===id);if(!confirm('Excluir produto "'+p.nome+'"?'))return;
+ const {error}=await supa.from('produtos').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.produtos=DB.produtos.filter(x=>x.id!==id);commit('excluir','Produtos',p.nome);syncSheets('produtos','delete',{id});toast('Produto excluído.','info');}
 
 /* ================= MADEIRAS ================= */
 const madM3=m=>(Number(m.esp)/100)*(Number(m.larg)/100)*(Number(m.comp)/100)*Number(m.qtd||0);
+async function carregarMadeirasSupabase(){
+ const {data,error}=await supa.from('madeiras').select('*').order('especie');
+ if(error){toast('Erro ao carregar madeiras do Supabase: '+error.message,'error');return;}
+ DB.madeiras=data||[];saveDB();
+ if(CUR==='madeiras')renderMadeiras();}
 function renderMadeiras(){const tb=$('tb-madeiras');
  let totM3=0,totVal=0;const esp=new Set();let baixo=0;
  tb.innerHTML=DB.madeiras.map(m=>{const v=madM3(m),val=v*Number(m.custo||0);totM3+=v;totVal+=val;esp.add(m.especie.toLowerCase());
@@ -846,18 +901,34 @@ function openMadeira(){['mad-id','mad-especie'].forEach(i=>$(i).value='');['mad-
 function editMadeira(id){if(!guard())return;const m=DB.madeiras.find(x=>x.id===id);if(!m)return;
  $('mad-id').value=m.id;$('mad-especie').value=m.especie;$('mad-tipo').value=m.tipo;$('mad-esp').value=m.esp;$('mad-larg').value=m.larg;$('mad-comp').value=m.comp;$('mad-qtd').value=m.qtd;$('mad-custo').value=m.custo;$('mad-umidade').value=m.umidade;$('mad-min').value=m.min;
  fillSel('mad-forn',DB.fornecedores,f=>f.nome,m.forn||'','—');$('mmad-title').textContent='Editar Madeira';calcMadPrev();openModal('modal-madeiras');}
-function saveMadeira(){if(!guard())return;const especie=$('mad-especie').value.trim();if(!especie){toast('Informe a espécie.','error');return;}
- const id=$('mad-id').value;const o={especie,tipo:$('mad-tipo').value,esp:num('mad-esp'),larg:num('mad-larg'),comp:num('mad-comp'),qtd:num('mad-qtd'),custo:num('mad-custo'),umidade:num('mad-umidade'),min:num('mad-min'),forn:$('mad-forn').value};
- if(id){const m2=Object.assign(DB.madeiras.find(x=>x.id===id),o);commit('editar','Madeiras',especie);syncSheets('madeiras','upsert',m2);}else{const m2=Object.assign({id:uid()},o);DB.madeiras.push(m2);commit('criar','Madeiras',especie);syncSheets('madeiras','upsert',m2);}
+async function saveMadeira(){if(!guard())return;const especie=$('mad-especie').value.trim();if(!especie){toast('Informe a espécie.','error');return;}
+ const id=$('mad-id').value;const o={especie,tipo:$('mad-tipo').value,esp:num('mad-esp'),larg:num('mad-larg'),comp:num('mad-comp'),qtd:num('mad-qtd'),custo:num('mad-custo'),umidade:num('mad-umidade'),min:num('mad-min'),forn:$('mad-forn').value||null};
+ const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
+ const {error}=await supa.from('madeiras').upsert(registro);
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ if(id){Object.assign(DB.madeiras.find(x=>x.id===id),o);commit('editar','Madeiras',especie);}
+ else{DB.madeiras.push(registro);commit('criar','Madeiras',especie);}
+ syncSheets('madeiras','upsert',registro);
  closeModal('modal-madeiras');toast('Madeira salva!','success');}
-function baixaMadeira(id){if(!guard())return;const m=DB.madeiras.find(x=>x.id===id);if(!m)return;
+async function baixaMadeira(id){if(!guard())return;const m=DB.madeiras.find(x=>x.id===id);if(!m)return;
  const q=prompt('Baixa de estoque — '+m.especie+'\nQuantas peças foram usadas? (disponível: '+m.qtd+')','1');if(q===null)return;
  const n=parseFloat(q)||0;if(n<=0)return;m.qtd=Math.max(0,Number(m.qtd)-n);
+ const {error}=await supa.from('madeiras').update({qtd:m.qtd}).eq('id',id);
+ if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
  commit('editar','Madeiras','Baixa de '+n+' pç — '+m.especie);syncSheets('madeiras','upsert',m);toast('Baixa registrada: '+n+' peça(s) de '+m.especie,'success');}
-function delMadeira(id){if(!guard())return;const m=DB.madeiras.find(x=>x.id===id);if(!confirm('Excluir "'+m.especie+'" do estoque?'))return;
+async function delMadeira(id){if(!guard())return;const m=DB.madeiras.find(x=>x.id===id);if(!confirm('Excluir "'+m.especie+'" do estoque?'))return;
+ const {error}=await supa.from('madeiras').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.madeiras=DB.madeiras.filter(x=>x.id!==id);commit('excluir','Madeiras',m.especie);syncSheets('madeiras','delete',{id});toast('Madeira excluída.','info');}
 
 /* ================= VENDAS ================= */
+function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data||null,pag:v.pag||null,status:v.status||null,obs:v.obs||null,itens:v.itens||[],total:v.total||0,baixa:!!v.baixa};if(v.num!==undefined&&v.num!==null)o.num=v.num;return o;}
+function vendaDeSupabase(row){return{id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],total:row.total,baixa:row.baixa};}
+async function carregarVendasSupabase(){
+ const {data,error}=await supa.from('vendas').select('*').order('num',{ascending:false});
+ if(error){toast('Erro ao carregar pedidos do Supabase: '+error.message,'error');return;}
+ DB.vendas=(data||[]).map(vendaDeSupabase);saveDB();
+ if(CUR==='vendas')renderVendas();}
 function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const lista=DB.vendas.filter(v=>matchPer(v.data,PER_VND));
  $('tb-vendas').innerHTML=lista.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
@@ -873,24 +944,44 @@ function openVenda(){$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nom
 function editVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-pag').value=v.pag;$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';
  $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemVenda(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);openModal('modal-vendas');}
-function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(!cliId){toast('Selecione o cliente.','error');return;}
+async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(!cliId){toast('Selecione o cliente.','error');return;}
  const itens=[];document.querySelectorAll('#vnd-itens > div').forEach(r=>{const pid=r.querySelector('.vi-prod').value;const qty=parseFloat(r.querySelector('.vi-qty').value)||0;const preco=parseFloat(r.querySelector('.vi-preco').value)||0;
   if(pid&&qty>0){const p=DB.produtos.find(x=>x.id===pid);itens.push({prodId:pid,desc:p?p.nome:'',qty,preco});}});
  if(!itens.length){toast('Adicione pelo menos um item.','error');return;}
  const total=itens.reduce((s,i)=>s+i.qty*i.preco,0);
  const id=$('vnd-id').value;const o={cliId,data:$('vnd-data').value||today(),pag:$('vnd-pag').value,status:$('vnd-status').value,obs:$('vnd-obs').value.trim(),itens,total};
- if(id){const v2=Object.assign(DB.vendas.find(x=>x.id===id),o);commit('editar','Pedidos','V-'+pad(v2.num));syncSheets('vendas','upsert',v2);}
- else{const v=Object.assign({id:uid(),num:DB.seq.venda++,baixa:false},o);
-  if(v.status!=='Cancelado'){v.itens.forEach(it=>{const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Math.max(0,Number(p.est)-it.qty);syncSheets('produtos','upsert',p);}});v.baixa=true;
-   const finReg={id:uid(),tipo:'Entrada',data:v.data,desc:'Pedido V-'+pad(v.num)+' — '+cliName(cliId),cat:'Pedidos',val:total,status:v.status==='Entregue'?'Pago':'Pendente'};
+ if(id){
+  const v2=Object.assign(DB.vendas.find(x=>x.id===id),o);
+  const {error}=await supa.from('vendas').update(vendaParaSupabase(v2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Pedidos','V-'+pad(v2.num));syncSheets('vendas','upsert',v2);
+ }
+ else{
+  const nova=Object.assign({id:uid(),baixa:false},o);
+  const {data,error}=await supa.from('vendas').insert(vendaParaSupabase(nova)).select().single();
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  nova.num=data.num;
+  if(nova.status!=='Cancelado'){for(const it of nova.itens){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Math.max(0,Number(p.est)-it.qty);await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
+   nova.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',nova.id);
+   const finReg={id:uid(),tipo:'Entrada',data:nova.data,desc:'Pedido V-'+pad(nova.num)+' — '+cliName(cliId),cat:'Pedidos',val:total,status:nova.status==='Entregue'?'Pago':'Pendente'};
    DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);}
-  DB.vendas.unshift(v);commit('criar','Pedidos','V-'+pad(v.num)+' — '+fmt(total));syncSheets('vendas','upsert',v);}
+  DB.vendas.unshift(nova);commit('criar','Pedidos','V-'+pad(nova.num)+' — '+fmt(total));syncSheets('vendas','upsert',nova);
+ }
  closeModal('modal-vendas');toast('Pedido salvo! Estoque e financeiro atualizados.','success');}
-function delVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===id);if(!confirm('Excluir pedido V-'+pad(v.num)+'?'))return;
- if(v.baixa)(v.itens||[]).forEach(it=>{const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Number(p.est)+it.qty;syncSheets('produtos','upsert',p);}});
+async function delVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===id);if(!confirm('Excluir pedido V-'+pad(v.num)+'?'))return;
+ if(v.baixa)for(const it of (v.itens||[])){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Number(p.est)+it.qty;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
+ const {error}=await supa.from('vendas').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.vendas=DB.vendas.filter(x=>x.id!==id);commit('excluir','Pedidos','V-'+pad(v.num));syncSheets('vendas','delete',{id});toast('Pedido excluído (estoque devolvido).','info');}
 
 /* ================= ORÇAMENTOS ================= */
+function orcParaSupabase(o){const r={id:o.id,tipo:o.tipo||null,descricao:o.desc||null,cli_id:o.cliId||null,data:o.data||null,validade:o.validade||null,status:o.status||null,obs:o.obs||null,cf:o.cf||null,mdo:o.mdo||null,materiais:o.materiais||null,imposto:o.imposto||0,markup:o.markup||0,custo:o.custo||0,preco:o.preco||0,lucro:o.lucro||0,prod_id:o.prodId||null,qty:o.qty||null,desc_pct:o.descPct||0,op_id:o.opId||null};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
+function orcDeSupabase(row){return{id:row.id,num:row.num,tipo:row.tipo,desc:row.descricao,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',cf:row.cf,mdo:row.mdo,materiais:row.materiais||[],imposto:row.imposto,markup:row.markup,custo:row.custo,preco:row.preco,lucro:row.lucro,prodId:row.prod_id,qty:row.qty,descPct:row.desc_pct,opId:row.op_id};}
+async function carregarOrcamentosSupabase(){
+ const {data,error}=await supa.from('orcamentos').select('*').order('num',{ascending:false});
+ if(error){toast('Erro ao carregar orçamentos do Supabase: '+error.message,'error');return;}
+ DB.orcamentos=(data||[]).map(orcDeSupabase);saveDB();
+ if(CUR==='orcamentos')renderOrcamentos();}
 function renderOrcamentos(){orcShow('lista');syncPerBar('orc-per',PER_ORC);
  const lista=DB.orcamentos.filter(o=>matchPer(o.data,PER_ORC));
  $('tb-orcamentos').innerHTML=lista.map(o=>{const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
@@ -943,20 +1034,31 @@ function calcOrc(){const t=computeOrc();
  $('orc-total-cf').textContent=fmt(t.cfRat);$('orc-total-mdo').textContent=fmt(t.mdo);$('orc-total-mat').textContent=fmt(t.mat);
  $('res-cf').textContent=fmt(t.cfRat);$('res-mat').textContent=fmt(t.mat);$('res-mdo').textContent=fmt(t.mdo);$('res-custo').textContent=fmt(t.custo);
  $('res-imposto').textContent=fmt(t.impostoVal);$('res-markup').textContent=fmt(t.markupVal);$('res-preco').textContent=fmt(t.preco);$('res-lucro').textContent=fmt(t.lucro);}
-function saveOrcamento(){if(!guard())return;const desc=$('orc-desc').value.trim();if(!desc){toast('Informe a descrição.','error');return;}
+async function saveOrcamento(){if(!guard())return;const desc=$('orc-desc').value.trim();if(!desc){toast('Informe a descrição.','error');return;}
  const tipo=$('orc-tipo').value;const t=computeOrc();
  const id=$('orc-id').value;
  const o={tipo,desc,cliId:$('orc-cli').value,data:$('orc-data').value||today(),status:$('orc-status').value,validade:$('orc-validade').value,obs:$('orc-obs').value.trim(),
   cf:{aluguel:num('cf-aluguel'),iptu:num('cf-iptu'),agua:num('cf-agua'),energia:num('cf-energia'),contador:num('cf-contador'),outros:num('cf-outros'),hmes:num('mdo-hmes')},
   mdo:{hsocio:num('mdo-hsocio'),haux:num('mdo-haux'),qhsocio:num('mdo-qhsocio'),qhaux:num('mdo-qhaux')},
   materiais:t.materiais,imposto:num('orc-imposto'),markup:num('orc-markup'),custo:t.custo,preco:t.preco,lucro:t.lucro};
- if(id){const o2=Object.assign(DB.orcamentos.find(x=>x.id===id),o);commit('editar','Orçamentos',desc);syncSheets('orcamentos','upsert',o2);}
- else{const n=Object.assign({id:uid(),num:DB.seq.orc++},o);
+ if(id){
+  const o2=Object.assign(DB.orcamentos.find(x=>x.id===id),o);
+  const {error}=await supa.from('orcamentos').update(orcParaSupabase(o2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Orçamentos',desc);syncSheets('orcamentos','upsert',o2);
+ }
+ else{
   if(tipo==='novo_produto'){const nome=$('np-nome').value.trim()||desc;
    const novoProd={id:uid(),nome,cat:'Móvel — Catálogo',un:$('np-un').value,preco:Math.round(t.preco*100)/100,custo:Math.round(t.custo*100)/100,est:num('np-est'),min:num('np-min')};
+   const {error:erroProd}=await supa.from('produtos').upsert(novoProd);
+   if(erroProd){toast('Erro ao cadastrar produto no Supabase: '+erroProd.message,'error');return;}
    DB.produtos.push(novoProd);syncSheets('produtos','upsert',novoProd);
    toast('Produto "'+nome+'" cadastrado no catálogo!','success');}
-  DB.orcamentos.unshift(n);commit('criar','Orçamentos','ORC-'+pad(n.num)+' — '+desc);syncSheets('orcamentos','upsert',n);}
+  const nova=Object.assign({id:uid()},o);
+  const {data,error}=await supa.from('orcamentos').insert(orcParaSupabase(nova)).select().single();
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  nova.num=data.num;
+  DB.orcamentos.unshift(nova);commit('criar','Orçamentos','ORC-'+pad(nova.num)+' — '+desc);syncSheets('orcamentos','upsert',nova);}
  toast('Orçamento salvo!','success');renderOrcamentos();}
 function editOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  if(o.tipo==='catalogo'){resetOrcCatalogo();
@@ -972,11 +1074,18 @@ function editOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id
  $('orc-imposto').value=o.imposto;$('orc-markup').value=o.markup;
  $('orc-materiais').innerHTML='';(o.materiais||[]).forEach(m=>addMaterial(m.mode||'livre',m));
  $('orc-form-title').textContent='Editar ORC-'+pad(o.num);calcOrc();orcShow('form');}
-function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!confirm('Excluir orçamento "'+o.desc+'"?'))return;
+async function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!confirm('Excluir orçamento "'+o.desc+'"?'))return;
+ const {error}=await supa.from('orcamentos').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.orcamentos=DB.orcamentos.filter(x=>x.id!==id);commit('excluir','Orçamentos',o.desc);syncSheets('orcamentos','delete',{id});toast('Orçamento excluído.','info');}
-function orcParaProducao(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
- const op={id:uid(),num:DB.seq.op++,titulo:o.desc,cliId:o.cliId,prazo:o.validade||addDays(today(),30),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:o.obs||'',orcId:o.id};
+async function orcParaProducao(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+ const op={id:uid(),titulo:o.desc,cliId:o.cliId,prazo:o.validade||addDays(today(),30),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:o.obs||'',orcId:o.id};
+ const {data,error:erroOp}=await supa.from('producao').insert(opParaSupabase(op)).select().single();
+ if(erroOp){toast('Erro ao criar ordem de produção no Supabase: '+erroOp.message,'error');return;}
+ op.num=data.num;
  DB.producao.push(op);o.opId=op.id;
+ const {error}=await supa.from('orcamentos').update({op_id:op.id}).eq('id',o.id);
+ if(error){toast('Erro ao atualizar orçamento no Supabase: '+error.message,'error');return;}
  commit('criar','Produção','OP-'+pad(op.num)+' criada do ORC-'+pad(o.num));
  syncSheets('pcp','upsert',op);syncSheets('orcamentos','upsert',o);
  toast('Ordem de produção criada! Veja em Produção (PCP).','success');}
@@ -990,12 +1099,22 @@ function selecionarProdCatalogo(){const p=DB.produtos.find(x=>x.id===$('orc-cat-
 function calcCatalogo(){const p=DB.produtos.find(x=>x.id===$('orc-cat-prod').value);const qty=num('orc-cat-qty')||1,pct=num('orc-cat-desc-pct');
  const bruto=p?p.preco*qty:0;const desc=bruto*pct/100;
  $('cat-val-desc').textContent='- '+fmt(desc);$('cat-total').textContent=fmt(bruto-desc);return{bruto,desc,total:bruto-desc,p,qty,pct};}
-function saveOrcamentoCatalogo(){if(!guard())return;const c=calcCatalogo();if(!c.p){toast('Selecione um produto.','error');return;}
+async function saveOrcamentoCatalogo(){if(!guard())return;const c=calcCatalogo();if(!c.p){toast('Selecione um produto.','error');return;}
  const custo=Number(c.p.custo||0)*c.qty;
  const id=$('orc-cat-id').value;
  const o={tipo:'catalogo',desc:c.p.nome+(c.qty>1?' ×'+c.qty:''),prodId:c.p.id,qty:c.qty,descPct:c.pct,cliId:$('orc-cat-cli').value,data:$('orc-cat-data').value||today(),status:$('orc-cat-status').value,obs:$('orc-cat-obs').value.trim(),custo,preco:c.total,lucro:c.total-custo};
- if(id){const o2=Object.assign(DB.orcamentos.find(x=>x.id===id),o);commit('editar','Orçamentos',o.desc);syncSheets('orcamentos','upsert',o2);}
- else{const n=Object.assign({id:uid(),num:DB.seq.orc++},o);DB.orcamentos.unshift(n);commit('criar','Orçamentos',o.desc);syncSheets('orcamentos','upsert',n);}
+ if(id){
+  const o2=Object.assign(DB.orcamentos.find(x=>x.id===id),o);
+  const {error}=await supa.from('orcamentos').update(orcParaSupabase(o2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Orçamentos',o.desc);syncSheets('orcamentos','upsert',o2);
+ }
+ else{
+  const n=Object.assign({id:uid()},o);
+  const {data,error}=await supa.from('orcamentos').insert(orcParaSupabase(n)).select().single();
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  n.num=data.num;
+  DB.orcamentos.unshift(n);commit('criar','Orçamentos',o.desc);syncSheets('orcamentos','upsert',n);}
  toast('Orçamento salvo!','success');renderOrcamentos();}
 function imprimirOrcamento(){const t=computeOrc();const cli=cliName($('orc-cli').value);
  const rows=t.materiais.map(m=>'<tr><td>'+esc(m.desc||'—')+'</td><td style="text-align:right">'+fmtN(m.qty,3)+'</td><td style="text-align:right">'+fmt(m.custo)+'</td><td style="text-align:right">'+fmt(m.qty*m.custo)+'</td></tr>').join('');
@@ -1013,6 +1132,13 @@ function imprimirOrcamento(){const t=computeOrc();const cli=cliName($('orc-cli')
 /* ================= PRODUÇÃO (PCP) ================= */
 const ETAPAS=['📥 Fila','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','🔁 Retrabalho','📦 Pronto','🚚 Entregue'];
 const ETAPA_FINAL=ETAPAS.length-1;
+function opParaSupabase(o){const r={id:o.id,titulo:o.titulo,cli_id:o.cliId||null,prazo:o.prazo||null,resp:o.resp||null,prio:o.prio||null,etapa:o.etapa||0,status:o.status||'Ativa',obs:o.obs||null,orc_id:o.orcId||null,fim:o.fim||null};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
+function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim};}
+async function carregarProducaoSupabase(){
+ const {data,error}=await supa.from('producao').select('*').order('num',{ascending:false});
+ if(error){toast('Erro ao carregar produção do Supabase: '+error.message,'error');return;}
+ DB.producao=(data||[]).map(opDeSupabase);saveDB();
+ if(CUR==='pcp')renderPCP();}
 function renderPCP(){const t=today();const ativas=DB.producao.filter(o=>o.status!=='Concluída');
  const atras=ativas.filter(o=>o.prazo&&o.prazo<t).length;
  const ym=t.slice(0,7);const concMes=DB.producao.filter(o=>o.status==='Concluída'&&String(o.fim||'').slice(0,7)===ym).length;
@@ -1029,61 +1155,119 @@ function openOP(){$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',D
 function editOP(id){if(!canEdit())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  $('op-id').value=o.id;$('op-titulo').value=o.titulo;fillSel('op-cli',DB.clientes,c=>c.nome,o.cliId,'—');$('op-prazo').value=o.prazo||'';$('op-resp').value=o.resp||'';$('op-prio').value=o.prio||'Normal';$('op-etapa').value=String(o.etapa);$('op-obs').value=o.obs||'';
  $('op-btn-del').style.display='inline-flex';$('mop-title').textContent='Editar OP-'+pad(o.num||0);openModal('modal-producao');}
-function saveOP(){if(!guard())return;const titulo=$('op-titulo').value.trim();if(!titulo){toast('Informe a peça / projeto.','error');return;}
+async function saveOP(){if(!guard())return;const titulo=$('op-titulo').value.trim();if(!titulo){toast('Informe a peça / projeto.','error');return;}
  const id=$('op-id').value;const o={titulo,cliId:$('op-cli').value,prazo:$('op-prazo').value,resp:$('op-resp').value.trim(),prio:$('op-prio').value,etapa:Number($('op-etapa').value),obs:$('op-obs').value.trim()};
- if(id){const o2=Object.assign(DB.producao.find(x=>x.id===id),o);commit('editar','Produção',titulo);syncSheets('pcp','upsert',o2);}
- else{const n=Object.assign({id:uid(),num:DB.seq.op++,status:'Ativa'},o);DB.producao.push(n);commit('criar','Produção',titulo);syncSheets('pcp','upsert',n);}
+ if(id){
+  const o2=Object.assign(DB.producao.find(x=>x.id===id),o);
+  const {error}=await supa.from('producao').update(opParaSupabase(o2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Produção',titulo);syncSheets('pcp','upsert',o2);
+ }
+ else{
+  const n=Object.assign({id:uid(),status:'Ativa'},o);
+  const {data,error}=await supa.from('producao').insert(opParaSupabase(n)).select().single();
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  n.num=data.num;
+  DB.producao.push(n);commit('criar','Produção',titulo);syncSheets('pcp','upsert',n);
+ }
  closeModal('modal-producao');toast('Ordem de produção salva!','success');}
-function delOPFromModal(){const id=$('op-id').value;if(!id)return;const o=DB.producao.find(x=>x.id===id);
+async function delOPFromModal(){const id=$('op-id').value;if(!id)return;const o=DB.producao.find(x=>x.id===id);
  if(!confirm('Excluir OP "'+o.titulo+'"?'))return;
+ const {error}=await supa.from('producao').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.producao=DB.producao.filter(x=>x.id!==id);closeModal('modal-producao');commit('excluir','Produção',o.titulo);syncSheets('pcp','delete',{id});toast('OP excluída.','info');}
-function moveOP(id,dir){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
- o.etapa=Math.max(0,Math.min(ETAPA_FINAL,Number(o.etapa)+dir));commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);}
-function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
+async function moveOP(id,dir){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
+ o.etapa=Math.max(0,Math.min(ETAPA_FINAL,Number(o.etapa)+dir));
+ const {error}=await supa.from('producao').update({etapa:o.etapa}).eq('id',id);
+ if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
+ commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);}
+async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  o.status='Concluída';o.fim=today();
+ const {error}=await supa.from('producao').update({status:'Concluída',fim:o.fim}).eq('id',id);
+ if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
  if(!DB.entregas.some(e=>e.opId===o.id)){const cli=DB.clientes.find(c=>c.id===o.cliId);
   const novaEnt={id:uid(),opId:o.id,data:o.prazo||addDays(today(),3),cliId:o.cliId,peca:o.titulo,end:cli?cli.end||'':'',resp:o.resp||'',status:'Agendada',obs:''};
-  DB.entregas.unshift(novaEnt);syncSheets('entregas','upsert',novaEnt);
+  const {error:erroEnt}=await supa.from('entregas').insert(entregaParaSupabase(novaEnt));
+  if(erroEnt){toast('Erro ao criar entrega no Supabase: '+erroEnt.message,'error');}
+  else{DB.entregas.unshift(novaEnt);syncSheets('entregas','upsert',novaEnt);}
   toast('OP concluída! Entrega agendada automaticamente. 🚚','success');}
  else toast('OP concluída!','success');
  commit('editar','Produção','Concluída: '+o.titulo);syncSheets('pcp','upsert',o);}
 
 /* ================= ENTREGAS ================= */
 const ENT_ST=['Agendada','Em rota','Entregue','Instalada'];
+function entregaParaSupabase(e){return{id:e.id,op_id:e.opId||null,data:e.data||null,cli_id:e.cliId||null,peca:e.peca||null,endereco:e.end||null,resp:e.resp||null,status:e.status||null,obs:e.obs||null};}
+function entregaDeSupabase(row){return{id:row.id,opId:row.op_id,data:row.data,cliId:row.cli_id,peca:row.peca,end:row.endereco||'',resp:row.resp||'',status:row.status,obs:row.obs||''};}
+async function carregarEntregasSupabase(){
+ const {data,error}=await supa.from('entregas').select('*').order('data',{ascending:false});
+ if(error){toast('Erro ao carregar entregas do Supabase: '+error.message,'error');return;}
+ DB.entregas=(data||[]).map(entregaDeSupabase);saveDB();
+ if(CUR==='entregas')renderEntregas();}
 function renderEntregas(){const t=today();
  $('tb-entregas').innerHTML=DB.entregas.map(e=>{const stB={'Agendada':'badge-warning','Em rota':'badge-info','Entregue':'badge-success','Instalada':'badge-success'}[e.status]||'badge-muted';
   const late=(e.status==='Agendada'&&e.data<t)?' style="color:var(--danger);font-weight:700"':'';
   const idx=ENT_ST.indexOf(e.status);
   const adv=(canEdit()&&idx<3)?'<button class="btn btn-ghost btn-sm" title="Avançar status" onclick="advEntrega(\''+e.id+'\')">'+ENT_ST[idx+1]+' →</button>':'';
   return '<tr><td class="mono"'+late+'>'+fmtD(e.data)+'</td><td>'+esc(e.cliId?cliName(e.cliId):e.cliente||'—')+'</td><td><strong>'+esc(e.peca)+'</strong></td><td>'+esc(e.end||'—')+'</td><td>'+esc(e.resp||'—')+'</td><td><span class="badge '+stB+'">'+e.status+'</span></td><td><div class="row-actions">'+adv+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editEntrega(\''+e.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delEntrega(\''+e.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(7,'Nenhuma entrega agendada');}
-function advEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);const i=ENT_ST.indexOf(e.status);
- if(i<3){e.status=ENT_ST[i+1];commit('editar','Entregas',e.peca+' → '+e.status);syncSheets('entregas','upsert',e);}}
+async function advEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);const i=ENT_ST.indexOf(e.status);
+ if(i<3){e.status=ENT_ST[i+1];
+  const {error}=await supa.from('entregas').update({status:e.status}).eq('id',id);
+  if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
+  commit('editar','Entregas',e.peca+' → '+e.status);syncSheets('entregas','upsert',e);}}
 function openEntrega(){$('ent-id').value='';$('ent-data').value=today();fillSel('ent-cli',DB.clientes,c=>c.nome,'','—');['ent-peca','ent-end','ent-resp','ent-obs'].forEach(i=>$(i).value='');$('ent-status').value='Agendada';$('ment-title').textContent='Nova Entrega';openModal('modal-entregas');}
 function editEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);if(!e)return;
  $('ent-id').value=e.id;$('ent-data').value=e.data;fillSel('ent-cli',DB.clientes,c=>c.nome,e.cliId||'','—');$('ent-peca').value=e.peca;$('ent-end').value=e.end||'';$('ent-resp').value=e.resp||'';$('ent-status').value=e.status;$('ent-obs').value=e.obs||'';$('ment-title').textContent='Editar Entrega';openModal('modal-entregas');}
-function saveEntrega(){if(!guard())return;const peca=$('ent-peca').value.trim();if(!peca){toast('Informe a peça.','error');return;}
+async function saveEntrega(){if(!guard())return;const peca=$('ent-peca').value.trim();if(!peca){toast('Informe a peça.','error');return;}
  const id=$('ent-id').value;const o={data:$('ent-data').value||today(),cliId:$('ent-cli').value,peca,end:$('ent-end').value.trim(),resp:$('ent-resp').value.trim(),status:$('ent-status').value,obs:$('ent-obs').value.trim()};
- if(id){const e2=Object.assign(DB.entregas.find(x=>x.id===id),o);commit('editar','Entregas',peca);syncSheets('entregas','upsert',e2);}else{const e2=Object.assign({id:uid()},o);DB.entregas.unshift(e2);commit('criar','Entregas',peca);syncSheets('entregas','upsert',e2);}
+ if(id){
+  const e2=Object.assign(DB.entregas.find(x=>x.id===id),o);
+  const {error}=await supa.from('entregas').update(entregaParaSupabase(e2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Entregas',peca);syncSheets('entregas','upsert',e2);
+ } else {
+  const e2=Object.assign({id:uid()},o);
+  const {error}=await supa.from('entregas').insert(entregaParaSupabase(e2));
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  DB.entregas.unshift(e2);commit('criar','Entregas',peca);syncSheets('entregas','upsert',e2);
+ }
  closeModal('modal-entregas');toast('Entrega salva!','success');}
-function delEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);if(!confirm('Excluir entrega de "'+e.peca+'"?'))return;
+async function delEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);if(!confirm('Excluir entrega de "'+e.peca+'"?'))return;
+ const {error}=await supa.from('entregas').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.entregas=DB.entregas.filter(x=>x.id!==id);commit('excluir','Entregas',e.peca);syncSheets('entregas','delete',{id});toast('Entrega excluída.','info');}
 
 /* ================= MÁQUINAS & FERRAMENTAS ================= */
 const ferProx=f=>(f.ult&&f.int)?addDays(f.ult,Number(f.int)):'';
+function ferramentaDeSupabase(row){return{id:row.id,nome:row.nome,tipo:row.tipo||'',ult:row.ult||'',int:row.intervalo||'',obs:row.obs||''};}
+function ferramentaParaSupabase(f){return{id:f.id,nome:f.nome,tipo:f.tipo||null,ult:f.ult||null,intervalo:f.int||null,obs:f.obs||null};}
+async function carregarFerramentasSupabase(){
+ const {data,error}=await supa.from('ferramentas').select('*').order('nome');
+ if(error){toast('Erro ao carregar máquinas do Supabase: '+error.message,'error');return;}
+ DB.ferramentas=(data||[]).map(ferramentaDeSupabase);saveDB();
+ if(CUR==='ferramentas')renderFerramentas();}
 function renderFerramentas(){const t=today();
  $('tb-ferramentas').innerHTML=DB.ferramentas.map(f=>{const prox=ferProx(f);
   const st=!prox?['—','badge-muted']:prox<t?['Vencida','badge-danger']:prox<=addDays(t,7)?['Próxima','badge-warning']:['Em dia','badge-success'];
   return '<tr><td><strong>'+esc(f.nome)+'</strong></td><td>'+esc(f.tipo)+'</td><td class="mono">'+fmtD(f.ult)+'</td><td class="mono">'+(f.int||'—')+' dias</td><td class="mono"'+(st[0]==='Vencida'?' style="color:var(--danger);font-weight:700"':'')+'>'+fmtD(prox)+'</td><td><span class="badge '+st[1]+'">'+st[0]+'</span></td><td style="font-size:12px;color:var(--text-muted)">'+esc(f.obs||'—')+'</td><td><div class="row-actions">'+(canEdit()?'<button class="btn btn-ghost btn-sm" title="Registrar manutenção feita hoje" onclick="manutFeita(\''+f.id+'\')">✔ Feita</button><button class="btn btn-ghost btn-sm" onclick="editFerramenta(\''+f.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delFerramenta(\''+f.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(8,'Nenhum equipamento cadastrado');}
-function manutFeita(id){if(!guard())return;const f=DB.ferramentas.find(x=>x.id===id);f.ult=today();
+async function manutFeita(id){if(!guard())return;const f=DB.ferramentas.find(x=>x.id===id);f.ult=today();
+ const {error}=await supa.from('ferramentas').update({ult:f.ult}).eq('id',id);
+ if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
  commit('editar','Máquinas','Manutenção: '+f.nome);syncSheets('ferramentas','upsert',f);toast('Manutenção registrada: '+f.nome,'success');}
 function openFerramenta(){['fer-id','fer-nome','fer-obs'].forEach(i=>$(i).value='');$('fer-tipo').value='Máquina estacionária';$('fer-ult').value=today();$('fer-int').value=30;$('mfer-title').textContent='Novo Equipamento';openModal('modal-ferramentas');}
 function editFerramenta(id){if(!guard())return;const f=DB.ferramentas.find(x=>x.id===id);if(!f)return;
  $('fer-id').value=f.id;$('fer-nome').value=f.nome;$('fer-tipo').value=f.tipo;$('fer-ult').value=f.ult||'';$('fer-int').value=f.int||'';$('fer-obs').value=f.obs||'';$('mfer-title').textContent='Editar Equipamento';openModal('modal-ferramentas');}
-function saveFerramenta(){if(!guard())return;const nome=$('fer-nome').value.trim();if(!nome){toast('Informe o equipamento.','error');return;}
+async function saveFerramenta(){if(!guard())return;const nome=$('fer-nome').value.trim();if(!nome){toast('Informe o equipamento.','error');return;}
  const id=$('fer-id').value;const o={nome,tipo:$('fer-tipo').value,ult:$('fer-ult').value,int:num('fer-int'),obs:$('fer-obs').value.trim()};
- if(id){const f2=Object.assign(DB.ferramentas.find(x=>x.id===id),o);commit('editar','Máquinas',nome);syncSheets('ferramentas','upsert',f2);}else{const f2=Object.assign({id:uid()},o);DB.ferramentas.push(f2);commit('criar','Máquinas',nome);syncSheets('ferramentas','upsert',f2);}
+ const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
+ const {error}=await supa.from('ferramentas').upsert(ferramentaParaSupabase(registro));
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ if(id){Object.assign(DB.ferramentas.find(x=>x.id===id),o);commit('editar','Máquinas',nome);}
+ else{DB.ferramentas.push(registro);commit('criar','Máquinas',nome);}
+ syncSheets('ferramentas','upsert',registro);
  closeModal('modal-ferramentas');toast('Equipamento salvo!','success');}
-function delFerramenta(id){if(!guard())return;const f=DB.ferramentas.find(x=>x.id===id);if(!confirm('Excluir "'+f.nome+'"?'))return;
+async function delFerramenta(id){if(!guard())return;const f=DB.ferramentas.find(x=>x.id===id);if(!confirm('Excluir "'+f.nome+'"?'))return;
+ const {error}=await supa.from('ferramentas').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.ferramentas=DB.ferramentas.filter(x=>x.id!==id);commit('excluir','Máquinas',f.nome);syncSheets('ferramentas','delete',{id});toast('Equipamento excluído.','info');}
 
 /* ================= FINANCEIRO ================= */
@@ -1106,15 +1290,27 @@ function delFin(id){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);
  DB.financeiro=DB.financeiro.filter(x=>x.id!==id);commit('excluir','Financeiro',f.desc);syncSheets('financeiro','delete',{id});toast('Lançamento excluído.','info');}
 
 /* ================= FORNECEDORES & COMPRAS ================= */
+async function carregarFornecedoresSupabase(){
+ const {data,error}=await supa.from('fornecedores').select('*').order('nome');
+ if(error){toast('Erro ao carregar fornecedores do Supabase: '+error.message,'error');return;}
+ DB.fornecedores=data||[];saveDB();
+ if(CUR==='fornecedores')renderFornecedores();}
 function renderFornecedores(){$('tb-fornecedores').innerHTML=DB.fornecedores.map((f,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(f.nome)+'</strong></td><td class="mono">'+esc(f.cnpj||'—')+'</td><td>'+esc(f.email||'—')+'</td><td>'+esc(f.tel||'—')+'</td><td>'+esc(f.cidade||'—')+'</td><td><span class="badge '+(f.status==='Ativo'?'badge-success':'badge-muted')+'">'+f.status+'</span></td><td>'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum fornecedor cadastrado');}
 function openFornecedor(){['for-id','for-nome','for-cnpj','for-tel','for-email','for-cidade'].forEach(i=>$(i).value='');$('for-status').value='Ativo';$('mfor-title').textContent='Novo Fornecedor';openModal('modal-fornecedores');}
 function editFornecedor(id){if(!guard())return;const f=DB.fornecedores.find(x=>x.id===id);if(!f)return;
  $('for-id').value=f.id;$('for-nome').value=f.nome;$('for-cnpj').value=f.cnpj||'';$('for-tel').value=f.tel||'';$('for-email').value=f.email||'';$('for-cidade').value=f.cidade||'';$('for-status').value=f.status;$('mfor-title').textContent='Editar Fornecedor';openModal('modal-fornecedores');}
-function saveFornecedor(){if(!guard())return;const nome=$('for-nome').value.trim();if(!nome){toast('Informe a razão social.','error');return;}
+async function saveFornecedor(){if(!guard())return;const nome=$('for-nome').value.trim();if(!nome){toast('Informe a razão social.','error');return;}
  const id=$('for-id').value;const o={nome,cnpj:$('for-cnpj').value.trim(),tel:$('for-tel').value.trim(),email:$('for-email').value.trim(),cidade:$('for-cidade').value.trim(),status:$('for-status').value};
- if(id){const f2=Object.assign(DB.fornecedores.find(x=>x.id===id),o);commit('editar','Fornecedores',nome);syncSheets('fornecedores','upsert',f2);}else{const f2=Object.assign({id:uid()},o);DB.fornecedores.push(f2);commit('criar','Fornecedores',nome);syncSheets('fornecedores','upsert',f2);}
+ const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
+ const {error}=await supa.from('fornecedores').upsert(registro);
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ if(id){Object.assign(DB.fornecedores.find(x=>x.id===id),o);commit('editar','Fornecedores',nome);}
+ else{DB.fornecedores.push(registro);commit('criar','Fornecedores',nome);}
+ syncSheets('fornecedores','upsert',registro);
  closeModal('modal-fornecedores');toast('Fornecedor salvo!','success');}
-function delFornecedor(id){if(!guard())return;const f=DB.fornecedores.find(x=>x.id===id);if(!confirm('Excluir fornecedor "'+f.nome+'"?'))return;
+async function delFornecedor(id){if(!guard())return;const f=DB.fornecedores.find(x=>x.id===id);if(!confirm('Excluir fornecedor "'+f.nome+'"?'))return;
+ const {error}=await supa.from('fornecedores').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.fornecedores=DB.fornecedores.filter(x=>x.id!==id);commit('excluir','Fornecedores',f.nome);syncSheets('fornecedores','delete',{id});toast('Fornecedor excluído.','info');}
 function renderCompras(){$('tb-compras').innerHTML=DB.compras.map(c=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Recebido':'badge-success','Cancelado':'badge-danger'}[c.status]||'badge-muted';
  const lanc=(canEdit()&&!c.lancado&&c.status!=='Cancelado')?'<button class="btn btn-ghost btn-sm" title="Lançar no financeiro" onclick="lancarCompra(\''+c.id+'\')">💰</button>':'';
