@@ -683,7 +683,8 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  carregarFerramentasSupabase();
  carregarVendasSupabase();
  carregarOrcamentosSupabase();
- carregarProducaoSupabase();}
+ carregarProducaoSupabase();
+ carregarEntregasSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
@@ -707,7 +708,8 @@ function navigate(sec){CUR=sec;
  if(sec==='ferramentas')carregarFerramentasSupabase();
  if(sec==='vendas')carregarVendasSupabase();
  if(sec==='orcamentos')carregarOrcamentosSupabase();
- if(sec==='pcp')carregarProducaoSupabase();}
+ if(sec==='pcp')carregarProducaoSupabase();
+ if(sec==='entregas')carregarEntregasSupabase();}
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
@@ -1185,29 +1187,53 @@ async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.i
  if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
  if(!DB.entregas.some(e=>e.opId===o.id)){const cli=DB.clientes.find(c=>c.id===o.cliId);
   const novaEnt={id:uid(),opId:o.id,data:o.prazo||addDays(today(),3),cliId:o.cliId,peca:o.titulo,end:cli?cli.end||'':'',resp:o.resp||'',status:'Agendada',obs:''};
-  DB.entregas.unshift(novaEnt);syncSheets('entregas','upsert',novaEnt);
+  const {error:erroEnt}=await supa.from('entregas').insert(entregaParaSupabase(novaEnt));
+  if(erroEnt){toast('Erro ao criar entrega no Supabase: '+erroEnt.message,'error');}
+  else{DB.entregas.unshift(novaEnt);syncSheets('entregas','upsert',novaEnt);}
   toast('OP concluída! Entrega agendada automaticamente. 🚚','success');}
  else toast('OP concluída!','success');
  commit('editar','Produção','Concluída: '+o.titulo);syncSheets('pcp','upsert',o);}
 
 /* ================= ENTREGAS ================= */
 const ENT_ST=['Agendada','Em rota','Entregue','Instalada'];
+function entregaParaSupabase(e){return{id:e.id,op_id:e.opId||null,data:e.data||null,cli_id:e.cliId||null,peca:e.peca||null,endereco:e.end||null,resp:e.resp||null,status:e.status||null,obs:e.obs||null};}
+function entregaDeSupabase(row){return{id:row.id,opId:row.op_id,data:row.data,cliId:row.cli_id,peca:row.peca,end:row.endereco||'',resp:row.resp||'',status:row.status,obs:row.obs||''};}
+async function carregarEntregasSupabase(){
+ const {data,error}=await supa.from('entregas').select('*').order('data',{ascending:false});
+ if(error){toast('Erro ao carregar entregas do Supabase: '+error.message,'error');return;}
+ DB.entregas=(data||[]).map(entregaDeSupabase);saveDB();
+ if(CUR==='entregas')renderEntregas();}
 function renderEntregas(){const t=today();
  $('tb-entregas').innerHTML=DB.entregas.map(e=>{const stB={'Agendada':'badge-warning','Em rota':'badge-info','Entregue':'badge-success','Instalada':'badge-success'}[e.status]||'badge-muted';
   const late=(e.status==='Agendada'&&e.data<t)?' style="color:var(--danger);font-weight:700"':'';
   const idx=ENT_ST.indexOf(e.status);
   const adv=(canEdit()&&idx<3)?'<button class="btn btn-ghost btn-sm" title="Avançar status" onclick="advEntrega(\''+e.id+'\')">'+ENT_ST[idx+1]+' →</button>':'';
   return '<tr><td class="mono"'+late+'>'+fmtD(e.data)+'</td><td>'+esc(e.cliId?cliName(e.cliId):e.cliente||'—')+'</td><td><strong>'+esc(e.peca)+'</strong></td><td>'+esc(e.end||'—')+'</td><td>'+esc(e.resp||'—')+'</td><td><span class="badge '+stB+'">'+e.status+'</span></td><td><div class="row-actions">'+adv+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editEntrega(\''+e.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delEntrega(\''+e.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(7,'Nenhuma entrega agendada');}
-function advEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);const i=ENT_ST.indexOf(e.status);
- if(i<3){e.status=ENT_ST[i+1];commit('editar','Entregas',e.peca+' → '+e.status);syncSheets('entregas','upsert',e);}}
+async function advEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);const i=ENT_ST.indexOf(e.status);
+ if(i<3){e.status=ENT_ST[i+1];
+  const {error}=await supa.from('entregas').update({status:e.status}).eq('id',id);
+  if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
+  commit('editar','Entregas',e.peca+' → '+e.status);syncSheets('entregas','upsert',e);}}
 function openEntrega(){$('ent-id').value='';$('ent-data').value=today();fillSel('ent-cli',DB.clientes,c=>c.nome,'','—');['ent-peca','ent-end','ent-resp','ent-obs'].forEach(i=>$(i).value='');$('ent-status').value='Agendada';$('ment-title').textContent='Nova Entrega';openModal('modal-entregas');}
 function editEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);if(!e)return;
  $('ent-id').value=e.id;$('ent-data').value=e.data;fillSel('ent-cli',DB.clientes,c=>c.nome,e.cliId||'','—');$('ent-peca').value=e.peca;$('ent-end').value=e.end||'';$('ent-resp').value=e.resp||'';$('ent-status').value=e.status;$('ent-obs').value=e.obs||'';$('ment-title').textContent='Editar Entrega';openModal('modal-entregas');}
-function saveEntrega(){if(!guard())return;const peca=$('ent-peca').value.trim();if(!peca){toast('Informe a peça.','error');return;}
+async function saveEntrega(){if(!guard())return;const peca=$('ent-peca').value.trim();if(!peca){toast('Informe a peça.','error');return;}
  const id=$('ent-id').value;const o={data:$('ent-data').value||today(),cliId:$('ent-cli').value,peca,end:$('ent-end').value.trim(),resp:$('ent-resp').value.trim(),status:$('ent-status').value,obs:$('ent-obs').value.trim()};
- if(id){const e2=Object.assign(DB.entregas.find(x=>x.id===id),o);commit('editar','Entregas',peca);syncSheets('entregas','upsert',e2);}else{const e2=Object.assign({id:uid()},o);DB.entregas.unshift(e2);commit('criar','Entregas',peca);syncSheets('entregas','upsert',e2);}
+ if(id){
+  const e2=Object.assign(DB.entregas.find(x=>x.id===id),o);
+  const {error}=await supa.from('entregas').update(entregaParaSupabase(e2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Entregas',peca);syncSheets('entregas','upsert',e2);
+ } else {
+  const e2=Object.assign({id:uid()},o);
+  const {error}=await supa.from('entregas').insert(entregaParaSupabase(e2));
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  DB.entregas.unshift(e2);commit('criar','Entregas',peca);syncSheets('entregas','upsert',e2);
+ }
  closeModal('modal-entregas');toast('Entrega salva!','success');}
-function delEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);if(!confirm('Excluir entrega de "'+e.peca+'"?'))return;
+async function delEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);if(!confirm('Excluir entrega de "'+e.peca+'"?'))return;
+ const {error}=await supa.from('entregas').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.entregas=DB.entregas.filter(x=>x.id!==id);commit('excluir','Entregas',e.peca);syncSheets('entregas','delete',{id});toast('Entrega excluída.','info');}
 
 /* ================= MÁQUINAS & FERRAMENTAS ================= */
