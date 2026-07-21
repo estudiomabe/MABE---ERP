@@ -680,7 +680,8 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  carregarFornecedoresSupabase();
  carregarProdutosSupabase();
  carregarMadeirasSupabase();
- carregarFerramentasSupabase();}
+ carregarFerramentasSupabase();
+ carregarVendasSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
@@ -701,7 +702,8 @@ function navigate(sec){CUR=sec;
  if(sec==='fornecedores')carregarFornecedoresSupabase();
  if(sec==='produtos')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
- if(sec==='ferramentas')carregarFerramentasSupabase();}
+ if(sec==='ferramentas')carregarFerramentasSupabase();
+ if(sec==='vendas')carregarVendasSupabase();}
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
@@ -914,6 +916,13 @@ async function delMadeira(id){if(!guard())return;const m=DB.madeiras.find(x=>x.i
  DB.madeiras=DB.madeiras.filter(x=>x.id!==id);commit('excluir','Madeiras',m.especie);syncSheets('madeiras','delete',{id});toast('Madeira excluída.','info');}
 
 /* ================= VENDAS ================= */
+function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data||null,pag:v.pag||null,status:v.status||null,obs:v.obs||null,itens:v.itens||[],total:v.total||0,baixa:!!v.baixa};if(v.num!==undefined&&v.num!==null)o.num=v.num;return o;}
+function vendaDeSupabase(row){return{id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],total:row.total,baixa:row.baixa};}
+async function carregarVendasSupabase(){
+ const {data,error}=await supa.from('vendas').select('*').order('num',{ascending:false});
+ if(error){toast('Erro ao carregar pedidos do Supabase: '+error.message,'error');return;}
+ DB.vendas=(data||[]).map(vendaDeSupabase);saveDB();
+ if(CUR==='vendas')renderVendas();}
 function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const lista=DB.vendas.filter(v=>matchPer(v.data,PER_VND));
  $('tb-vendas').innerHTML=lista.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
@@ -935,15 +944,28 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
  if(!itens.length){toast('Adicione pelo menos um item.','error');return;}
  const total=itens.reduce((s,i)=>s+i.qty*i.preco,0);
  const id=$('vnd-id').value;const o={cliId,data:$('vnd-data').value||today(),pag:$('vnd-pag').value,status:$('vnd-status').value,obs:$('vnd-obs').value.trim(),itens,total};
- if(id){const v2=Object.assign(DB.vendas.find(x=>x.id===id),o);commit('editar','Pedidos','V-'+pad(v2.num));syncSheets('vendas','upsert',v2);}
- else{const v=Object.assign({id:uid(),num:DB.seq.venda++,baixa:false},o);
-  if(v.status!=='Cancelado'){for(const it of v.itens){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Math.max(0,Number(p.est)-it.qty);await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}v.baixa=true;
-   const finReg={id:uid(),tipo:'Entrada',data:v.data,desc:'Pedido V-'+pad(v.num)+' — '+cliName(cliId),cat:'Pedidos',val:total,status:v.status==='Entregue'?'Pago':'Pendente'};
+ if(id){
+  const v2=Object.assign(DB.vendas.find(x=>x.id===id),o);
+  const {error}=await supa.from('vendas').update(vendaParaSupabase(v2)).eq('id',id);
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  commit('editar','Pedidos','V-'+pad(v2.num));syncSheets('vendas','upsert',v2);
+ }
+ else{
+  const nova=Object.assign({id:uid(),baixa:false},o);
+  const {data,error}=await supa.from('vendas').insert(vendaParaSupabase(nova)).select().single();
+  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  nova.num=data.num;
+  if(nova.status!=='Cancelado'){for(const it of nova.itens){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Math.max(0,Number(p.est)-it.qty);await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
+   nova.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',nova.id);
+   const finReg={id:uid(),tipo:'Entrada',data:nova.data,desc:'Pedido V-'+pad(nova.num)+' — '+cliName(cliId),cat:'Pedidos',val:total,status:nova.status==='Entregue'?'Pago':'Pendente'};
    DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);}
-  DB.vendas.unshift(v);commit('criar','Pedidos','V-'+pad(v.num)+' — '+fmt(total));syncSheets('vendas','upsert',v);}
+  DB.vendas.unshift(nova);commit('criar','Pedidos','V-'+pad(nova.num)+' — '+fmt(total));syncSheets('vendas','upsert',nova);
+ }
  closeModal('modal-vendas');toast('Pedido salvo! Estoque e financeiro atualizados.','success');}
 async function delVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===id);if(!confirm('Excluir pedido V-'+pad(v.num)+'?'))return;
  if(v.baixa)for(const it of (v.itens||[])){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Number(p.est)+it.qty;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
+ const {error}=await supa.from('vendas').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.vendas=DB.vendas.filter(x=>x.id!==id);commit('excluir','Pedidos','V-'+pad(v.num));syncSheets('vendas','delete',{id});toast('Pedido excluído (estoque devolvido).','info');}
 
 /* ================= ORÇAMENTOS ================= */
