@@ -503,6 +503,15 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 <div id="toast-container"></div>
 
 <!-- MODALS -->
+<!-- MODAL APROVAR ORÇAMENTO -->
+<div class="modal-overlay" id="modal-aprovar-orc"><div class="modal"><div class="modal-header"><div class="modal-title">✔ Aprovar Orçamento</div><button class="modal-close" onclick="closeModal('modal-aprovar-orc')">✕</button></div><div class="modal-body">
+<input type="hidden" id="aprv-orc-id">
+<p style="font-size:13px;color:var(--text-muted);margin-bottom:14px" id="aprv-orc-desc"></p>
+<div class="form-grid">
+<div class="form-group"><label class="form-label">Forma de Pagamento escolhida pelo cliente *</label><select class="form-control" id="aprv-pag"><option>PIX</option><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>Boleto</option><option>Transferência</option><option>A combinar</option></select></div>
+</div>
+<p style="font-size:12px;color:var(--text-muted);margin-top:14px">Ao confirmar: o status vira "Aprovado", um pedido é gerado com essa forma de pagamento e uma ordem de produção entra em Planejamento no PCP.</p>
+</div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group"><label class="form-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-vendas"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="mv-title">Novo Pedido</div><button class="modal-close" onclick="closeModal('modal-vendas')">✕</button></div><div class="modal-body"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="vnd-cli"></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="addItemVenda()">+ Adicionar</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-vendas')">Cancelar</button><button class="btn btn-primary" onclick="saveVenda()">Salvar Pedido</button></div></div></div>
@@ -1006,7 +1015,10 @@ function renderOrcamentos(){orcShow('lista');syncPerBar('orc-per',PER_ORC);
  $('tb-orcamentos').innerHTML=lista.map(o=>{const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
   const tipoL={'sob_medida':'🔨 Sob medida','catalogo':'📦 Catálogo','novo_produto':'🆕 Novo produto'}[o.tipo]||o.tipo;
   const prodBtn=(o.status==='Aprovado'&&!o.opId&&canEdit())?'<button class="btn btn-primary btn-sm" title="Enviar para produção" onclick="orcParaProducao(\''+o.id+'\')">▶ Produzir</button>':'';
-  return '<tr><td class="mono">ORC-'+pad(o.num)+'</td><td>'+tipoL+'</td><td><strong>'+esc(o.desc)+'</strong></td><td>'+esc(cliName(o.cliId))+'</td><td class="mono">'+fmtD(o.data)+'</td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td><td class="mono" style="color:var(--success)">'+fmt(o.lucro)+'</td><td><span class="badge '+stB+'">'+o.status+'</span></td><td><div class="row-actions">'+prodBtn+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editOrcamento(\''+o.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delOrcamento(\''+o.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(9,'Nenhum orçamento no período selecionado');}
+  const podeDecidir=canEdit()&&o.status!=='Aprovado'&&o.status!=='Reprovado'&&o.status!=='Concluído';
+  const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" title="Aprovar orçamento" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>':'';
+  const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" title="Reprovar orçamento" onclick="rejeitarOrcamento(\''+o.id+'\')">✗</button>':'';
+  return '<tr><td class="mono">ORC-'+pad(o.num)+'</td><td>'+tipoL+'</td><td><strong>'+esc(o.desc)+'</strong></td><td>'+esc(cliName(o.cliId))+'</td><td class="mono">'+fmtD(o.data)+'</td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td><td class="mono" style="color:var(--success)">'+fmt(o.lucro)+'</td><td><span class="badge '+stB+'">'+o.status+'</span></td><td><div class="row-actions">'+aprovarBtn+reprovarBtn+prodBtn+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editOrcamento(\''+o.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delOrcamento(\''+o.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(9,'Nenhum orçamento no período selecionado');}
 function orcShow(view){['lista','tipo','form','catalogo'].forEach(v=>{$('orc-'+v+'-view').style.display=v===view?'block':'none';});}
 function novoOrcamento(){orcShow('tipo');}
 function fecharFormOrc(){renderOrcamentos();}
@@ -1097,6 +1109,51 @@ async function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=
  const {error}=await supa.from('orcamentos').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.orcamentos=DB.orcamentos.filter(x=>x.id!==id);commit('excluir','Orçamentos',o.desc);syncSheets('orcamentos','delete',{id});toast('Orçamento excluído.','info');}
+function abrirAprovarOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+ if(o.status==='Aprovado'){toast('Este orçamento já está aprovado.','info');return;}
+ $('aprv-orc-id').value=id;$('aprv-orc-desc').textContent=o.desc+' — '+cliName(o.cliId)+' — '+fmt(o.preco);$('aprv-pag').value='PIX';
+ openModal('modal-aprovar-orc');}
+async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const pag=$('aprv-pag').value;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+ closeModal('modal-aprovar-orc');
+ o.status='Aprovado';
+ const {error:erroStatus}=await supa.from('orcamentos').update({status:'Aprovado'}).eq('id',id);
+ if(erroStatus){toast('Erro ao aprovar no Supabase: '+erroStatus.message,'error');return;}
+
+ // 1) Gerar pedido (venda) vinculado ao orçamento, com a forma de pagamento escolhida
+ const qty=o.qty||1;
+ const itens=[{prodId:o.prodId||null,desc:o.desc,qty,preco:qty?Math.round((o.preco/qty)*100)/100:o.preco}];
+ const vendaObj={cliId:o.cliId||'',data:today(),pag,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num),itens,total:o.preco};
+ const novaVenda=Object.assign({id:uid(),baixa:false},vendaObj);
+ const {data:dv,error:erroVenda}=await supa.from('vendas').insert(vendaParaSupabase(novaVenda)).select().single();
+ if(erroVenda){toast('Erro ao gerar pedido no Supabase: '+erroVenda.message,'error');return;}
+ novaVenda.num=dv.num;
+ if(o.tipo==='catalogo'&&o.prodId){const p=DB.produtos.find(x=>x.id===o.prodId);if(p){p.est=Math.max(0,Number(p.est)-qty);await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}
+  novaVenda.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',novaVenda.id);}
+ const finReg={id:uid(),tipo:'Entrada',data:novaVenda.data,desc:'Pedido V-'+pad(novaVenda.num)+' — '+cliName(o.cliId),cat:'Pedidos',val:o.preco,status:'Pendente'};
+ const {error:erroFin}=await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
+ if(erroFin){toast('Erro ao lançar financeiro no Supabase: '+erroFin.message,'error');return;}
+ DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);
+ DB.vendas.unshift(novaVenda);syncSheets('vendas','upsert',novaVenda);
+
+ // 2) Gerar ordem de produção no PCP, já em Planejamento (etapa 0)
+ const op={id:uid(),titulo:o.desc,cliId:o.cliId,prazo:o.validade||addDays(today(),30),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:o.obs||'',orcId:o.id};
+ const {data:dop,error:erroOp}=await supa.from('producao').insert(opParaSupabase(op)).select().single();
+ if(erroOp){toast('Erro ao criar ordem de produção no Supabase: '+erroOp.message,'error');return;}
+ op.num=dop.num;
+ DB.producao.push(op);o.opId=op.id;
+ syncSheets('pcp','upsert',op);
+ const {error:erroLink}=await supa.from('orcamentos').update({op_id:op.id}).eq('id',o.id);
+ if(erroLink){toast('Erro ao vincular ordem de produção no Supabase: '+erroLink.message,'error');return;}
+
+ commit('editar','Orçamentos','Aprovado ORC-'+pad(o.num)+' ('+pag+') → gerou V-'+pad(novaVenda.num)+' e OP em Planejamento');
+ toast('Orçamento aprovado! Pedido V-'+pad(novaVenda.num)+' ('+pag+') e ordem de produção criados automaticamente. 🎉','success');}
+async function rejeitarOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+ if(!confirm('Marcar orçamento "'+o.desc+'" como reprovado?'))return;
+ o.status='Reprovado';
+ const {error}=await supa.from('orcamentos').update({status:'Reprovado'}).eq('id',id);
+ if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
+ commit('editar','Orçamentos','Reprovado ORC-'+pad(o.num));syncSheets('orcamentos','upsert',o);
+ toast('Orçamento marcado como reprovado.','info');}
 async function orcParaProducao(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  const op={id:uid(),titulo:o.desc,cliId:o.cliId,prazo:o.validade||addDays(today(),30),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:o.obs||'',orcId:o.id};
  const {data,error:erroOp}=await supa.from('producao').insert(opParaSupabase(op)).select().single();
@@ -1149,7 +1206,7 @@ function imprimirOrcamento(){const t=computeOrc();const cli=cliName($('orc-cli')
  w.document.close();w.print();}
 
 /* ================= PRODUÇÃO (PCP) ================= */
-const ETAPAS=['📥 Fila','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','🔁 Retrabalho','📦 Pronto','🚚 Entregue'];
+const ETAPAS=['📋 Planejamento','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','🔁 Retrabalho','📦 Pronto','🚚 Entregue'];
 const ETAPA_FINAL=ETAPAS.length-1;
 function opParaSupabase(o){const r={id:o.id,titulo:o.titulo,cli_id:o.cliId||null,prazo:o.prazo||null,resp:o.resp||null,prio:o.prio||null,etapa:o.etapa||0,status:o.status||'Ativa',obs:o.obs||null,orc_id:o.orcId||null,fim:o.fim||null};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
 function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim};}
@@ -1161,7 +1218,7 @@ async function carregarProducaoSupabase(){
 function renderPCP(){const t=today();const ativas=DB.producao.filter(o=>o.status!=='Concluída');
  const atras=ativas.filter(o=>o.prazo&&o.prazo<t).length;
  const ym=t.slice(0,7);const concMes=DB.producao.filter(o=>o.status==='Concluída'&&String(o.fim||'').slice(0,7)===ym).length;
- $('pcp-stats').innerHTML=[['Na fila',ativas.filter(o=>o.etapa==0).length,''],['Em produção',ativas.filter(o=>o.etapa>0&&o.etapa<4).length,''],['Retrabalho',ativas.filter(o=>o.etapa==4).length,'color:var(--warning)'],['Prontas',ativas.filter(o=>o.etapa==5).length,''],['Atrasadas',atras,'color:var(--danger)'],['Concluídas (mês)',concMes,'color:var(--success)']].map(s=>'<div class="pcp-stat"><div class="pcp-stat-val" style="'+s[2]+'">'+s[1]+'</div><div class="pcp-stat-label">'+s[0]+'</div></div>').join('');
+ $('pcp-stats').innerHTML=[['Planejamento',ativas.filter(o=>o.etapa==0).length,''],['Em produção',ativas.filter(o=>o.etapa>0&&o.etapa<4).length,''],['Retrabalho',ativas.filter(o=>o.etapa==4).length,'color:var(--warning)'],['Prontas',ativas.filter(o=>o.etapa==5).length,''],['Atrasadas',atras,'color:var(--danger)'],['Concluídas (mês)',concMes,'color:var(--success)']].map(s=>'<div class="pcp-stat"><div class="pcp-stat-val" style="'+s[2]+'">'+s[1]+'</div><div class="pcp-stat-label">'+s[0]+'</div></div>').join('');
  $('pcp-kanban').innerHTML=ETAPAS.map((et,i)=>{const cards=ativas.filter(o=>Number(o.etapa)===i);
   return '<div class="kanban-col"><div class="kanban-col-header"><span class="kanban-col-title">'+et+'</span><span class="kanban-count">'+cards.length+'</span></div>'
   +cards.map(o=>{const pcls=!o.prazo?'ok':o.prazo<t?'vencido':o.prazo===t?'hoje':'ok';
