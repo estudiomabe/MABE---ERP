@@ -494,6 +494,21 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <button class="btn btn-primary" onclick="saveCFConfig()">💾 Salvar Configurações de Custo</button>
         </div>
       </div>
+      <div class="config-card">
+        <div class="config-title">💳 Condições de Pagamento</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Regras aplicadas ao aprovar um orçamento — geram automaticamente as contas a receber.</div>
+        <div class="form-grid">
+          <div class="form-grid form-2">
+            <div class="form-group"><label class="form-label">PIX — % Antecipado</label><input type="number" class="form-control" id="cfg-pix-ant" step="1" min="0" max="100"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">O restante fica como conta a receber na data de entrega combinada.</div></div>
+            <div class="form-group"><label class="form-label">Cartão de Crédito — Taxa (%)</label><input type="number" class="form-control" id="cfg-taxa-cartao" step="0.1" min="0"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Cobrado 100% antecipado do cliente; a taxa é absorvida pelo estúdio (lançada como saída).</div></div>
+          </div>
+          <div class="form-grid form-2">
+            <div class="form-group"><label class="form-label">Parcelamento — Valor base (R$)</label><input type="number" class="form-control" id="cfg-parc-base" step="1" min="1"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Ex: 1000 → a partir de R$1.000 permite 2x, a partir de R$2.000 permite 3x...</div></div>
+            <div class="form-group"><label class="form-label">Parcelamento — Máximo de parcelas</label><input type="number" class="form-control" id="cfg-parc-max" step="1" min="1"></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveCondPagto()">💾 Salvar Condições de Pagamento</button>
+        </div>
+      </div>
       <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" onclick="exportData()">📤 Exportar JSON</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
@@ -508,9 +523,18 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 <input type="hidden" id="aprv-orc-id">
 <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px" id="aprv-orc-desc"></p>
 <div class="form-grid">
-<div class="form-group"><label class="form-label">Forma de Pagamento escolhida pelo cliente *</label><select class="form-control" id="aprv-pag"><option>PIX</option><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>Boleto</option><option>Transferência</option><option>A combinar</option></select></div>
+<div class="form-group"><label class="form-label">Forma de Pagamento escolhida pelo cliente *</label><select class="form-control" id="aprv-pag" onchange="atualizarPreviewAprov()">
+<option value="pix">PIX — antecipado + na entrega</option>
+<option value="cartao">Cartão de Crédito — 100% antecipado</option>
+<option value="parcelado">Parcelado (boleto/transferência)</option>
+<option value="dinheiro">Dinheiro — 100% antecipado</option>
+<option value="transferencia">Transferência — 100% antecipado</option>
+<option value="boleto">Boleto — 100% na entrega</option>
+</select></div>
+<div class="form-group" id="aprv-parc-wrap" style="display:none"><label class="form-label">Número de Parcelas</label><select class="form-control" id="aprv-parcelas" onchange="atualizarPreviewAprov()"></select></div>
+<div class="form-group"><label class="form-label">Data de Entrega combinada com o cliente *</label><input type="date" class="form-control" id="aprv-prazo" onchange="atualizarPreviewAprov()"></div>
 </div>
-<p style="font-size:12px;color:var(--text-muted);margin-top:14px">Ao confirmar: o status vira "Aprovado", um pedido é gerado com essa forma de pagamento e uma ordem de produção entra em Planejamento no PCP.</p>
+<div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.7"></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group"><label class="form-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
@@ -596,6 +620,7 @@ const fmtK=v=>{v=Number(v)||0;return v>=100000?'R$ '+(v/1000).toLocaleString('pt
 const fmtN=(v,d)=> (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:d===undefined?2:d,maximumFractionDigits:d===undefined?2:d});
 const num=id=>parseFloat($(id).value)||0;
 const today=()=>new Date().toISOString().slice(0,10);
+const addMonths=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setMonth(d.getMonth()+n);return d.toISOString().slice(0,10);};
 const fmtD=d=>d?String(d).slice(0,10).split('-').reverse().join('/'):'—';
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const pad=n=>String(n).padStart(4,'0');
@@ -611,12 +636,13 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Admin',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60}},
+ config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,pixAntecipado:50,taxaCartao:3.5,parcelaBase:1000,parcelaMax:12}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
  for(const k in d)if(DB[k]===undefined)DB[k]=d[k];
- if(!DB.config.cf)DB.config.cf=d.config.cf; if(!DB.seq)DB.seq=d.seq;}
+ if(!DB.config.cf)DB.config.cf=d.config.cf; if(!DB.seq)DB.seq=d.seq;
+ for(const k in d.config.cf)if(DB.config.cf[k]===undefined)DB.config.cf[k]=d.config.cf[k];}
 function saveDB(){localStorage.setItem(DKEY,JSON.stringify(DB));}
 function log(acao,modulo,detalhe){const h={id:uid(),dt:new Date().toLocaleString('pt-BR'),user:USER?USER.nome:'—',usuario:USER?USER.nome:'—',login:USER?USER.login:'',acao,modulo,detalhe};DB.historico.unshift(h);if(DB.historico.length>400)DB.historico.length=400;syncSheets('historico','upsert',h);
  supa.from('historico').insert(historicoParaSupabase(h)).then(({error})=>{if(error)console.error('Erro ao salvar histórico no Supabase:',error.message);});}
@@ -1109,34 +1135,80 @@ async function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=
  const {error}=await supa.from('orcamentos').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.orcamentos=DB.orcamentos.filter(x=>x.id!==id);commit('excluir','Orçamentos',o.desc);syncSheets('orcamentos','delete',{id});toast('Orçamento excluído.','info');}
+const PAG_LABELS={pix:'PIX',cartao:'Cartão de Crédito',parcelado:'Parcelado',dinheiro:'Dinheiro',transferencia:'Transferência',boleto:'Boleto'};
+function maxParcelasPara(valor){const cf=DB.config.cf;const base=Number(cf.parcelaBase)||1000;const max=Number(cf.parcelaMax)||12;if(!base||valor<base)return 1;return Math.min(max,1+Math.floor(valor/base));}
+function popularParcelasSelect(valor){const max=Math.max(2,maxParcelasPara(valor));const sel=$('aprv-parcelas');let h='';for(let n=2;n<=max;n++)h+='<option value="'+n+'">'+n+'x de '+fmt(valor/n)+'</option>';sel.innerHTML=h;}
 function abrirAprovarOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  if(o.status==='Aprovado'){toast('Este orçamento já está aprovado.','info');return;}
- $('aprv-orc-id').value=id;$('aprv-orc-desc').textContent=o.desc+' — '+cliName(o.cliId)+' — '+fmt(o.preco);$('aprv-pag').value='PIX';
+ $('aprv-orc-id').value=id;$('aprv-orc-desc').textContent=o.desc+' — '+cliName(o.cliId)+' — '+fmt(o.preco);
+ $('aprv-pag').value='pix';$('aprv-prazo').value=o.validade||addDays(today(),30);
+ popularParcelasSelect(o.preco);
+ atualizarPreviewAprov();
  openModal('modal-aprovar-orc');}
-async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const pag=$('aprv-pag').value;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+function atualizarPreviewAprov(){const o=DB.orcamentos.find(x=>x.id===$('aprv-orc-id').value);if(!o)return;
+ const pag=$('aprv-pag').value,cf=DB.config.cf,prazo=$('aprv-prazo').value;
+ $('aprv-parc-wrap').style.display=pag==='parcelado'?'block':'none';
+ let html='';
+ if(pag==='pix'){const pct=Number(cf.pixAntecipado)||50;const p1=Math.round(o.preco*pct/100*100)/100,p2=Math.round((o.preco-p1)*100)/100;
+  html='💰 '+pct+'% antecipado (hoje): <strong>'+fmt(p1)+'</strong><br>💰 '+(100-pct)+'% na entrega ('+fmtD(prazo)+'): <strong>'+fmt(p2)+'</strong><br>→ Gera 2 contas a receber.';}
+ else if(pag==='cartao'){const taxa=Math.round(o.preco*(Number(cf.taxaCartao)||0)/100*100)/100;
+  html='💳 Cobrado do cliente: <strong>'+fmt(o.preco)+'</strong> (100% antecipado)<br>Taxa do cartão ('+fmtN(cf.taxaCartao,1)+'%), absorvida pelo estúdio: <strong style="color:var(--danger)">- '+fmt(taxa)+'</strong><br>→ Gera 1 entrada (valor cheio) + 1 saída (taxa).';}
+ else if(pag==='parcelado'){const n=Number($('aprv-parcelas').value)||maxParcelasPara(o.preco);
+  html='📅 Parcelado em <strong>'+n+'x de '+fmt(o.preco/n)+'</strong>, mensalmente a partir de hoje.<br>→ Gera '+n+' contas a receber.';}
+ else if(pag==='boleto'){html='📄 100% na entrega ('+fmtD(prazo)+'): <strong>'+fmt(o.preco)+'</strong><br>→ Gera 1 conta a receber.';}
+ else{html='💵 100% antecipado (hoje): <strong>'+fmt(o.preco)+'</strong><br>→ Gera 1 conta a receber (já paga).';}
+ $('aprv-preview').innerHTML=html;}
+async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+ const pagKey=$('aprv-pag').value,pagLabel=PAG_LABELS[pagKey]||pagKey;
+ const prazoEntrega=$('aprv-prazo').value;
+ if(!prazoEntrega){toast('Informe a data de entrega combinada.','error');return;}
  closeModal('modal-aprovar-orc');
  o.status='Aprovado';
  const {error:erroStatus}=await supa.from('orcamentos').update({status:'Aprovado'}).eq('id',id);
  if(erroStatus){toast('Erro ao aprovar no Supabase: '+erroStatus.message,'error');return;}
+ const cf=DB.config.cf;
 
- // 1) Gerar pedido (venda) vinculado ao orçamento, com a forma de pagamento escolhida
+ // 1) Gerar pedido (venda) vinculado ao orçamento
  const qty=o.qty||1;
  const itens=[{prodId:o.prodId||null,desc:o.desc,qty,preco:qty?Math.round((o.preco/qty)*100)/100:o.preco}];
- const vendaObj={cliId:o.cliId||'',data:today(),pag,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num),itens,total:o.preco};
+ const vendaObj={cliId:o.cliId||'',data:today(),pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega),itens,total:o.preco};
  const novaVenda=Object.assign({id:uid(),baixa:false},vendaObj);
  const {data:dv,error:erroVenda}=await supa.from('vendas').insert(vendaParaSupabase(novaVenda)).select().single();
  if(erroVenda){toast('Erro ao gerar pedido no Supabase: '+erroVenda.message,'error');return;}
  novaVenda.num=dv.num;
  if(o.tipo==='catalogo'&&o.prodId){const p=DB.produtos.find(x=>x.id===o.prodId);if(p){p.est=Math.max(0,Number(p.est)-qty);await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}
   novaVenda.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',novaVenda.id);}
- const finReg={id:uid(),tipo:'Entrada',data:novaVenda.data,desc:'Pedido V-'+pad(novaVenda.num)+' — '+cliName(o.cliId),cat:'Pedidos',val:o.preco,status:'Pendente'};
- const {error:erroFin}=await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
- if(erroFin){toast('Erro ao lançar financeiro no Supabase: '+erroFin.message,'error');return;}
- DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);
  DB.vendas.unshift(novaVenda);syncSheets('vendas','upsert',novaVenda);
 
- // 2) Gerar ordem de produção no PCP, já em Planejamento (etapa 0)
- const op={id:uid(),titulo:o.desc,cliId:o.cliId,prazo:o.validade||addDays(today(),30),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:o.obs||'',orcId:o.id};
+ // 2) Gerar contas a receber (e, se cartão, a saída da taxa) conforme a forma de pagamento
+ const baseDesc='Pedido V-'+pad(novaVenda.num)+' — '+cliName(o.cliId);
+ const finEntries=[];
+ if(pagKey==='pix'){
+  const pct=Number(cf.pixAntecipado)||50;
+  const p1=Math.round(o.preco*pct/100*100)/100,p2=Math.round((o.preco-p1)*100)/100;
+  finEntries.push({tipo:'Entrada',data:today(),desc:baseDesc+' — PIX '+pct+'% antecipado',cat:'Pedidos',val:p1,status:'Pago'});
+  finEntries.push({tipo:'Entrada',data:prazoEntrega,desc:baseDesc+' — PIX '+(100-pct)+'% na entrega',cat:'Pedidos',val:p2,status:'Pendente'});
+ } else if(pagKey==='cartao'){
+  const taxa=Math.round(o.preco*(Number(cf.taxaCartao)||0)/100*100)/100;
+  finEntries.push({tipo:'Entrada',data:today(),desc:baseDesc+' — Cartão de Crédito (100% antecipado)',cat:'Pedidos',val:o.preco,status:'Pago'});
+  if(taxa>0)finEntries.push({tipo:'Saída',data:today(),desc:baseDesc+' — Taxa do cartão ('+fmtN(cf.taxaCartao,1)+'%)',cat:'Taxas de Cartão',val:taxa,status:'Pago'});
+ } else if(pagKey==='parcelado'){
+  const n=Math.max(2,Number($('aprv-parcelas').value)||2);
+  const parcela=Math.round((o.preco/n)*100)/100;
+  for(let i=0;i<n;i++){const ultima=i===n-1;const val=ultima?Math.round((o.preco-parcela*(n-1))*100)/100:parcela;
+   finEntries.push({tipo:'Entrada',data:i===0?today():addMonths(today(),i),desc:baseDesc+' — Parcela '+(i+1)+'/'+n,cat:'Pedidos',val,status:i===0?'Pago':'Pendente'});}
+ } else if(pagKey==='boleto'){
+  finEntries.push({tipo:'Entrada',data:prazoEntrega,desc:baseDesc+' — Boleto na entrega',cat:'Pedidos',val:o.preco,status:'Pendente'});
+ } else {
+  finEntries.push({tipo:'Entrada',data:today(),desc:baseDesc+' — '+pagLabel+' (antecipado)',cat:'Pedidos',val:o.preco,status:'Pago'});
+ }
+ for(const fe of finEntries){const reg=Object.assign({id:uid()},fe);
+  const {error:erroFin}=await supa.from('financeiro').insert(financeiroParaSupabase(reg));
+  if(erroFin){toast('Erro ao lançar financeiro no Supabase: '+erroFin.message,'error');continue;}
+  DB.financeiro.unshift(reg);syncSheets('financeiro','upsert',reg);}
+
+ // 3) Gerar ordem de produção no PCP, já em Planejamento (etapa 0), com prazo = entrega combinada
+ const op={id:uid(),titulo:o.desc,cliId:o.cliId,prazo:prazoEntrega,resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:o.obs||'',orcId:o.id};
  const {data:dop,error:erroOp}=await supa.from('producao').insert(opParaSupabase(op)).select().single();
  if(erroOp){toast('Erro ao criar ordem de produção no Supabase: '+erroOp.message,'error');return;}
  op.num=dop.num;
@@ -1145,8 +1217,8 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const pag=$
  const {error:erroLink}=await supa.from('orcamentos').update({op_id:op.id}).eq('id',o.id);
  if(erroLink){toast('Erro ao vincular ordem de produção no Supabase: '+erroLink.message,'error');return;}
 
- commit('editar','Orçamentos','Aprovado ORC-'+pad(o.num)+' ('+pag+') → gerou V-'+pad(novaVenda.num)+' e OP em Planejamento');
- toast('Orçamento aprovado! Pedido V-'+pad(novaVenda.num)+' ('+pag+') e ordem de produção criados automaticamente. 🎉','success');}
+ commit('editar','Orçamentos','Aprovado ORC-'+pad(o.num)+' ('+pagLabel+') → V-'+pad(novaVenda.num)+' + '+finEntries.length+' conta(s) a receber + OP em Planejamento');
+ toast('Orçamento aprovado! Pedido, contas a receber e ordem de produção criados. 🎉','success');}
 async function rejeitarOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  if(!confirm('Marcar orçamento "'+o.desc+'" como reprovado?'))return;
  o.status='Reprovado';
@@ -1534,7 +1606,8 @@ async function clearHistorico(){if(!isAdmin()){toast('Apenas administradores.','
  DB.historico=[];saveDB();renderHistorico();toast('Histórico limpo.','info');}
 function renderConfig(){$('sheets-url').value=DB.config.sheetsUrl||'';const cf=DB.config.cf;
  $('cfg-aluguel').value=cf.aluguel;$('cfg-iptu').value=cf.iptu;$('cfg-agua').value=cf.agua;$('cfg-energia').value=cf.energia;$('cfg-contador').value=cf.contador;$('cfg-outros').value=cf.outros;
- $('cfg-hmes').value=cf.hmes;$('cfg-hsocio').value=cf.hsocio;$('cfg-haux').value=cf.haux;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;}
+ $('cfg-hmes').value=cf.hmes;$('cfg-hsocio').value=cf.hsocio;$('cfg-haux').value=cf.haux;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;
+ $('cfg-pix-ant').value=cf.pixAntecipado;$('cfg-taxa-cartao').value=cf.taxaCartao;$('cfg-parc-base').value=cf.parcelaBase;$('cfg-parc-max').value=cf.parcelaMax;}
 function saveConfig(){DB.config.sheetsUrl=$('sheets-url').value.trim();saveDB();
  const st=$('conn-status');if(!DB.config.sheetsUrl){st.textContent='URL removida.';return;}
  st.textContent='Testando conexão...';st.style.color='var(--text-muted)';
@@ -1542,12 +1615,19 @@ function saveConfig(){DB.config.sheetsUrl=$('sheets-url').value.trim();saveDB();
   else{st.textContent='⚠️ URL respondeu, mas não reconheceu o formato esperado.';st.style.color='var(--warning)';}})
  .catch(()=>{st.textContent='❌ Não foi possível conectar. Confira a URL e a implantação do Apps Script.';st.style.color='var(--danger)';});}
 async function saveCFConfig(){if(!guard())return;
- DB.config.cf={aluguel:num('cfg-aluguel'),iptu:num('cfg-iptu'),agua:num('cfg-agua'),energia:num('cfg-energia'),contador:num('cfg-contador'),outros:num('cfg-outros'),hmes:num('cfg-hmes')||176,hsocio:num('cfg-hsocio'),haux:num('cfg-haux'),imposto:num('cfg-imposto'),markup:num('cfg-markup')};
+ Object.assign(DB.config.cf,{aluguel:num('cfg-aluguel'),iptu:num('cfg-iptu'),agua:num('cfg-agua'),energia:num('cfg-energia'),contador:num('cfg-contador'),outros:num('cfg-outros'),hmes:num('cfg-hmes')||176,hsocio:num('cfg-hsocio'),haux:num('cfg-haux'),imposto:num('cfg-imposto'),markup:num('cfg-markup')});
  saveDB();log('editar','Configurações','Custos fixos padrão atualizados');saveDB();
  const {error}=await supa.from('config').upsert(Object.entries(DB.config.cf).map(([campo,valor])=>({campo,valor})));
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
  Object.entries(DB.config.cf).forEach(([campo,valor])=>syncSheets('config','upsert',{campo,valor}));
  toast('Configurações de custo salvas!','success');}
+async function saveCondPagto(){if(!guard())return;
+ Object.assign(DB.config.cf,{pixAntecipado:Math.min(100,Math.max(0,num('cfg-pix-ant')||50)),taxaCartao:Math.max(0,num('cfg-taxa-cartao')),parcelaBase:Math.max(1,num('cfg-parc-base')||1000),parcelaMax:Math.max(1,num('cfg-parc-max')||12)});
+ saveDB();log('editar','Configurações','Condições de pagamento atualizadas');saveDB();
+ const {error}=await supa.from('config').upsert(Object.entries(DB.config.cf).map(([campo,valor])=>({campo,valor})));
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ Object.entries(DB.config.cf).forEach(([campo,valor])=>syncSheets('config','upsert',{campo,valor}));
+ toast('Condições de pagamento salvas!','success');}
 async function carregarConfigSupabase(){
  const {data,error}=await supa.from('config').select('*');
  if(error){toast('Erro ao carregar configurações do Supabase: '+error.message,'error');return;}
