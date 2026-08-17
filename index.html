@@ -1117,11 +1117,18 @@ function renderOrcamentos(){orcShow('lista');syncPerBar('orc-per',PER_ORC);
   const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" title="Aprovar orçamento" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>':'';
   const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" title="Reprovar orçamento" onclick="rejeitarOrcamento(\''+o.id+'\')">✗</button>':'';
   const prodBtn=(o.status==='Aprovado'&&!o.opId&&canEdit())?'<button class="btn btn-primary btn-sm" title="Enviar para produção" onclick="orcParaProducao(\''+o.id+'\')">▶ Produzir</button>':'';
-  const tipoL={'sob_medida':'🔨 Sob medida','catalogo':'📦 Catálogo','novo_produto':'🆕 Novo produto'};
-  const linhaHeader='<tr style="cursor:pointer" onclick="if(event.target.closest(\'button\'))return;abrirDetalheOrc(\''+o.id+'\')"><td class="mono">ORC-'+pad(o.num)+'</td><td>'+esc(cliName(o.cliId))+'</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">'+(waBtn||mailBtn?waBtn+mailBtn:'<span style="color:var(--text-muted);font-size:11px">—</span>')+'</div></td><td class="mono">'+fmtD(o.data)+'</td><td class="mono">'+fmtD(o.validade)+'</td><td class="mono">'+itens.length+'</td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td><td class="mono" style="color:var(--success)">'+fmt(o.lucro)+'</td><td><span class="badge '+stB+'">'+o.status+'</span></td><td onclick="event.stopPropagation()"><div class="row-actions">'+aprovarBtn+reprovarBtn+prodBtn+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editarCabecalhoOrc(\''+o.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delOrcamento(\''+o.id+'\')">🗑️</button>':'')+'</div></td></tr>';
-  const linhasItens=itens.length?itens.map(it=>'<tr style="background:var(--surface2);cursor:pointer" onclick="if(event.target.closest(\'button\'))return;'+(it.id==='legacy'?'abrirDetalheOrc(\''+o.id+'\')':'abrirDetalheOrc(\''+o.id+'\');setTimeout(()=>editarItemOrc(\''+it.id+'\'),0)')+'"><td></td><td colspan="4" style="padding-left:30px;font-size:12.5px;color:var(--text)">↳ '+(tipoL[it.tipo]||'')+' <strong>'+esc(it.desc)+'</strong></td><td class="mono" style="font-size:12px">'+(it.qty||1)+'</td><td class="mono" style="font-size:12px;font-weight:600">'+fmt(it.preco)+'</td><td class="mono" style="font-size:12px;color:var(--success)">'+fmt(it.lucro||0)+'</td><td></td><td></td></tr>').join('')
-   :'<tr style="background:var(--surface2)"><td></td><td colspan="9" style="padding-left:30px;font-size:12px;color:var(--text-muted)">↳ Nenhum item ainda — clique no orçamento pra adicionar</td></tr>';
+  const tipoL={'sob_medida':'🔨','catalogo':'📦','novo_produto':'🆕'};
+  const colapsado=ORC_COLAPSADOS.has(o.id);
+  const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(colapsado?'Expandir itens':'Recolher itens')+'" onclick="event.stopPropagation();toggleItensOrc(\''+o.id+'\')">'+(colapsado?'▸':'▾')+'</button>':'<span style="display:inline-block;width:29px"></span>';
+  const linhaHeader='<tr style="cursor:pointer;border-left:3px solid '+(stB==='badge-success'?'var(--success)':stB==='badge-danger'?'var(--danger)':stB==='badge-info'?'var(--primary)':'transparent')+'" onclick="if(event.target.closest(\'button\'))return;abrirDetalheOrc(\''+o.id+'\')"><td class="mono" style="white-space:nowrap">'+chevron+'ORC-'+pad(o.num)+'</td><td>'+esc(cliName(o.cliId))+'</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">'+(waBtn||mailBtn?waBtn+mailBtn:'<span style="color:var(--text-muted);font-size:11px">—</span>')+'</div></td><td class="mono">'+fmtD(o.data)+'</td><td class="mono">'+fmtD(o.validade)+'</td><td class="mono">'+itens.length+(itens.length&&colapsado?' <span style="color:var(--text-muted);font-size:10px">(recolhido)</span>':'')+'</td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td><td class="mono" style="color:var(--success)">'+fmt(o.lucro)+'</td><td><span class="badge '+stB+'">'+o.status+'</span></td><td onclick="event.stopPropagation()"><div class="row-actions">'+aprovarBtn+reprovarBtn+prodBtn+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editarCabecalhoOrc(\''+o.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delOrcamento(\''+o.id+'\')">🗑️</button>':'')+'</div></td></tr>';
+  let linhasItens='';
+  if(!colapsado){
+   linhasItens=itens.length?itens.map(it=>'<tr style="background:var(--surface2);cursor:pointer;border-left:3px solid var(--surface3)" onclick="if(event.target.closest(\'button\'))return;'+(it.id==='legacy'?'abrirDetalheOrc(\''+o.id+'\')':'abrirDetalheOrc(\''+o.id+'\');setTimeout(()=>editarItemOrc(\''+it.id+'\'),0)')+'"><td></td><td colspan="4" style="padding:7px 14px 7px 32px;font-size:12.5px;color:var(--text)">'+(tipoL[it.tipo]||'•')+' <strong>'+esc(it.desc)+'</strong></td><td class="mono" style="font-size:12px">'+(it.qty||1)+'</td><td class="mono" style="font-size:12px;font-weight:600">'+fmt(it.preco)+'</td><td class="mono" style="font-size:12px;color:var(--success)">'+fmt(it.lucro||0)+'</td><td></td><td></td></tr>').join('')
+    :'<tr style="background:var(--surface2)"><td></td><td colspan="9" style="padding:7px 14px 7px 32px;font-size:12px;color:var(--text-muted)">Nenhum item ainda — clique no orçamento pra adicionar</td></tr>';
+  }
   return linhaHeader+linhasItens;}).join('')||emptyRow(10,'Nenhum orçamento no período selecionado');}
+let ORC_COLAPSADOS=new Set();
+function toggleItensOrc(id){if(ORC_COLAPSADOS.has(id))ORC_COLAPSADOS.delete(id);else ORC_COLAPSADOS.add(id);renderOrcamentos();}
 function abrirWhatsappOrc(id){const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  const cli=DB.clientes.find(c=>c.id===o.cliId);if(!cli||!cli.tel){toast('Cliente sem telefone cadastrado.','error');return;}
  let digits=String(cli.tel).replace(/\D/g,'');if(!digits){toast('Telefone do cliente inválido.','error');return;}
@@ -1269,10 +1276,20 @@ async function excluirItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.f
  if(error){toast('Erro ao excluir item no Supabase: '+error.message,'error');return;}
  commit('editar','Orçamentos','Item "'+it.desc+'" removido de ORC-'+pad(o.num));syncSheets('orcamentos','upsert',o);
  toast('Item removido.','info');orcShow('detalhe');renderOrcDetalhe();}
-async function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!confirm('Excluir orçamento ORC-'+pad(o.num)+' inteiro (com todos os itens)?'))return;
+async function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+ const opsVinculadas=DB.producao.filter(op=>op.orcId===id);
+ let msg='Excluir orçamento ORC-'+pad(o.num)+' inteiro (com todos os itens)?';
+ if(opsVinculadas.length)msg+='\n\nEste orçamento tem '+opsVinculadas.length+' ordem(ns) de produção vinculada(s) no PCP. Elas serão mantidas (não apagadas), apenas desvinculadas do orçamento.';
+ if(!confirm(msg))return;
+ for(const op of opsVinculadas){
+  const {error:erroUnlink}=await supa.from('producao').update({orc_id:null}).eq('id',op.id);
+  if(erroUnlink){toast('Erro ao desvincular ordem de produção OP-'+pad(op.num)+': '+erroUnlink.message,'error');return;}
+  op.orcId=null;syncSheets('pcp','upsert',op);
+ }
  const {error}=await supa.from('orcamentos').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
- DB.orcamentos=DB.orcamentos.filter(x=>x.id!==id);commit('excluir','Orçamentos','ORC-'+pad(o.num));syncSheets('orcamentos','delete',{id});toast('Orçamento excluído.','info');}
+ DB.orcamentos=DB.orcamentos.filter(x=>x.id!==id);commit('excluir','Orçamentos','ORC-'+pad(o.num));syncSheets('orcamentos','delete',{id});
+ toast('Orçamento excluído.'+(opsVinculadas.length?' Ordem(ns) de produção mantidas no PCP.':''),'info');}
 const PAG_LABELS={pix:'PIX',cartao:'Cartão de Crédito',dinheiro:'Dinheiro',transferencia:'Transferência',boleto:'Boleto'};
 function taxaParcela(n){return Number(DB.config.cf['taxaParc'+n])||0;}
 function popularParcelasSelect(valor){const sel=$('aprv-parcelas');let h='';for(let n=1;n<=10;n++){const taxa=taxaParcela(n);const total=valor*(1+taxa/100);h+='<option value="'+n+'"'+(n===2?' selected':'')+'>'+n+'x'+(taxa?' (+'+fmtN(taxa,1)+'%)':'')+' de '+fmt(total/n)+'</option>';}sel.innerHTML=h;}
