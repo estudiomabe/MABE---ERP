@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root {
   --bg: #f5f0e8; --surface: #faf7f2; --surface2: #ede8df; --surface3: #e0d9ce;
@@ -571,6 +573,13 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 
 <!-- MODALS -->
 <!-- MODAL APROVAR ORÇAMENTO -->
+<!-- MODAL GERAR PDF -->
+<div class="modal-overlay" id="modal-pdf-orc"><div class="modal"><div class="modal-header"><div class="modal-title">📄 Gerar PDF do Orçamento</div><button class="modal-close" onclick="closeModal('modal-pdf-orc')">✕</button></div><div class="modal-body">
+<p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Marque os itens que devem entrar no PDF:</p>
+<div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="marcarTodosItensPdf(true)">Marcar todos</button><button class="btn btn-ghost btn-sm" onclick="marcarTodosItensPdf(false)">Desmarcar todos</button></div>
+<div id="pdf-itens-lista" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto"></div>
+<div style="text-align:right;margin-top:14px;font-size:13px;font-weight:700">Total selecionado: <span id="pdf-total-sel" class="mono" style="color:var(--accent)">R$ 0,00</span></div>
+</div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-pdf-orc')">Cancelar</button><button class="btn btn-primary" onclick="gerarPdfOrcamento()">📄 Gerar PDF</button></div></div></div>
 <div class="modal-overlay" id="modal-aprovar-orc"><div class="modal"><div class="modal-header"><div class="modal-title">✔ Aprovar Orçamento</div><button class="modal-close" onclick="closeModal('modal-aprovar-orc')">✕</button></div><div class="modal-body">
 <input type="hidden" id="aprv-orc-id">
 <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px" id="aprv-orc-desc"></p>
@@ -1171,7 +1180,7 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
  const podeDecidir=canEdit()&&itens.length>0&&o.status!=='Aprovado'&&o.status!=='Reprovado'&&o.status!=='Concluído';
  const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>':'';
  const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" onclick="rejeitarOrcamento(\''+o.id+'\')">✗ Reprovar</button>':'';
- $('orcd-acoes').innerHTML=aprovarBtn+reprovarBtn+'<button class="btn btn-ghost btn-sm" onclick="imprimirOrcamento()">🖨️ Imprimir</button>';
+ $('orcd-acoes').innerHTML=aprovarBtn+reprovarBtn+'<button class="btn btn-ghost btn-sm" onclick="abrirPdfOrcamento()">📄 Gerar PDF</button><button class="btn btn-ghost btn-sm" onclick="imprimirOrcamento()">🖨️ Imprimir</button>';
  const tipoL={'sob_medida':'🔨 Sob medida','catalogo':'📦 Catálogo','novo_produto':'🆕 Novo produto'};
  $('tb-orc-itens').innerHTML=itens.map(it=>'<tr><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong></td><td class="mono">'+(it.qty||1)+'</td><td class="mono" style="font-weight:700">'+fmt(it.preco)+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>').join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
  $('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);}
@@ -1390,6 +1399,43 @@ async function salvarItemCatalogo(){if(!guard())return;const c=calcCatalogo();if
  commit('editar','Orçamentos','Item "'+item.desc+'" salvo em ORC-'+pad(o.num));syncSheets('orcamentos','upsert',o);
  toast('Item salvo!','success');
  ORC_VOLTAR='detalhe';orcShow('detalhe');renderOrcDetalhe();}
+function abrirPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ const itens=itensOrc(o);
+ if(!itens.length){toast('Este orçamento não tem itens.','error');return;}
+ $('pdf-itens-lista').innerHTML=itens.map(it=>'<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer"><input type="checkbox" class="pdf-item-check" value="'+it.id+'" data-preco="'+(it.preco||0)+'" checked style="width:16px;height:16px;flex-shrink:0" onchange="atualizarTotalPdf()"><div style="flex:1;min-width:0"><strong>'+esc(it.desc)+'</strong><div style="font-size:11px;color:var(--text-muted)">Qtd: '+(it.qty||1)+'</div></div><span class="mono" style="font-weight:700;flex-shrink:0">'+fmt(it.preco)+'</span></label>').join('');
+ atualizarTotalPdf();
+ openModal('modal-pdf-orc');}
+function marcarTodosItensPdf(v){document.querySelectorAll('.pdf-item-check').forEach(c=>c.checked=v);atualizarTotalPdf();}
+function atualizarTotalPdf(){let t=0;document.querySelectorAll('.pdf-item-check:checked').forEach(c=>t+=Number(c.dataset.preco)||0);$('pdf-total-sel').textContent=fmt(t);}
+function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ const idsSelecionados=Array.from(document.querySelectorAll('.pdf-item-check:checked')).map(c=>c.value);
+ if(!idsSelecionados.length){toast('Selecione ao menos um item.','error');return;}
+ if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+ const itens=itensOrc(o).filter(it=>idsSelecionados.includes(it.id));
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF();
+ doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(26,23,20);
+ doc.text('ESTÚDIO MABE',14,20);
+ doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(122,111,98);
+ doc.text('Marcenaria de Madeira Maciça — Orçamento ORC-'+pad(o.num),14,27);
+ doc.setTextColor(26,23,20);doc.setFontSize(11);
+ doc.text('Cliente: '+cliName(o.cliId),14,38);
+ doc.text('Data: '+fmtD(o.data)+'   Entrega: '+fmtD(o.validade),14,45);
+ let y=55;
+ if(o.obs){doc.setFontSize(9);doc.setTextColor(122,111,98);
+  const obsLines=doc.splitTextToSize(o.obs,180);
+  doc.text(obsLines,14,y);y+=obsLines.length*4+8;doc.setTextColor(26,23,20);}
+ const rows=itens.map(it=>[it.desc,String(it.qty||1),fmt((it.qty||1)?it.preco/(it.qty||1):it.preco),fmt(it.preco)]);
+ doc.autoTable({startY:y,head:[['Item','Qtd','Unit.','Subtotal']],body:rows,theme:'grid',headStyles:{fillColor:[26,23,20],textColor:255},styles:{fontSize:9,cellPadding:4}});
+ const totalSelecionado=itens.reduce((s,it)=>s+Number(it.preco||0),0);
+ const finalY=(doc.lastAutoTable?doc.lastAutoTable.finalY:y)+10;
+ doc.setFontSize(14);doc.setFont('helvetica','bold');
+ doc.text('Investimento: '+fmt(totalSelecionado),14,finalY);
+ doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(122,111,98);
+ doc.text('Peças produzidas artesanalmente em madeira maciça. Valores válidos até a data de entrega indicada.',14,finalY+12);
+ doc.save('Orcamento-ORC-'+pad(o.num)+'.pdf');
+ closeModal('modal-pdf-orc');
+ toast('PDF gerado! Confira sua pasta de downloads.','success');}
 function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const itens=itensOrc(o);
  const rows=itens.map(it=>'<tr><td>'+esc(it.desc)+'</td><td style="text-align:right">'+(it.qty||1)+'</td><td style="text-align:right">'+fmt((it.qty||1)?it.preco/(it.qty||1):it.preco)+'</td><td style="text-align:right">'+fmt(it.preco)+'</td></tr>').join('');
