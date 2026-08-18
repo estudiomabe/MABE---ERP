@@ -346,6 +346,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="stat-box"><div class="stat-value" id="rel-margem">0%</div><div class="stat-label">Margem média (orçamentos)</div></div>
         <div class="stat-box"><div class="stat-value" id="rel-ticket">R$ 0</div><div class="stat-label">Ticket médio</div></div>
         <div class="stat-box"><div class="stat-value" id="rel-madeira">0,000 m³</div><div class="stat-label">Madeira em estoque</div></div>
+        <div class="stat-box"><div class="stat-value" id="rel-reserva" style="color:#6fa8e0">R$ 0</div><div class="stat-label">Fundo de Reserva acumulado</div></div>
       </div>
       <div class="bottom-grid" style="margin-bottom:14px">
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">📊 Margem por Orçamento</div></div><table><thead><tr><th>Descrição</th><th>Preço</th><th>Custo</th><th>Lucro</th><th>Margem</th></tr></thead><tbody id="tb-rel-margem"></tbody></table></div>
@@ -460,9 +461,10 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
               <div class="form-group"><label class="form-label">Horas Auxiliar</label><input type="number" class="form-control" id="mdo-qhaux" oninput="calcOrc()"></div>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total MDO</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-mdo">R$ 0,00</span></div>
             </div></div>
-            <div class="config-card" style="margin:0"><div class="config-title">📊 Impostos & Markup</div><div class="form-grid form-2">
+            <div class="config-card" style="margin:0"><div class="config-title">📊 Reserva, Impostos & Markup</div><div class="form-grid form-2">
+              <div class="form-group"><label class="form-label">Fundo de Reserva (%)</label><input type="number" class="form-control" id="orc-reserva" step="0.5" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Reserva sobre o custo, separada do lucro</div></div>
               <div class="form-group"><label class="form-label">Imposto (%)</label><input type="number" class="form-control" id="orc-imposto" step="0.1" oninput="calcOrc()"></div>
-              <div class="form-group"><label class="form-label">Markup (%)</label><input type="number" class="form-control" id="orc-markup" step="1" oninput="calcOrc()"></div>
+              <div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="orc-markup" step="1" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">% do preço final que vira lucro</div></div>
             </div></div>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
@@ -479,8 +481,8 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Mão de Obra</span><span id="res-mdo" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="height:1px;background:rgba(255,255,255,0.1);margin:4px 0"></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.8)"><span>Custo Total</span><span id="res-custo" style="font-family:var(--mono)">R$ 0,00</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;color:#6fa8e0"><span>Fundo de Reserva</span><span id="res-reserva" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Imposto</span><span id="res-imposto" style="font-family:var(--mono)">R$ 0,00</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Markup</span><span id="res-markup" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="height:1px;background:rgba(255,255,255,0.1);margin:4px 0"></div>
                 <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;color:var(--accent);font-weight:700">Preço Sugerido</span><span id="res-preco" style="font-family:var(--mono);font-size:22px;font-weight:800;color:var(--accent)">R$ 0,00</span></div>
                 <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px"><span style="font-size:12px;color:rgba(250,247,242,0.5)">Lucro estimado</span><span id="res-lucro" style="font-family:var(--mono);font-size:14px;font-weight:700;color:#6fcf97">R$ 0,00</span></div>
@@ -541,7 +543,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <div class="form-grid form-2"><div class="form-group"><label class="form-label">Contador (R$)</label><input type="number" class="form-control" id="cfg-contador" step="0.01"></div><div class="form-group"><label class="form-label">Outros (R$)</label><input type="number" class="form-control" id="cfg-outros" step="0.01"></div></div>
           <div class="form-grid form-2"><div class="form-group"><label class="form-label">Horas/Mês</label><input type="number" class="form-control" id="cfg-hmes"></div><div class="form-group"><label class="form-label">R$/h Sócio</label><input type="number" class="form-control" id="cfg-hsocio" step="0.01"></div></div>
           <div class="form-grid form-2"><div class="form-group"><label class="form-label">R$/h Auxiliar</label><input type="number" class="form-control" id="cfg-haux" step="0.01"></div><div class="form-group"><label class="form-label">Imposto (%)</label><input type="number" class="form-control" id="cfg-imposto" step="0.1"></div></div>
-          <div class="form-group"><label class="form-label">Markup (%)</label><input type="number" class="form-control" id="cfg-markup" step="1"></div>
+          <div class="form-grid form-2"><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="cfg-markup" step="1"></div><div class="form-group"><label class="form-label">Fundo de Reserva Padrão (%)</label><input type="number" class="form-control" id="cfg-reserva" step="0.5"></div></div>
           <button class="btn btn-primary" onclick="saveCFConfig()">💾 Salvar Configurações de Custo</button>
         </div>
       </div>
@@ -704,7 +706,7 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Admin',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0}},
+ config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
@@ -1208,7 +1210,7 @@ function resetOrcForm(tipo){const cf=DB.config.cf;
  $('orc-id').value='';$('orc-tipo').value=tipo;$('orc-desc').value='';$('orc-obs').value='';
  $('cf-aluguel').value=cf.aluguel;$('cf-iptu').value=cf.iptu;$('cf-agua').value=cf.agua;$('cf-energia').value=cf.energia;$('cf-contador').value=cf.contador;$('cf-outros').value=cf.outros;
  $('mdo-hmes').value=cf.hmes;$('mdo-hsocio').value=cf.hsocio;$('mdo-haux').value=cf.haux;$('mdo-qhsocio').value='';$('mdo-qhaux').value='';
- $('orc-imposto').value=cf.imposto;$('orc-markup').value=cf.markup;
+ $('orc-imposto').value=cf.imposto;$('orc-markup').value=cf.markup;$('orc-reserva').value=cf.reserva!==undefined?cf.reserva:10;
  $('orc-materiais').innerHTML='';
  $('card-novo-produto').style.display=tipo==='novo_produto'?'block':'none';
  $('res-novo-produto').style.display=tipo==='novo_produto'?'block':'none';
@@ -1235,14 +1237,17 @@ function computeOrc(){const cfT=['aluguel','iptu','agua','energia','contador','o
   r.querySelector('.om-sub').textContent=fmt(sub);mat+=sub;
   const sel=r.querySelector('.om-sel');const inp=r.querySelector('.om-desc');
   materiais.push({mode:r.dataset.mode,ref:sel?sel.value:'',desc:sel?(sel.selectedOptions[0]?sel.selectedOptions[0].textContent.trim():''):(inp?inp.value.trim():''),qty,custo});});
- const custo=cfRat+mdo+mat;const mk=num('orc-markup'),imp=Math.min(num('orc-imposto'),99);
- const precoBase=custo*(1+mk/100);const preco=precoBase/(1-imp/100);
- const impostoVal=preco-precoBase,markupVal=precoBase-custo,lucro=preco-custo-impostoVal;
- return{cfRat,mdo,mat,materiais,custo,impostoVal,markupVal,preco,lucro};}
+ const custo=cfRat+mdo+mat;const rsv=num('orc-reserva'),margem=Math.max(0,num('orc-markup')),imp=Math.max(0,num('orc-imposto'));
+ const reservaVal=custo*rsv/100;const custoBase=custo+reservaVal;
+ const combinado=Math.min(imp+margem,95);
+ const preco=custoBase/(1-combinado/100);
+ const impostoVal=preco*imp/100,lucro=preco*margem/100;
+ return{cfRat,mdo,mat,materiais,custo,reservaVal,impostoVal,preco,lucro};}
 function calcOrc(){const t=computeOrc();
  $('orc-total-cf').textContent=fmt(t.cfRat);$('orc-total-mdo').textContent=fmt(t.mdo);$('orc-total-mat').textContent=fmt(t.mat);
  $('res-cf').textContent=fmt(t.cfRat);$('res-mat').textContent=fmt(t.mat);$('res-mdo').textContent=fmt(t.mdo);$('res-custo').textContent=fmt(t.custo);
- $('res-imposto').textContent=fmt(t.impostoVal);$('res-markup').textContent=fmt(t.markupVal);$('res-preco').textContent=fmt(t.preco);$('res-lucro').textContent=fmt(t.lucro);}
+ $('res-reserva').textContent=fmt(t.reservaVal);
+ $('res-imposto').textContent=fmt(t.impostoVal);$('res-preco').textContent=fmt(t.preco);$('res-lucro').textContent=fmt(t.lucro);}
 async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value.trim();if(!desc){toast('Informe a descrição.','error');return;}
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o){toast('Orçamento não encontrado.','error');return;}
  const tipo=$('orc-tipo').value;const t=computeOrc();
@@ -1252,7 +1257,7 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
   if(erroProd){toast('Erro ao cadastrar produto no Supabase: '+erroProd.message,'error');return;}
   DB.produtos.push(novoProd);syncSheets('produtos','upsert',novoProd);
   toast('Produto "'+nome+'" cadastrado no catálogo!','success');}
- const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,imposto:num('orc-imposto'),markup:num('orc-markup'),qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
+ const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,reserva:num('orc-reserva'),reservaVal:t.reservaVal,imposto:num('orc-imposto'),markup:num('orc-markup'),qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
@@ -1272,7 +1277,7 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
  $('orc-id').value=it.id;$('orc-desc').value=it.desc;$('orc-obs').value=it.obs||'';
  const cf=it.cf||{};$('cf-aluguel').value=cf.aluguel||0;$('cf-iptu').value=cf.iptu||0;$('cf-agua').value=cf.agua||0;$('cf-energia').value=cf.energia||0;$('cf-contador').value=cf.contador||0;$('cf-outros').value=cf.outros||0;$('mdo-hmes').value=cf.hmes||176;
  const md=it.mdo||{};$('mdo-hsocio').value=md.hsocio||0;$('mdo-haux').value=md.haux||0;$('mdo-qhsocio').value=md.qhsocio||'';$('mdo-qhaux').value=md.qhaux||'';
- $('orc-imposto').value=it.imposto;$('orc-markup').value=it.markup;
+ $('orc-imposto').value=it.imposto;$('orc-markup').value=it.markup;$('orc-reserva').value=it.reserva!==undefined?it.reserva:0;
  $('orc-materiais').innerHTML='';(it.materiais||[]).forEach(m=>addMaterial(m.mode||'livre',m));
  $('orc-form-title').textContent='Editar Item';calcOrc();
  ORC_ITEM_EDITANDO=itemId;ORC_VOLTAR='detalhe';orcShow('form');}
@@ -1732,6 +1737,8 @@ function renderRelatorios(){syncPerBar('rel-per',REL);
  $('rel-margem').textContent=margens.length?fmtN(margens.reduce((a,b)=>a+b,0)/margens.length,1)+'%':'0%';
  const m3=DB.madeiras.reduce((s,m)=>s+madM3(m),0);
  $('rel-madeira').textContent=fmtN(m3,3)+' m³';
+ const reservaTotal=DB.orcamentos.filter(o=>o.status==='Aprovado'||o.status==='Concluído').reduce((s,o)=>s+itensOrc(o).reduce((s2,it)=>s2+Number(it.reservaVal||0),0),0);
+ $('rel-reserva').textContent=fmtK(reservaTotal);
  $('tb-rel-margem').innerHTML=orcV.slice(0,10).map(o=>{const mg=Number(o.lucro)/Number(o.preco)*100;
   return '<tr><td>'+esc(resumoOrc(o))+'</td><td class="mono">'+fmt(o.preco)+'</td><td class="mono">'+fmt(o.custo)+'</td><td class="mono" style="color:var(--success)">'+fmt(o.lucro)+'</td><td><span class="badge '+(mg>=30?'badge-success':mg>=15?'badge-warning':'badge-danger')+'">'+fmtN(mg,1)+'%</span></td></tr>';}).join('')||emptyRow(5,'Sem orçamentos');
  const porCli={};vendasOk.forEach(v=>{if(!porCli[v.cliId])porCli[v.cliId]={n:0,t:0};porCli[v.cliId].n++;porCli[v.cliId].t+=Number(v.total||0);});
@@ -1804,7 +1811,7 @@ async function clearHistorico(){if(!isAdmin()){toast('Apenas administradores.','
  DB.historico=[];saveDB();renderHistorico();toast('Histórico limpo.','info');}
 function renderConfig(){$('sheets-url').value=DB.config.sheetsUrl||'';const cf=DB.config.cf;
  $('cfg-aluguel').value=cf.aluguel;$('cfg-iptu').value=cf.iptu;$('cfg-agua').value=cf.agua;$('cfg-energia').value=cf.energia;$('cfg-contador').value=cf.contador;$('cfg-outros').value=cf.outros;
- $('cfg-hmes').value=cf.hmes;$('cfg-hsocio').value=cf.hsocio;$('cfg-haux').value=cf.haux;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;
+ $('cfg-hmes').value=cf.hmes;$('cfg-hsocio').value=cf.hsocio;$('cfg-haux').value=cf.haux;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;$('cfg-reserva').value=cf.reserva;
  $('cfg-pix-ant').value=cf.pixAntecipado;
  for(let n=1;n<=10;n++)$('cfg-taxa-p'+n).value=cf['taxaParc'+n];}
 function saveConfig(){DB.config.sheetsUrl=$('sheets-url').value.trim();saveDB();
@@ -1814,7 +1821,7 @@ function saveConfig(){DB.config.sheetsUrl=$('sheets-url').value.trim();saveDB();
   else{st.textContent='⚠️ URL respondeu, mas não reconheceu o formato esperado.';st.style.color='var(--warning)';}})
  .catch(()=>{st.textContent='❌ Não foi possível conectar. Confira a URL e a implantação do Apps Script.';st.style.color='var(--danger)';});}
 async function saveCFConfig(){if(!guard())return;
- Object.assign(DB.config.cf,{aluguel:num('cfg-aluguel'),iptu:num('cfg-iptu'),agua:num('cfg-agua'),energia:num('cfg-energia'),contador:num('cfg-contador'),outros:num('cfg-outros'),hmes:num('cfg-hmes')||176,hsocio:num('cfg-hsocio'),haux:num('cfg-haux'),imposto:num('cfg-imposto'),markup:num('cfg-markup')});
+ Object.assign(DB.config.cf,{aluguel:num('cfg-aluguel'),iptu:num('cfg-iptu'),agua:num('cfg-agua'),energia:num('cfg-energia'),contador:num('cfg-contador'),outros:num('cfg-outros'),hmes:num('cfg-hmes')||176,hsocio:num('cfg-hsocio'),haux:num('cfg-haux'),imposto:num('cfg-imposto'),markup:num('cfg-markup'),reserva:num('cfg-reserva')});
  saveDB();log('editar','Configurações','Custos fixos padrão atualizados');saveDB();
  const {error}=await supa.from('config').upsert(Object.entries(DB.config.cf).map(([campo,valor])=>({campo,valor})));
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
