@@ -148,7 +148,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 .toast.success { border-left:3px solid var(--success); } .toast.error { border-left:3px solid var(--danger); } .toast.info { border-left:3px solid var(--primary); }
 @keyframes slideIn { from { opacity:0;transform:translateX(20px); } to { opacity:1;transform:translateX(0); } }
 .table-wrapper { overflow-x:auto; }
-#vnd-itens, #orc-materiais { overflow-x:auto; }
+#vnd-itens, #orc-materiais, #orc-servicos { overflow-x:auto; }
 #sidebar-backdrop { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:150; }
 @media (max-width:860px) {
   #btn-menu { display:inline-flex !important; }
@@ -169,6 +169,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   .parc-taxa-grid { grid-template-columns:repeat(2,1fr) !important; }
   .modal, .modal-lg { width:94vw; }
   #vnd-itens>div, #orc-materiais>div { grid-template-columns:minmax(110px,2fr) 55px 70px 65px 24px !important; }
+  #orc-servicos>div { grid-template-columns:minmax(90px,1fr) minmax(110px,2fr) 65px 24px !important; }
 }
 @media (max-width:460px) {
   .kpi-grid, .pcp-stats { grid-template-columns:1fr; }
@@ -449,16 +450,12 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
               <div class="form-grid form-2"><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="np-un"><option>un</option><option>m</option><option>m²</option><option>cx</option><option>par</option></select></div><div class="form-group"><label class="form-label">Estoque Inicial</label><input type="number" class="form-control" id="np-est" value="0" min="0"></div></div>
               <div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="np-min" value="1" min="0"></div>
             </div></div>
-            <div class="config-card" style="margin:0"><div class="config-title">🏢 Custos Fixos (Rateio)</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Rateado pelas horas trabalhadas (sócio + auxiliar)</div><div class="form-grid">
-              <div class="form-grid form-2"><div class="form-group"><label class="form-label">Aluguel</label><input type="number" class="form-control" id="cf-aluguel" step="0.01" oninput="calcOrc()"></div><div class="form-group"><label class="form-label">IPTU</label><input type="number" class="form-control" id="cf-iptu" step="0.01" oninput="calcOrc()"></div></div>
-              <div class="form-grid form-2"><div class="form-group"><label class="form-label">Água</label><input type="number" class="form-control" id="cf-agua" step="0.01" oninput="calcOrc()"></div><div class="form-group"><label class="form-label">Energia</label><input type="number" class="form-control" id="cf-energia" step="0.01" oninput="calcOrc()"></div></div>
-              <div class="form-grid form-2"><div class="form-group"><label class="form-label">Contador</label><input type="number" class="form-control" id="cf-contador" step="0.01" oninput="calcOrc()"></div><div class="form-group"><label class="form-label">Outros</label><input type="number" class="form-control" id="cf-outros" step="0.01" oninput="calcOrc()"></div></div>
+            <div class="config-card" style="margin:0"><div class="config-title">🏢 Custos Fixos (Rateio)</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Definidos em Configurações — rateados automaticamente pelas horas trabalhadas neste item</div>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total rateado</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-cf">R$ 0,00</span></div>
-            </div></div>
-            <div class="config-card" style="margin:0"><div class="config-title">👷 Mão de Obra (MDO)</div><div class="form-grid">
-              <div class="form-grid form-2"><div class="form-group"><label class="form-label">Horas/Mês</label><input type="number" class="form-control" id="mdo-hmes" oninput="calcOrc()"></div><div class="form-group"><label class="form-label">R$/h Sócio</label><input type="number" class="form-control" id="mdo-hsocio" step="0.01" oninput="calcOrc()"></div></div>
-              <div class="form-grid form-2"><div class="form-group"><label class="form-label">Horas Sócio</label><input type="number" class="form-control" id="mdo-qhsocio" oninput="calcOrc()"></div><div class="form-group"><label class="form-label">R$/h Auxiliar</label><input type="number" class="form-control" id="mdo-haux" step="0.01" oninput="calcOrc()"></div></div>
-              <div class="form-group"><label class="form-label">Horas Auxiliar</label><input type="number" class="form-control" id="mdo-qhaux" oninput="calcOrc()"></div>
+            </div>
+            <div class="config-card" style="margin:0"><div class="config-title">👷 Mão de Obra (MDO)</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Taxas por hora definidas em Configurações — informe só as horas deste item</div><div class="form-grid">
+              <div class="form-group"><label class="form-label" id="mdo-lbl-socio">Horas Sócio</label><input type="number" class="form-control" id="mdo-qhsocio" oninput="calcOrc()"></div>
+              <div class="form-group"><label class="form-label" id="mdo-lbl-aux">Horas Auxiliar</label><input type="number" class="form-control" id="mdo-qhaux" oninput="calcOrc()"></div>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total MDO</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-mdo">R$ 0,00</span></div>
             </div></div>
             <div class="config-card" style="margin:0"><div class="config-title">📊 Reserva, Impostos & Markup</div><div class="form-grid form-2">
@@ -473,12 +470,18 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
               <div id="orc-materiais" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Materiais</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-mat">R$ 0,00</span></div>
             </div>
+            <div class="config-card" style="margin:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button></div>
+              <div id="orc-servicos" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+              <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Serviços</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-serv">R$ 0,00</span></div>
+            </div>
             <div class="config-card" style="margin:0;background:#1a1714;border-color:#1a1714">
               <div class="config-title" style="color:#faf7f2;margin-bottom:16px">💰 Resumo</div>
               <div style="display:flex;flex-direction:column;gap:8px">
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Custos Fixos</span><span id="res-cf" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Materiais</span><span id="res-mat" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Mão de Obra</span><span id="res-mdo" style="font-family:var(--mono)">R$ 0,00</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Serviços Terceirizados</span><span id="res-serv" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="height:1px;background:rgba(255,255,255,0.1);margin:4px 0"></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.8)"><span>Custo Total</span><span id="res-custo" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:#6fa8e0"><span>Fundo de Reserva</span><span id="res-reserva" style="font-family:var(--mono)">R$ 0,00</span></div>
@@ -1208,13 +1211,14 @@ function selecionarTipoOrc(tipo){if(tipo==='catalogo'){resetOrcCatalogo();orcSho
  resetOrcForm(tipo);orcShow('form');}
 function resetOrcForm(tipo){const cf=DB.config.cf;
  $('orc-id').value='';$('orc-tipo').value=tipo;$('orc-desc').value='';$('orc-obs').value='';
- $('cf-aluguel').value=cf.aluguel;$('cf-iptu').value=cf.iptu;$('cf-agua').value=cf.agua;$('cf-energia').value=cf.energia;$('cf-contador').value=cf.contador;$('cf-outros').value=cf.outros;
- $('mdo-hmes').value=cf.hmes;$('mdo-hsocio').value=cf.hsocio;$('mdo-haux').value=cf.haux;$('mdo-qhsocio').value='';$('mdo-qhaux').value='';
+ $('mdo-qhsocio').value='';$('mdo-qhaux').value='';
+ $('mdo-lbl-socio').textContent='Horas Sócio (R$'+fmtN(cf.hsocio,2)+'/h)';$('mdo-lbl-aux').textContent='Horas Auxiliar (R$'+fmtN(cf.haux,2)+'/h)';
  $('orc-imposto').value=cf.imposto;$('orc-markup').value=cf.markup;$('orc-reserva').value=cf.reserva!==undefined?cf.reserva:10;
  $('orc-materiais').innerHTML='';
  $('card-novo-produto').style.display=tipo==='novo_produto'?'block':'none';
  $('res-novo-produto').style.display=tipo==='novo_produto'?'block':'none';
  $('np-nome').value='';$('np-un').value='un';$('np-est').value='0';$('np-min').value='1';
+ $('orc-servicos').innerHTML='';
  $('orc-form-title').textContent='Novo Item';
  $('orc-tipo-badge').textContent=tipo==='sob_medida'?'Projeto sob medida — rateio de CF, MDO e materiais':'Novo produto — será cadastrado no catálogo ao salvar';
  calcOrc();}
@@ -1222,30 +1226,38 @@ function insumoOptions(sel){let h='<option value="">— Selecionar —</option>'
  if(DB.madeiras.length)h+='<optgroup label="🪵 Madeiras (custo R$/m³ — qtd em m³)">'+DB.madeiras.map(m=>'<option value="m:'+m.id+'" data-custo="'+(m.custo||0)+'"'+('m:'+m.id===sel?' selected':'')+'>'+esc(m.especie+' '+m.tipo+' '+m.esp+'×'+m.larg+'cm')+'</option>').join('')+'</optgroup>';
  if(DB.produtos.length)h+='<optgroup label="📦 Produtos / Insumos">'+DB.produtos.map(p=>'<option value="p:'+p.id+'" data-custo="'+(p.custo||0)+'"'+('p:'+p.id===sel?' selected':'')+'>'+esc(p.nome)+'</option>').join('')+'</optgroup>';
  return h;}
+function fornOptions(sel){return '<option value="">— Sem fornecedor —</option>'+DB.fornecedores.map(f=>'<option value="'+f.id+'"'+(f.id===sel?' selected':'')+'>'+esc(f.nome)+'</option>').join('');}
+function addServico(sv){const wrap=$('orc-servicos');const row=document.createElement('div');
+ row.style.cssText='display:grid;grid-template-columns:150px 2fr 100px 28px;gap:6px;align-items:center';
+ row.innerHTML='<select class="form-control sv-forn">'+fornOptions(sv?sv.fornId:'')+'</select><input type="text" class="form-control sv-desc" placeholder="Descrição do serviço (ex: Estofamento terceirizado)" value="'+esc(sv?sv.desc:'')+'"><input type="number" class="form-control sv-valor" value="'+(sv?sv.valor:0)+'" step="0.01" min="0" oninput="calcOrc()"><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
+ wrap.appendChild(row);calcOrc();}
 function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.createElement('div');row.dataset.mode=mode;
  row.style.cssText='display:grid;grid-template-columns:2fr 65px 85px 85px 28px;gap:6px;align-items:center';
  const desc=mode==='catalogo'?'<select class="form-control om-sel" onchange="omSel(this)">'+insumoOptions(it?it.ref:'')+'</select>':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
  row.innerHTML=desc+'<input type="number" class="form-control om-qty" value="'+(it?it.qty:1)+'" min="0" step="0.001" oninput="calcOrc()" title="Quantidade"><input type="number" class="form-control om-custo" value="'+(it?it.custo:0)+'" step="0.01" min="0" oninput="calcOrc()" title="Custo unitário"><div class="mono om-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
  wrap.appendChild(row);calcOrc();}
 function omSel(sel){const opt=sel.selectedOptions[0];sel.parentElement.querySelector('.om-custo').value=opt?opt.dataset.custo||0:0;calcOrc();}
-function computeOrc(){const cfT=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+num('cf-'+k),0);
- const hmes=num('mdo-hmes')||1,qhs=num('mdo-qhsocio'),qha=num('mdo-qhaux');
+function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0);
+ const hmes=Number(cfg.hmes)||1,qhs=num('mdo-qhsocio'),qha=num('mdo-qhaux');
  const cfRat=cfT/hmes*(qhs+qha);
- const mdo=qhs*num('mdo-hsocio')+qha*num('mdo-haux');
+ const mdo=qhs*(Number(cfg.hsocio)||0)+qha*(Number(cfg.haux)||0);
  let mat=0;const materiais=[];
  document.querySelectorAll('#orc-materiais > div').forEach(r=>{const qty=parseFloat(r.querySelector('.om-qty').value)||0;const custo=parseFloat(r.querySelector('.om-custo').value)||0;const sub=qty*custo;
   r.querySelector('.om-sub').textContent=fmt(sub);mat+=sub;
   const sel=r.querySelector('.om-sel');const inp=r.querySelector('.om-desc');
   materiais.push({mode:r.dataset.mode,ref:sel?sel.value:'',desc:sel?(sel.selectedOptions[0]?sel.selectedOptions[0].textContent.trim():''):(inp?inp.value.trim():''),qty,custo});});
- const custo=cfRat+mdo+mat;const rsv=num('orc-reserva'),margem=Math.max(0,num('orc-markup')),imp=Math.max(0,num('orc-imposto'));
+ let serv=0;const servicos=[];
+ document.querySelectorAll('#orc-servicos > div').forEach(r=>{const valor=parseFloat(r.querySelector('.sv-valor').value)||0;serv+=valor;
+  servicos.push({fornId:r.querySelector('.sv-forn').value,desc:r.querySelector('.sv-desc').value.trim(),valor});});
+ const custo=cfRat+mdo+mat+serv;const rsv=num('orc-reserva'),margem=Math.max(0,num('orc-markup')),imp=Math.max(0,num('orc-imposto'));
  const reservaVal=custo*rsv/100;const custoBase=custo+reservaVal;
  const combinado=Math.min(imp+margem,95);
  const preco=custoBase/(1-combinado/100);
  const impostoVal=preco*imp/100,lucro=preco*margem/100;
- return{cfRat,mdo,mat,materiais,custo,reservaVal,impostoVal,preco,lucro};}
+ return{cfRat,mdo,mat,materiais,serv,servicos,custo,reservaVal,impostoVal,preco,lucro};}
 function calcOrc(){const t=computeOrc();
- $('orc-total-cf').textContent=fmt(t.cfRat);$('orc-total-mdo').textContent=fmt(t.mdo);$('orc-total-mat').textContent=fmt(t.mat);
- $('res-cf').textContent=fmt(t.cfRat);$('res-mat').textContent=fmt(t.mat);$('res-mdo').textContent=fmt(t.mdo);$('res-custo').textContent=fmt(t.custo);
+ $('orc-total-cf').textContent=fmt(t.cfRat);$('orc-total-mdo').textContent=fmt(t.mdo);$('orc-total-mat').textContent=fmt(t.mat);$('orc-total-serv').textContent=fmt(t.serv);
+ $('res-cf').textContent=fmt(t.cfRat);$('res-mat').textContent=fmt(t.mat);$('res-mdo').textContent=fmt(t.mdo);$('res-serv').textContent=fmt(t.serv);$('res-custo').textContent=fmt(t.custo);
  $('res-reserva').textContent=fmt(t.reservaVal);
  $('res-imposto').textContent=fmt(t.impostoVal);$('res-preco').textContent=fmt(t.preco);$('res-lucro').textContent=fmt(t.lucro);}
 async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value.trim();if(!desc){toast('Informe a descrição.','error');return;}
@@ -1257,7 +1269,8 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
   if(erroProd){toast('Erro ao cadastrar produto no Supabase: '+erroProd.message,'error');return;}
   DB.produtos.push(novoProd);syncSheets('produtos','upsert',novoProd);
   toast('Produto "'+nome+'" cadastrado no catálogo!','success');}
- const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,reserva:num('orc-reserva'),reservaVal:t.reservaVal,imposto:num('orc-imposto'),markup:num('orc-markup'),qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
+ const cfgAtual=DB.config.cf;
+ const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes},mdo:{hsocio:cfgAtual.hsocio,haux:cfgAtual.haux,qhsocio:num('mdo-qhsocio'),qhaux:num('mdo-qhaux')},reserva:num('orc-reserva'),reservaVal:t.reservaVal,imposto:num('orc-imposto'),markup:num('orc-markup'),qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
@@ -1275,10 +1288,10 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
   selecionarProdCatalogo();ORC_ITEM_EDITANDO=itemId;ORC_VOLTAR='detalhe';orcShow('catalogo');return;}
  resetOrcForm(it.tipo);
  $('orc-id').value=it.id;$('orc-desc').value=it.desc;$('orc-obs').value=it.obs||'';
- const cf=it.cf||{};$('cf-aluguel').value=cf.aluguel||0;$('cf-iptu').value=cf.iptu||0;$('cf-agua').value=cf.agua||0;$('cf-energia').value=cf.energia||0;$('cf-contador').value=cf.contador||0;$('cf-outros').value=cf.outros||0;$('mdo-hmes').value=cf.hmes||176;
- const md=it.mdo||{};$('mdo-hsocio').value=md.hsocio||0;$('mdo-haux').value=md.haux||0;$('mdo-qhsocio').value=md.qhsocio||'';$('mdo-qhaux').value=md.qhaux||'';
+ const md=it.mdo||{};$('mdo-qhsocio').value=md.qhsocio||'';$('mdo-qhaux').value=md.qhaux||'';
  $('orc-imposto').value=it.imposto;$('orc-markup').value=it.markup;$('orc-reserva').value=it.reserva!==undefined?it.reserva:0;
  $('orc-materiais').innerHTML='';(it.materiais||[]).forEach(m=>addMaterial(m.mode||'livre',m));
+ $('orc-servicos').innerHTML='';(it.servicos||[]).forEach(sv=>addServico(sv));
  $('orc-form-title').textContent='Editar Item';calcOrc();
  ORC_ITEM_EDITANDO=itemId;ORC_VOLTAR='detalhe';orcShow('form');}
 async function excluirItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
