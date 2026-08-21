@@ -104,6 +104,7 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .kanban-card:hover { box-shadow:0 3px 12px rgba(0,0,0,0.08);transform:translateY(-1px); }
 .kanban-card-title { font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3; }
 .kanban-card-sub { font-size:11px;color:var(--text-muted);margin-bottom:8px; }
+.kanban-card-timer { font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-bottom:8px; }
 .kanban-card-footer { display:flex;align-items:center;justify-content:space-between; }
 .kanban-card-prazo { font-size:10px;font-family:var(--mono); }
 .kanban-card-prazo.vencido { color:var(--danger);font-weight:700; } .kanban-card-prazo.hoje { color:var(--warning);font-weight:700; } .kanban-card-prazo.ok { color:var(--text-muted); }
@@ -1502,7 +1503,12 @@ function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
 const ETAPAS=['📋 Planejamento','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','🔁 Retrabalho','📦 Pronto','🚚 Entregue'];
 const ETAPA_FINAL=ETAPAS.length-1;
 function opParaSupabase(o){const r={id:o.id,titulo:o.titulo,cli_id:o.cliId||null,prazo:o.prazo||null,resp:o.resp||null,prio:o.prio||null,etapa:o.etapa||0,status:o.status||'Ativa',obs:o.obs||null,orc_id:o.orcId||null,fim:o.fim||null};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
-function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim};}
+function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim,criadoEm:row.created_at};}
+function elapsedStr(iso){if(!iso)return '';const ms=Date.now()-new Date(iso).getTime();if(ms<0)return '0min';
+ const min=Math.floor(ms/60000);const dias=Math.floor(min/1440);const horas=Math.floor((min%1440)/60);const mins=min%60;
+ const partes=[];if(dias)partes.push(dias+'d');if(dias||horas)partes.push(horas+'h');partes.push(mins+'min');return partes.join(' ');}
+function tickPCPTimers(){document.querySelectorAll('.kanban-card-timer[data-criado]').forEach(el=>{const iso=el.getAttribute('data-criado');if(iso)el.textContent='⏱ '+elapsedStr(iso);});}
+setInterval(tickPCPTimers,60000);
 async function carregarProducaoSupabase(){
  const {data,error}=await supa.from('producao').select('*').order('num',{ascending:false});
  if(error){toast('Erro ao carregar produção do Supabase: '+error.message,'error');return;}
@@ -1517,7 +1523,7 @@ function renderPCP(){const t=today();const ativas=DB.producao.filter(o=>o.status
   +cards.map(o=>{const pcls=!o.prazo?'ok':o.prazo<t?'vencido':o.prazo===t?'hoje':'ok';
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
    const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶</button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
-   return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(o.titulo)+'</div><div class="kanban-card-sub">'+esc(cliName(o.cliId))+(o.resp?' · '+esc(o.resp):'')+'</div><div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
+   return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(o.titulo)+'</div><div class="kanban-card-sub">'+esc(cliName(o.cliId))+(o.resp?' · '+esc(o.resp):'')+'</div>'+(o.criadoEm?'<div class="kanban-card-timer" data-criado="'+o.criadoEm+'">⏱ '+elapsedStr(o.criadoEm)+'</div>':'')+'<div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
   +'</div>';}).join('');}
 function openOP(){$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';$('op-prio').value='Normal';$('op-etapa').value='0';$('op-obs').value='';
  $('op-btn-del').style.display='none';$('mop-title').textContent='Nova Ordem de Produção';openModal('modal-producao');}
@@ -1536,7 +1542,7 @@ async function saveOP(){if(!guard())return;const titulo=$('op-titulo').value.tri
   const n=Object.assign({id:uid(),status:'Ativa'},o);
   const {data,error}=await supa.from('producao').insert(opParaSupabase(n)).select().single();
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
-  n.num=data.num;
+  n.num=data.num;n.criadoEm=data.created_at;
   DB.producao.push(n);commit('criar','Produção',titulo);syncSheets('pcp','upsert',n);
  }
  closeModal('modal-producao');toast('Ordem de produção salva!','success');}
