@@ -262,6 +262,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <span id="per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
       </div>
       <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent:var(--text-muted)"><div class="kpi-label">Orçamentos do Período</div><div class="kpi-value" id="kpi-orcamentos">R$0</div><div class="kpi-sub" id="kpi-osub">orçamentos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Pedidos do Período</div><div class="kpi-value" id="kpi-vendas">R$0</div><div class="kpi-sub" id="kpi-vsub">pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Entradas</div><div class="kpi-value" id="kpi-entradas">R$0</div><div class="kpi-sub">recebido no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Saídas</div><div class="kpi-value" id="kpi-saidas">R$0</div><div class="kpi-sub">pago no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
@@ -908,6 +909,9 @@ function renderDashboard(){
  $('per-ano-sel').style.display=PER.modo==='tudo'?'none':'';
  $('per-label').textContent='📅 '+(PER.modo==='tudo'?'Todo o período':PER.modo==='ano'?('Ano '+PER.ano):(MESES[PER.mes]+'/'+PER.ano));
 
+ const oPer=DB.orcamentos.filter(o=>inPer(o.data)&&o.status!=='Reprovado');
+ $('kpi-orcamentos').textContent=fmtK(oPer.reduce((s,o)=>s+Number(o.preco||0),0));
+ $('kpi-osub').textContent=oPer.length+' orçamento(s)';
  const vPer=DB.vendas.filter(v=>inPer(v.data)&&v.status!=='Cancelado');
  const pagos=DB.financeiro.filter(f=>f.status==='Pago'&&inPer(f.data));
  const entradas=pagos.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
@@ -1113,7 +1117,8 @@ async function carregarOrcamentosSupabase(){
  const {data,error}=await supa.from('orcamentos').select('*').order('num',{ascending:false});
  if(error){toast('Erro ao carregar orçamentos do Supabase: '+error.message,'error');return;}
  DB.orcamentos=(data||[]).map(orcDeSupabase);saveDB();
- if(CUR==='orcamentos'&&$('orc-lista-view').style.display!=='none')renderOrcamentos();}
+ if(CUR==='orcamentos'&&$('orc-lista-view').style.display!=='none')renderOrcamentos();
+ if(CUR==='dashboard')renderDashboard();}
 function itensOrc(o){return (o.itens&&o.itens.length)?o.itens:(o.desc?[{id:'legacy',tipo:o.tipo||'sob_medida',desc:o.desc,qty:o.qty||1,preco:o.preco||0,custo:o.custo||0,lucro:o.lucro||0}]:[]);}
 function resumoOrc(o){const itens=itensOrc(o);if(!itens.length)return '(sem itens)';
  if(itens.length===1)return itens[0].desc;
