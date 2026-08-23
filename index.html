@@ -130,9 +130,11 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .form-label { font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px; }
 .form-control { background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color 0.15s;width:100%; }
 .form-control:focus { border-color:var(--primary);background:#fff; }
+.om-nao-encontrado .om-desc-cat { border-color:var(--warning);background:rgba(160,120,48,0.06); }
 .form-control::placeholder { color:var(--text-muted); }
 select.form-control { cursor:pointer; } select.form-control option { background:#fff;color:var(--text); }
-.stat-row { display:flex;gap:14px;margin-bottom:18px; }
+.stat-row { display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap; }
+.stat-row .stat-box { flex:1;min-width:150px; }
 .stat-box { flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .stat-value { font-size:20px;font-weight:800;font-family:var(--mono); }
 .stat-label { font-size:10px;color:var(--text-muted);margin-top:2px; }
@@ -349,11 +351,13 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="stat-box"><div class="stat-value" id="rel-ticket">R$ 0</div><div class="stat-label">Ticket médio</div></div>
         <div class="stat-box"><div class="stat-value" id="rel-madeira">0,000 m³</div><div class="stat-label">Madeira em estoque</div></div>
         <div class="stat-box"><div class="stat-value" id="rel-reserva" style="color:#6fa8e0">R$ 0</div><div class="stat-label">Fundo de Reserva acumulado</div></div>
+        <div class="stat-box"><div class="stat-value" id="rel-desvio">R$ 0</div><div class="stat-label">Desvio de preços manuais</div></div>
       </div>
       <div class="bottom-grid" style="margin-bottom:14px">
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">📊 Margem por Orçamento</div></div><table><thead><tr><th>Descrição</th><th>Preço</th><th>Custo</th><th>Lucro</th><th>Margem</th></tr></thead><tbody id="tb-rel-margem"></tbody></table></div>
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">🏆 Top Clientes</div></div><table><thead><tr><th>Cliente</th><th>Pedidos</th><th>Total Comprado</th></tr></thead><tbody id="tb-rel-clientes"></tbody></table></div>
       </div>
+      <div class="table-wrapper" style="margin-bottom:14px"><div class="table-toolbar"><div class="table-toolbar-title">✏️ Preços Ajustados Manualmente <span style="font-size:11px;color:var(--text-muted);font-weight:400">— comparação com o preço sugerido pela fórmula</span></div></div><table><thead><tr><th>Orçamento</th><th>Item</th><th>Sugerido</th><th>Final</th><th>Desvio (R$)</th><th>Desvio (%)</th></tr></thead><tbody id="tb-rel-desvio"></tbody></table></div>
       <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">🪵 Madeira por Espécie <span style="font-size:11px;color:var(--text-muted);font-weight:400">— estoque atual</span></div></div><table><thead><tr><th>Espécie</th><th>Peças</th><th>Volume (m³)</th><th>Valor</th><th>Situação</th></tr></thead><tbody id="tb-rel-madeiras"></tbody></table></div>
     </div>
 
@@ -467,8 +471,9 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
             <div class="config-card" style="margin:0;flex:1">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="config-title" style="margin:0">🪵 Materiais / Insumos</div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="addMaterial('catalogo')">📦 Catálogo</button><button class="btn btn-ghost btn-sm" onclick="addMaterial('sob_medida')">✏️ Livre</button></div></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="config-title" style="margin:0">🪵 Materiais / Insumos</div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="addMaterial('catalogo')">📦 Catálogo</button><button class="btn btn-ghost btn-sm" onclick="addMaterial('livre')">✏️ Livre</button><button class="btn btn-primary btn-sm" onclick="abrirNovoProdutoRapido()">+ Novo Produto</button></div></div>
               <div id="orc-materiais" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+              <datalist id="dl-materiais"></datalist>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Materiais</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-mat">R$ 0,00</span></div>
             </div>
             <div class="config-card" style="margin:0">
@@ -1004,7 +1009,7 @@ function renderProdutos(){$('tb-produtos').innerHTML=DB.produtos.map((p,i)=>{con
  const st=est<=min?['Crítico','badge-danger','var(--danger)']:est<=min*1.5?['Baixo','badge-warning','var(--warning)']:['OK','badge-success','var(--success)'];
  const pct=Math.min(100,min>0?est/(min*2)*100:100);
  return '<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(p.nome)+'</strong></td><td>'+esc(p.cat||'—')+'</td><td class="mono">'+(Number(p.preco)>0?fmt(p.preco):'—')+'</td><td class="mono">'+fmt(p.custo)+'</td><td><span class="mono">'+est+' '+esc(p.un||'un')+'</span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+st[2]+'"></div></div></td><td><span class="badge '+st[1]+'">'+st[0]+'</span></td><td>'+actionBtns("editProduto('"+p.id+"')","delProduto('"+p.id+"')")+'</td></tr>';}).join('')||emptyRow(8,'Nenhum produto cadastrado');}
-function openProduto(){['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-un').value='un';$('mp-title').textContent='Novo Produto';openModal('modal-produtos');}
+function openProduto(){PRODUTO_RAPIDO_ORC=false;['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-un').value='un';$('mp-title').textContent='Novo Produto';openModal('modal-produtos');}
 function editProduto(id){if(!guard())return;const p=DB.produtos.find(x=>x.id===id);if(!p)return;
  $('prod-id').value=p.id;$('prod-nome').value=p.nome;$('prod-cat').value=p.cat||'';$('prod-un').value=p.un||'un';$('prod-preco').value=p.preco;$('prod-custo').value=p.custo;$('prod-est').value=p.est;$('prod-min').value=p.min;$('mp-title').textContent='Editar Produto';openModal('modal-produtos');}
 async function saveProduto(){if(!guard())return;const nome=$('prod-nome').value.trim();if(!nome){toast('Informe o nome do produto.','error');return;}
@@ -1015,6 +1020,8 @@ async function saveProduto(){if(!guard())return;const nome=$('prod-nome').value.
  if(id){Object.assign(DB.produtos.find(x=>x.id===id),o);commit('editar','Produtos',nome);}
  else{DB.produtos.push(registro);commit('criar','Produtos',nome);}
  syncSheets('produtos','upsert',registro);
+ atualizarDatalistMateriais();
+ if(PRODUTO_RAPIDO_ORC){PRODUTO_RAPIDO_ORC=false;addMaterial('catalogo',{ref:'p:'+registro.id,desc:registro.nome,qty:1,custo:registro.custo});}
  closeModal('modal-produtos');toast('Produto salvo!','success');}
 async function delProduto(id){if(!guard())return;const p=DB.produtos.find(x=>x.id===id);if(!confirm('Excluir produto "'+p.nome+'"?'))return;
  const {error}=await supa.from('produtos').delete().eq('id',id);
@@ -1212,7 +1219,11 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
  const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" onclick="rejeitarOrcamento(\''+o.id+'\')">✗ Reprovar</button>':'';
  $('orcd-acoes').innerHTML=aprovarBtn+reprovarBtn+'<button class="btn btn-ghost btn-sm" onclick="abrirPdfOrcamento()">📄 Gerar PDF</button><button class="btn btn-ghost btn-sm" onclick="imprimirOrcamento()">🖨️ Imprimir</button>';
  const tipoL={'sob_medida':'🔨 Sob medida','catalogo':'📦 Catálogo','novo_produto':'🆕 Novo produto'};
- $('tb-orc-itens').innerHTML=itens.map(it=>'<tr><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong></td><td class="mono">'+(it.qty||1)+'</td><td class="mono" style="font-weight:700">'+fmt(it.preco)+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>').join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
+ $('tb-orc-itens').innerHTML=itens.map(it=>{
+  let precoCell='<span style="font-weight:700">'+fmt(it.preco)+'</span>';
+  if(it.precoManual&&it.precoSugerido){const desvioPct=(it.preco-it.precoSugerido)/it.precoSugerido*100;
+   precoCell+='<div style="font-size:10px;margin-top:2px" title="Sugerido: '+fmt(it.precoSugerido)+'"><span class="badge '+(desvioPct<0?'badge-danger':desvioPct>0?'badge-info':'badge-muted')+'" style="font-size:9px">✏️ manual '+(desvioPct>=0?'+':'')+fmtN(desvioPct,1)+'%</span></div>';}
+  return '<tr><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong></td><td class="mono">'+(it.qty||1)+'</td><td class="mono">'+precoCell+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>';}).join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
  $('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);}
 function abrirAdicionarItem(){if(!guard())return;ORC_ITEM_EDITANDO=null;ORC_VOLTAR='detalhe';orcShow('tipo');}
 function voltarDeItem(){if(ORC_VOLTAR==='detalhe'&&ORC_ATUAL_ID){orcShow('detalhe');renderOrcDetalhe();}else{orcShow('lista');renderOrcamentos();}}
@@ -1220,6 +1231,7 @@ function selecionarTipoOrc(tipo){if(tipo==='catalogo'){resetOrcCatalogo();orcSho
  resetOrcForm(tipo);orcShow('form');}
 function resetOrcForm(tipo){const cf=DB.config.cf;
  PRECO_MANUAL=false;$('preco-manual-hint').style.display='none';
+ atualizarDatalistMateriais();
  $('orc-id').value='';$('orc-tipo').value=tipo;$('orc-desc').value='';$('orc-obs').value='';
  $('orc-mdo').innerHTML='';
  $('orc-imposto').value=cf.imposto;$('orc-markup').value=cf.markup;$('orc-reserva').value=cf.reserva!==undefined?cf.reserva:10;
@@ -1245,12 +1257,28 @@ function addServico(sv){const wrap=$('orc-servicos');const row=document.createEl
  row.style.cssText='display:grid;grid-template-columns:150px 2fr 100px 28px;gap:6px;align-items:center';
  row.innerHTML='<select class="form-control sv-forn">'+fornOptions(sv?sv.fornId:'')+'</select><input type="text" class="form-control sv-desc" placeholder="Descrição do serviço (ex: Estofamento terceirizado)" value="'+esc(sv?sv.desc:'')+'"><input type="number" class="form-control sv-valor" value="'+(sv?sv.valor:0)+'" step="0.01" min="0" oninput="calcOrc()"><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
  wrap.appendChild(row);calcOrc();}
-function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.createElement('div');row.dataset.mode=mode;
+function materiaisDatalistOptions(){let opts='';
+ DB.madeiras.forEach(m=>{opts+='<option value="'+esc(m.especie+' '+m.tipo+' '+m.esp+'×'+m.larg+'cm')+'"></option>';});
+ DB.produtos.forEach(p=>{opts+='<option value="'+esc(p.nome)+'"></option>';});
+ return opts;}
+function atualizarDatalistMateriais(){const dl=$('dl-materiais');if(dl)dl.innerHTML=materiaisDatalistOptions();}
+function buscarMaterialPorNome(nome){
+ const m=DB.madeiras.find(x=>(x.especie+' '+x.tipo+' '+x.esp+'×'+x.larg+'cm')===nome);
+ if(m)return{ref:'m:'+m.id,custo:m.custo||0};
+ const p=DB.produtos.find(x=>x.nome===nome);
+ if(p)return{ref:'p:'+p.id,custo:p.custo||0};
+ return null;}
+function omBusca(input){const nome=input.value.trim();const found=buscarMaterialPorNome(nome);const row=input.closest('div');
+ if(found){row.dataset.ref=found.ref;row.querySelector('.om-custo').value=found.custo;row.classList.remove('om-nao-encontrado');}
+ else{delete row.dataset.ref;row.classList.toggle('om-nao-encontrado',nome.length>0);}
+ calcOrc();}
+let LINHA_MATERIAL_PENDENTE=null,PRODUTO_RAPIDO_ORC=false;
+function abrirNovoProdutoRapido(){openProduto();PRODUTO_RAPIDO_ORC=true;}
+function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.createElement('div');row.dataset.mode=mode;if(it&&it.ref)row.dataset.ref=it.ref;
  row.style.cssText='display:grid;grid-template-columns:2fr 65px 85px 85px 28px;gap:6px;align-items:center';
- const desc=mode==='catalogo'?'<select class="form-control om-sel" onchange="omSel(this)">'+insumoOptions(it?it.ref:'')+'</select>':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
+ const desc=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
  row.innerHTML=desc+'<input type="number" class="form-control om-qty" value="'+(it?it.qty:1)+'" min="0" step="0.001" oninput="calcOrc()" title="Quantidade"><input type="number" class="form-control om-custo" value="'+(it?it.custo:0)+'" step="0.01" min="0" oninput="calcOrc()" title="Custo unitário"><div class="mono om-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
- wrap.appendChild(row);calcOrc();}
-function omSel(sel){const opt=sel.selectedOptions[0];sel.parentElement.querySelector('.om-custo').value=opt?opt.dataset.custo||0:0;calcOrc();}
+ wrap.appendChild(row);calcOrc();return row;}
 function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0);
  const hmes=Number(cfg.hmes)||1;
  let mdo=0,horasTotal=0;const mdoLinhas=[];
@@ -1262,24 +1290,25 @@ function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua',
  let mat=0;const materiais=[];
  document.querySelectorAll('#orc-materiais > div').forEach(r=>{const qty=parseFloat(r.querySelector('.om-qty').value)||0;const custo=parseFloat(r.querySelector('.om-custo').value)||0;const sub=qty*custo;
   r.querySelector('.om-sub').textContent=fmt(sub);mat+=sub;
-  const sel=r.querySelector('.om-sel');const inp=r.querySelector('.om-desc');
-  materiais.push({mode:r.dataset.mode,ref:sel?sel.value:'',desc:sel?(sel.selectedOptions[0]?sel.selectedOptions[0].textContent.trim():''):(inp?inp.value.trim():''),qty,custo});});
+  const inpCat=r.querySelector('.om-desc-cat');const inpLivre=r.querySelector('.om-desc');
+  materiais.push({mode:r.dataset.mode,ref:r.dataset.ref||'',desc:inpCat?inpCat.value.trim():(inpLivre?inpLivre.value.trim():''),qty,custo});});
  let serv=0;const servicos=[];
  document.querySelectorAll('#orc-servicos > div').forEach(r=>{const valor=parseFloat(r.querySelector('.sv-valor').value)||0;serv+=valor;
   servicos.push({fornId:r.querySelector('.sv-forn').value,desc:r.querySelector('.sv-desc').value.trim(),valor});});
  const custo=cfRat+mdo+mat+serv;const rsv=num('orc-reserva'),margem=Math.max(0,num('orc-markup')),imp=Math.max(0,num('orc-imposto'));
  const reservaVal=custo*rsv/100;const custoBase=custo+reservaVal;
+ const combinado=Math.min(imp+margem,95);
+ const precoAuto=custoBase/(1-combinado/100);
  let preco,impostoVal,lucro;
  if(PRECO_MANUAL){
   preco=parseFloat($('res-preco-input').value)||0;
   impostoVal=preco*imp/100;
   lucro=preco-custoBase-impostoVal;
  } else {
-  const combinado=Math.min(imp+margem,95);
-  preco=custoBase/(1-combinado/100);
+  preco=precoAuto;
   impostoVal=preco*imp/100;lucro=preco*margem/100;
  }
- return{cfRat,mdo,mdoLinhas,mat,materiais,serv,servicos,custo,reservaVal,custoBase,impostoVal,preco,lucro};}
+ return{cfRat,mdo,mdoLinhas,mat,materiais,serv,servicos,custo,reservaVal,custoBase,precoAuto,impostoVal,preco,lucro};}
 let PRECO_MANUAL=false;
 function onPrecoManual(){PRECO_MANUAL=true;$('preco-manual-hint').style.display='block';calcOrc();}
 function resetPrecoManual(){PRECO_MANUAL=false;$('preco-manual-hint').style.display='none';calcOrc();}
@@ -1301,7 +1330,7 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
   DB.produtos.push(novoProd);syncSheets('produtos','upsert',novoProd);
   toast('Produto "'+nome+'" cadastrado no catálogo!','success');}
  const cfgAtual=DB.config.cf;
- const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal,imposto:num('orc-imposto'),markup:num('orc-markup'),precoManual:PRECO_MANUAL,qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
+ const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal,imposto:num('orc-imposto'),markup:num('orc-markup'),precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto,qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
@@ -1791,6 +1820,14 @@ function renderRelatorios(){syncPerBar('rel-per',REL);
  $('rel-madeira').textContent=fmtN(m3,3)+' m³';
  const reservaTotal=DB.orcamentos.filter(o=>o.status==='Aprovado'||o.status==='Concluído').reduce((s,o)=>s+itensOrc(o).reduce((s2,it)=>s2+Number(it.reservaVal||0),0),0);
  $('rel-reserva').textContent=fmtK(reservaTotal);
+ const desviosLinhas=[];
+ DB.orcamentos.filter(o=>matchPer(o.data,REL)).forEach(o=>{itensOrc(o).forEach(it=>{
+  if(it.precoManual&&it.precoSugerido){desviosLinhas.push({orcNum:o.num,itemDesc:it.desc,sugerido:Number(it.precoSugerido),final:Number(it.preco)});}});});
+ const desvioTotal=desviosLinhas.reduce((s,d)=>s+(d.final-d.sugerido),0);
+ $('rel-desvio').textContent=(desvioTotal<0?'- ':'')+fmtK(Math.abs(desvioTotal));
+ $('rel-desvio').style.color=desvioTotal<0?'var(--danger)':desvioTotal>0?'var(--success)':'';
+ $('tb-rel-desvio').innerHTML=desviosLinhas.map(d=>{const desvioR=d.final-d.sugerido;const desvioPct=d.sugerido?desvioR/d.sugerido*100:0;
+  return '<tr><td class="mono">ORC-'+pad(d.orcNum)+'</td><td>'+esc(d.itemDesc)+'</td><td class="mono">'+fmt(d.sugerido)+'</td><td class="mono" style="font-weight:700">'+fmt(d.final)+'</td><td class="mono" style="color:'+(desvioR<0?'var(--danger)':'var(--success)')+'">'+(desvioR>=0?'+':'')+fmt(desvioR)+'</td><td><span class="badge '+(desvioPct<0?'badge-danger':desvioPct>0?'badge-info':'badge-muted')+'">'+(desvioPct>=0?'+':'')+fmtN(desvioPct,1)+'%</span></td></tr>';}).join('')||emptyRow(6,'Nenhum preço ajustado manualmente no período');
  $('tb-rel-margem').innerHTML=orcV.slice(0,10).map(o=>{const mg=Number(o.lucro)/Number(o.preco)*100;
   return '<tr><td>'+esc(resumoOrc(o))+'</td><td class="mono">'+fmt(o.preco)+'</td><td class="mono">'+fmt(o.custo)+'</td><td class="mono" style="color:var(--success)">'+fmt(o.lucro)+'</td><td><span class="badge '+(mg>=30?'badge-success':mg>=15?'badge-warning':'badge-danger')+'">'+fmtN(mg,1)+'%</span></td></tr>';}).join('')||emptyRow(5,'Sem orçamentos');
  const porCli={};vendasOk.forEach(v=>{if(!porCli[v.cliId])porCli[v.cliId]={n:0,t:0};porCli[v.cliId].n++;porCli[v.cliId].t+=Number(v.total||0);});
