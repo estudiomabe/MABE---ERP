@@ -131,6 +131,8 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .form-control { background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color 0.15s;width:100%; }
 .form-control:focus { border-color:var(--primary);background:#fff; }
 .om-nao-encontrado .om-desc-cat { border-color:var(--warning);background:rgba(160,120,48,0.06); }
+.status-pill { display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid;white-space:nowrap; }
+.status-pill .dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
 .form-control::placeholder { color:var(--text-muted); }
 select.form-control { cursor:pointer; } select.form-control option { background:#fff;color:var(--text); }
 .stat-row { display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap; }
@@ -383,7 +385,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <span id="orc-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
         </div>
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Orçamentos — Mabe</div></div>
-        <table><thead><tr><th>#</th><th>Cliente</th><th>Contato</th><th>Data</th><th>Entrega</th><th>Itens</th><th>Total</th><th>Lucro</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-orcamentos"></tbody></table></div>
+        <table><thead><tr><th>#</th><th>Status</th><th>Data</th><th>Cliente</th><th>Entrega</th><th>Contato</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tb-orcamentos"></tbody></table></div>
       </div>
       <div id="orc-header-view" style="display:none">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><button class="btn btn-ghost btn-sm" onclick="cancelarHeaderOrc()">← Voltar</button><h2 style="font-size:16px;font-weight:700" id="orch-title">Novo Orçamento</h2></div>
@@ -1135,6 +1137,9 @@ function resumoOrc(o){const itens=itensOrc(o);if(!itens.length)return '(sem iten
  if(itens.length===1)return itens[0].desc;
  const join=itens.map(i=>i.desc).join(', ');return itens.length+' itens: '+(join.length>60?join.slice(0,60)+'...':join);}
 function recomputeHeaderTotais(o){o.preco=(o.itens||[]).reduce((s,i)=>s+Number(i.preco||0),0);o.custo=(o.itens||[]).reduce((s,i)=>s+Number(i.custo||0),0);o.lucro=(o.itens||[]).reduce((s,i)=>s+Number(i.lucro||0),0);}
+function statusPillHtml(status){const map={'Rascunho':['var(--text-muted)','var(--surface3)'],'Enviado':['var(--primary)','rgba(26,23,20,0.06)'],'Aprovado':['var(--success)','rgba(61,107,79,0.1)'],'Reprovado':['var(--danger)','rgba(181,64,64,0.1)'],'Concluído':['var(--success)','rgba(61,107,79,0.1)']};
+ const [color,bg]=map[status]||map['Rascunho'];
+ return '<span class="status-pill" style="color:'+color+';background:'+bg+';border-color:'+color+'40"><span class="dot" style="background:'+color+'"></span>'+status+'</span>';}
 function renderOrcamentos(){orcShow('lista');syncPerBar('orc-per',PER_ORC);
  const filtroStatus=$('orc-status-filter')?$('orc-status-filter').value:'';
  const lista=DB.orcamentos.filter(o=>matchPer(o.data,PER_ORC)&&(!filtroStatus||o.status===filtroStatus));
@@ -1144,19 +1149,32 @@ function renderOrcamentos(){orcShow('lista');syncPerBar('orc-per',PER_ORC);
   const waBtn=(cliObj&&cliObj.tel)?'<button class="btn btn-ghost btn-sm" title="Enviar no WhatsApp" onclick="abrirWhatsappOrc(\''+o.id+'\')">💬</button>':'';
   const mailBtn=(cliObj&&cliObj.email)?'<button class="btn btn-ghost btn-sm" title="Enviar por E-mail" onclick="abrirEmailOrc(\''+o.id+'\')">✉️</button>':'';
   const podeDecidir=canEdit()&&itens.length>0&&o.status!=='Aprovado'&&o.status!=='Reprovado'&&o.status!=='Concluído';
-  const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" title="Aprovar orçamento" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>':'';
+  const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" title="Aprovar orçamento" onclick="abrirAprovarOrc(\''+o.id+'\')">✔</button>':'';
   const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" title="Reprovar orçamento" onclick="rejeitarOrcamento(\''+o.id+'\')">✗</button>':'';
-  const prodBtn=(o.status==='Aprovado'&&!o.opId&&canEdit())?'<button class="btn btn-primary btn-sm" title="Enviar para produção" onclick="orcParaProducao(\''+o.id+'\')">▶ Produzir</button>':'';
+  const prodBtn=(o.status==='Aprovado'&&!o.opId&&canEdit())?'<button class="btn btn-primary btn-sm" title="Enviar para produção" onclick="orcParaProducao(\''+o.id+'\')">▶</button>':'';
   const tipoL={'sob_medida':'🔨','catalogo':'📦','novo_produto':'🆕'};
   const colapsado=ORC_COLAPSADOS.has(o.id);
   const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(colapsado?'Expandir itens':'Recolher itens')+'" onclick="event.stopPropagation();toggleItensOrc(\''+o.id+'\')">'+(colapsado?'▸':'▾')+'</button>':'<span style="display:inline-block;width:29px"></span>';
-  const linhaHeader='<tr style="cursor:pointer;border-left:3px solid '+(stB==='badge-success'?'var(--success)':stB==='badge-danger'?'var(--danger)':stB==='badge-info'?'var(--primary)':'transparent')+'" onclick="if(event.target.closest(\'button\'))return;abrirDetalheOrc(\''+o.id+'\')"><td class="mono" style="white-space:nowrap">'+chevron+'ORC-'+pad(o.num)+'</td><td>'+esc(cliName(o.cliId))+'</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">'+(waBtn||mailBtn?waBtn+mailBtn:'<span style="color:var(--text-muted);font-size:11px">—</span>')+'</div></td><td class="mono">'+fmtD(o.data)+'</td><td class="mono">'+fmtD(o.validade)+'</td><td class="mono">'+itens.length+(itens.length&&colapsado?' <span style="color:var(--text-muted);font-size:10px">(recolhido)</span>':'')+'</td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td><td class="mono" style="color:var(--success)">'+fmt(o.lucro)+'</td><td><span class="badge '+stB+'">'+o.status+'</span></td><td onclick="event.stopPropagation()"><div class="row-actions">'+aprovarBtn+reprovarBtn+prodBtn+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editarCabecalhoOrc(\''+o.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delOrcamento(\''+o.id+'\')">🗑️</button>':'')+'</div></td></tr>';
+  const linhaHeader='<tr style="cursor:pointer;border-left:3px solid '+(stB==='badge-success'?'var(--success)':stB==='badge-danger'?'var(--danger)':stB==='badge-info'?'var(--primary)':'transparent')+'" onclick="if(event.target.closest(\'button\'))return;abrirDetalheOrc(\''+o.id+'\')">'
+   +'<td class="mono" style="white-space:nowrap">'+chevron+'ORC-'+pad(o.num)+'</td>'
+   +'<td>'+statusPillHtml(o.status)+'</td>'
+   +'<td class="mono">'+fmtD(o.data)+'</td>'
+   +'<td>'+esc(cliName(o.cliId))+'</td>'
+   +'<td class="mono">'+fmtD(o.validade)+'</td>'
+   +'<td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">'+(waBtn||mailBtn?waBtn+mailBtn:'<span style="color:var(--text-muted);font-size:11px">—</span>')+'</div></td>'
+   +'<td class="mono" style="font-weight:700">'+fmt(o.preco)+'<div style="font-size:10px;color:var(--success);font-weight:400">lucro '+fmt(o.lucro)+'</div></td>'
+   +'<td onclick="event.stopPropagation()"><div class="row-actions">'+aprovarBtn+reprovarBtn+prodBtn+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editarCabecalhoOrc(\''+o.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delOrcamento(\''+o.id+'\')">🗑️</button>':'')+'</div></td></tr>';
   let linhasItens='';
   if(!colapsado){
-   linhasItens=itens.length?itens.map(it=>'<tr style="background:var(--surface2);cursor:pointer;border-left:3px solid var(--surface3)" onclick="if(event.target.closest(\'button\'))return;'+(it.id==='legacy'?'abrirDetalheOrc(\''+o.id+'\')':'abrirDetalheOrc(\''+o.id+'\');setTimeout(()=>editarItemOrc(\''+it.id+'\'),0)')+'"><td></td><td colspan="4" style="padding:7px 14px 7px 32px;font-size:12.5px;color:var(--text)">'+(tipoL[it.tipo]||'•')+' <strong>'+esc(it.desc)+'</strong></td><td class="mono" style="font-size:12px">'+(it.qty||1)+'</td><td class="mono" style="font-size:12px;font-weight:600">'+fmt(it.preco)+'</td><td class="mono" style="font-size:12px;color:var(--success)">'+fmt(it.lucro||0)+'</td><td></td><td></td></tr>').join('')
-    :'<tr style="background:var(--surface2)"><td></td><td colspan="9" style="padding:7px 14px 7px 32px;font-size:12px;color:var(--text-muted)">Nenhum item ainda — clique no orçamento pra adicionar</td></tr>';
+   linhasItens=itens.map(it=>'<tr style="background:var(--surface2);cursor:pointer" onclick="if(event.target.closest(\'button\'))return;'+(it.id==='legacy'?'abrirDetalheOrc(\''+o.id+'\')':'abrirDetalheOrc(\''+o.id+'\');setTimeout(()=>editarItemOrc(\''+it.id+'\'),0)')+'">'
+    +'<td></td><td>'+statusPillHtml(o.status)+'</td>'
+    +'<td colspan="2" style="padding:7px 14px;font-size:12.5px;color:var(--text)">'+(tipoL[it.tipo]||'•')+' <strong>'+esc(it.desc)+'</strong></td>'
+    +'<td class="mono" style="font-size:12px">'+(it.qty||1)+'</td>'
+    +'<td class="mono" style="font-size:12px">'+fmt((it.qty||1)?it.preco/(it.qty||1):it.preco)+'</td>'
+    +'<td class="mono" style="font-size:12px;font-weight:600">'+fmt(it.preco)+'</td><td></td></tr>').join('');
+   if(canEdit())linhasItens+='<tr style="background:var(--surface2)"><td></td><td colspan="7" style="padding:6px 14px"><a href="#" onclick="event.preventDefault();event.stopPropagation();abrirDetalheOrc(\''+o.id+'\');abrirAdicionarItem();" style="font-size:11.5px;color:var(--accent);font-weight:600;text-decoration:none">+ Novo Item</a></td></tr>';
   }
-  return linhaHeader+linhasItens;}).join('')||emptyRow(10,'Nenhum orçamento no período selecionado');}
+  return linhaHeader+linhasItens;}).join('')||emptyRow(8,'Nenhum orçamento no período selecionado');}
 let ORC_COLAPSADOS=new Set();
 function toggleItensOrc(id){if(ORC_COLAPSADOS.has(id))ORC_COLAPSADOS.delete(id);else ORC_COLAPSADOS.add(id);renderOrcamentos();}
 function abrirWhatsappOrc(id){const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
