@@ -591,6 +591,19 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <button class="btn btn-primary" onclick="saveCondPagto()">💾 Salvar Condições de Pagamento</button>
         </div>
       </div>
+      <div class="config-card">
+        <div class="config-title">🏢 Dados do Estúdio (para documentos)</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Aparecem no PDF de orçamento e outros documentos gerados.</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cfg-emp-endereco" placeholder="Rua, número, bairro, cidade - UF"></div>
+          <div class="form-grid form-2">
+            <div class="form-group"><label class="form-label">Telefone/WhatsApp</label><input type="text" class="form-control" id="cfg-emp-telefone" placeholder="(11) 99999-9999"></div>
+            <div class="form-group"><label class="form-label">E-mail</label><input type="text" class="form-control" id="cfg-emp-email" placeholder="contato@estudiomabe.com"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Site / Instagram</label><input type="text" class="form-control" id="cfg-emp-site" placeholder="@estudiomabe ou www.estudiomabe.com"></div>
+          <button class="btn btn-primary" onclick="saveEmpresaInfo()">💾 Salvar Dados do Estúdio</button>
+        </div>
+      </div>
       <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" onclick="exportData()">📤 Exportar JSON</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
@@ -724,14 +737,15 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Admin',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}]},
+ config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],empresa:{endereco:'',telefone:'',email:'',site:''}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
  for(const k in d)if(DB[k]===undefined)DB[k]=d[k];
  if(!DB.config.cf)DB.config.cf=d.config.cf; if(!DB.seq)DB.seq=d.seq;
  for(const k in d.config.cf)if(DB.config.cf[k]===undefined)DB.config.cf[k]=d.config.cf[k];
- if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];}
+ if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];
+ if(!DB.config.empresa)DB.config.empresa={endereco:'',telefone:'',email:'',site:''};}
 function saveDB(){localStorage.setItem(DKEY,JSON.stringify(DB));}
 function log(acao,modulo,detalhe){const h={id:uid(),dt:new Date().toLocaleString('pt-BR'),user:USER?USER.nome:'—',usuario:USER?USER.nome:'—',login:USER?USER.login:'',acao,modulo,detalhe};DB.historico.unshift(h);if(DB.historico.length>400)DB.historico.length=400;syncSheets('historico','upsert',h);
  supa.from('historico').insert(historicoParaSupabase(h)).then(({error})=>{if(error)console.error('Erro ao salvar histórico no Supabase:',error.message);});}
@@ -1085,7 +1099,7 @@ function renderVendas(){syncPerBar('vnd-per',PER_VND);
 function prodOptions(sel){return '<option value="">— Produto —</option>'+DB.produtos.map(p=>'<option value="'+p.id+'" data-preco="'+(p.preco||p.custo||0)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.nome)+' ('+p.est+' '+esc(p.un||'un')+')</option>').join('');}
 function addItemVenda(it){const wrap=$('vnd-itens');const row=document.createElement('div');
  row.style.cssText='display:grid;grid-template-columns:2fr 70px 100px 100px 30px;gap:6px;align-items:center';
- row.innerHTML='<select class="form-control vi-prod" onchange="viProd(this)">'+prodOptions(it?it.prodId:'')+'</select><input type="number" class="form-control vi-qty" value="'+(it?it.qty:1)+'" min="1" oninput="calcVenda()"><input type="number" class="form-control vi-preco" value="'+(it?it.preco:0)+'" step="0.01" oninput="calcVenda()"><div class="mono vi-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcVenda()">✕</button>';
+ row.innerHTML='<select class="form-control vi-prod" onchange="viProd(this)">'+prodOptions(it?it.prodId:'')+'</select><input type="number" class="form-control vi-qty" value="'+(it?it.qty:1)+'" min="1" oninput="calcVenda()"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control vi-preco" value="'+(it?it.preco:0)+'" step="0.01" oninput="calcVenda()" style="border:none;background:transparent;padding-left:2px"></div><div class="mono vi-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcVenda()">✕</button>';
  wrap.appendChild(row);calcVenda();}
 function viProd(sel){const opt=sel.selectedOptions[0];const row=sel.parentElement;row.querySelector('.vi-preco').value=opt?opt.dataset.preco||0:0;calcVenda();}
 function calcVenda(){let t=0;document.querySelectorAll('#vnd-itens > div').forEach(r=>{const s=(parseFloat(r.querySelector('.vi-qty').value)||0)*(parseFloat(r.querySelector('.vi-preco').value)||0);r.querySelector('.vi-sub').textContent=fmt(s);t+=s;});$('vnd-total').textContent=fmt(t);return t;}
@@ -1273,7 +1287,7 @@ function addMdoItem(m){const wrap=$('orc-mdo');const row=document.createElement(
  wrap.appendChild(row);calcOrc();}
 function addServico(sv){const wrap=$('orc-servicos');const row=document.createElement('div');
  row.style.cssText='display:grid;grid-template-columns:150px 2fr 100px 28px;gap:6px;align-items:center';
- row.innerHTML='<select class="form-control sv-forn">'+fornOptions(sv?sv.fornId:'')+'</select><input type="text" class="form-control sv-desc" placeholder="Descrição do serviço (ex: Estofamento terceirizado)" value="'+esc(sv?sv.desc:'')+'"><input type="number" class="form-control sv-valor" value="'+(sv?sv.valor:0)+'" step="0.01" min="0" oninput="calcOrc()"><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
+ row.innerHTML='<select class="form-control sv-forn">'+fornOptions(sv?sv.fornId:'')+'</select><input type="text" class="form-control sv-desc" placeholder="Descrição do serviço (ex: Estofamento terceirizado)" value="'+esc(sv?sv.desc:'')+'"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control sv-valor" value="'+(sv?sv.valor:0)+'" step="0.01" min="0" oninput="calcOrc()" style="border:none;background:transparent;padding-left:2px"></div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
  wrap.appendChild(row);calcOrc();}
 function materiaisDatalistOptions(){let opts='';
  DB.madeiras.forEach(m=>{opts+='<option value="'+esc(m.especie+' '+m.tipo+' '+m.esp+'×'+m.larg+'cm')+'"></option>';});
@@ -1295,7 +1309,7 @@ function abrirNovoProdutoRapido(){openProduto();PRODUTO_RAPIDO_ORC=true;}
 function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.createElement('div');row.dataset.mode=mode;if(it&&it.ref)row.dataset.ref=it.ref;
  row.style.cssText='display:grid;grid-template-columns:2fr 65px 85px 85px 28px;gap:6px;align-items:center';
  const desc=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
- row.innerHTML=desc+'<input type="number" class="form-control om-qty" value="'+(it?it.qty:1)+'" min="0" step="0.001" oninput="calcOrc()" title="Quantidade"><input type="number" class="form-control om-custo" value="'+(it?it.custo:0)+'" step="0.01" min="0" oninput="calcOrc()" title="Custo unitário"><div class="mono om-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
+ row.innerHTML=desc+'<input type="number" class="form-control om-qty" value="'+(it?it.qty:1)+'" min="0" step="0.001" oninput="calcOrc()" title="Quantidade"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control om-custo" value="'+(it?it.custo:0)+'" step="0.01" min="0" oninput="calcOrc()" title="Custo unitário" style="border:none;background:transparent;padding-left:2px"></div><div class="mono om-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
  wrap.appendChild(row);calcOrc();return row;}
 function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0);
  const hmes=Number(cfg.hmes)||1;
@@ -1544,25 +1558,91 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  const itens=itensOrc(o).filter(it=>idsSelecionados.includes(it.id));
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
- doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(26,23,20);
- doc.text('ESTÚDIO MABE',14,20);
- doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(122,111,98);
- doc.text('Marcenaria de Madeira Maciça — Orçamento ORC-'+pad(o.num),14,27);
- doc.setTextColor(26,23,20);doc.setFontSize(11);
- doc.text('Cliente: '+cliName(o.cliId),14,38);
- doc.text('Data: '+fmtD(o.data)+'   Entrega: '+fmtD(o.validade),14,45);
- let y=55;
- if(o.obs){doc.setFontSize(9);doc.setTextColor(122,111,98);
-  const obsLines=doc.splitTextToSize(o.obs,180);
-  doc.text(obsLines,14,y);y+=obsLines.length*4+8;doc.setTextColor(26,23,20);}
- const rows=itens.map(it=>[it.desc,String(it.qty||1),fmt((it.qty||1)?it.preco/(it.qty||1):it.preco),fmt(it.preco)]);
- doc.autoTable({startY:y,head:[['Item','Qtd','Unit.','Subtotal']],body:rows,theme:'grid',headStyles:{fillColor:[26,23,20],textColor:255},styles:{fontSize:9,cellPadding:4}});
+ const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],WHITE=[255,255,255];
+ const emp=DB.config.empresa||{};
+ const pageW=210,marginX=14;
+
+ // Cabeçalho: título + forma decorativa
+ doc.setFillColor(...ACCENT);doc.circle(30,26,13,'F');
+ doc.setFillColor(...DARK);doc.circle(22,32,7,'F');
+ doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
+ doc.text('ORÇAMENTO',marginX,52);
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
+ doc.text('ORC-'+pad(o.num),marginX,58);
+
+ // Logo (marca Estúdio Mabe) no canto superior direito
+ const logoX=196;
+ doc.setFillColor(...DARK);doc.roundedRect(logoX-8,15,8,8,1,1,'F');
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
+ doc.text('estúdio',logoX,17,{align:'right'});
+ doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(...DARK);
+ doc.text('mabe.',logoX,23,{align:'right'});
+ doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ doc.text('MARCENARIA · MADEIRA MACIÇA',logoX,28,{align:'right'});
+
+ // Linha de metadados: Cliente / Data / Entrega
+ let metaY=70;
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(marginX,metaY-6,196,metaY-6);
+ const metaCols=[{label:'CLIENTE',val:cliName(o.cliId),x:marginX},{label:'DATA',val:fmtD(o.data),x:100},{label:'ENTREGA',val:fmtD(o.validade),x:145}];
+ metaCols.forEach(c=>{doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...MUTED);doc.text(c.label,c.x,metaY);
+  doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...DARK);doc.text(String(c.val),c.x,metaY+6);});
+
+ // Barra lateral esquerda com dados do estúdio
+ const sidebarX=marginX,sidebarW=42,tableX=sidebarX+sidebarW+6,tableW=196-tableX;
+ const rows=itens.map((it,i)=>[String(i+1),it.desc,String(it.qty||1),fmt((it.qty||1)?it.preco/(it.qty||1):it.preco),fmt(it.preco)]);
+ const tableStartY=88;
+ doc.autoTable({startY:tableStartY,margin:{left:tableX,right:14},tableWidth:tableW,
+  head:[['#','Item','Qtd','Unit.','Subtotal']],body:rows,theme:'plain',
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3,bottom:3,left:3,right:3}},
+  bodyStyles:{fontSize:8.5,textColor:DARK,cellPadding:{top:3,bottom:3,left:3,right:3}},
+  alternateRowStyles:{fillColor:[250,247,242]},
+  columnStyles:{0:{cellWidth:8},2:{cellWidth:14,halign:'right'},3:{cellWidth:24,halign:'right'},4:{cellWidth:26,halign:'right'}}});
+ const finalY=doc.lastAutoTable.finalY;
+
+ // Barra lateral (desenhada depois pra saber a altura da tabela)
+ doc.setFillColor(...CREAM);doc.rect(sidebarX,tableStartY-8,sidebarW,(finalY-tableStartY)+8,'F');
+ doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...DARK);
+ doc.text('ESTÚDIO MABE',sidebarX+4,tableStartY);
+ let sy=tableStartY+8;
+ doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ const sidebarLinhas=[];
+ if(emp.endereco)sidebarLinhas.push(['ENDEREÇO',emp.endereco]);
+ if(emp.telefone)sidebarLinhas.push(['TELEFONE',emp.telefone]);
+ if(emp.email)sidebarLinhas.push(['E-MAIL',emp.email]);
+ if(emp.site)sidebarLinhas.push(['SITE',emp.site]);
+ sidebarLinhas.forEach(([label,val])=>{doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...ACCENT);doc.text(label,sidebarX+4,sy);
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...DARK);
+  const linhas=doc.splitTextToSize(val,sidebarW-8);doc.text(linhas,sidebarX+4,sy+4);sy+=4+linhas.length*3.6+4;});
+
+ // Termos/Observações + caixa de total
+ let y2=finalY+12;
+ if(o.obs){doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...DARK);doc.text('Observações',tableX,y2);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+  const obsLines=doc.splitTextToSize(o.obs,tableW-70);doc.text(obsLines,tableX,y2+5);}
  const totalSelecionado=itens.reduce((s,it)=>s+Number(it.preco||0),0);
- const finalY=(doc.lastAutoTable?doc.lastAutoTable.finalY:y)+10;
- doc.setFontSize(14);doc.setFont('helvetica','bold');
- doc.text('Investimento: '+fmt(totalSelecionado),14,finalY);
- doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(122,111,98);
- doc.text('Peças produzidas artesanalmente em madeira maciça. Valores válidos até a data de entrega indicada.',14,finalY+12);
+ const boxX=140,boxW=56;
+ doc.setFillColor(...CREAM);doc.rect(boxX,y2-6,boxW,9,'F');
+ doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);doc.text('SUBTOTAL',boxX+4,y2);
+ doc.setFont('helvetica','bold');doc.setTextColor(...DARK);doc.text(fmt(totalSelecionado),boxX+boxW-4,y2,{align:'right'});
+ doc.setFillColor(...DARK);doc.rect(boxX,y2+3,boxW,12,'F');
+ doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...ACCENT);doc.text('TOTAL',boxX+4,y2+10.5);
+ doc.setFontSize(12);doc.setTextColor(...WHITE);doc.text(fmt(totalSelecionado),boxX+boxW-4,y2+10.5,{align:'right'});
+
+ // Assinaturas
+ const sigY=Math.max(y2+35,270);
+ doc.setDrawColor(...MUTED);doc.setLineWidth(0.2);
+ doc.line(marginX,sigY,90,sigY);doc.line(120,sigY,196,sigY);
+ doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+ doc.text('Assinatura do Estúdio',marginX,sigY+5);
+ doc.text('Assinatura do Cliente',120,sigY+5);
+
+ // Rodapé
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(marginX,285,196,285);
+ doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+ const rodape=[emp.endereco,emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
+ doc.text(rodape,marginX,290);
+ doc.text('Válido até '+fmtD(o.validade),196,290,{align:'right'});
+
  doc.save('Orcamento-ORC-'+pad(o.num)+'.pdf');
  closeModal('modal-pdf-orc');
  toast('PDF gerado! Confira sua pasta de downloads.','success');}
@@ -1921,7 +2001,15 @@ function renderConfig(){$('sheets-url').value=DB.config.sheetsUrl||'';const cf=D
  $('cfg-hmes').value=cf.hmes;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;$('cfg-reserva').value=cf.reserva;
  $('cfg-pix-ant').value=cf.pixAntecipado;
  for(let n=1;n<=10;n++)$('cfg-taxa-p'+n).value=cf['taxaParc'+n];
- renderMdoTiposConfig();}
+ renderMdoTiposConfig();
+ const emp=DB.config.empresa||{};$('cfg-emp-endereco').value=emp.endereco||'';$('cfg-emp-telefone').value=emp.telefone||'';$('cfg-emp-email').value=emp.email||'';$('cfg-emp-site').value=emp.site||'';}
+async function saveEmpresaInfo(){if(!guard())return;
+ const info={endereco:$('cfg-emp-endereco').value.trim(),telefone:$('cfg-emp-telefone').value.trim(),email:$('cfg-emp-email').value.trim(),site:$('cfg-emp-site').value.trim()};
+ DB.config.empresa=info;saveDB();log('editar','Configurações','Dados do estúdio atualizados');saveDB();
+ const {error}=await supa.from('config').upsert({campo:'empresaInfo',valor:JSON.stringify(info)});
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ syncSheets('config','upsert',{campo:'empresaInfo',valor:JSON.stringify(info)});
+ toast('Dados do estúdio salvos!','success');}
 function saveConfig(){DB.config.sheetsUrl=$('sheets-url').value.trim();saveDB();
  const st=$('conn-status');if(!DB.config.sheetsUrl){st.textContent='URL removida.';return;}
  st.textContent='Testando conexão...';st.style.color='var(--text-muted)';
@@ -1947,7 +2035,7 @@ function renderMdoTiposConfig(){$('cfg-mdo-tipos').innerHTML='';DB.config.mdoTip
 function addMdoTipoConfig(t){const wrap=$('cfg-mdo-tipos');const row=document.createElement('div');
  row.dataset.id=t?t.id:uid();
  row.style.cssText='display:grid;grid-template-columns:2fr 130px 28px;gap:8px;align-items:center';
- row.innerHTML='<input type="text" class="form-control mt-nome" placeholder="Nome (ex: Marceneiro)" value="'+esc(t?t.nome:'')+'"><input type="number" class="form-control mt-valor" step="0.01" min="0" placeholder="R$/h" value="'+(t?t.valorHora:0)+'"><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>';
+ row.innerHTML='<input type="text" class="form-control mt-nome" placeholder="Nome (ex: Marceneiro)" value="'+esc(t?t.nome:'')+'"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$/h</span><input type="number" class="form-control mt-valor" step="0.01" min="0" value="'+(t?t.valorHora:0)+'" style="border:none;background:transparent;padding-left:2px"></div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>';
  wrap.appendChild(row);}
 async function saveMdoTipos(){if(!guard())return;
  const tipos=[];let temVazio=false;
@@ -1966,6 +2054,7 @@ async function carregarConfigSupabase(){
  if(error){toast('Erro ao carregar configurações do Supabase: '+error.message,'error');return;}
  (data||[]).forEach(({campo,valor})=>{
   if(campo==='mdoTipos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr)&&arr.length)DB.config.mdoTipos=arr;}catch(e){}}
+  else if(campo==='empresaInfo'){try{const obj=JSON.parse(valor);if(obj&&typeof obj==='object')DB.config.empresa=obj;}catch(e){}}
   else if(DB.config.cf[campo]!==undefined)DB.config.cf[campo]=Number(valor)||0;});
  saveDB();
  if(CUR==='configuracoes')renderConfig();}
