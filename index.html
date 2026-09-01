@@ -364,7 +364,6 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="stat-box"><div class="stat-value" id="rel-fat" style="color:var(--success)">R$ 0</div><div class="stat-label">Faturamento (pedidos)</div></div>
         <div class="stat-box"><div class="stat-value" id="rel-margem">0%</div><div class="stat-label">Margem média (orçamentos)</div></div>
         <div class="stat-box"><div class="stat-value" id="rel-ticket">R$ 0</div><div class="stat-label">Ticket médio</div></div>
-        <div class="stat-box"><div class="stat-value" id="rel-madeira">0,000 m³</div><div class="stat-label">Madeira em estoque</div></div>
         <div class="stat-box"><div class="stat-value" id="rel-reserva" style="color:#6fa8e0">R$ 0</div><div class="stat-label">Fundo de Reserva acumulado</div></div>
         <div class="stat-box"><div class="stat-value" id="rel-desvio">R$ 0</div><div class="stat-label">Desvio de preços manuais</div></div>
       </div>
@@ -2029,8 +2028,6 @@ function renderRelatorios(){syncPerBar('rel-per',REL);
  const orcV=DB.orcamentos.filter(o=>Number(o.preco)>0&&matchPer(o.data,REL));
  const margens=orcV.map(o=>Number(o.lucro)/Number(o.preco)*100);
  $('rel-margem').textContent=margens.length?fmtN(margens.reduce((a,b)=>a+b,0)/margens.length,1)+'%':'0%';
- const m3=DB.madeiras.reduce((s,m)=>s+madM3(m),0);
- $('rel-madeira').textContent=fmtN(m3,3)+' m³';
  const reservaTotal=DB.orcamentos.filter(o=>o.status==='Aprovado'||o.status==='Concluído').reduce((s,o)=>s+itensOrc(o).reduce((s2,it)=>s2+Number(it.reservaVal||0),0),0);
  $('rel-reserva').textContent=fmtK(reservaTotal);
  const desviosLinhas=[];
@@ -2088,7 +2085,6 @@ function gerarPdfRelatorio(){
  const orcV=DB.orcamentos.filter(o=>Number(o.preco)>0&&matchPer(o.data,REL));
  const margens=orcV.map(o=>Number(o.lucro)/Number(o.preco)*100);
  const margemMedia=margens.length?margens.reduce((a,b)=>a+b,0)/margens.length:0;
- const m3=DB.madeiras.reduce((s,m)=>s+madM3(m),0);
  const reservaTotal=DB.orcamentos.filter(o=>o.status==='Aprovado'||o.status==='Concluído').reduce((s,o)=>s+itensOrc(o).reduce((s2,it)=>s2+Number(it.reservaVal||0),0),0);
  const desviosLinhas=[];
  DB.orcamentos.filter(o=>matchPer(o.data,REL)).forEach(o=>{itensOrc(o).forEach(it=>{
@@ -2106,7 +2102,6 @@ function gerarPdfRelatorio(){
    ['Faturamento (pedidos)',fmt(fat)],
    ['Margem média (orçamentos)',fmtN(margemMedia,1)+'%'],
    ['Ticket médio',fmt(ticket)],
-   ['Madeira em estoque',fmtN(m3,3)+' m³'],
    ['Fundo de Reserva acumulado',fmt(reservaTotal)],
    ['Desvio de preços manuais',(desvioTotal<0?'- ':'')+fmt(Math.abs(desvioTotal))]
   ],theme:'plain',
