@@ -358,6 +358,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <select class="form-control" id="rel-per-mes-sel" style="width:auto;min-width:130px" onchange="onRelChange()"></select>
         <select class="form-control" id="rel-per-ano-sel" style="width:auto;min-width:90px" onchange="onRelChange()"></select>
         <span id="rel-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
+        <button class="btn btn-primary btn-sm" onclick="gerarPdfRelatorio()">📄 Gerar Relatório em PDF</button>
       </div>
       <div class="stat-row">
         <div class="stat-box"><div class="stat-value" id="rel-fat" style="color:var(--success)">R$ 0</div><div class="stat-label">Faturamento (pedidos)</div></div>
@@ -2046,6 +2047,123 @@ function renderRelatorios(){syncPerBar('rel-per',REL);
  $('tb-rel-clientes').innerHTML=Object.entries(porCli).sort((a,b)=>b[1].t-a[1].t).slice(0,8).map(e=>'<tr><td>'+esc(cliName(e[0]))+'</td><td class="mono">'+e[1].n+'</td><td class="mono" style="font-weight:700">'+fmt(e[1].t)+'</td></tr>').join('')||emptyRow(3,'Sem pedidos');
  const porEsp={};DB.madeiras.forEach(m=>{const k=m.especie;if(!porEsp[k])porEsp[k]={pcs:0,m3:0,val:0,low:false};porEsp[k].pcs+=Number(m.qtd||0);porEsp[k].m3+=madM3(m);porEsp[k].val+=madM3(m)*Number(m.custo||0);if(madM3(m)<Number(m.min||0))porEsp[k].low=true;});
  $('tb-rel-madeiras').innerHTML=Object.entries(porEsp).map(e=>'<tr><td><strong>'+esc(e[0])+'</strong></td><td class="mono">'+e[1].pcs+'</td><td class="mono">'+fmtN(e[1].m3,3)+'</td><td class="mono">'+fmt(e[1].val)+'</td><td><span class="badge '+(e[1].low?'badge-danger':'badge-success')+'">'+(e[1].low?'Repor':'OK')+'</span></td></tr>').join('')||emptyRow(5,'Sem madeiras cadastradas');}
+
+function gerarPdfRelatorio(){
+ if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF();
+ const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255];
+ const marginX=14;
+
+ // Cabeçalho: título + período
+ doc.setFillColor(...ACCENT);doc.circle(30,26,13,'F');
+ doc.setFillColor(...DARK);doc.circle(22,32,7,'F');
+ doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
+ doc.text('RELATÓRIO GERENCIAL',marginX,52);
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
+ doc.text($('rel-per-label').textContent.replace('📅 ','')||'Todo o período',marginX,58);
+
+ // Logo (marca Estúdio Mabe) no canto superior direito
+ const logoRight=196,logoTop=14;
+ doc.setFont('helvetica','bold');doc.setFontSize(17);
+ const wMabe=doc.getTextWidth('mabe.');
+ doc.setFont('helvetica','normal');doc.setFontSize(9.5);
+ const wEstudio=doc.getTextWidth('estúdio');
+ const textW=Math.max(wMabe,wEstudio);
+ const iconW=9,iconGap=2.5;
+ const textX=logoRight-textW;
+ const iconX=textX-iconGap-iconW;
+ doc.setFillColor(...DARK);doc.rect(iconX,logoTop,iconW,iconW,'F');
+ doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...DARK);
+ doc.text('estúdio',textX,logoTop+7);
+ doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(...DARK);
+ doc.text('mabe.',textX,logoTop+18);
+ doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ doc.text('MARCENARIA · MADEIRA MACIÇA',logoRight,logoTop+24,{align:'right'});
+
+ // Recalcula os mesmos números exibidos na tela, para o período atual (REL)
+ const vendasOk=DB.vendas.filter(v=>v.status!=='Cancelado'&&matchPer(v.data,REL));
+ const fat=vendasOk.reduce((s,v)=>s+Number(v.total||0),0);
+ const ticket=vendasOk.length?fat/vendasOk.length:0;
+ const orcV=DB.orcamentos.filter(o=>Number(o.preco)>0&&matchPer(o.data,REL));
+ const margens=orcV.map(o=>Number(o.lucro)/Number(o.preco)*100);
+ const margemMedia=margens.length?margens.reduce((a,b)=>a+b,0)/margens.length:0;
+ const m3=DB.madeiras.reduce((s,m)=>s+madM3(m),0);
+ const reservaTotal=DB.orcamentos.filter(o=>o.status==='Aprovado'||o.status==='Concluído').reduce((s,o)=>s+itensOrc(o).reduce((s2,it)=>s2+Number(it.reservaVal||0),0),0);
+ const desviosLinhas=[];
+ DB.orcamentos.filter(o=>matchPer(o.data,REL)).forEach(o=>{itensOrc(o).forEach(it=>{
+  if(it.precoManual&&it.precoSugerido){desviosLinhas.push({orcNum:o.num,itemDesc:it.desc,sugerido:Number(it.precoSugerido),final:Number(it.preco)});}});});
+ const desvioTotal=desviosLinhas.reduce((s,d)=>s+(d.final-d.sugerido),0);
+ const orcRealizados=DB.orcamentos.filter(o=>matchPer(o.data,REL)).slice().sort((a,b)=>b.num-a.num);
+ const orcAprovados=DB.orcamentos.filter(o=>(o.status==='Aprovado'||o.status==='Concluído')&&matchPer(o.data,REL)).slice().sort((a,b)=>b.num-a.num);
+ const porCli={};vendasOk.forEach(v=>{if(!porCli[v.cliId])porCli[v.cliId]={n:0,t:0};porCli[v.cliId].n++;porCli[v.cliId].t+=Number(v.total||0);});
+ const porEsp={};DB.madeiras.forEach(m=>{const k=m.especie;if(!porEsp[k])porEsp[k]={pcs:0,m3:0,val:0,low:false};porEsp[k].pcs+=Number(m.qtd||0);porEsp[k].m3+=madM3(m);porEsp[k].val+=madM3(m)*Number(m.custo||0);if(madM3(m)<Number(m.min||0))porEsp[k].low=true;});
+
+ // Indicadores principais
+ doc.autoTable({startY:70,margin:{left:marginX,right:14},
+  head:[['Indicador','Valor']],
+  body:[
+   ['Faturamento (pedidos)',fmt(fat)],
+   ['Margem média (orçamentos)',fmtN(margemMedia,1)+'%'],
+   ['Ticket médio',fmt(ticket)],
+   ['Madeira em estoque',fmtN(m3,3)+' m³'],
+   ['Fundo de Reserva acumulado',fmt(reservaTotal)],
+   ['Desvio de preços manuais',(desvioTotal<0?'- ':'')+fmt(Math.abs(desvioTotal))]
+  ],theme:'plain',
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3,bottom:3,left:3,right:3}},
+  bodyStyles:{fontSize:9,textColor:DARK,cellPadding:{top:3,bottom:3,left:3,right:3}},
+  alternateRowStyles:{fillColor:[250,247,242]},
+  columnStyles:{1:{halign:'right',fontStyle:'bold'}}});
+ let y=doc.lastAutoTable.finalY+10;
+
+ function novaSecao(titulo,head,rows,colStyles){
+  if(y>250){doc.addPage();y=20;}
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...DARK);
+  doc.text(titulo,marginX,y);
+  doc.autoTable({startY:y+4,margin:{left:marginX,right:14},
+   head:[head],body:rows.length?rows:[['Nenhum registro no período'].concat(Array(head.length-1).fill(''))],theme:'plain',
+   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold',cellPadding:{top:2.5,bottom:2.5,left:3,right:3}},
+   bodyStyles:{fontSize:8,textColor:DARK,cellPadding:{top:2.5,bottom:2.5,left:3,right:3}},
+   alternateRowStyles:{fillColor:[250,247,242]},
+   columnStyles:colStyles||{}});
+  y=doc.lastAutoTable.finalY+10;}
+
+ novaSecao('Orçamentos Realizados',['#','Cliente','Data','Status','Valor'],
+  orcRealizados.map(o=>['ORC-'+pad(o.num),cliName(o.cliId),fmtD(o.data),o.status,fmt(o.preco)]),
+  {4:{halign:'right'}});
+
+ novaSecao('Orçamentos Aprovados (Pedidos)',['#','Cliente','Data Aprovação','Pedido Gerado','Valor'],
+  orcAprovados.map(o=>{const venda=DB.vendas.find(v=>(v.obs||'').includes('ORC-'+pad(o.num)));
+   return['ORC-'+pad(o.num),cliName(o.cliId),fmtD(o.data),venda?'V-'+pad(venda.num):'—',fmt(o.preco)];}),
+  {4:{halign:'right'}});
+
+ novaSecao('Margem por Orçamento',['Descrição','Preço','Custo','Lucro','Margem'],
+  orcV.slice(0,15).map(o=>{const mg=Number(o.lucro)/Number(o.preco)*100;return[resumoOrc(o),fmt(o.preco),fmt(o.custo),fmt(o.lucro),fmtN(mg,1)+'%'];}),
+  {1:{halign:'right'},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'}});
+
+ novaSecao('Top Clientes',['Cliente','Pedidos','Total Comprado'],
+  Object.entries(porCli).sort((a,b)=>b[1].t-a[1].t).slice(0,10).map(e=>[cliName(e[0]),String(e[1].n),fmt(e[1].t)]),
+  {1:{halign:'right'},2:{halign:'right'}});
+
+ novaSecao('Preços Ajustados Manualmente',['Orçamento','Item','Sugerido','Final','Desvio (%)'],
+  desviosLinhas.map(d=>{const desvioR=d.final-d.sugerido;const desvioPct=d.sugerido?desvioR/d.sugerido*100:0;
+   return['ORC-'+pad(d.orcNum),d.itemDesc,fmt(d.sugerido),fmt(d.final),(desvioPct>=0?'+':'')+fmtN(desvioPct,1)+'%'];}),
+  {2:{halign:'right'},3:{halign:'right'},4:{halign:'right'}});
+
+ novaSecao('Madeira por Espécie',['Espécie','Peças','Volume (m³)','Valor','Situação'],
+  Object.entries(porEsp).map(e=>[e[0],String(e[1].pcs),fmtN(e[1].m3,3),fmt(e[1].val),e[1].low?'Repor':'OK']),
+  {1:{halign:'right'},2:{halign:'right'},3:{halign:'right'}});
+
+ // Rodapé
+ const totalPaginas=doc.internal.getNumberOfPages();
+ for(let p=1;p<=totalPaginas;p++){doc.setPage(p);
+  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(marginX,285,196,285);
+  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+  doc.text('Estúdio Mabe — Relatório gerado em '+fmtD(today()),marginX,290);
+  doc.text('Página '+p+' de '+totalPaginas,196,290,{align:'right'});}
+
+ doc.save('Relatorio-Mabe-'+today()+'.pdf');
+ toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
 
 /* ================= USUÁRIOS ================= */
 function renderUsuarios(){$('tb-usuarios').innerHTML=DB.usuarios.map(u=>{const chip={'Admin':'chip-admin','Operador':'chip-operador','Visualizador':'chip-visualizador'}[u.perfil];
