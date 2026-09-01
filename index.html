@@ -2109,19 +2109,21 @@ function gerarPdfRelatorio(){
   bodyStyles:{fontSize:9,textColor:DARK,cellPadding:{top:3,bottom:3,left:3,right:3}},
   alternateRowStyles:{fillColor:[250,247,242]},
   columnStyles:{1:{halign:'right',fontStyle:'bold'}}});
- let y=doc.lastAutoTable.finalY+10;
+ let y=doc.lastAutoTable.finalY+7;
 
  function novaSecao(titulo,head,rows,colStyles){
-  if(y>250){doc.addPage();y=20;}
+  const nLinhas=rows.length||1;
+  const alturaEstimada=8+8+nLinhas*7+3;
+  if(y+alturaEstimada>285&&y>30){doc.addPage();y=20;}
   doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...DARK);
   doc.text(titulo,marginX,y);
   doc.autoTable({startY:y+4,margin:{left:marginX,right:14},
    head:[head],body:rows.length?rows:[['Nenhum registro no período'].concat(Array(head.length-1).fill(''))],theme:'plain',
-   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold',cellPadding:{top:2.5,bottom:2.5,left:3,right:3}},
-   bodyStyles:{fontSize:8,textColor:DARK,cellPadding:{top:2.5,bottom:2.5,left:3,right:3}},
+   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold',cellPadding:{top:2,bottom:2,left:3,right:3}},
+   bodyStyles:{fontSize:8,textColor:DARK,cellPadding:{top:2,bottom:2,left:3,right:3}},
    alternateRowStyles:{fillColor:[250,247,242]},
    columnStyles:colStyles||{}});
-  y=doc.lastAutoTable.finalY+10;}
+  y=doc.lastAutoTable.finalY+7;}
 
  novaSecao('Orçamentos Realizados',['#','Cliente','Data','Status','Valor'],
   orcRealizados.map(o=>['ORC-'+pad(o.num),cliName(o.cliId),fmtD(o.data),o.status,fmt(o.preco)]),
