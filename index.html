@@ -307,8 +307,18 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="stat-box"><div class="stat-value" id="fin-sai" style="color:var(--danger)">R$0</div><div class="stat-label">Saídas (mês)</div></div>
         <div class="stat-box"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
       </div>
-      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody></table></div>
+      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody></table></div>
     </div>
+
+    <div class="modal-overlay" id="modal-ofx"><div class="modal" style="max-width:640px">
+      <div class="modal-header"><div class="modal-title">📥 Importar Extrato Bancário (OFX)</div><button class="modal-close" onclick="closeModal('modal-ofx')">✕</button></div>
+      <div class="modal-body">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Revise os lançamentos abaixo antes de confirmar. Itens já existentes no financeiro (mesma data/valor/descrição) vêm desmarcados.</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn btn-ghost btn-sm" onclick="marcarTodosOfx(true)">Marcar todos</button><button class="btn btn-ghost btn-sm" onclick="marcarTodosOfx(false)">Desmarcar todos</button></div>
+        <div id="ofx-itens-lista" style="display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-ofx')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImportacaoOfx()">✔ Lançar Selecionados</button></div>
+    </div></div>
 
     <div class="section" id="section-fornecedores"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Fornecedores</div></div><table><thead><tr><th>#</th><th>Nome</th><th>CNPJ</th><th>Email</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-fornecedores"></tbody></table></div></div>
     <div class="section" id="section-compras"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
@@ -1857,6 +1867,46 @@ async function delFerramenta(id){if(!guard())return;const f=DB.ferramentas.find(
 /* ================= FINANCEIRO ================= */
 function financeiroParaSupabase(f){return{id:f.id,tipo:f.tipo||null,data:f.data||null,descricao:f.desc||null,cat:f.cat||null,val:f.val||0,status:f.status||null};}
 function financeiroDeSupabase(row){return{id:row.id,tipo:row.tipo,data:row.data,desc:row.descricao||'',cat:row.cat||'',val:row.val,status:row.status};}
+
+/* ================= IMPORTAÇÃO DE EXTRATO (OFX) ================= */
+let OFX_ITENS=[];
+function parseOfxDate(s){const m=String(s||'').match(/^(\d{4})(\d{2})(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:'';}
+function parseOfx(texto){
+ const blocos=texto.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/gi)||[];
+ return blocos.map(b=>{
+  const get=tag=>{const m=b.match(new RegExp('<'+tag+'>([^\\r\\n<]*)','i'));return m?m[1].trim():'';};
+  const amt=parseFloat(get('TRNAMT').replace(',','.'))||0;
+  const data=parseOfxDate(get('DTPOSTED'));
+  const desc=get('MEMO')||get('NAME')||'Lançamento importado';
+  const fitid=get('FITID');
+  return{data,val:Math.round(Math.abs(amt)*100)/100,tipo:amt>=0?'Entrada':'Saída',desc,fitid};
+ }).filter(t=>t.data&&t.val>0);}
+function jaExisteFinanceiro(t){return DB.financeiro.some(f=>f.data===t.data&&Math.abs(Number(f.val)-t.val)<0.005&&(f.desc||'').trim()===t.desc.trim());}
+function importarExtratoOfx(ev){const file=ev.target.files[0];ev.target.value='';if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  let itens;
+  try{itens=parseOfx(reader.result);}catch(e){toast('Erro ao ler o arquivo OFX: '+e.message,'error');return;}
+  if(!itens.length){toast('Nenhum lançamento encontrado neste arquivo OFX.','error');return;}
+  OFX_ITENS=itens;
+  $('ofx-itens-lista').innerHTML=itens.map((t,i)=>{const dup=jaExisteFinanceiro(t);
+   return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer"><input type="checkbox" class="ofx-item-check" value="'+i+'" '+(dup?'':'checked')+' style="width:16px;height:16px;flex-shrink:0"><div style="flex:1;min-width:0"><strong>'+esc(t.desc)+'</strong><div style="font-size:11px;color:var(--text-muted)">'+fmtD(t.data)+(dup?' · <span style="color:var(--warning)">já existe no financeiro</span>':'')+'</div></div><span class="mono" style="font-weight:700;flex-shrink:0;color:'+(t.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+(t.tipo==='Entrada'?'+':'−')+' '+fmt(t.val)+'</span></label>';
+  }).join('');
+  openModal('modal-ofx');
+ };
+ reader.onerror=()=>toast('Não foi possível ler o arquivo.','error');
+ reader.readAsText(file);}
+function marcarTodosOfx(v){document.querySelectorAll('.ofx-item-check').forEach(c=>c.checked=v);}
+async function confirmarImportacaoOfx(){if(!guard())return;
+ const idxs=Array.from(document.querySelectorAll('.ofx-item-check:checked')).map(c=>Number(c.value));
+ if(!idxs.length){toast('Selecione ao menos um lançamento.','error');return;}
+ const novos=idxs.map(i=>Object.assign({id:uid()},{tipo:OFX_ITENS[i].tipo,data:OFX_ITENS[i].data,desc:OFX_ITENS[i].desc,cat:'Extrato bancário',val:OFX_ITENS[i].val,status:'Pago'}));
+ const {error}=await supa.from('financeiro').insert(novos.map(financeiroParaSupabase));
+ if(error){toast('Erro ao importar no Supabase: '+error.message,'error');return;}
+ DB.financeiro=novos.concat(DB.financeiro);
+ commit('criar','Financeiro',novos.length+' lançamento(s) importado(s) do extrato OFX');
+ novos.forEach(n=>syncSheets('financeiro','upsert',n));
+ closeModal('modal-ofx');toast(novos.length+' lançamento(s) importado(s)!','success');}
 async function carregarFinanceiroSupabase(){
  const {data,error}=await supa.from('financeiro').select('*').order('data',{ascending:false});
  if(error){toast('Erro ao carregar financeiro do Supabase: '+error.message,'error');return;}
