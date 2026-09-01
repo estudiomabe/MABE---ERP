@@ -367,6 +367,8 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="stat-box"><div class="stat-value" id="rel-reserva" style="color:#6fa8e0">R$ 0</div><div class="stat-label">Fundo de Reserva acumulado</div></div>
         <div class="stat-box"><div class="stat-value" id="rel-desvio">R$ 0</div><div class="stat-label">Desvio de preços manuais</div></div>
       </div>
+      <div class="table-wrapper" style="margin-bottom:14px"><div class="table-toolbar"><div class="table-toolbar-title">📝 Orçamentos Realizados <span id="rel-orc-real-count" style="font-size:11px;color:var(--text-muted);font-weight:400"></span></div></div><table><thead><tr><th>#</th><th>Cliente</th><th>Data</th><th>Status</th><th>Valor</th></tr></thead><tbody id="tb-rel-orc-realizados"></tbody></table></div>
+      <div class="table-wrapper" style="margin-bottom:14px"><div class="table-toolbar"><div class="table-toolbar-title">✔ Orçamentos Aprovados (Pedidos) <span id="rel-orc-aprov-count" style="font-size:11px;color:var(--text-muted);font-weight:400"></span></div></div><table><thead><tr><th>#</th><th>Cliente</th><th>Data Aprovação</th><th>Pedido Gerado</th><th>Valor</th></tr></thead><tbody id="tb-rel-orc-aprovados"></tbody></table></div>
       <div class="bottom-grid" style="margin-bottom:14px">
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">📊 Margem por Orçamento</div></div><table><thead><tr><th>Descrição</th><th>Preço</th><th>Custo</th><th>Lucro</th><th>Margem</th></tr></thead><tbody id="tb-rel-margem"></tbody></table></div>
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">🏆 Top Clientes</div></div><table><thead><tr><th>Cliente</th><th>Pedidos</th><th>Total Comprado</th></tr></thead><tbody id="tb-rel-clientes"></tbody></table></div>
@@ -2011,6 +2013,14 @@ async function delCompra(id){if(!guard())return;const c=DB.compras.find(x=>x.id=
 
 /* ================= RELATÓRIOS ================= */
 function renderRelatorios(){syncPerBar('rel-per',REL);
+ const orcRealizados=DB.orcamentos.filter(o=>matchPer(o.data,REL)).slice().sort((a,b)=>b.num-a.num);
+ $('rel-orc-real-count').textContent='— '+orcRealizados.length+' no período';
+ const stBOrc={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'};
+ $('tb-rel-orc-realizados').innerHTML=orcRealizados.map(o=>'<tr><td class="mono">ORC-'+pad(o.num)+'</td><td>'+esc(cliName(o.cliId))+'</td><td class="mono">'+fmtD(o.data)+'</td><td><span class="badge '+(stBOrc[o.status]||'badge-muted')+'">'+o.status+'</span></td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td></tr>').join('')||emptyRow(5,'Nenhum orçamento no período');
+ const orcAprovados=DB.orcamentos.filter(o=>(o.status==='Aprovado'||o.status==='Concluído')&&matchPer(o.data,REL)).slice().sort((a,b)=>b.num-a.num);
+ $('rel-orc-aprov-count').textContent='— '+orcAprovados.length+' no período';
+ $('tb-rel-orc-aprovados').innerHTML=orcAprovados.map(o=>{const venda=DB.vendas.find(v=>(v.obs||'').includes('ORC-'+pad(o.num)));
+  return '<tr><td class="mono">ORC-'+pad(o.num)+'</td><td>'+esc(cliName(o.cliId))+'</td><td class="mono">'+fmtD(o.data)+'</td><td>'+(venda?'<span class="badge badge-success">V-'+pad(venda.num)+'</span>':'<span class="badge badge-muted">—</span>')+'</td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td></tr>';}).join('')||emptyRow(5,'Nenhum orçamento aprovado no período');
  const vendasOk=DB.vendas.filter(v=>v.status!=='Cancelado'&&matchPer(v.data,REL));
  const fat=vendasOk.reduce((s,v)=>s+Number(v.total||0),0);
  $('rel-fat').textContent=fmtK(fat);
