@@ -204,7 +204,8 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
     <div class="nav-item" onclick="navigate('entregas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Entregas</div>
     <div class="nav-item" onclick="navigate('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Máquinas<span class="nav-badge" id="badge-manut" style="display:none">!</span></div>
     <span class="nav-label">Estoque</span>
-    <div class="nav-item" onclick="navigate('produtos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Produtos<span class="nav-badge" id="badge-estoque" style="display:none">!</span></div>
+    <div class="nav-item" onclick="navigate('insumos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1"/></svg>Insumos<span class="nav-badge" id="badge-insumos" style="display:none">!</span></div>
+    <div class="nav-item" onclick="navigate('portfolio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Portfólio<span class="nav-badge" id="badge-portfolio" style="display:none">!</span></div>
     <div class="nav-item" onclick="navigate('madeiras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8h20v8H2z"/><path d="M6 8v8M11 8v8M16 8v8"/></svg>Madeiras<span class="nav-badge" id="badge-madeira" style="display:none">!</span></div>
     <span class="nav-label">Financeiro</span>
     <div class="nav-item" onclick="navigate('financeiro')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financeiro</div>
@@ -285,7 +286,8 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
     </div>
 
     <div class="section" id="section-clientes"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Clientes — CRM</div></div><table><thead><tr><th>#</th><th>Nome</th><th>Email</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-clientes"></tbody></table></div></div>
-    <div class="section" id="section-produtos"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Produtos & Estoque</div></div><table><thead><tr><th>#</th><th>Produto</th><th>Categoria</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-produtos"></tbody></table></div></div>
+    <div class="section" id="section-insumos"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Insumos & Estoque</div></div><table><thead><tr><th>#</th><th>Insumo</th><th>Categoria</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-insumos"></tbody></table></div></div>
+    <div class="section" id="section-portfolio"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Portfólio & Estoque</div></div><table><thead><tr><th>#</th><th>Produto</th><th>Categoria</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-portfolio"></tbody></table></div></div>
     <div class="section" id="section-vendas">
       <div class="period-bar">
         <div class="per-tabs">
@@ -657,7 +659,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 <div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.7"></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group"><label class="form-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group"><label class="form-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-vendas"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="mv-title">Novo Pedido</div><button class="modal-close" onclick="closeModal('modal-vendas')">✕</button></div><div class="modal-body"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="vnd-cli"></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="addItemVenda()">+ Adicionar</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-vendas')">Cancelar</button><button class="btn btn-primary" onclick="saveVenda()">Salvar Pedido</button></div></div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="fin-cat"></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-fornecedores"><div class="modal"><div class="modal-header"><div class="modal-title" id="mfor-title">Novo Fornecedor</div><button class="modal-close" onclick="closeModal('modal-fornecedores')">✕</button></div><div class="modal-body"><input type="hidden" id="for-id"><div class="form-grid"><div class="form-group"><label class="form-label">Razão Social *</label><input type="text" class="form-control" id="for-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CNPJ</label><input type="text" class="form-control" id="for-cnpj"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="for-tel"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="for-email"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="for-cidade"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="for-status"><option>Ativo</option><option>Inativo</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-fornecedores')">Cancelar</button><button class="btn btn-primary" onclick="saveFornecedor()">Salvar</button></div></div></div>
@@ -803,7 +805,7 @@ function syncFullDatabase(){if(!guard())return;const url=DB.config.sheetsUrl;
 function desserializar(v){if(typeof v==='string'&&v.length&&(v[0]==='{'||v[0]==='[')){try{return JSON.parse(v);}catch(e){return v;}}return v;}
 function normalizarRegistros(arr){return (arr||[]).map(r=>{const o={};for(const k in r)o[k]=desserializar(r[k]);return o;});}
 function maiorNum(arr){return (arr||[]).reduce((m,r)=>Math.max(m,Number(r.num)||0),0);}
-const MAPA_ABA_DB={clientes:'clientes',produtos:'produtos',madeiras:'madeiras',vendas:'vendas',orcamentos:'orcamentos',entregas:'entregas',ferramentas:'ferramentas',financeiro:'financeiro',fornecedores:'fornecedores',compras:'compras',pcp:'producao'};
+const MAPA_ABA_DB={clientes:'clientes',insumos:'produtos',portfolio:'produtos',madeiras:'madeiras',vendas:'vendas',orcamentos:'orcamentos',entregas:'entregas',ferramentas:'ferramentas',financeiro:'financeiro',fornecedores:'fornecedores',compras:'compras',pcp:'producao'};
 function carregarDaPlanilha(silencioso){
  const url=DB.config.sheetsUrl;if(!url)return Promise.resolve(false);
  return fetch(url).then(r=>r.json()).then(r=>{
@@ -858,8 +860,8 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  carregarHistoricoSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
-const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',produtos:'Produtos & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
-const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','produtos','madeiras','financeiro','fornecedores','compras','usuarios'];
+const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',insumos:'Insumos & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
+const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','compras','usuarios'];
 let CUR='dashboard';
 function toggleSidebar(){$('sidebar').classList.toggle('open');}
 function closeSidebar(){$('sidebar').classList.remove('open');}
@@ -874,7 +876,7 @@ function navigate(sec){CUR=sec;
  renderSection(sec);
  if(sec==='clientes')carregarClientesSupabase();
  if(sec==='fornecedores')carregarFornecedoresSupabase();
- if(sec==='produtos')carregarProdutosSupabase();
+ if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas')carregarFerramentasSupabase();
  if(sec==='vendas')carregarVendasSupabase();
@@ -885,14 +887,15 @@ function navigate(sec){CUR=sec;
  if(sec==='financeiro')carregarFinanceiroSupabase();
  if(sec==='configuracoes')carregarConfigSupabase();
  if(sec==='historico')carregarHistoricoSupabase();}
-function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
+function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
  if(CUR==='pcp')document.querySelectorAll('#pcp-kanban .kanban-card').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(v)?'':'none';});}
 function openNew(){if(!guard())return;
  switch(CUR){
   case 'clientes':openCliente();break;
-  case 'produtos':openProduto();break;
+  case 'insumos':openProduto('Insumo');break;
+  case 'portfolio':openProduto('Portfólio');break;
   case 'madeiras':openMadeira();break;
   case 'vendas':openVenda();break;
   case 'orcamentos':novoOrcamento();break;
@@ -906,10 +909,11 @@ function openNew(){if(!guard())return;
 function updateBadges(){
  const t=today();
  const atras=DB.producao.filter(o=>o.status!=='Concluída'&&o.prazo&&o.prazo<t).length;
- const crit=DB.produtos.filter(p=>Number(p.est)<=Number(p.min)).length;
+ const critInsumos=DB.produtos.filter(p=>p.tipo==='Insumo'&&Number(p.est)<=Number(p.min)).length;
+ const critPortfolio=DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio'&&Number(p.est)<=Number(p.min)).length;
  const madB=DB.madeiras.filter(m=>madM3(m)<Number(m.min||0)).length;
  const manut=DB.ferramentas.filter(f=>ferProx(f)&&ferProx(f)<t).length;
- setBadge('badge-pcp',atras);setBadge('badge-estoque',crit);setBadge('badge-madeira',madB);setBadge('badge-manut',manut);}
+ setBadge('badge-pcp',atras);setBadge('badge-insumos',critInsumos);setBadge('badge-portfolio',critPortfolio);setBadge('badge-madeira',madB);setBadge('badge-manut',manut);}
 function setBadge(id,n){const b=$(id);if(!b)return;b.style.display=n>0?'inline-flex':'none';b.textContent=n;}
 function actionBtns(fnE,fnD){if(!canEdit())return '';return '<div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="'+fnE+'">✏️</button><button class="btn btn-danger btn-sm" onclick="'+fnD+'">🗑️</button></div>';}
 
@@ -1042,26 +1046,29 @@ async function carregarProdutosSupabase(){
  const {data,error}=await supa.from('produtos').select('*').order('nome');
  if(error){toast('Erro ao carregar produtos do Supabase: '+error.message,'error');return;}
  DB.produtos=data||[];saveDB();
- if(CUR==='produtos')renderProdutos();}
-function renderProdutos(){$('tb-produtos').innerHTML=DB.produtos.map((p,i)=>{const est=Number(p.est||0),min=Number(p.min||0);
+ if(CUR==='insumos')renderInsumos();
+ if(CUR==='portfolio')renderPortfolio();}
+function linhaProduto(p,i){const est=Number(p.est||0),min=Number(p.min||0);
  const st=est<=min?['Crítico','badge-danger','var(--danger)']:est<=min*1.5?['Baixo','badge-warning','var(--warning)']:['OK','badge-success','var(--success)'];
  const pct=Math.min(100,min>0?est/(min*2)*100:100);
- return '<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(p.nome)+'</strong></td><td>'+esc(p.cat||'—')+'</td><td class="mono">'+(Number(p.preco)>0?fmt(p.preco):'—')+'</td><td class="mono">'+fmt(p.custo)+'</td><td><span class="mono">'+est+' '+esc(p.un||'un')+'</span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+st[2]+'"></div></div></td><td><span class="badge '+st[1]+'">'+st[0]+'</span></td><td>'+actionBtns("editProduto('"+p.id+"')","delProduto('"+p.id+"')")+'</td></tr>';}).join('')||emptyRow(8,'Nenhum produto cadastrado');}
-function openProduto(){PRODUTO_RAPIDO_ORC=false;['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-un').value='un';$('mp-title').textContent='Novo Produto';openModal('modal-produtos');}
+ return '<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(p.nome)+'</strong></td><td>'+esc(p.cat||'—')+'</td><td class="mono">'+(Number(p.preco)>0?fmt(p.preco):'—')+'</td><td class="mono">'+fmt(p.custo)+'</td><td><span class="mono">'+est+' '+esc(p.un||'un')+'</span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+st[2]+'"></div></div></td><td><span class="badge '+st[1]+'">'+st[0]+'</span></td><td>'+actionBtns("editProduto('"+p.id+"')","delProduto('"+p.id+"')")+'</td></tr>';}
+function renderInsumos(){$('tb-insumos').innerHTML=DB.produtos.filter(p=>p.tipo==='Insumo').map(linhaProduto).join('')||emptyRow(8,'Nenhum insumo cadastrado');}
+function renderPortfolio(){$('tb-portfolio').innerHTML=DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').map(linhaProduto).join('')||emptyRow(8,'Nenhum produto cadastrado');}
+function openProduto(tipoPadrao){PRODUTO_RAPIDO_ORC=false;['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-un').value='un';$('prod-tipo').value=tipoPadrao||'Portfólio';$('mp-title').textContent='Novo '+(tipoPadrao==='Insumo'?'Insumo':'Produto');openModal('modal-produtos');}
 function editProduto(id){if(!guard())return;const p=DB.produtos.find(x=>x.id===id);if(!p)return;
- $('prod-id').value=p.id;$('prod-nome').value=p.nome;$('prod-cat').value=p.cat||'';$('prod-un').value=p.un||'un';$('prod-preco').value=p.preco;$('prod-custo').value=p.custo;$('prod-est').value=p.est;$('prod-min').value=p.min;$('mp-title').textContent='Editar Produto';openModal('modal-produtos');}
+ $('prod-id').value=p.id;$('prod-nome').value=p.nome;$('prod-tipo').value=p.tipo||'Portfólio';$('prod-cat').value=p.cat||'';$('prod-un').value=p.un||'un';$('prod-preco').value=p.preco;$('prod-custo').value=p.custo;$('prod-est').value=p.est;$('prod-min').value=p.min;$('mp-title').textContent='Editar '+(p.tipo==='Insumo'?'Insumo':'Produto');openModal('modal-produtos');}
 async function saveProduto(){if(!guard())return;const nome=$('prod-nome').value.trim();if(!nome){toast('Informe o nome do produto.','error');return;}
- const id=$('prod-id').value;const o={nome,cat:$('prod-cat').value.trim(),un:$('prod-un').value,preco:num('prod-preco'),custo:num('prod-custo'),est:num('prod-est'),min:num('prod-min')};
+ const id=$('prod-id').value;const o={nome,tipo:$('prod-tipo').value,cat:$('prod-cat').value.trim(),un:$('prod-un').value,preco:num('prod-preco'),custo:num('prod-custo'),est:num('prod-est'),min:num('prod-min')};
  const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
  const {error}=await supa.from('produtos').upsert(registro);
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
- if(id){Object.assign(DB.produtos.find(x=>x.id===id),o);commit('editar','Produtos',nome);}
- else{DB.produtos.push(registro);commit('criar','Produtos',nome);}
+ if(id){Object.assign(DB.produtos.find(x=>x.id===id),o);commit('editar',o.tipo==='Insumo'?'Insumos':'Portfólio',nome);}
+ else{DB.produtos.push(registro);commit('criar',o.tipo==='Insumo'?'Insumos':'Portfólio',nome);}
  syncSheets('produtos','upsert',registro);
  atualizarDatalistMateriais();
  if(PRODUTO_RAPIDO_ORC){PRODUTO_RAPIDO_ORC=false;addMaterial('catalogo',{ref:'p:'+registro.id,desc:registro.nome,qty:1,custo:registro.custo});}
- closeModal('modal-produtos');toast('Produto salvo!','success');}
-async function delProduto(id){if(!guard())return;const p=DB.produtos.find(x=>x.id===id);if(!confirm('Excluir produto "'+p.nome+'"?'))return;
+ closeModal('modal-produtos');toast((o.tipo==='Insumo'?'Insumo':'Produto')+' salvo!','success');}
+async function delProduto(id){if(!guard())return;const p=DB.produtos.find(x=>x.id===id);if(!confirm('Excluir "'+p.nome+'"?'))return;
  const {error}=await supa.from('produtos').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.produtos=DB.produtos.filter(x=>x.id!==id);commit('excluir','Produtos',p.nome);syncSheets('produtos','delete',{id});toast('Produto excluído.','info');}
@@ -1118,7 +1125,7 @@ function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const lista=DB.vendas.filter(v=>matchPer(v.data,PER_VND));
  $('tb-vendas').innerHTML=lista.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
  return '<tr><td class="mono">V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+(v.itens||[]).length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</td></tr>';}).join('')||emptyRow(8,'Nenhum pedido no período selecionado');}
-function prodOptions(sel){return '<option value="">— Produto —</option>'+DB.produtos.map(p=>'<option value="'+p.id+'" data-preco="'+(p.preco||p.custo||0)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.nome)+' ('+p.est+' '+esc(p.un||'un')+')</option>').join('');}
+function prodOptions(sel){return '<option value="">— Produto —</option>'+DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').map(p=>'<option value="'+p.id+'" data-preco="'+(p.preco||p.custo||0)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.nome)+' ('+p.est+' '+esc(p.un||'un')+')</option>').join('');}
 function addItemVenda(it){const wrap=$('vnd-itens');const row=document.createElement('div');
  row.style.cssText='display:grid;grid-template-columns:2fr 70px 100px 100px 30px;gap:6px;align-items:center';
  row.innerHTML='<select class="form-control vi-prod" onchange="viProd(this)">'+prodOptions(it?it.prodId:'')+'</select><input type="number" class="form-control vi-qty" value="'+(it?it.qty:1)+'" min="1" oninput="calcVenda()"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control vi-preco" value="'+(it?it.preco:0)+'" step="0.01" oninput="calcVenda()" style="border:none;background:transparent;padding-left:2px"></div><div class="mono vi-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcVenda()">✕</button>';
@@ -1330,7 +1337,8 @@ function resetOrcForm(tipo){const cf=DB.config.cf;
  calcOrc();}
 function insumoOptions(sel){let h='<option value="">— Selecionar —</option>';
  if(DB.madeiras.length)h+='<optgroup label="🪵 Madeiras (custo R$/m³ — qtd em m³)">'+DB.madeiras.map(m=>'<option value="m:'+m.id+'" data-custo="'+(m.custo||0)+'"'+('m:'+m.id===sel?' selected':'')+'>'+esc(m.especie+' '+m.tipo+' '+m.esp+'×'+m.larg+'cm')+'</option>').join('')+'</optgroup>';
- if(DB.produtos.length)h+='<optgroup label="📦 Produtos / Insumos">'+DB.produtos.map(p=>'<option value="p:'+p.id+'" data-custo="'+(p.custo||0)+'"'+('p:'+p.id===sel?' selected':'')+'>'+esc(p.nome)+'</option>').join('')+'</optgroup>';
+ const insumosOpt=DB.produtos.filter(p=>p.tipo==='Insumo');
+ if(insumosOpt.length)h+='<optgroup label="📦 Insumos">'+insumosOpt.map(p=>'<option value="p:'+p.id+'" data-custo="'+(p.custo||0)+'"'+('p:'+p.id===sel?' selected':'')+'>'+esc(p.nome)+'</option>').join('')+'</optgroup>';
  return h;}
 function fornOptions(sel){return '<option value="">— Sem fornecedor —</option>'+DB.fornecedores.map(f=>'<option value="'+f.id+'"'+(f.id===sel?' selected':'')+'>'+esc(f.nome)+'</option>').join('');}
 function mdoTipoOptions(sel){return '<option value="">— Selecionar —</option>'+DB.config.mdoTipos.map(t=>'<option value="'+t.id+'"'+(t.id===sel?' selected':'')+'>'+esc(t.nome)+' (R$'+fmtN(t.valorHora,2)+'/h)</option>').join('');}
@@ -1344,7 +1352,7 @@ function addServico(sv){const wrap=$('orc-servicos');const row=document.createEl
  wrap.appendChild(row);calcOrc();}
 function materiaisDatalistOptions(){let opts='';
  DB.madeiras.forEach(m=>{opts+='<option value="'+esc(m.especie+' '+m.tipo+' '+m.esp+'×'+m.larg+'cm')+'"></option>';});
- DB.produtos.forEach(p=>{opts+='<option value="'+esc(p.nome)+'"></option>';});
+ DB.produtos.filter(p=>p.tipo==='Insumo').forEach(p=>{opts+='<option value="'+esc(p.nome)+'"></option>';});
  return opts;}
 function atualizarDatalistMateriais(){const dl=$('dl-materiais');if(dl)dl.innerHTML=materiaisDatalistOptions();}
 function buscarMaterialPorNome(nome){
@@ -1358,7 +1366,7 @@ function omBusca(input){const nome=input.value.trim();const found=buscarMaterial
  else{delete row.dataset.ref;row.classList.toggle('om-nao-encontrado',nome.length>0);}
  calcOrc();}
 let LINHA_MATERIAL_PENDENTE=null,PRODUTO_RAPIDO_ORC=false;
-function abrirNovoProdutoRapido(){openProduto();PRODUTO_RAPIDO_ORC=true;}
+function abrirNovoProdutoRapido(){openProduto('Insumo');PRODUTO_RAPIDO_ORC=true;}
 function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.createElement('div');row.dataset.mode=mode;if(it&&it.ref)row.dataset.ref=it.ref;
  row.style.cssText='display:grid;grid-template-columns:2fr 65px 85px 85px 28px;gap:6px;align-items:center';
  const desc=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
@@ -1409,7 +1417,7 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o){toast('Orçamento não encontrado.','error');return;}
  const tipo=$('orc-tipo').value;const t=computeOrc();
  if(tipo==='novo_produto'){const nome=$('np-nome').value.trim()||desc;
-  const novoProd={id:uid(),nome,cat:'Móvel — Catálogo',un:$('np-un').value,preco:Math.round(t.preco*100)/100,custo:Math.round(t.custo*100)/100,est:num('np-est'),min:num('np-min')};
+  const novoProd={id:uid(),nome,tipo:'Portfólio',cat:'Móvel — Catálogo',un:$('np-un').value,preco:Math.round(t.preco*100)/100,custo:Math.round(t.custo*100)/100,est:num('np-est'),min:num('np-min')};
   const {error:erroProd}=await supa.from('produtos').upsert(novoProd);
   if(erroProd){toast('Erro ao cadastrar produto no Supabase: '+erroProd.message,'error');return;}
   DB.produtos.push(novoProd);syncSheets('produtos','upsert',novoProd);
@@ -1428,7 +1436,7 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
 function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const it=(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
  if(it.tipo==='catalogo'){resetOrcCatalogo();
-  $('orc-cat-id').value=it.id;fillSel('orc-cat-prod',DB.produtos.filter(p=>Number(p.preco)>0),p=>p.nome,it.prodId,'— Selecionar produto final —');
+  $('orc-cat-id').value=it.id;fillSel('orc-cat-prod',DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio'&&Number(p.preco)>0),p=>p.nome,it.prodId,'— Selecionar produto final —');
   $('orc-cat-qty').value=it.qty||1;$('orc-cat-desc-pct').value=it.descPct||0;$('orc-cat-obs').value=it.obs||'';
   selecionarProdCatalogo();ORC_ITEM_EDITANDO=itemId;ORC_VOLTAR='detalhe';orcShow('catalogo');return;}
  resetOrcForm(it.tipo);
@@ -1575,7 +1583,7 @@ async function orcParaProducao(id){if(!guard())return;const o=DB.orcamentos.find
  syncSheets('pcp','upsert',op);syncSheets('orcamentos','upsert',o);
  toast('Ordem de produção criada! Veja em Produção (PCP).','success');}
 /* Item de catálogo */
-function resetOrcCatalogo(){$('orc-cat-id').value='';fillSel('orc-cat-prod',DB.produtos.filter(p=>Number(p.preco)>0),p=>p.nome,'','— Selecionar produto final —');
+function resetOrcCatalogo(){$('orc-cat-id').value='';fillSel('orc-cat-prod',DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio'&&Number(p.preco)>0),p=>p.nome,'','— Selecionar produto final —');
  $('orc-cat-qty').value=1;$('orc-cat-desc-pct').value=0;$('orc-cat-obs').value='';$('cat-info-prod').style.display='none';calcCatalogo();}
 function selecionarProdCatalogo(){const p=DB.produtos.find(x=>x.id===$('orc-cat-prod').value);
  if(p){$('cat-info-prod').style.display='block';$('cat-preco-tab').textContent=fmt(p.preco);$('cat-estoque').textContent=p.est+' '+(p.un||'un');}else $('cat-info-prod').style.display='none';
@@ -2309,10 +2317,10 @@ function loadDemoData(){if(!guard())return;
   {id:'f2',nome:'Ferragens & Cia',cnpj:'34.567.890/0001-22',tel:'(11) 3322-1144',email:'pedidos@ferragensecia.com.br',cidade:'São Paulo',status:'Ativo'},
   {id:'f3',nome:'Vernizes Premium',cnpj:'45.678.901/0001-33',tel:'(11) 2211-9988',email:'comercial@vernizespremium.com.br',cidade:'Guarulhos',status:'Ativo'}];
  db.produtos=[
-  {id:'p1',nome:'Mesa de Jantar Tauari 2,20m',cat:'Móvel — Catálogo',un:'un',preco:8900,custo:3400,est:1,min:0},
-  {id:'p2',nome:'Banco Ripado Freijó 1,60m',cat:'Móvel — Catálogo',un:'un',preco:2400,custo:950,est:2,min:1},
-  {id:'p3',nome:'Aparador Cumaru 1,80m',cat:'Móvel — Catálogo',un:'un',preco:5200,custo:2100,est:0,min:1},
-  {id:'p4',nome:'Cadeira Maciça Estofada',cat:'Móvel — Catálogo',un:'un',preco:1450,custo:580,est:6,min:4},
+  {id:'p1',nome:'Mesa de Jantar Tauari 2,20m',tipo:'Portfólio',cat:'Móvel — Catálogo',un:'un',preco:8900,custo:3400,est:1,min:0},
+  {id:'p2',nome:'Banco Ripado Freijó 1,60m',tipo:'Portfólio',cat:'Móvel — Catálogo',un:'un',preco:2400,custo:950,est:2,min:1},
+  {id:'p3',nome:'Aparador Cumaru 1,80m',tipo:'Portfólio',cat:'Móvel — Catálogo',un:'un',preco:5200,custo:2100,est:0,min:1},
+  {id:'p4',nome:'Cadeira Maciça Estofada',tipo:'Portfólio',cat:'Móvel — Catálogo',un:'un',preco:1450,custo:580,est:6,min:4},
   {id:'p5',nome:'Verniz PU Fosco 3,6L',cat:'Insumo — Acabamento',un:'un',preco:0,custo:189,est:4,min:2},
   {id:'p6',nome:'Cola PVA Extra 5kg',cat:'Insumo — Colagem',un:'un',preco:0,custo:98,est:2,min:2},
   {id:'p7',nome:'Lixa Grão 120 (pct 50)',cat:'Insumo — Lixamento',un:'cx',preco:0,custo:75,est:1,min:2},
