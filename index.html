@@ -1611,15 +1611,23 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
  doc.text('ORC-'+pad(o.num),marginX,58);
 
- // Logo (marca Estúdio Mabe) no canto superior direito
- const logoX=196;
- doc.setFillColor(...DARK);doc.roundedRect(logoX-10,12,10,10,1.5,1.5,'F');
- doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
- doc.text('estúdio',logoX,29,{align:'right'});
- doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(...DARK);
- doc.text('mabe.',logoX,35,{align:'right'});
+ // Logo (marca Estúdio Mabe) no canto superior direito — ícone à esquerda, "estúdio" pequeno sobre "mabe." em negrito
+ const logoRight=196,logoTop=14;
+ doc.setFont('helvetica','bold');doc.setFontSize(17);
+ const wMabe=doc.getTextWidth('mabe.');
+ doc.setFont('helvetica','normal');doc.setFontSize(9.5);
+ const wEstudio=doc.getTextWidth('estúdio');
+ const textW=Math.max(wMabe,wEstudio);
+ const iconW=9,iconGap=2.5;
+ const textX=logoRight-textW;
+ const iconX=textX-iconGap-iconW;
+ doc.setFillColor(...DARK);doc.rect(iconX,logoTop,iconW,iconW,'F');
+ doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...DARK);
+ doc.text('estúdio',textX,logoTop+7);
+ doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(...DARK);
+ doc.text('mabe.',textX,logoTop+18);
  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
- doc.text('MARCENARIA · MADEIRA MACIÇA',logoX,40,{align:'right'});
+ doc.text('MARCENARIA · MADEIRA MACIÇA',logoRight,logoTop+24,{align:'right'});
 
  // Linha de metadados: Cliente / Data / Entrega
  let metaY=70;
