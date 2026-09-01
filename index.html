@@ -104,6 +104,7 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .kanban-card:hover { box-shadow:0 3px 12px rgba(0,0,0,0.08);transform:translateY(-1px); }
 .kanban-card-title { font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3; }
 .kanban-card-sub { font-size:11px;color:var(--text-muted);margin-bottom:8px; }
+.kanban-card-timer { font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-bottom:8px; }
 .kanban-card-footer { display:flex;align-items:center;justify-content:space-between; }
 .kanban-card-prazo { font-size:10px;font-family:var(--mono); }
 .kanban-card-prazo.vencido { color:var(--danger);font-weight:700; } .kanban-card-prazo.hoje { color:var(--warning);font-weight:700; } .kanban-card-prazo.ok { color:var(--text-muted); }
@@ -267,6 +268,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <span id="per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
       </div>
       <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent:var(--text-muted)"><div class="kpi-label">Orçamentos do Período</div><div class="kpi-value" id="kpi-orcamentos">R$0</div><div class="kpi-sub" id="kpi-osub">orçamentos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Pedidos do Período</div><div class="kpi-value" id="kpi-vendas">R$0</div><div class="kpi-sub" id="kpi-vsub">pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Entradas</div><div class="kpi-value" id="kpi-entradas">R$0</div><div class="kpi-sub">recebido no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Saídas</div><div class="kpi-value" id="kpi-saidas">R$0</div><div class="kpi-sub">pago no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
@@ -422,6 +424,11 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="table-wrapper" style="margin-top:14px">
           <div class="table-toolbar"><div class="table-toolbar-title">Itens do Orçamento</div><button class="btn btn-primary btn-sm" onclick="abrirAdicionarItem()">+ Adicionar Item</button></div>
           <table><thead><tr><th>Tipo</th><th>Descrição</th><th>Qtd</th><th>Preço</th><th>Lucro</th><th>Ações</th></tr></thead><tbody id="tb-orc-itens"></tbody></table>
+        </div>
+        <div class="config-card" style="margin-top:14px">
+          <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('orc-anexo-input').click()">+ Anexar Arquivo</button></div>
+          <input type="file" id="orc-anexo-input" accept=".png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" style="display:none" onchange="uploadAnexoOrc(event)">
+          <div id="orc-anexos-lista" style="display:flex;flex-wrap:wrap;gap:10px"></div>
         </div>
         <div class="config-card" style="margin-top:14px;background:#1a1714;border-color:#1a1714;max-width:360px;margin-left:auto">
           <div style="display:flex;flex-direction:column;gap:6px">
@@ -938,6 +945,9 @@ function renderDashboard(){
  $('per-ano-sel').style.display=PER.modo==='tudo'?'none':'';
  $('per-label').textContent='📅 '+(PER.modo==='tudo'?'Todo o período':PER.modo==='ano'?('Ano '+PER.ano):(MESES[PER.mes]+'/'+PER.ano));
 
+ const oPer=DB.orcamentos.filter(o=>inPer(o.data)&&o.status!=='Reprovado');
+ $('kpi-orcamentos').textContent=fmtK(oPer.reduce((s,o)=>s+Number(o.preco||0),0));
+ $('kpi-osub').textContent=oPer.length+' orçamento(s)';
  const vPer=DB.vendas.filter(v=>inPer(v.data)&&v.status!=='Cancelado');
  const pagos=DB.financeiro.filter(f=>f.status==='Pago'&&inPer(f.data));
  const entradas=pagos.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
@@ -1139,8 +1149,8 @@ async function delVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===
  DB.vendas=DB.vendas.filter(x=>x.id!==id);commit('excluir','Pedidos','V-'+pad(v.num));syncSheets('vendas','delete',{id});toast('Pedido excluído (estoque devolvido).','info');}
 
 /* ================= ORÇAMENTOS ================= */
-function orcParaSupabase(o){const r={id:o.id,cli_id:o.cliId||null,data:o.data||null,validade:o.validade||null,status:o.status||null,obs:o.obs||null,itens:o.itens||[],custo:o.custo||0,preco:o.preco||0,lucro:o.lucro||0,op_id:o.opId||null,tipo:null,cf:null,mdo:null,materiais:null,imposto:0,markup:0,prod_id:null,qty:null,desc_pct:0};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
-function orcDeSupabase(row){return{id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,desc:row.descricao||''};}
+function orcParaSupabase(o){const r={id:o.id,cli_id:o.cliId||null,data:o.data||null,validade:o.validade||null,status:o.status||null,obs:o.obs||null,itens:o.itens||[],anexos:o.anexos||[],custo:o.custo||0,preco:o.preco||0,lucro:o.lucro||0,op_id:o.opId||null,tipo:null,cf:null,mdo:null,materiais:null,imposto:0,markup:0,prod_id:null,qty:null,desc_pct:0};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
+function orcDeSupabase(row){return{id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,desc:row.descricao||''};}
 async function carregarOrcamentosSupabase(){
  const {data,error}=await supa.from('orcamentos').select('*').order('num',{ascending:false});
  if(error){toast('Erro ao carregar orçamentos do Supabase: '+error.message,'error');return;}
@@ -1256,7 +1266,38 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
   if(it.precoManual&&it.precoSugerido){const desvioPct=(it.preco-it.precoSugerido)/it.precoSugerido*100;
    precoCell+='<div style="font-size:10px;margin-top:2px" title="Sugerido: '+fmt(it.precoSugerido)+'"><span class="badge '+(desvioPct<0?'badge-danger':desvioPct>0?'badge-info':'badge-muted')+'" style="font-size:9px">✏️ manual '+(desvioPct>=0?'+':'')+fmtN(desvioPct,1)+'%</span></div>';}
   return '<tr><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong></td><td class="mono">'+(it.qty||1)+'</td><td class="mono">'+precoCell+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>';}).join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
- $('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);}
+ $('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);
+ renderAnexosOrc(o);}
+function renderAnexosOrc(o){const anexos=o.anexos||[];
+ $('orc-anexos-lista').innerHTML=anexos.map(a=>{
+  const isImg=/\.(png|jpe?g)$/i.test(a.nome||'');
+  const thumb=isImg?'<img src="'+a.url+'" style="width:100%;height:90px;object-fit:cover;border-radius:8px 8px 0 0">':'<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--surface2);border-radius:8px 8px 0 0">📄</div>';
+  const del=canEdit()?'<button class="btn btn-danger btn-sm" style="width:100%;border-radius:0 0 8px 8px" onclick="excluirAnexoOrc(\''+a.path.replace(/'/g,"\\'")+'\')">🗑️ Excluir</button>':'';
+  return '<div style="width:130px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)"><a href="'+a.url+'" target="_blank" style="display:block">'+thumb+'</a><div style="font-size:10px;padding:5px 6px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(a.nome)+'">'+esc(a.nome)+'</div>'+del+'</div>';
+ }).join('')||'<div style="font-size:12px;color:var(--text-muted)">Nenhum anexo ainda.</div>';}
+async function uploadAnexoOrc(ev){if(!guard())return;const file=ev.target.files[0];ev.target.value='';if(!file)return;
+ const tiposOk=['image/png','image/jpeg','application/pdf'];
+ if(!tiposOk.includes(file.type)){toast('Envie apenas PNG, JPEG ou PDF.','error');return;}
+ if(file.size>10*1024*1024){toast('Arquivo muito grande (máx. 10MB).','error');return;}
+ const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ const path=o.id+'/'+uid()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+ toast('Enviando arquivo...','info');
+ const {error:upErr}=await supa.storage.from('orcamentos-anexos').upload(path,file);
+ if(upErr){toast('Erro ao enviar arquivo: '+upErr.message,'error');return;}
+ const {data:pub}=supa.storage.from('orcamentos-anexos').getPublicUrl(path);
+ const anexo={path,nome:file.name,url:pub.publicUrl};
+ const anexos=(o.anexos||[]).concat([anexo]);
+ const {error}=await supa.from('orcamentos').update({anexos}).eq('id',o.id);
+ if(error){toast('Erro ao salvar anexo no orçamento: '+error.message,'error');return;}
+ o.anexos=anexos;saveDB();renderAnexosOrc(o);toast('Anexo adicionado!','success');}
+async function excluirAnexoOrc(path){if(!guard())return;if(!confirm('Excluir este anexo?'))return;
+ const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ const {error:delErr}=await supa.storage.from('orcamentos-anexos').remove([path]);
+ if(delErr){toast('Erro ao excluir arquivo: '+delErr.message,'error');return;}
+ const anexos=(o.anexos||[]).filter(a=>a.path!==path);
+ const {error}=await supa.from('orcamentos').update({anexos}).eq('id',o.id);
+ if(error){toast('Erro ao atualizar orçamento: '+error.message,'error');return;}
+ o.anexos=anexos;saveDB();renderAnexosOrc(o);toast('Anexo excluído.','info');}
 function abrirAdicionarItem(){if(!guard())return;ORC_ITEM_EDITANDO=null;ORC_VOLTAR='detalhe';orcShow('tipo');}
 function voltarDeItem(){if(ORC_VOLTAR==='detalhe'&&ORC_ATUAL_ID){orcShow('detalhe');renderOrcDetalhe();}else{orcShow('lista');renderOrcamentos();}}
 function selecionarTipoOrc(tipo){if(tipo==='catalogo'){resetOrcCatalogo();orcShow('catalogo');return;}
@@ -1663,7 +1704,12 @@ function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
 const ETAPAS=['📋 Planejamento','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','🔁 Retrabalho','📦 Pronto','🚚 Entregue'];
 const ETAPA_FINAL=ETAPAS.length-1;
 function opParaSupabase(o){const r={id:o.id,titulo:o.titulo,cli_id:o.cliId||null,prazo:o.prazo||null,resp:o.resp||null,prio:o.prio||null,etapa:o.etapa||0,status:o.status||'Ativa',obs:o.obs||null,orc_id:o.orcId||null,fim:o.fim||null};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
-function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim};}
+function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim,criadoEm:row.created_at};}
+function elapsedStr(iso){if(!iso)return '';const ms=Date.now()-new Date(iso).getTime();if(ms<0)return '0min';
+ const min=Math.floor(ms/60000);const dias=Math.floor(min/1440);const horas=Math.floor((min%1440)/60);const mins=min%60;
+ const partes=[];if(dias)partes.push(dias+'d');if(dias||horas)partes.push(horas+'h');partes.push(mins+'min');return partes.join(' ');}
+function tickPCPTimers(){document.querySelectorAll('.kanban-card-timer[data-criado]').forEach(el=>{const iso=el.getAttribute('data-criado');if(iso)el.textContent='⏱ '+elapsedStr(iso);});}
+setInterval(tickPCPTimers,60000);
 async function carregarProducaoSupabase(){
  const {data,error}=await supa.from('producao').select('*').order('num',{ascending:false});
  if(error){toast('Erro ao carregar produção do Supabase: '+error.message,'error');return;}
@@ -1678,7 +1724,7 @@ function renderPCP(){const t=today();const ativas=DB.producao.filter(o=>o.status
   +cards.map(o=>{const pcls=!o.prazo?'ok':o.prazo<t?'vencido':o.prazo===t?'hoje':'ok';
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
    const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶</button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
-   return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(o.titulo)+'</div><div class="kanban-card-sub">'+esc(cliName(o.cliId))+(o.resp?' · '+esc(o.resp):'')+'</div><div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
+   return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(o.titulo)+'</div><div class="kanban-card-sub">'+esc(cliName(o.cliId))+(o.resp?' · '+esc(o.resp):'')+'</div>'+(o.criadoEm?'<div class="kanban-card-timer" data-criado="'+o.criadoEm+'">⏱ '+elapsedStr(o.criadoEm)+'</div>':'')+'<div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
   +'</div>';}).join('');}
 function openOP(){$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';$('op-prio').value='Normal';$('op-etapa').value='0';$('op-obs').value='';
  $('op-btn-del').style.display='none';$('mop-title').textContent='Nova Ordem de Produção';openModal('modal-producao');}
@@ -1697,7 +1743,7 @@ async function saveOP(){if(!guard())return;const titulo=$('op-titulo').value.tri
   const n=Object.assign({id:uid(),status:'Ativa'},o);
   const {data,error}=await supa.from('producao').insert(opParaSupabase(n)).select().single();
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
-  n.num=data.num;
+  n.num=data.num;n.criadoEm=data.created_at;
   DB.producao.push(n);commit('criar','Produção',titulo);syncSheets('pcp','upsert',n);
  }
  closeModal('modal-producao');toast('Ordem de produção salva!','success');}
