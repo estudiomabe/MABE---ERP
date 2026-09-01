@@ -1613,13 +1613,13 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
 
  // Logo (marca Estúdio Mabe) no canto superior direito
  const logoX=196;
- doc.setFillColor(...DARK);doc.roundedRect(logoX-8,15,8,8,1,1,'F');
+ doc.setFillColor(...DARK);doc.roundedRect(logoX-10,12,10,10,1.5,1.5,'F');
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
- doc.text('estúdio',logoX,17,{align:'right'});
+ doc.text('estúdio',logoX,29,{align:'right'});
  doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(...DARK);
- doc.text('mabe.',logoX,23,{align:'right'});
+ doc.text('mabe.',logoX,35,{align:'right'});
  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
- doc.text('MARCENARIA · MADEIRA MACIÇA',logoX,28,{align:'right'});
+ doc.text('MARCENARIA · MADEIRA MACIÇA',logoX,40,{align:'right'});
 
  // Linha de metadados: Cliente / Data / Entrega
  let metaY=70;
