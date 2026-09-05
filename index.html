@@ -681,7 +681,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <button class="btn btn-primary" onclick="saveEmpresaInfo()">💾 Salvar Dados do Estúdio</button>
         </div>
       </div>
-      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo.</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="exportData()">📥 Baixar Backup Completo (JSON)</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Baixar backup em planilhas (Excel)</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
+      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio.</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="exportData()">📥 Baixar Backup Completo (JSON)</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Baixar backup em planilhas (Excel)</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 Baixar Backup Completo (PDF)</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
   </div>
@@ -2664,6 +2664,119 @@ function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error
  });
  XLSX.writeFile(wb,'Backup-ERP-Mabe-'+today()+'.xlsx');
  toast('Planilha de backup baixada! Guarde este arquivo em local seguro.','success');}
+function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF();
+ const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],CREAM=[245,240,232];
+ const marginX=14;
+ const pintarFundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
+ const origAddPage=doc.addPage.bind(doc);
+ doc.addPage=function(...args){const r=origAddPage(...args);pintarFundo();return r;};
+ pintarFundo();
+
+ const logoTop=14,iconW=9,iconGap=2.5;
+ const textX=marginX+iconW+iconGap;
+ doc.setFillColor(...DARK);doc.rect(marginX,logoTop,iconW,iconW,'F');
+ doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...DARK);
+ doc.text('estúdio',textX,logoTop+7);
+ doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(...DARK);
+ doc.text('mabe.',textX,logoTop+18);
+ doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ doc.text('MARCENARIA · MADEIRA MACIÇA',marginX,logoTop+24);
+
+ doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
+ doc.text('BACKUP COMPLETO',marginX,48);
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
+ doc.text('Gerado em '+fmtD(today())+' · todos os módulos do ERP',marginX,54);
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(marginX,60,196,60);
+
+ let y=70;
+ function novaSecao(titulo,head,rows,colStyles){
+  const nLinhas=rows.length||1;
+  const alturaEstimada=8+8+Math.min(nLinhas,8)*7+3;
+  if(y+alturaEstimada>282&&y>75){doc.addPage();pintarFundo();y=20;}
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...DARK);
+  doc.text(titulo,marginX,y);
+  doc.autoTable({startY:y+4,margin:{left:marginX,right:14},
+   head:[head],body:rows.length?rows:[['Nenhum registro cadastrado'].concat(Array(head.length-1).fill(''))],theme:'plain',
+   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold',cellPadding:{top:2,bottom:2,left:3,right:3}},
+   bodyStyles:{fontSize:7.5,textColor:DARK,cellPadding:{top:2,bottom:2,left:3,right:3}},
+   alternateRowStyles:{fillColor:[250,247,242]},
+   columnStyles:colStyles||{}});
+  y=doc.lastAutoTable.finalY+9;}
+
+ // Resumo geral
+ const resumo=[
+  ['Clientes',DB.clientes.length],['Orçamentos',DB.orcamentos.length],['Pedidos',DB.vendas.length],
+  ['Produção (OPs)',DB.producao.length],['Entregas',DB.entregas.length],['Lançamentos Financeiros',DB.financeiro.length],
+  ['Portfólio',DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').length],['Insumos',DB.produtos.filter(p=>p.tipo==='Insumo').length],
+  ['Madeiras',DB.madeiras.length],['Máquinas/Ferramentas',DB.ferramentas.length],['Fornecedores',DB.fornecedores.length],
+  ['Compras',DB.compras.length],['Registros no Histórico',DB.historico.length]
+ ];
+ doc.autoTable({startY:y,margin:{left:marginX,right:14},
+  head:[['Módulo','Quantidade']],body:resumo.map(r=>[r[0],String(r[1])]),theme:'plain',
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3,bottom:3,left:3,right:3}},
+  bodyStyles:{fontSize:9,textColor:DARK,cellPadding:{top:3,bottom:3,left:3,right:3}},
+  alternateRowStyles:{fillColor:[250,247,242]},
+  columnStyles:{1:{halign:'right',fontStyle:'bold'}}});
+ y=doc.lastAutoTable.finalY+10;
+
+ novaSecao('Clientes',['Nome','Telefone','E-mail','Cidade','Status'],
+  DB.clientes.map(c=>[c.nome,c.tel||'—',c.email||'—',c.cidade||'—',c.status]));
+
+ novaSecao('Orçamentos',['#','Cliente','Data','Status','Valor'],
+  DB.orcamentos.slice().sort((a,b)=>b.num-a.num).map(o=>['ORC-'+pad(o.num),cliName(o.cliId),fmtD(o.data),o.status,fmt(o.preco)]),
+  {4:{halign:'right'}});
+
+ novaSecao('Pedidos',['#','Cliente','Data','Pagamento','Status','Total'],
+  DB.vendas.slice().sort((a,b)=>b.num-a.num).map(v=>['V-'+pad(v.num),cliName(v.cliId),fmtD(v.data),v.pag||'—',v.status,fmt(v.total)]),
+  {5:{halign:'right'}});
+
+ novaSecao('Produção (PCP)',['#','Título','Cliente','Prazo','Etapa','Status'],
+  DB.producao.slice().sort((a,b)=>b.num-a.num).map(o=>['OP-'+pad(o.num),o.titulo,cliName(o.cliId),fmtD(o.prazo),ETAPAS[o.etapa]||'—',o.status]));
+
+ novaSecao('Entregas',['Peça','Cliente','Data','Status'],
+  DB.entregas.map(e=>[e.peca||'—',cliName(e.cliId),fmtD(e.data),e.status]));
+
+ novaSecao('Financeiro',['Data','Descrição','Pedido','Centro de Custo','Tipo','Valor','Status'],
+  DB.financeiro.map(f=>[fmtD(f.data),f.desc,f.cat||'—',f.centroCusto||'—',f.tipo,fmt(f.val),f.status]),
+  {5:{halign:'right'}});
+
+ novaSecao('Portfólio',['Nome','Categoria','Preço Venda','Custo','Estoque'],
+  DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').map(p=>[p.nome,p.cat||'—',fmt(p.preco),fmt(p.custo),String(p.est)+' '+(p.un||'un')]),
+  {2:{halign:'right'},3:{halign:'right'}});
+
+ novaSecao('Insumos',['Nome','Categoria','Custo','Estoque'],
+  DB.produtos.filter(p=>p.tipo==='Insumo').map(p=>[p.nome,p.cat||'—',fmt(p.custo),String(p.est)+' '+(p.un||'un')]),
+  {2:{halign:'right'}});
+
+ novaSecao('Madeiras',['Espécie','Tipo','Volume (m³)','Custo'],
+  DB.madeiras.map(m=>[m.especie,m.tipo||'—',fmtN(madM3(m),3),fmt(m.custo)]),
+  {2:{halign:'right'},3:{halign:'right'}});
+
+ novaSecao('Máquinas & Ferramentas',['Nome','Tipo','Última Manutenção','Intervalo (dias)'],
+  DB.ferramentas.map(f=>[f.nome,f.tipo||'—',fmtD(f.ult),String(f.int||'—')]));
+
+ novaSecao('Fornecedores',['Nome','CNPJ','Telefone','Cidade','Status'],
+  DB.fornecedores.map(f=>[f.nome,f.cnpj||'—',f.tel||'—',f.cidade||'—',f.status]));
+
+ novaSecao('Compras',['#','Fornecedor','Data','Total','Status'],
+  DB.compras.slice().sort((a,b)=>b.num-a.num).map(c=>['OC-'+pad(c.num),fornName(c.forId),fmtD(c.data),fmt(c.total),c.status]),
+  {3:{halign:'right'}});
+
+ novaSecao('Histórico de Edições',['Data/Hora','Usuário','Ação','Módulo','Detalhe'],
+  DB.historico.map(h=>[h.dt,h.user,h.acao,h.modulo,h.detalhe]));
+
+ const totalPaginas=doc.internal.getNumberOfPages();
+ for(let p=1;p<=totalPaginas;p++){doc.setPage(p);
+  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(marginX,285,196,285);
+  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+  doc.text('Estúdio Mabe — Backup completo gerado em '+fmtD(today()),marginX,290);
+  doc.text('Página '+p+' de '+totalPaginas,196,290,{align:'right'});}
+
+ doc.save('Backup-ERP-Mabe-'+today()+'.pdf');
+ toast('Backup completo em PDF gerado! Confira sua pasta de downloads.','success');}
 function confirmReset(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!confirm('⚠️ ATENÇÃO: todos os dados serão apagados. Continuar?'))return;
  if(!confirm('Tem certeza? Esta ação não pode ser desfeita. Exporte um backup antes!'))return;
