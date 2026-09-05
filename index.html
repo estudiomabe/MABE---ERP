@@ -680,7 +680,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <button class="btn btn-primary" onclick="saveEmpresaInfo()">💾 Salvar Dados do Estúdio</button>
         </div>
       </div>
-      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" onclick="exportData()">📤 Exportar JSON</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
+      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.</div><div style="display:flex;gap:10px"><button class="btn btn-primary btn-sm" onclick="exportData()">📥 Baixar Backup Completo</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
   </div>
@@ -2636,8 +2636,14 @@ async function carregarConfigSupabase(){
   else if(DB.config.cf[campo]!==undefined)DB.config.cf[campo]=Number(valor)||0;});
  saveDB();
  if(CUR==='configuracoes')renderConfig();}
-function exportData(){const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mabe_backup_'+today()+'.json';a.click();toast('Backup exportado!','success');}
+function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ const backup=Object.assign({},DB,{
+  usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,perfil:u.perfil,status:u.status,ultimo:u.ultimo})),
+  geradoEm:new Date().toISOString()
+ });
+ const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Backup-ERP-Mabe-'+today()+'.json';a.click();
+ toast('Backup completo baixado! Guarde este arquivo em local seguro.','success');}
 function confirmReset(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!confirm('⚠️ ATENÇÃO: todos os dados serão apagados. Continuar?'))return;
  if(!confirm('Tem certeza? Esta ação não pode ser desfeita. Exporte um backup antes!'))return;
