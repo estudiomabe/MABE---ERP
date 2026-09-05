@@ -1858,7 +1858,8 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  doc.text(rodape,marginX,290);
  doc.text('Válido até '+fmtD(o.validade),196,290,{align:'right'});
 
- doc.save('Orcamento-ORC-'+pad(o.num)+'.pdf');
+ const nomeArquivoCli=cliName(o.cliId).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+ doc.save('Orcamento-ORC-'+pad(o.num)+'-'+nomeArquivoCli+'.pdf');
  closeModal('modal-pdf-orc');
  toast('PDF gerado! Confira sua pasta de downloads.','success');}
 function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
