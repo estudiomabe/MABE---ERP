@@ -1259,7 +1259,8 @@ function gerarReciboVenda(id){const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);doc.text('SUBTOTAL',boxX+4,y2);
  doc.setFont('helvetica','bold');doc.setTextColor(...DARK);doc.text(fmt(v.total),boxX+boxW-4,y2,{align:'right'});
  doc.setFillColor(...DARK);doc.rect(boxX,y2+3,boxW,12,'F');
- doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...ACCENT);doc.text('TOTAL',boxX+4,y2+10.5);
+ doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...DARK);doc.text('Valor Pago',boxX-6,y2+10.5,{align:'right'});
+ doc.setFontSize(9);doc.setTextColor(...ACCENT);doc.text('TOTAL',boxX+4,y2+10.5);
  doc.setFontSize(12);doc.setTextColor(...WHITE);doc.text(fmt(v.total),boxX+boxW-4,y2+10.5,{align:'right'});
 
  const sigY=Math.max(y2+35,270);
