@@ -10,6 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root {
   --bg: #f5f0e8; --surface: #faf7f2; --surface2: #ede8df; --surface3: #e0d9ce;
@@ -680,7 +681,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <button class="btn btn-primary" onclick="saveEmpresaInfo()">💾 Salvar Dados do Estúdio</button>
         </div>
       </div>
-      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.</div><div style="display:flex;gap:10px"><button class="btn btn-primary btn-sm" onclick="exportData()">📥 Baixar Backup Completo</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
+      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo.</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="exportData()">📥 Baixar Backup Completo (JSON)</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Baixar Planilha (Excel)</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
   </div>
@@ -2644,6 +2645,23 @@ function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');re
  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Backup-ERP-Mabe-'+today()+'.json';a.click();
  toast('Backup completo baixado! Guarde este arquivo em local seguro.','success');}
+function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ if(!window.XLSX){toast('Biblioteca de planilha não carregou. Verifique sua conexão e tente novamente.','error');return;}
+ const tabelas={
+  clientes:DB.clientes,orcamentos:DB.orcamentos,pedidos:DB.vendas,producao:DB.producao,entregas:DB.entregas,
+  financeiro:DB.financeiro,insumos_portfolio:DB.produtos,madeiras:DB.madeiras,ferramentas:DB.ferramentas,
+  fornecedores:DB.fornecedores,compras:DB.compras,historico:DB.historico,
+  usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,perfil:u.perfil,status:u.status,ultimo:u.ultimo}))
+ };
+ const achatarLinha=row=>{const r={};Object.entries(row).forEach(([k,v])=>{r[k]=(v&&typeof v==='object')?JSON.stringify(v):v;});return r;};
+ const wb=XLSX.utils.book_new();
+ Object.entries(tabelas).forEach(([nome,linhas])=>{
+  const dados=(linhas||[]).map(achatarLinha);
+  const ws=XLSX.utils.json_to_sheet(dados.length?dados:[{aviso:'Sem registros'}]);
+  XLSX.utils.book_append_sheet(wb,ws,nome.slice(0,31));
+ });
+ XLSX.writeFile(wb,'Backup-ERP-Mabe-'+today()+'.xlsx');
+ toast('Planilha de backup baixada! Guarde este arquivo em local seguro.','success');}
 function confirmReset(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!confirm('⚠️ ATENÇÃO: todos os dados serão apagados. Continuar?'))return;
  if(!confirm('Tem certeza? Esta ação não pode ser desfeita. Exporte um backup antes!'))return;
