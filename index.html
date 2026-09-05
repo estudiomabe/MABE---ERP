@@ -686,6 +686,21 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group"><label class="form-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-vendas"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="mv-title">Novo Pedido</div><button class="modal-close" onclick="closeModal('modal-vendas')">✕</button></div><div class="modal-body"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="vnd-cli"></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="addItemVenda()">+ Adicionar</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-vendas')">Cancelar</button><button class="btn btn-primary" onclick="saveVenda()">Salvar Pedido</button></div></div></div>
+<div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
+  <div class="modal-header"><div class="modal-title">📋 Nota Fiscal Eletrônica</div><button class="modal-close" onclick="closeModal('modal-nfe-info')">✕</button></div>
+  <div class="modal-body" style="font-size:13px;line-height:1.7;color:var(--text)">
+    <p style="margin-bottom:12px">O ERP ainda não emite Nota Fiscal Eletrônica (NF-e/NFS-e) de verdade — isso exige integração com a Receita/Prefeitura, que depende de alguns pré-requisitos:</p>
+    <ul style="margin:0 0 12px 18px;display:flex;flex-direction:column;gap:6px">
+      <li><strong>Certificado digital</strong> (A1 ou A3) no CNPJ do estúdio</li>
+      <li><strong>CNPJ habilitado</strong> para emissão junto à Sefaz (produto) ou Prefeitura (serviço)</li>
+      <li>Um <strong>emissor homologado</strong> (ex: Focus NFe, PlugNotas, eNotas, NFe.io) — geralmente com custo mensal</li>
+      <li>Configuração fiscal dos produtos (NCM, CFOP, regime tributário, alíquotas)</li>
+    </ul>
+    <p style="margin-bottom:12px">Se você já tiver (ou decidir contratar) um desses emissores, eu consigo integrar o botão desta tela com a API deles para emitir a nota automaticamente a partir do pedido.</p>
+    <p style="color:var(--text-muted)">Por enquanto, use o botão 🧾 <strong>Recibo</strong> para gerar um comprovante em PDF com os dados do pedido — sem valor fiscal.</p>
+  </div>
+  <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-nfe-info')">Entendi</button></div>
+</div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option><option>Marketing</option><option>Vendas</option><option>Pedidos</option><option>Folha de Pagamento</option><option>Administrativo</option><option>Manutenção</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-fornecedores"><div class="modal"><div class="modal-header"><div class="modal-title" id="mfor-title">Novo Fornecedor</div><button class="modal-close" onclick="closeModal('modal-fornecedores')">✕</button></div><div class="modal-body"><input type="hidden" id="for-id"><div class="form-grid"><div class="form-group"><label class="form-label">Razão Social *</label><input type="text" class="form-control" id="for-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CNPJ</label><input type="text" class="form-control" id="for-cnpj"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="for-tel"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="for-email"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="for-cidade"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="for-status"><option>Ativo</option><option>Inativo</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-fornecedores')">Cancelar</button><button class="btn btn-primary" onclick="saveFornecedor()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-usuarios"><div class="modal"><div class="modal-header"><div class="modal-title" id="mu-title">Novo Usuário</div><button class="modal-close" onclick="closeModal('modal-usuarios')">✕</button></div><div class="modal-body"><input type="hidden" id="usr-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="usr-nome"></div><div class="form-group"><label class="form-label">Login *</label><input type="text" class="form-control" id="usr-login"></div></div><div class="form-group"><label class="form-label">Senha *</label><input type="password" class="form-control" id="usr-senha" placeholder="Mínimo 6 caracteres"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Perfil</label><select class="form-control" id="usr-perfil"><option value="Admin">Admin</option><option value="Operador">Operador</option><option value="Visualizador">Visualizador</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="usr-status"><option>Ativo</option><option>Inativo</option></select></div></div>
@@ -1193,7 +1208,75 @@ async function carregarVendasSupabase(){
 function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const lista=DB.vendas.filter(v=>matchPer(v.data,PER_VND));
  $('tb-vendas').innerHTML=lista.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
- return '<tr><td class="mono">V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+(v.itens||[]).length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</td></tr>';}).join('')||emptyRow(8,'Nenhum pedido no período selecionado');}
+ return '<tr><td class="mono">V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+(v.itens||[]).length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td><div style="display:flex;gap:4px;align-items:center"><button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button><button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';}).join('')||emptyRow(8,'Nenhum pedido no período selecionado');}
+function abrirInfoNotaFiscal(id){openModal('modal-nfe-info');}
+function gerarReciboVenda(id){const v=DB.vendas.find(x=>x.id===id);if(!v)return;
+ if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF();
+ const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],CREAM=[245,240,232];
+ const emp=DB.config.empresa||{};
+ const marginX=14;
+ doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');
+
+ const logoTop=14,iconW=9,iconGap=2.5;
+ const textX=marginX+iconW+iconGap;
+ doc.setFillColor(...DARK);doc.rect(marginX,logoTop,iconW,iconW,'F');
+ doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...DARK);
+ doc.text('estúdio',textX,logoTop+7);
+ doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(...DARK);
+ doc.text('mabe.',textX,logoTop+18);
+ doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ doc.text('MARCENARIA · MADEIRA MACIÇA',marginX,logoTop+24);
+
+ doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
+ doc.text('RECIBO',marginX,48);
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
+ doc.text('Pedido V-'+pad(v.num)+' · comprovante sem valor fiscal',marginX,54);
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(marginX,60,196,60);
+
+ let metaY=70;
+ const metaCols=[{label:'CLIENTE',val:cliName(v.cliId),x:marginX},{label:'DATA',val:fmtD(v.data),x:100},{label:'PAGAMENTO',val:v.pag||'—',x:145}];
+ metaCols.forEach(c=>{doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...MUTED);doc.text(c.label,c.x,metaY);
+  doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...DARK);doc.text(String(c.val),c.x,metaY+6);});
+
+ const itens=v.itens||[];
+ const rows=itens.map((it,i)=>[String(i+1),it.desc,String(it.qty||1),fmt((it.qty||1)?it.preco/(it.qty||1):it.preco),fmt(it.preco)]);
+ doc.autoTable({startY:88,margin:{left:marginX,right:14},
+  head:[['#','Item','Qtd','Unit.','Subtotal']],body:rows,theme:'plain',
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3,bottom:3,left:3,right:3}},
+  bodyStyles:{fontSize:8.5,textColor:DARK,cellPadding:{top:3,bottom:3,left:3,right:3}},
+  alternateRowStyles:{fillColor:[250,247,242]},
+  columnStyles:{0:{cellWidth:10},2:{cellWidth:18,halign:'right'},3:{cellWidth:30,halign:'right'},4:{cellWidth:32,halign:'right'}}});
+ const finalY=doc.lastAutoTable.finalY;
+
+ let y2=finalY+12;
+ if(v.obs){doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...DARK);doc.text('Observações',marginX,y2);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+  const obsLines=doc.splitTextToSize(v.obs,182);doc.text(obsLines,marginX,y2+5);y2+=5+obsLines.length*3.6+8;}
+ const boxX=140,boxW=56;
+ doc.setFillColor(...WHITE);doc.rect(boxX,y2-6,boxW,9,'F');
+ doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);doc.text('SUBTOTAL',boxX+4,y2);
+ doc.setFont('helvetica','bold');doc.setTextColor(...DARK);doc.text(fmt(v.total),boxX+boxW-4,y2,{align:'right'});
+ doc.setFillColor(...DARK);doc.rect(boxX,y2+3,boxW,12,'F');
+ doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...ACCENT);doc.text('TOTAL',boxX+4,y2+10.5);
+ doc.setFontSize(12);doc.setTextColor(...WHITE);doc.text(fmt(v.total),boxX+boxW-4,y2+10.5,{align:'right'});
+
+ const sigY=Math.max(y2+35,270);
+ doc.setDrawColor(...MUTED);doc.setLineWidth(0.2);
+ doc.line(marginX,sigY,90,sigY);doc.line(120,sigY,196,sigY);
+ doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+ doc.text('Assinatura do Estúdio',marginX,sigY+5);
+ doc.text('Assinatura do Cliente',120,sigY+5);
+
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(marginX,285,196,285);
+ doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+ const rodape=[emp.endereco,emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
+ doc.text(rodape,marginX,290);
+ doc.text('Documento sem valor fiscal',196,290,{align:'right'});
+
+ doc.save('Recibo-V-'+pad(v.num)+'.pdf');
+ toast('Recibo em PDF gerado! Confira sua pasta de downloads.','success');}
 function prodOptions(sel){return '<option value="">— Produto —</option>'+DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').map(p=>'<option value="'+p.id+'" data-preco="'+(p.preco||p.custo||0)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.nome)+' ('+p.est+' '+esc(p.un||'un')+')</option>').join('');}
 function addItemVenda(it){const wrap=$('vnd-itens');const row=document.createElement('div');
  row.style.cssText='display:grid;grid-template-columns:2fr 70px 100px 100px 30px;gap:6px;align-items:center';
