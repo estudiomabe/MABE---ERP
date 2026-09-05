@@ -1232,7 +1232,7 @@ function gerarReciboVenda(id){const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
  doc.text('RECIBO',marginX,48);
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
- doc.text('Pedido V-'+pad(v.num)+' · comprovante sem valor fiscal',marginX,54);
+ doc.text('Pedido V-'+pad(v.num),marginX,54);
  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(marginX,60,196,60);
 
  let metaY=70;
@@ -1273,7 +1273,6 @@ function gerarReciboVenda(id){const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
  const rodape=[emp.endereco,emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
  doc.text(rodape,marginX,290);
- doc.text('Documento sem valor fiscal',196,290,{align:'right'});
 
  doc.save('Recibo-V-'+pad(v.num)+'.pdf');
  toast('Recibo em PDF gerado! Confira sua pasta de downloads.','success');}
