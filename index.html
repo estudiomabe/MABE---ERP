@@ -2647,8 +2647,10 @@ function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');re
  toast('Backup completo baixado! Guarde este arquivo em local seguro.','success');}
 function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!window.XLSX){toast('Biblioteca de planilha não carregou. Verifique sua conexão e tente novamente.','error');return;}
+ const comNomeCliente=arr=>(arr||[]).map(r=>Object.assign({},r,{cliente_nome:r.cliId?cliName(r.cliId):''}));
  const tabelas={
-  clientes:DB.clientes,orcamentos:DB.orcamentos,pedidos:DB.vendas,producao:DB.producao,entregas:DB.entregas,
+  clientes:DB.clientes,orcamentos:comNomeCliente(DB.orcamentos),pedidos:comNomeCliente(DB.vendas),
+  producao:comNomeCliente(DB.producao),entregas:comNomeCliente(DB.entregas),
   financeiro:DB.financeiro,insumos_portfolio:DB.produtos,madeiras:DB.madeiras,ferramentas:DB.ferramentas,
   fornecedores:DB.fornecedores,compras:DB.compras,historico:DB.historico,
   usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,perfil:u.perfil,status:u.status,ultimo:u.ultimo}))
