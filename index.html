@@ -1622,6 +1622,7 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],WHITE=[255,255,255];
  const emp=DB.config.empresa||{};
  const pageW=210,marginX=14;
+ doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');
 
  // Cabeçalho: título
  doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
@@ -1668,7 +1669,7 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  const finalY=doc.lastAutoTable.finalY;
 
  // Barra lateral (desenhada depois pra saber a altura da tabela)
- doc.setFillColor(...CREAM);doc.rect(sidebarX,tableStartY-8,sidebarW,(finalY-tableStartY)+8,'F');
+ doc.setFillColor(...WHITE);doc.rect(sidebarX,tableStartY-8,sidebarW,(finalY-tableStartY)+8,'F');
  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...DARK);
  doc.text('ESTÚDIO MABE',sidebarX+4,tableStartY);
  let sy=tableStartY+8;
@@ -1689,7 +1690,7 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
   const obsLines=doc.splitTextToSize(o.obs,tableW-70);doc.text(obsLines,tableX,y2+5);}
  const totalSelecionado=itens.reduce((s,it)=>s+Number(it.preco||0),0);
  const boxX=140,boxW=56;
- doc.setFillColor(...CREAM);doc.rect(boxX,y2-6,boxW,9,'F');
+ doc.setFillColor(...WHITE);doc.rect(boxX,y2-6,boxW,9,'F');
  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);doc.text('SUBTOTAL',boxX+4,y2);
  doc.setFont('helvetica','bold');doc.setTextColor(...DARK);doc.text(fmt(totalSelecionado),boxX+boxW-4,y2,{align:'right'});
  doc.setFillColor(...DARK);doc.rect(boxX,y2+3,boxW,12,'F');
@@ -2056,8 +2057,9 @@ function gerarPdfRelatorio(){
  if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
- const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255];
+ const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],CREAM=[245,240,232];
  const marginX=14;
+ doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');
 
  // Cabeçalho: título + período
  doc.setFillColor(...ACCENT);doc.circle(30,26,13,'F');
@@ -2121,7 +2123,7 @@ function gerarPdfRelatorio(){
  function novaSecao(titulo,head,rows,colStyles){
   const nLinhas=rows.length||1;
   const alturaEstimada=8+8+nLinhas*7+3;
-  if(y+alturaEstimada>285&&y>30){doc.addPage();y=20;}
+  if(y+alturaEstimada>285&&y>30){doc.addPage();doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');y=20;}
   doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...DARK);
   doc.text(titulo,marginX,y);
   doc.autoTable({startY:y+4,margin:{left:marginX,right:14},
