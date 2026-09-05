@@ -209,6 +209,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
     <div class="nav-item" onclick="navigate('madeiras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8h20v8H2z"/><path d="M6 8v8M11 8v8M16 8v8"/></svg>Madeiras<span class="nav-badge" id="badge-madeira" style="display:none">!</span></div>
     <span class="nav-label">Financeiro</span>
     <div class="nav-item" onclick="navigate('financeiro')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financeiro</div>
+    <div class="nav-item" onclick="navigate('centrocustos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 3.5"/></svg>Centro de Custos</div>
     <div class="nav-item" onclick="navigate('relatorios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Relatórios</div>
     <span class="nav-label">Compras</span>
     <div class="nav-item" onclick="navigate('fornecedores')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Fornecedores</div>
@@ -310,6 +311,29 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="stat-box"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
       </div>
       <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody></table></div>
+    </div>
+
+    <div class="section" id="section-centrocustos">
+      <div class="period-bar">
+        <div class="per-tabs">
+          <button class="per-tab" id="cc-per-mes" onclick="setCCModo('mes')">Mês</button>
+          <button class="per-tab" id="cc-per-ano" onclick="setCCModo('ano')">Ano</button>
+          <button class="per-tab" id="cc-per-tudo" onclick="setCCModo('tudo')">Tudo</button>
+        </div>
+        <select class="form-control" id="cc-per-mes-sel" style="width:auto;min-width:130px" onchange="onCCChange()"></select>
+        <select class="form-control" id="cc-per-ano-sel" style="width:auto;min-width:90px" onchange="onCCChange()"></select>
+        <span id="cc-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-value" id="cc-total-saidas" style="color:var(--danger)">R$0</div><div class="stat-label">Total de Custos (Saídas)</div></div>
+        <div class="stat-box"><div class="stat-value" id="cc-total-entradas" style="color:var(--success)">R$0</div><div class="stat-label">Total de Entradas</div></div>
+        <div class="stat-box"><div class="stat-value" id="cc-maior-cat">—</div><div class="stat-label">Maior Centro de Custo</div></div>
+        <div class="stat-box"><div class="stat-value" id="cc-qtd-cats">0</div><div class="stat-label">Categorias com lançamento</div></div>
+      </div>
+      <div class="bottom-grid" style="margin-bottom:14px">
+        <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">💰 Custos por Categoria</div></div><table><thead><tr><th>Categoria</th><th>Saídas</th><th>Entradas</th><th>% do Total</th></tr></thead><tbody id="tb-centrocustos"></tbody></table></div>
+        <div class="chart-card"><div class="chart-title">Distribuição dos Custos</div><canvas id="chart-cc" height="220"></canvas></div>
+      </div>
     </div>
 
     <div class="modal-overlay" id="modal-ofx"><div class="modal" style="max-width:640px">
@@ -860,7 +884,7 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  carregarHistoricoSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
-const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',insumos:'Insumos & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
+const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',insumos:'Insumos & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
 const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','compras','usuarios'];
 let CUR='dashboard';
 function toggleSidebar(){$('sidebar').classList.toggle('open');}
@@ -884,10 +908,10 @@ function navigate(sec){CUR=sec;
  if(sec==='pcp')carregarProducaoSupabase();
  if(sec==='entregas')carregarEntregasSupabase();
  if(sec==='compras')carregarComprasSupabase();
- if(sec==='financeiro')carregarFinanceiroSupabase();
+ if(sec==='financeiro'||sec==='centrocustos')carregarFinanceiroSupabase();
  if(sec==='configuracoes')carregarConfigSupabase();
  if(sec==='historico')carregarHistoricoSupabase();}
-function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
+function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
  if(CUR==='pcp')document.querySelectorAll('#pcp-kanban .kanban-card').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(v)?'':'none';});}
@@ -947,6 +971,32 @@ function onPerChange(){PER.mes=+$('per-mes-sel').value;PER.ano=+$('per-ano-sel')
 let REL={modo:'tudo',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function setRelModo(m){REL.modo=m;renderRelatorios();}
 function onRelChange(){REL.mes=+$('rel-per-mes-sel').value;REL.ano=+$('rel-per-ano-sel').value;renderRelatorios();}
+let CC={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
+function setCCModo(m){CC.modo=m;renderCentroCustos();}
+function onCCChange(){CC.mes=+$('cc-per-mes-sel').value;CC.ano=+$('cc-per-ano-sel').value;renderCentroCustos();}
+let chCC=null;
+function renderCentroCustos(){syncPerBar('cc-per',CC);
+ const lancs=DB.financeiro.filter(f=>f.status!=='Cancelado'&&matchPer(f.data,CC));
+ const porCat={};
+ lancs.forEach(f=>{const cat=(f.cat||'').trim()||'Sem categoria';
+  if(!porCat[cat])porCat[cat]={saidas:0,entradas:0};
+  if(f.tipo==='Saída')porCat[cat].saidas+=Number(f.val||0);else porCat[cat].entradas+=Number(f.val||0);});
+ const totalSaidas=lancs.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
+ const totalEntradas=lancs.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
+ $('cc-total-saidas').textContent=fmtK(totalSaidas);
+ $('cc-total-entradas').textContent=fmtK(totalEntradas);
+ const cats=Object.entries(porCat).sort((a,b)=>b[1].saidas-a[1].saidas);
+ $('cc-qtd-cats').textContent=cats.length;
+ $('cc-maior-cat').textContent=cats.length?cats[0][0]:'—';
+ $('tb-centrocustos').innerHTML=cats.map(([cat,v])=>{const pct=totalSaidas>0?v.saidas/totalSaidas*100:0;
+  return '<tr><td><strong>'+esc(cat)+'</strong></td><td class="mono" style="color:var(--danger)">'+fmt(v.saidas)+'</td><td class="mono" style="color:var(--success)">'+fmt(v.entradas)+'</td><td class="mono">'+fmtN(pct,1)+'%</td></tr>';}).join('')||emptyRow(4,'Nenhum lançamento no período');
+ if(!window.Chart)return;
+ if(chCC)chCC.destroy();
+ const catsComSaida=cats.filter(c=>c[1].saidas>0);
+ const cores=['#c8a96e','#1a1714','#7a6f62','#3d6b4f','#a07830','#b54040','#8a9bb5','#9c7fb5'];
+ chCC=new Chart($('chart-cc'),{type:'doughnut',data:{labels:catsComSaida.length?catsComSaida.map(c=>c[0]):['Sem custos'],
+  datasets:[{data:catsComSaida.length?catsComSaida.map(c=>c[1].saidas):[1],backgroundColor:catsComSaida.length?catsComSaida.map((c,i)=>cores[i%cores.length]):['#e0d9ce']}]},
+  options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}},cutout:'60%'}});}
 let PER_VND={modo:'tudo',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function setVndModo(m){PER_VND.modo=m;renderVendas();}
 function onVndChange(){PER_VND.mes=+$('vnd-per-mes-sel').value;PER_VND.ano=+$('vnd-per-ano-sel').value;renderVendas();}
@@ -1928,6 +1978,7 @@ async function carregarFinanceiroSupabase(){
  if(error){toast('Erro ao carregar financeiro do Supabase: '+error.message,'error');return;}
  DB.financeiro=(data||[]).map(financeiroDeSupabase);saveDB();
  if(CUR==='financeiro')renderFinanceiro();
+ if(CUR==='centrocustos')renderCentroCustos();
  if(CUR==='dashboard')renderDashboard();}
 function renderFinanceiro(){const ym=today().slice(0,7);
  const pagos=DB.financeiro.filter(f=>f.status==='Pago');
