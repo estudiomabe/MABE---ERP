@@ -195,6 +195,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   <div class="sidebar-nav">
     <span class="nav-label">Principal</span>
     <div class="nav-item active" onclick="navigate('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</div>
+    <div class="nav-item" onclick="navigate('relatoriodash')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Relatório</div>
     <span class="nav-label">Comercial</span>
     <div class="nav-item" onclick="navigate('orcamentos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Orçamentos</div>
     <div class="nav-item" onclick="navigate('vendas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Pedidos</div>
@@ -283,6 +284,35 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
       <div class="bottom-grid">
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">⚠️ Estoque Crítico</div></div><table><thead><tr><th>Produto</th><th>Atual</th><th>Mínimo</th></tr></thead><tbody id="dash-estoque"></tbody></table></div>
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Últimas Transações</div></div><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Valor</th></tr></thead><tbody id="dash-fin"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="section" id="section-relatoriodash">
+      <div class="period-bar">
+        <div class="per-tabs">
+          <button class="per-tab" id="rd-per-mes" onclick="setRDModo('mes')">Mês</button>
+          <button class="per-tab" id="rd-per-ano" onclick="setRDModo('ano')">Ano</button>
+          <button class="per-tab" id="rd-per-tudo" onclick="setRDModo('tudo')">Tudo</button>
+        </div>
+        <select class="form-control" id="rd-per-mes-sel" style="width:auto;min-width:130px" onchange="onRDChange()"></select>
+        <select class="form-control" id="rd-per-ano-sel" style="width:auto;min-width:90px" onchange="onRDChange()"></select>
+        <span id="rd-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
+        <button class="btn btn-primary btn-sm" onclick="gerarPdfRelatorioDash()">📄 Gerar Relatório em PDF</button>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent:var(--text-muted)"><div class="kpi-label">Orçamentos do Período</div><div class="kpi-value" id="rd-kpi-orcamentos">R$0</div><div class="kpi-sub" id="rd-kpi-osub">orçamentos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Pedidos do Período</div><div class="kpi-value" id="rd-kpi-vendas">R$0</div><div class="kpi-sub" id="rd-kpi-vsub">pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Entradas</div><div class="kpi-value" id="rd-kpi-entradas">R$0</div><div class="kpi-sub">recebido no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Saídas</div><div class="kpi-value" id="rd-kpi-saidas">R$0</div><div class="kpi-sub">pago no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Resultado</div><div class="kpi-value" id="rd-kpi-resultado">R$0</div><div class="kpi-sub" id="rd-kpi-rsub">entradas − saídas</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card"><div class="chart-title">Evolução de Pedidos <span id="rd-chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><canvas id="rd-chart-vendas" height="180"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Status dos Pedidos</div><canvas id="rd-chart-status" height="180"></canvas></div>
+      </div>
+      <div class="bottom-grid">
+        <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">⚠️ Estoque Crítico</div></div><table><thead><tr><th>Produto</th><th>Atual</th><th>Mínimo</th></tr></thead><tbody id="rd-dash-estoque"></tbody></table></div>
+        <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Últimas Transações</div></div><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Valor</th></tr></thead><tbody id="rd-dash-fin"></tbody></table></div>
       </div>
     </div>
 
@@ -900,7 +930,7 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  carregarHistoricoSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
-const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',insumos:'Insumos & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
+const TITLES={dashboard:'Dashboard',relatoriodash:'Relatório',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',insumos:'Insumos & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
 const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','compras','usuarios'];
 let CUR='dashboard';
 function toggleSidebar(){$('sidebar').classList.toggle('open');}
@@ -927,7 +957,7 @@ function navigate(sec){CUR=sec;
  if(sec==='financeiro'||sec==='centrocustos')carregarFinanceiroSupabase();
  if(sec==='configuracoes')carregarConfigSupabase();
  if(sec==='historico')carregarHistoricoSupabase();}
-function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
+function renderSection(s){const map={dashboard:renderDashboard,relatoriodash:renderRelatorioDash,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
  if(CUR==='pcp')document.querySelectorAll('#pcp-kanban .kanban-card').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(v)?'':'none';});}
@@ -1073,6 +1103,140 @@ function renderDashboard(){
  const stKeys=Object.keys(sts);
  chStatus=new Chart($('chart-status'),{type:'doughnut',data:{labels:stKeys.length?stKeys:['Sem pedidos'],datasets:[{data:stKeys.length?Object.values(sts):[1],backgroundColor:stKeys.length?stKeys.map(k=>cores[k]||'#1a1714'):['#e0d9ce']}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}}},cutout:'65%'}});}
 function saldoFin(){return DB.financeiro.filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
+
+/* ================= RELATÓRIO (espelha o Dashboard) ================= */
+let RD={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
+function setRDModo(m){RD.modo=m;renderRelatorioDash();}
+function onRDChange(){RD.mes=+$('rd-per-mes-sel').value;RD.ano=+$('rd-per-ano-sel').value;renderRelatorioDash();}
+let chVendasRD=null,chStatusRD=null;
+function renderRelatorioDash(){
+ $('rd-per-mes-sel').innerHTML=MESES.map((m,i)=>'<option value="'+i+'"'+(i===RD.mes?' selected':'')+'>'+m+'</option>').join('');
+ $('rd-per-ano-sel').innerHTML=perYears().map(y=>'<option value="'+y+'"'+(y===RD.ano?' selected':'')+'>'+y+'</option>').join('');
+ ['mes','ano','tudo'].forEach(m=>$('rd-per-'+m).classList.toggle('active',RD.modo===m));
+ $('rd-per-mes-sel').style.display=RD.modo==='mes'?'':'none';
+ $('rd-per-ano-sel').style.display=RD.modo==='tudo'?'none':'';
+ $('rd-per-label').textContent='📅 '+(RD.modo==='tudo'?'Todo o período':RD.modo==='ano'?('Ano '+RD.ano):(MESES[RD.mes]+'/'+RD.ano));
+
+ const oPer=DB.orcamentos.filter(o=>matchPer(o.data,RD)&&o.status!=='Reprovado');
+ $('rd-kpi-orcamentos').textContent=fmtK(oPer.reduce((s,o)=>s+Number(o.preco||0),0));
+ $('rd-kpi-osub').textContent=oPer.length+' orçamento(s)';
+ const vPer=DB.vendas.filter(v=>matchPer(v.data,RD)&&v.status!=='Cancelado');
+ const pagos=DB.financeiro.filter(f=>f.status==='Pago'&&matchPer(f.data,RD));
+ const entradas=pagos.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
+ const saidas=pagos.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
+ const resultado=entradas-saidas;
+ $('rd-kpi-vendas').textContent=fmtK(vPer.reduce((s,v)=>s+Number(v.total||0),0));
+ $('rd-kpi-vsub').textContent=vPer.length+' pedido(s)';
+ $('rd-kpi-entradas').textContent=fmtK(entradas);
+ $('rd-kpi-saidas').textContent=fmtK(saidas);
+ $('rd-kpi-resultado').textContent=fmtK(resultado);
+ $('rd-kpi-resultado').style.color=resultado>=0?'var(--success)':'var(--danger)';
+ $('rd-kpi-rsub').textContent=resultado>=0?'superávit no período':'déficit no período';
+
+ const crit=DB.produtos.filter(p=>Number(p.est)<=Number(p.min));
+ $('rd-dash-estoque').innerHTML=crit.length?crit.slice(0,6).map(p=>'<tr><td>'+esc(p.nome)+'</td><td class="mono" style="color:var(--danger);font-weight:700">'+p.est+'</td><td class="mono">'+p.min+'</td></tr>').join(''):'<tr><td colspan="3" style="color:var(--text-muted)">Nenhum item crítico 👍</td></tr>';
+ const finList=DB.financeiro.filter(f=>matchPer(f.data,RD)).slice(0,7);
+ $('rd-dash-fin').innerHTML=finList.map(f=>'<tr><td>'+esc(f.desc)+'</td><td><span class="badge '+(f.tipo==='Entrada'?'badge-success':'badge-danger')+'">'+f.tipo+'</span></td><td class="mono">'+fmt(f.val)+'</td></tr>').join('')||'<tr><td colspan="3" style="color:var(--text-muted)">Sem lançamentos no período</td></tr>';
+
+ if(!window.Chart)return;
+ let labels=[],vals=[];
+ if(RD.modo==='tudo'){const anos=perYears().slice().sort((a,b)=>a-b);
+  anos.forEach(y=>{labels.push(String(y));vals.push(DB.vendas.filter(v=>String(v.data).slice(0,4)===String(y)&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));});
+  $('rd-chart-vendas-sub').textContent='por ano';}
+ else if(RD.modo==='ano'){for(let m=0;m<12;m++){const k=RD.ano+'-'+String(m+1).padStart(2,'0');labels.push(MESES[m].slice(0,3));
+  vals.push(DB.vendas.filter(v=>String(v.data).slice(0,7)===k&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));}
+  $('rd-chart-vendas-sub').textContent='meses de '+RD.ano;}
+ else{for(let i=5;i>=0;i--){const d=new Date(RD.ano,RD.mes-i,1);const k=d.toISOString().slice(0,7);
+  labels.push(d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','')+'/'+String(d.getFullYear()).slice(2));
+  vals.push(DB.vendas.filter(v=>String(v.data).slice(0,7)===k&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));}
+  $('rd-chart-vendas-sub').textContent='6 meses até '+MESES[RD.mes].slice(0,3)+'/'+String(RD.ano).slice(2);}
+ if(chVendasRD)chVendasRD.destroy();
+ const ticksVendasRD=ticksRegua(Math.max(...vals,1));
+ chVendasRD=new Chart($('rd-chart-vendas'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:'#c8a96e',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{type:'logarithmic',min:1000,max:ticksVendasRD[ticksVendasRD.length-1],afterBuildTicks:axis=>{axis.ticks=ticksVendasRD.map(v=>({value:v}));},ticks:{autoSkip:false,font:{size:9},callback:v=>v>=1000?(v/1000)+'k':v}}},responsive:true}});
+ const sts={};vPer.forEach(v=>sts[v.status]=(sts[v.status]||0)+1);
+ if(chStatusRD)chStatusRD.destroy();
+ const cores={'Pendente':'#a07830','Confirmado':'#c8a96e','Enviado':'#7a6f62','Entregue':'#3d6b4f','Cancelado':'#b54040'};
+ const stKeysRD=Object.keys(sts);
+ chStatusRD=new Chart($('rd-chart-status'),{type:'doughnut',data:{labels:stKeysRD.length?stKeysRD:['Sem pedidos'],datasets:[{data:stKeysRD.length?Object.values(sts):[1],backgroundColor:stKeysRD.length?stKeysRD.map(k=>cores[k]||'#1a1714'):['#e0d9ce']}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}}},cutout:'65%'}});}
+function gerarPdfRelatorioDash(){
+ if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF();
+ const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],CREAM=[245,240,232];
+ const marginX=14;
+ doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');
+
+ const logoTop=14,iconW=9,iconGap=2.5;
+ const textX=marginX+iconW+iconGap;
+ doc.setFillColor(...DARK);doc.rect(marginX,logoTop,iconW,iconW,'F');
+ doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...DARK);
+ doc.text('estúdio',textX,logoTop+7);
+ doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(...DARK);
+ doc.text('mabe.',textX,logoTop+18);
+ doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ doc.text('MARCENARIA · MADEIRA MACIÇA',marginX,logoTop+24);
+
+ doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
+ doc.text('RELATÓRIO',marginX,48);
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
+ doc.text($('rd-per-label').textContent.replace('📅 ','')||'Todo o período',marginX,54);
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(marginX,60,196,60);
+
+ const oPer=DB.orcamentos.filter(o=>matchPer(o.data,RD)&&o.status!=='Reprovado');
+ const vPer=DB.vendas.filter(v=>matchPer(v.data,RD)&&v.status!=='Cancelado');
+ const pagos=DB.financeiro.filter(f=>f.status==='Pago'&&matchPer(f.data,RD));
+ const entradas=pagos.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
+ const saidas=pagos.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
+ const resultado=entradas-saidas;
+
+ doc.autoTable({startY:70,margin:{left:marginX,right:14},
+  head:[['Indicador','Valor']],
+  body:[
+   ['Orçamentos do Período',fmt(oPer.reduce((s,o)=>s+Number(o.preco||0),0))+'  ('+oPer.length+' orçamento(s))'],
+   ['Pedidos do Período',fmt(vPer.reduce((s,v)=>s+Number(v.total||0),0))+'  ('+vPer.length+' pedido(s))'],
+   ['Entradas',fmt(entradas)],
+   ['Saídas',fmt(saidas)],
+   ['Resultado',(resultado<0?'- ':'')+fmt(Math.abs(resultado))]
+  ],theme:'plain',
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3,bottom:3,left:3,right:3}},
+  bodyStyles:{fontSize:9,textColor:DARK,cellPadding:{top:3,bottom:3,left:3,right:3}},
+  alternateRowStyles:{fillColor:[250,247,242]},
+  columnStyles:{1:{halign:'right',fontStyle:'bold'}}});
+ let y=doc.lastAutoTable.finalY+8;
+
+ const crit=DB.produtos.filter(p=>Number(p.est)<=Number(p.min));
+ doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...DARK);
+ doc.text('Estoque Crítico',marginX,y);
+ doc.autoTable({startY:y+4,margin:{left:marginX,right:14},
+  head:[['Produto','Atual','Mínimo']],
+  body:crit.length?crit.map(p=>[p.nome,String(p.est),String(p.min)]):[['Nenhum item crítico','','']],theme:'plain',
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold',cellPadding:{top:2,bottom:2,left:3,right:3}},
+  bodyStyles:{fontSize:8,textColor:DARK,cellPadding:{top:2,bottom:2,left:3,right:3}},
+  alternateRowStyles:{fillColor:[250,247,242]},
+  columnStyles:{1:{halign:'right'},2:{halign:'right'}}});
+ y=doc.lastAutoTable.finalY+8;
+ if(y>250){doc.addPage();doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');y=20;}
+
+ const finList=DB.financeiro.filter(f=>matchPer(f.data,RD));
+ doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...DARK);
+ doc.text('Últimas Transações',marginX,y);
+ doc.autoTable({startY:y+4,margin:{left:marginX,right:14},
+  head:[['Descrição','Tipo','Valor']],
+  body:finList.length?finList.slice(0,20).map(f=>[f.desc,f.tipo,fmt(f.val)]):[['Sem lançamentos no período','','']],theme:'plain',
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold',cellPadding:{top:2,bottom:2,left:3,right:3}},
+  bodyStyles:{fontSize:8,textColor:DARK,cellPadding:{top:2,bottom:2,left:3,right:3}},
+  alternateRowStyles:{fillColor:[250,247,242]},
+  columnStyles:{2:{halign:'right'}}});
+
+ const totalPaginas=doc.internal.getNumberOfPages();
+ for(let p=1;p<=totalPaginas;p++){doc.setPage(p);
+  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(marginX,285,196,285);
+  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+  doc.text('Estúdio Mabe — Relatório gerado em '+fmtD(today()),marginX,290);
+  doc.text('Página '+p+' de '+totalPaginas,196,290,{align:'right'});}
+
+ doc.save('Relatorio-Dashboard-Mabe-'+today()+'.pdf');
+ toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
 
 /* ================= SUPABASE ================= */
 const SUPA_URL='https://fzlkuceflazohljpnkgi.supabase.co';
