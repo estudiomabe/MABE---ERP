@@ -1623,13 +1623,12 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  const emp=DB.config.empresa||{};
  const pageW=210,marginX=14;
 
- // Cabeçalho: título + forma decorativa
- doc.setFillColor(...ACCENT);doc.circle(30,26,13,'F');
- doc.setFillColor(...DARK);doc.circle(22,32,7,'F');
+ // Cabeçalho: título
  doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
- doc.text('ORÇAMENTO',marginX,52);
+ doc.text('ORÇAMENTO',marginX,28);
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
- doc.text('ORC-'+pad(o.num),marginX,58);
+ doc.text('ORC-'+pad(o.num),marginX,34);
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(marginX,40,196,40);
 
  // Logo (marca Estúdio Mabe) no canto superior direito — ícone à esquerda, "estúdio" pequeno sobre "mabe." em negrito
  const logoRight=196,logoTop=14;
