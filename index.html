@@ -1232,7 +1232,7 @@ function gerarReciboVenda(id){const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
  doc.text('RECIBO',marginX,48);
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
- doc.text('Pedido V-'+pad(v.num),marginX,54);
+ doc.text('Pedido V-'+pad(v.num)+' — '+cliName(v.cliId),marginX,54);
  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(marginX,60,196,60);
 
  let metaY=70;
@@ -1274,7 +1274,8 @@ function gerarReciboVenda(id){const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  const rodape=[emp.endereco,emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
  doc.text(rodape,marginX,290);
 
- doc.save('Recibo-V-'+pad(v.num)+'.pdf');
+ const nomeArquivoCli=cliName(v.cliId).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+ doc.save('Recibo-V-'+pad(v.num)+'-'+nomeArquivoCli+'.pdf');
  toast('Recibo em PDF gerado! Confira sua pasta de downloads.','success');}
 function prodOptions(sel){return '<option value="">— Produto —</option>'+DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').map(p=>'<option value="'+p.id+'" data-preco="'+(p.preco||p.custo||0)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.nome)+' ('+p.est+' '+esc(p.un||'un')+')</option>').join('');}
 function addItemVenda(it){const wrap=$('vnd-itens');const row=document.createElement('div');
