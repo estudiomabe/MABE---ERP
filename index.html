@@ -1624,34 +1624,26 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  const pageW=210,marginX=14;
  doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');
 
- // Cabeçalho: título
- doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
- doc.text('ORÇAMENTO',marginX,28);
- doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
- doc.text('ORC-'+pad(o.num),marginX,34);
- doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(marginX,40,196,40);
-
- // Logo (marca Estúdio Mabe) no canto superior direito — ícone à esquerda, "estúdio" pequeno sobre "mabe." em negrito
- const logoRight=196,logoTop=14;
- doc.setFont('helvetica','bold');doc.setFontSize(17);
- const wMabe=doc.getTextWidth('mabe.');
- doc.setFont('helvetica','normal');doc.setFontSize(9.5);
- const wEstudio=doc.getTextWidth('estúdio');
- const textW=Math.max(wMabe,wEstudio);
- const iconW=9,iconGap=2.5;
- const textX=logoRight-textW;
- const iconX=textX-iconGap-iconW;
- doc.setFillColor(...DARK);doc.rect(iconX,logoTop,iconW,iconW,'F');
+ // Logo (marca Estúdio Mabe) no canto superior esquerdo — ícone à esquerda, "estúdio" pequeno sobre "mabe." em negrito
+ const logoTop=14,iconW=9,iconGap=2.5;
+ const textX=marginX+iconW+iconGap;
+ doc.setFillColor(...DARK);doc.rect(marginX,logoTop,iconW,iconW,'F');
  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...DARK);
  doc.text('estúdio',textX,logoTop+7);
  doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(...DARK);
  doc.text('mabe.',textX,logoTop+18);
  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
- doc.text('MARCENARIA · MADEIRA MACIÇA',logoRight,logoTop+24,{align:'right'});
+ doc.text('MARCENARIA · MADEIRA MACIÇA',marginX,logoTop+24);
+
+ // Cabeçalho: título
+ doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
+ doc.text('ORÇAMENTO',marginX,48);
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
+ doc.text('ORC-'+pad(o.num),marginX,54);
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(marginX,60,196,60);
 
  // Linha de metadados: Cliente / Data / Entrega
  let metaY=70;
- doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(marginX,metaY-6,196,metaY-6);
  const metaCols=[{label:'CLIENTE',val:cliName(o.cliId),x:marginX},{label:'DATA',val:fmtD(o.data),x:100},{label:'ENTREGA',val:fmtD(o.validade),x:145}];
  metaCols.forEach(c=>{doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...MUTED);doc.text(c.label,c.x,metaY);
   doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...DARK);doc.text(String(c.val),c.x,metaY+6);});
