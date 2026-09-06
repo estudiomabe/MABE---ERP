@@ -657,7 +657,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <button class="btn btn-primary" onclick="saveEmpresaInfo()">💾 Salvar Dados do Estúdio</button>
         </div>
       </div>
-      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio.</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="exportData()">📥 Baixar Backup Completo (JSON)</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Baixar backup em planilhas (Excel)</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 Baixar Backup Completo (PDF)</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
+      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio; use o <strong>Backup de Arquitetura</strong> se precisar recriar este sistema do zero um dia (não contém dados, só a descrição técnica de como o ERP foi construído — dá pra colar direto num Claude Code novo).</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="exportData()">📥 Baixar Backup Completo (JSON)</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Baixar backup em planilhas (Excel)</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 Baixar Backup Completo (PDF)</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupArquitetura()">🏛️ Backup de Arquitetura deste ERP</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
   </div>
@@ -2734,6 +2734,351 @@ function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.'
 
  doc.save('Backup-ERP-Mabe-'+today()+'.pdf');
  toast('Backup completo em PDF gerado! Confira sua pasta de downloads.','success');}
+function gerarBackupArquitetura(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ const txt=`# Arquitetura do ERP — Estúdio Mabe
+
+Documento técnico gerado automaticamente pelo próprio sistema em ${fmtD(today())}.
+Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
+módulos e regras de negócio — para que o sistema possa ser recriado do zero,
+mesmo sem acesso ao código-fonte original.
+
+IMPORTANTE: este arquivo NÃO contém dados de clientes, orçamentos, financeiro
+etc. Para isso use os botões "Baixar Backup Completo" em JSON, Excel ou PDF,
+em Configurações. Este documento descreve apenas a ARQUITETURA do sistema.
+
+Como usar: copie todo o conteúdo deste arquivo e cole numa conversa com o
+Claude Code, pedindo para ele recriar o sistema a partir daqui (veja um
+prompt pronto na última seção).
+
+
+## 1. Visão geral
+
+- Nome: ERP interno da Estúdio Mabe, marcenaria de móveis sob medida em
+  madeira maciça.
+- Público: uso interno da equipe (administradores, operadores e
+  visualizadores) — não é um produto para venda a terceiros.
+- Formato: aplicação web de página única, sem processo de build — um único
+  arquivo "index.html" contendo HTML, CSS e JavaScript puro (ES6+), sem
+  framework (sem React/Vue/Angular) e sem TypeScript.
+- Hospedagem: Vercel, com deploy automático a cada push na branch "master"
+  de um repositório no GitHub. Não existe backend próprio nem variáveis de
+  ambiente de servidor — o site é 100% estático do ponto de vista do deploy.
+- Banco de dados: Supabase (Postgres gerenciado), acessado direto do
+  navegador com uma chave pública ("publishable key" do Supabase — segura
+  para expor no cliente).
+- Cópia secundária opcional: Google Sheets, sincronizada via um Google Apps
+  Script publicado como Web App.
+- Cache local: todos os dados também ficam espelhados no localStorage do
+  navegador (chave "erp_mabe_db_v2"), permitindo abrir o sistema
+  rapidamente e mesmo com internet instável.
+
+
+## 2. Bibliotecas usadas (via CDN jsdelivr, sem gerenciador de pacotes)
+
+- Chart.js 4.4.0 — gráficos do Dashboard.
+- @supabase/supabase-js v2 — cliente de acesso ao banco de dados.
+- jsPDF 2.5.1 + jspdf-autotable 3.8.2 — geração de PDFs (orçamentos,
+  relatórios, backups).
+- xlsx (SheetJS) 0.18.5 — exportação do backup em Excel.
+- Google Fonts: "Plus Jakarta Sans" (textos) e "Fira Code" (números e
+  valores monetários, monoespaçada).
+
+
+## 3. Identidade visual
+
+- Paleta de interface: fundo bege claro (#f5f0e8), superfícies claras
+  (#faf7f2 / #ede8df / #e0d9ce), texto quase preto (#1a1714), dourado como
+  cor de destaque (#c8a96e), verde para sucesso (#3d6b4f), vermelho para
+  erro (#b54040), laranja para alerta (#a07830).
+- Paleta usada nos PDFs (RGB): escuro (26,23,20), dourado (200,169,110),
+  cinza-texto (122,111,98), branco (255,255,255), creme de fundo
+  (245,240,232).
+- Logotipo: um quadrado escuro sólido ao lado do texto "estúdio" (peso
+  normal) sobre "mabe." (peso bold, maior), com a tagline "MARCENARIA ·
+  MADEIRA MACIÇA" abaixo, em letras espaçadas e maiúsculas.
+- Tipografia: "Plus Jakarta Sans" para textos gerais, "Fira Code" para
+  números, códigos e valores monetários.
+
+
+## 4. Estrutura do arquivo único (index.html)
+
+- <head>: meta tags, título, favicon inline (SVG em data-URI), fontes do
+  Google, os 5 scripts de CDN, e um único bloco <style> com variáveis CSS
+  (:root) e todas as classes usadas no sistema.
+- <body>:
+  - uma tela de login (mostrada/escondida por classe CSS);
+  - uma barra lateral fixa (sidebar) com links para cada módulo, agrupados
+    por categoria (Principal, Comercial, Produção, Estoque, Financeiro,
+    Compras, Cadastros);
+  - uma topbar com busca global e nome/perfil do usuário logado;
+  - uma div por módulo (classe "section", com "id=section-NOME"), todas
+    presentes no mesmo HTML — a navegação apenas alterna qual delas recebe
+    a classe "active" e fica visível;
+  - modais (overlays) para os formulários de cadastro/edição de cada
+    módulo;
+  - um único <script> no final do arquivo com toda a lógica em JavaScript.
+
+
+## 5. Modelo de dados — tabelas no Supabase (Postgres)
+
+1. clientes — nome, email, tel, doc (CPF/CNPJ), cidade, endereco, status
+2. produtos — usada tanto para "Portfólio" (produtos prontos vendáveis)
+   quanto para "Insumo" (matéria-prima); campos: nome, tipo, cat, preco,
+   custo, est (estoque atual), min (estoque mínimo), un (unidade)
+3. madeiras — espécie, tipo, dimensões (para cálculo de volume em m³),
+   custo, estoque mínimo
+4. vendas (Pedidos) — num sequencial, cli_id, data, pag (forma de
+   pagamento), status, itens (array em JSON), total, baixa (boolean)
+5. orcamentos — num sequencial, cli_id, data, validade, status, itens
+   (array em JSON com o detalhamento de custo/preço de cada item),
+   anexos, custo, preco, lucro, op_id (ordem de produção vinculada)
+6. producao (Ordens de Produção / PCP) — num sequencial, titulo, cli_id,
+   prazo, resp (responsável), prio (prioridade), etapa (índice 0-6 do
+   kanban), status, orc_id, fim
+7. entregas — op_id, data, cli_id, peca, endereco, resp, status, obs
+8. ferramentas (Máquinas & Ferramentas) — nome, tipo, ult (última
+   manutenção), intervalo (dias), obs
+9. financeiro — tipo (Entrada/Saída), data, descricao, cat, centro_custo,
+   val, status (Pago/Pendente/Cancelado)
+10. fornecedores — nome, cnpj, tel, cidade, status
+11. compras (Ordens de Compra) — num sequencial, for_id, data, total,
+    status, obs, lancado (boolean)
+12. historico (auditoria) — dt, user_nome, acao, modulo, detalhe; toda
+    ação relevante do sistema grava uma linha aqui
+13. config — tabela chave-valor simples (campo, valor); guarda: custos
+    fixos padrão, tipos de mão de obra (JSON), custos fixos extras
+    (JSON), condições de pagamento (taxas de parcelamento, % de PIX
+    antecipado), dados cadastrais da empresa, e a URL do Google Apps
+    Script
+
+Observação importante: NÃO existe tabela de usuários no Supabase — o
+cadastro de usuários (login/senha/perfil) fica só no localStorage de cada
+navegador. Ou seja, os usuários do sistema são locais por máquina, não
+compartilhados entre dispositivos.
+
+Convenção de nomes: no banco os campos usam "snake_case" (ex: cli_id,
+centro_custo, for_id) e no JavaScript usam "camelCase" (ex: cliId,
+centroCusto, forId) — cada módulo tem duas pequenas funções de conversão
+(ex: "vendaParaSupabase" e "vendaDeSupabase") que traduzem de um formato
+para o outro.
+
+Numeração: contadores sequenciais ficam guardados à parte (venda, compra,
+orc, op) e aparecem na tela com prefixo e zero à esquerda, por exemplo:
+ORC-0007, V-0014, OP-0009, OC-0003.
+
+
+## 6. Autenticação e permissões
+
+- Login simples: usuário e senha em texto puro, conferidos contra a lista
+  local de usuários (sem hashing, sem OAuth, sem Supabase Auth).
+- 3 perfis: Admin (acesso total, único que vê o módulo "Usuários" e pode
+  resetar os dados), Operador (pode criar/editar registros), Visualizador
+  (somente leitura).
+- Funções centrais no código: canEdit() → true para Operador ou Admin;
+  isAdmin() → true só para Admin; guard() → bloqueia a ação e mostra um
+  aviso quando o perfil é Visualizador.
+- Sessão: o id do usuário logado fica salvo no localStorage (chave
+  "erp_mabe_session") para manter o login entre acessos.
+
+
+## 7. Módulos / telas do sistema
+
+- Dashboard — KPIs do período (orçamentos, pedidos, entradas, saídas,
+  resultado), gráfico de evolução de pedidos, gráfico de status dos
+  pedidos, estoque crítico, últimas transações; botão para gerar um PDF
+  com o mesmo conteúdo do período selecionado.
+- Orçamentos — criação de orçamentos com múltiplos itens (sob medida,
+  catálogo ou novo produto); aprovação parcial de itens (checklist) que
+  gera automaticamente um Pedido, contas a receber e uma Ordem de
+  Produção; geração de PDF do orçamento para o cliente.
+- Pedidos (Vendas) — lista de pedidos gerados manualmente ou a partir da
+  aprovação de orçamentos, com baixa financeira.
+- Produção (PCP) — kanban com 7 etapas fixas: Planejamento, Corte &
+  Usinagem, Montagem, Acabamento, Retrabalho, Pronto, Entregue.
+- Entregas — controle de entregas/instalações vinculadas às ordens de
+  produção.
+- Máquinas & Ferramentas — cadastro com alerta de manutenção preventiva
+  vencida.
+- Material/Insumo — estoque de matéria-prima com alerta de estoque
+  mínimo.
+- Portfólio — catálogo de produtos prontos vendáveis, também com alerta
+  de estoque mínimo.
+- Madeiras — estoque de madeira com cálculo de volume em m³.
+- Financeiro — lançamentos de entrada/saída, com status de pagamento.
+- Centro de Custos — segmentação dos lançamentos financeiros por setor
+  fixo (Marketing, Vendas, Pedidos, Folha de Pagamento, Administrativo,
+  Manutenção).
+- Relatórios — relatório financeiro detalhado por período.
+- Compras (Ordens de Compra) — pedidos a fornecedores.
+- Fornecedores / Clientes — CRMs simples.
+- Usuários — gestão de usuários e perfis (só Admin; dados 100% locais).
+- Histórico de Edições — auditoria de todas as ações relevantes (quem fez
+  o quê e quando).
+- Configurações — sincronização com Google Sheets, custos fixos padrão
+  (mais custos fixos extras dinâmicos), tipos de mão de obra, condições
+  de pagamento, dados cadastrais da empresa, backups (JSON/Excel/PDF/
+  Arquitetura) e reset de dados.
+
+
+## 8. Motor de precificação de orçamentos (a regra de negócio mais importante)
+
+Para cada item de um orçamento, o cálculo segue esta ordem:
+
+1. Custo fixo do período = soma de Aluguel + IPTU + Água + Energia +
+   Contador + Outros + quaisquer custos fixos extras cadastrados
+   dinamicamente.
+2. Esse custo fixo mensal é dividido pelas "Horas/Mês" configuradas, e
+   multiplicado pelas horas de mão de obra lançadas naquele item
+   específico → "custo fixo rateado".
+3. Mão de obra = soma de (horas × valor/hora) para cada tipo de mão de
+   obra usado (tipos configuráveis, ex: Sócio, Auxiliar, Marceneiro, cada
+   um com seu valor/hora).
+4. Materiais = soma de (quantidade × custo unitário) de cada
+   material/madeira/insumo usado no item.
+5. Serviços terceirizados = soma dos valores lançados.
+6. Custo total do item = custo fixo rateado + mão de obra + materiais +
+   serviços.
+7. Fundo de reserva = custo total × percentual configurável (padrão 10%)
+   → custo base.
+8. Preço sugerido = custo base ÷ (1 − (margem de lucro % + imposto %) /
+   100). Alternativamente, o usuário pode sobrescrever manualmente o
+   preço final do item.
+
+
+## 9. Fluxo de aprovação de orçamento
+
+Ao aprovar um orçamento, o usuário escolhe quais itens o cliente de fato
+aprovou (checklist — permite aprovação parcial) e a forma de pagamento:
+
+- PIX — divisão configurável entre "% antecipado hoje" e o restante "na
+  entrega".
+- Cartão de Crédito — parcelado, com taxa de juros configurável por
+  número de parcelas (1x a 10x).
+- Boleto — 100% na entrega.
+- Outro — 100% antecipado.
+
+Ao confirmar, o sistema automaticamente: cria um Pedido (venda) só com os
+itens aprovados; lança as contas a receber correspondentes no Financeiro
+(uma ou mais, conforme a forma de pagamento); e cria uma Ordem de
+Produção vinculada, já na etapa "Planejamento".
+
+
+## 10. Alertas automáticos (badges no menu lateral)
+
+- Estoque crítico de Insumos e de Portfólio (estoque atual ≤ estoque
+  mínimo).
+- Madeira abaixo do volume mínimo cadastrado.
+- Manutenção de máquina atrasada (data prevista já passou).
+- Ordem de Produção com prazo vencido e ainda não concluída.
+
+
+## 11. Geração de PDFs
+
+Todos os PDFs do sistema (orçamento para o cliente, backup completo,
+relatório do dashboard, este próprio documento de arquitetura não é PDF
+mas os outros três são) seguem o mesmo padrão visual: cabeçalho com o
+logo da Mabe, título, linha divisória dourada, tabelas com cabeçalho
+escuro e linhas zebradas, rodapé com "Estúdio Mabe" + data + número de
+página.
+
+Detalhe técnico relevante: a biblioteca jspdf-autotable pode criar
+páginas extras sozinha quando uma tabela não cabe numa página só. Para
+garantir que o fundo colorido apareça em TODA página (inclusive essas
+criadas automaticamente), o código intercepta (monkey-patch) a função
+doc.addPage do jsPDF, pintando o fundo assim que qualquer página nova é
+criada — antes de qualquer conteúdo ser desenhado nela.
+
+
+## 12. Sincronização com Google Sheets (opcional, não é a fonte de verdade)
+
+Um Google Apps Script é publicado como aplicativo Web (executar como
+"eu", acesso "qualquer pessoa"). O ERP envia requisições POST para essa
+URL a cada alteração relevante (formato: entidade, ação, dados), e a
+planilha guarda uma cópia legível dos dados. Também é possível puxar
+(importar) da planilha de volta para o sistema. Essa sincronização é
+totalmente opcional — o sistema funciona plenamente sem ela, usando
+apenas o Supabase.
+
+
+## 13. Backups existentes
+
+- Backup Completo (JSON) — todos os dados, exceto senhas de usuário;
+  serve para restaurar o sistema.
+- Backup em Planilhas (Excel) — os mesmos dados, organizados em abas, uma
+  por módulo, para consulta humana.
+- Backup Completo (PDF) — documento visual com a identidade da marca,
+  para leitura ou impressão.
+- Backup de Arquitetura (este documento) — não contém dados, contém a
+  descrição de como o sistema foi construído.
+
+
+## 14. Segurança
+
+- A chave do Supabase embutida no código é do tipo "publishable"
+  (pública/anônima) — fica exposta a qualquer visitante do site por
+  design, e isso não representa uma falha de segurança por si só; o
+  controle de acesso real depende das regras (RLS — Row Level Security)
+  configuradas no projeto Supabase.
+- Senhas de usuário nunca aparecem em nenhum backup ou exportação.
+- Login e perfis de usuário são a única camada de controle de acesso
+  dentro da própria aplicação.
+
+
+## 15. Prompt pronto para recriar este sistema (copie e cole no Claude Code)
+
+Quero que você crie, do zero, um ERP web para uma marcenaria de móveis
+sob medida em madeira maciça chamada "Estúdio Mabe". Requisitos:
+
+FORMATO: um único arquivo index.html com HTML, CSS e JavaScript puro (sem
+framework, sem processo de build, sem TypeScript) — deve rodar sendo
+aberto direto no navegador ou hospedado como site estático (ex: Vercel).
+
+BANCO DE DADOS: Supabase (Postgres). Crie um projeto Supabase e as
+tabelas: clientes, produtos, madeiras, vendas, orcamentos, producao,
+entregas, ferramentas, financeiro, fornecedores, compras, historico e
+config — com os campos descritos na seção 5 deste documento. Use a chave
+"publishable"/anon do Supabase direto no código do cliente (sem backend
+próprio). Não crie tabela de usuários no banco — usuários e login ficam
+só no localStorage do navegador (ver seção 6).
+
+IDENTIDADE VISUAL: siga a paleta de cores e tipografia da seção 3 (fundo
+bege claro, dourado como destaque, fontes "Plus Jakarta Sans" e "Fira
+Code").
+
+MÓDULOS: implemente cada módulo listado na seção 7, com navegação por uma
+barra lateral fixa e uma área de conteúdo que troca de visibilidade sem
+recarregar a página.
+
+REGRAS DE NEGÓCIO: implemente o motor de precificação de orçamentos
+exatamente como descrito na seção 8, e o fluxo de aprovação de orçamento
+da seção 9 (aprovação parcial de itens + geração automática de pedido +
+contas a receber + ordem de produção).
+
+ALERTAS: implemente os badges automáticos descritos na seção 10.
+
+PDFS: gere PDFs com jsPDF + jspdf-autotable seguindo o padrão visual da
+seção 11, e use o truque de interceptar doc.addPage para evitar páginas
+extras com fundo errado.
+
+BACKUP: inclua os 4 tipos de backup da seção 13 (JSON completo, Excel
+multi-abas, PDF visual, e um documento de arquitetura como este),
+disponíveis na tela de Configurações.
+
+BIBLIOTECAS: use exatamente as listadas na seção 2, carregadas via CDN
+(jsdelivr), sem gerenciador de pacotes.
+
+Comece pela estrutura do HTML/CSS (barra lateral + seções + modais),
+depois o modelo de dados e a camada de sincronização com Supabase,
+depois cada módulo, e por último o motor de precificação e o fluxo de
+aprovação de orçamentos, que são as partes mais complexas do sistema.
+
+
+---
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em ${fmtD(today())}.
+`;
+ const blob=new Blob([txt],{type:'text/markdown;charset=utf-8'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Arquitetura-ERP-Mabe-'+today()+'.md';a.click();
+ toast('Backup de arquitetura gerado! Envie o arquivo .md pra quem for recriar o sistema.','success');}
 function confirmReset(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!confirm('⚠️ ATENÇÃO: todos os dados serão apagados. Continuar?'))return;
  if(!confirm('Tem certeza? Esta ação não pode ser desfeita. Exporte um backup antes!'))return;
