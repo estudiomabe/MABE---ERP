@@ -1305,10 +1305,20 @@ async function carregarVendasSupabase(){
  if(error){toast('Erro ao carregar pedidos do Supabase: '+error.message,'error');return;}
  DB.vendas=(data||[]).map(vendaDeSupabase);saveDB();
  if(CUR==='vendas')renderVendas();}
+let VND_EXPANDIDOS=new Set();
+function toggleItensVenda(id){if(VND_EXPANDIDOS.has(id))VND_EXPANDIDOS.delete(id);else VND_EXPANDIDOS.add(id);renderVendas();}
 function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const lista=DB.vendas.filter(v=>matchPer(v.data,PER_VND));
  $('tb-vendas').innerHTML=lista.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
- return '<tr><td class="mono">V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+(v.itens||[]).length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td><div style="display:flex;gap:4px;align-items:center">'+(canEdit()?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button><button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';}).join('')||emptyRow(8,'Nenhum pedido no período selecionado');}
+ const itens=v.itens||[];
+ const expandido=VND_EXPANDIDOS.has(v.id);
+ const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(expandido?'Recolher itens':'Ver itens do pedido')+'" onclick="event.stopPropagation();toggleItensVenda(\''+v.id+'\')">'+(expandido?'▾':'▸')+'</button>':'<span style="display:inline-block;width:29px"></span>';
+ const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td><div style="display:flex;gap:4px;align-items:center">'+(canEdit()?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button><button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
+ let linhasItens='';
+ if(expandido&&itens.length){
+  linhasItens=itens.map(it=>'<tr style="background:var(--surface2)"><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td></tr>').join('');
+ }
+ return linhaHeader+linhasItens;}).join('')||emptyRow(8,'Nenhum pedido no período selecionado');}
 function abrirInfoNotaFiscal(id){openModal('modal-nfe-info');}
 function gerarReciboVenda(id){const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
