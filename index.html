@@ -203,6 +203,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
     <div class="nav-item" onclick="navigate('pcp')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="11"/><rect x="17" y="3" width="5" height="15"/></svg>Produção (PCP)<span class="nav-badge" id="badge-pcp" style="display:none">!</span></div>
     <div class="nav-item" onclick="navigate('entregas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Entregas</div>
     <div class="nav-item" onclick="navigate('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Máquinas<span class="nav-badge" id="badge-manut" style="display:none">!</span></div>
+    <div class="nav-item" onclick="navigate('calendario')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendário</div>
     <span class="nav-label">Estoque</span>
     <div class="nav-item" onclick="navigate('insumos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1"/></svg>Material/Insumo<span class="nav-badge" id="badge-insumos" style="display:none">!</span></div>
     <div class="nav-item" onclick="navigate('portfolio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Portfólio<span class="nav-badge" id="badge-portfolio" style="display:none">!</span></div>
@@ -367,6 +368,26 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
     <div class="section" id="section-ferramentas">
       <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">🛠️ Máquinas & Ferramentas — Plano de Manutenção</div></div>
       <table><thead><tr><th>Equipamento</th><th>Tipo</th><th>Última Manutenção</th><th>Intervalo</th><th>Próxima</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-ferramentas"></tbody></table></div>
+    </div>
+
+    <!-- CALENDÁRIO DE ENTREGAS -->
+    <div class="section" id="section-calendario">
+      <div class="table-toolbar" style="margin-bottom:14px"><div class="table-toolbar-title">📅 Calendário de Entregas</div></div>
+      <div class="period-bar">
+        <button class="btn btn-ghost btn-sm" onclick="calMudarMes(-1)">‹</button>
+        <span id="cal-label" style="font-weight:700;font-size:15px;min-width:170px;text-align:center"></span>
+        <button class="btn btn-ghost btn-sm" onclick="calMudarMes(1)">›</button>
+        <button class="btn btn-ghost btn-sm" onclick="calHoje()">Hoje</button>
+        <span style="margin-left:auto;display:flex;gap:14px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warning);margin-right:4px"></span>Agendada</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text);margin-right:4px"></span>Em rota</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:4px"></span>Entregue/Instalada</span>
+        </span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:center">
+        <div>DOM</div><div>SEG</div><div>TER</div><div>QUA</div><div>QUI</div><div>SEX</div><div>SÁB</div>
+      </div>
+      <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px"></div>
     </div>
 
     <!-- ENTREGAS -->
@@ -912,7 +933,7 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  carregarHistoricoSupabase();}
 
 /* ================= NAVEGAÇÃO ================= */
-const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
+const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
 const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','compras','usuarios'];
 const BTN_NEW_LABELS={orcamentos:'Novo Orçamento'};
 let CUR='dashboard';
@@ -937,12 +958,12 @@ function navigate(sec){CUR=sec;
  if(sec==='vendas')carregarVendasSupabase();
  if(sec==='orcamentos')carregarOrcamentosSupabase();
  if(sec==='pcp')carregarProducaoSupabase();
- if(sec==='entregas')carregarEntregasSupabase();
+ if(sec==='entregas'||sec==='calendario')carregarEntregasSupabase();
  if(sec==='compras')carregarComprasSupabase();
  if(sec==='financeiro'||sec==='centrocustos')carregarFinanceiroSupabase();
  if(sec==='configuracoes')carregarConfigSupabase();
  if(sec==='historico')carregarHistoricoSupabase();}
-function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
+function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
  if(CUR==='pcp')document.querySelectorAll('#pcp-kanban .kanban-card').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(v)?'':'none';});}
@@ -2102,6 +2123,33 @@ async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.i
  else toast('OP concluída!','success');
  commit('editar','Produção','Concluída: '+o.titulo);syncSheets('pcp','upsert',o);}
 
+/* ================= CALENDÁRIO DE ENTREGAS ================= */
+let CAL={ano:new Date().getFullYear(),mes:new Date().getMonth()};
+function calMudarMes(delta){CAL.mes+=delta;if(CAL.mes<0){CAL.mes=11;CAL.ano--;}else if(CAL.mes>11){CAL.mes=0;CAL.ano++;}renderCalendario();}
+function calHoje(){const d=new Date();CAL.ano=d.getFullYear();CAL.mes=d.getMonth();renderCalendario();}
+function renderCalendario(){
+ $('cal-label').textContent=MESES[CAL.mes]+' de '+CAL.ano;
+ const porDia={};
+ DB.entregas.forEach(e=>{if(!e.data)return;const partes=String(e.data).slice(0,10).split('-').map(Number);
+  if(partes[0]===CAL.ano&&partes[1]-1===CAL.mes)(porDia[partes[2]]=porDia[partes[2]]||[]).push(e);});
+ const primeiroDia=new Date(CAL.ano,CAL.mes,1).getDay();
+ const totalDias=new Date(CAL.ano,CAL.mes+1,0).getDate();
+ const t=today();
+ const stCor={'Agendada':['var(--warning)','rgba(160,120,48,0.12)'],'Em rota':['var(--text)','rgba(26,23,20,0.08)'],'Entregue':['var(--success)','rgba(61,107,79,0.12)'],'Instalada':['var(--success)','rgba(61,107,79,0.12)']};
+ let html='';
+ for(let i=0;i<primeiroDia;i++)html+='<div></div>';
+ for(let d=1;d<=totalDias;d++){
+  const iso=CAL.ano+'-'+String(CAL.mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  const ents=(porDia[d]||[]).slice().sort((a,b)=>(a.peca||'').localeCompare(b.peca||''));
+  const isHoje=iso===t;
+  const temAtrasada=ents.some(e=>e.status==='Agendada'&&e.data<t);
+  const itens=ents.slice(0,3).map(e=>{const cor=stCor[e.status]||['var(--text-muted)','var(--surface2)'];
+   return '<div style="font-size:10px;padding:2px 4px;border-radius:4px;margin-bottom:2px;cursor:pointer;background:'+cor[1]+';color:'+cor[0]+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(e.peca)+' — '+esc(e.cliId?cliName(e.cliId):'—')+' ('+e.status+')" onclick="editEntrega(\''+e.id+'\')">'+esc(e.peca)+'</div>';}).join('');
+  const mais=ents.length>3?'<div style="font-size:9.5px;color:var(--text-muted)">+'+(ents.length-3)+' mais</div>':'';
+  html+='<div style="min-height:86px;border:1px solid '+(temAtrasada?'var(--danger)':'var(--border)')+';border-radius:8px;padding:6px;background:'+(isHoje?'var(--surface2)':'var(--surface)')+'">'
+   +'<div style="font-size:11px;font-weight:700;color:'+(isHoje?'var(--accent)':'var(--text-muted)')+';margin-bottom:4px">'+d+'</div>'+itens+mais+'</div>';
+ }
+ $('cal-grid').innerHTML=html;}
 /* ================= ENTREGAS ================= */
 const ENT_ST=['Agendada','Em rota','Entregue','Instalada'];
 function entregaParaSupabase(e){return{id:e.id,op_id:e.opId||null,data:e.data||null,cli_id:e.cliId||null,peca:e.peca||null,endereco:e.end||null,resp:e.resp||null,status:e.status||null,obs:e.obs||null};}
@@ -2110,7 +2158,8 @@ async function carregarEntregasSupabase(){
  const {data,error}=await supa.from('entregas').select('*').order('data',{ascending:false});
  if(error){toast('Erro ao carregar entregas do Supabase: '+error.message,'error');return;}
  DB.entregas=(data||[]).map(entregaDeSupabase);saveDB();
- if(CUR==='entregas')renderEntregas();}
+ if(CUR==='entregas')renderEntregas();
+ if(CUR==='calendario')renderCalendario();}
 function renderEntregas(){const t=today();
  $('tb-entregas').innerHTML=DB.entregas.map(e=>{const stB={'Agendada':'badge-warning','Em rota':'badge-info','Entregue':'badge-success','Instalada':'badge-success'}[e.status]||'badge-muted';
   const late=(e.status==='Agendada'&&e.data<t)?' style="color:var(--danger);font-weight:700"':'';
