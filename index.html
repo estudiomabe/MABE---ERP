@@ -604,6 +604,11 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <div class="form-grid form-2"><div class="form-group"><label class="form-label">Contador (R$)</label><input type="number" class="form-control" id="cfg-contador" step="0.01"></div><div class="form-group"><label class="form-label">Outros (R$)</label><input type="number" class="form-control" id="cfg-outros" step="0.01"></div></div>
           <div class="form-grid form-2"><div class="form-group"><label class="form-label">Horas/Mês</label><input type="number" class="form-control" id="cfg-hmes"></div><div class="form-group"><label class="form-label">Imposto (%)</label><input type="number" class="form-control" id="cfg-imposto" step="0.1"></div></div>
           <div class="form-grid form-2"><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="cfg-markup" step="1"></div><div class="form-group"><label class="form-label">Fundo de Reserva Padrão (%)</label><input type="number" class="form-control" id="cfg-reserva" step="0.5"></div></div>
+          <div style="margin-top:4px">
+            <label class="form-label" style="display:block;margin-bottom:8px">Outros Custos Fixos</label>
+            <div id="cfg-custos-extras" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="addCustoFixoExtraConfig()">+ Adicionar Custo Fixo</button>
+          </div>
           <button class="btn btn-primary" onclick="saveCFConfig()">💾 Salvar Configurações de Custo</button>
         </div>
         <div class="config-card">
@@ -801,7 +806,7 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Admin',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],empresa:{endereco:'',telefone:'',email:'',site:''}},
+ config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],empresa:{endereco:'',telefone:'',email:'',site:''}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
@@ -809,6 +814,7 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  if(!DB.config.cf)DB.config.cf=d.config.cf; if(!DB.seq)DB.seq=d.seq;
  for(const k in d.config.cf)if(DB.config.cf[k]===undefined)DB.config.cf[k]=d.config.cf[k];
  if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];
+ if(!DB.config.custosFixosExtras)DB.config.custosFixosExtras=[];
  if(!DB.config.empresa)DB.config.empresa={endereco:'',telefone:'',email:'',site:''};}
 function saveDB(){localStorage.setItem(DKEY,JSON.stringify(DB));}
 function log(acao,modulo,detalhe){const h={id:uid(),dt:new Date().toLocaleString('pt-BR'),user:USER?USER.nome:'—',usuario:USER?USER.nome:'—',login:USER?USER.login:'',acao,modulo,detalhe};DB.historico.unshift(h);if(DB.historico.length>400)DB.historico.length=400;syncSheets('historico','upsert',h);
@@ -1620,7 +1626,7 @@ function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.c
  const desc=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
  row.innerHTML=desc+'<input type="number" class="form-control om-qty" value="'+(it?it.qty:1)+'" min="0" step="0.001" oninput="calcOrc()" title="Quantidade"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control om-custo" value="'+(it?it.custo:0)+'" step="0.01" min="0" oninput="calcOrc()" title="Custo unitário" style="border:none;background:transparent;padding-left:2px"></div><div class="mono om-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
  wrap.appendChild(row);calcOrc();return row;}
-function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0);
+function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
  const hmes=Number(cfg.hmes)||1;
  let mdo=0,horasTotal=0;const mdoLinhas=[];
  document.querySelectorAll('#orc-mdo > div').forEach(r=>{const sel=r.querySelector('.md-sel');const horas=parseFloat(r.querySelector('.md-horas').value)||0;
@@ -1671,7 +1677,7 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
   DB.produtos.push(novoProd);syncSheets('produtos','upsert',novoProd);
   toast('Produto "'+nome+'" cadastrado no catálogo!','success');}
  const cfgAtual=DB.config.cf;
- const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal,imposto:num('orc-imposto'),markup:num('orc-markup'),precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto,qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
+ const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal,imposto:num('orc-imposto'),markup:num('orc-markup'),precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto,qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
@@ -2514,6 +2520,7 @@ function renderConfig(){$('sheets-url').value=DB.config.sheetsUrl||'';const cf=D
  $('cfg-hmes').value=cf.hmes;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;$('cfg-reserva').value=cf.reserva;
  $('cfg-pix-ant').value=cf.pixAntecipado;
  for(let n=1;n<=10;n++)$('cfg-taxa-p'+n).value=cf['taxaParc'+n];
+ renderCustosFixosExtrasConfig();
  renderMdoTiposConfig();
  const emp=DB.config.empresa||{};$('cfg-emp-endereco').value=emp.endereco||'';$('cfg-emp-telefone').value=emp.telefone||'';$('cfg-emp-email').value=emp.email||'';$('cfg-emp-site').value=emp.site||'';}
 async function saveEmpresaInfo(){if(!guard())return;
@@ -2529,12 +2536,27 @@ function saveConfig(){DB.config.sheetsUrl=$('sheets-url').value.trim();saveDB();
  pingSheets().then(r=>{if(r&&r.ok){st.textContent='✅ Conectado à planilha "'+(r.planilha||'')+'"!';st.style.color='var(--success)';}
   else{st.textContent='⚠️ URL respondeu, mas não reconheceu o formato esperado.';st.style.color='var(--warning)';}})
  .catch(()=>{st.textContent='❌ Não foi possível conectar. Confira a URL e a implantação do Apps Script.';st.style.color='var(--danger)';});}
+function renderCustosFixosExtrasConfig(){$('cfg-custos-extras').innerHTML='';(DB.config.custosFixosExtras||[]).forEach(c=>addCustoFixoExtraConfig(c));}
+function addCustoFixoExtraConfig(c){const wrap=$('cfg-custos-extras');const row=document.createElement('div');
+ row.dataset.id=c?c.id:uid();
+ row.style.cssText='display:grid;grid-template-columns:2fr 130px 28px;gap:8px;align-items:center';
+ row.innerHTML='<input type="text" class="form-control cx-nome" placeholder="Nome (ex: Internet)" value="'+esc(c?c.nome:'')+'"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control cx-valor" step="0.01" min="0" value="'+(c?c.valor:0)+'" style="border:none;background:transparent;padding-left:2px"></div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>';
+ wrap.appendChild(row);}
 async function saveCFConfig(){if(!guard())return;
+ const extras=[];let temVazio=false;
+ document.querySelectorAll('#cfg-custos-extras > div').forEach(r=>{const nome=r.querySelector('.cx-nome').value.trim();const valor=parseFloat(r.querySelector('.cx-valor').value)||0;
+  if(!nome){temVazio=true;return;}
+  extras.push({id:r.dataset.id,nome,valor});});
+ if(temVazio){toast('Remova ou preencha as linhas de custo fixo sem nome.','error');return;}
  Object.assign(DB.config.cf,{aluguel:num('cfg-aluguel'),iptu:num('cfg-iptu'),agua:num('cfg-agua'),energia:num('cfg-energia'),contador:num('cfg-contador'),outros:num('cfg-outros'),hmes:num('cfg-hmes')||176,imposto:num('cfg-imposto'),markup:num('cfg-markup'),reserva:num('cfg-reserva')});
+ DB.config.custosFixosExtras=extras;
  saveDB();log('editar','Configurações','Custos fixos padrão atualizados');saveDB();
  const {error}=await supa.from('config').upsert(Object.entries(DB.config.cf).map(([campo,valor])=>({campo,valor})));
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ const {error:erroExtras}=await supa.from('config').upsert({campo:'custosFixosExtras',valor:JSON.stringify(extras)});
+ if(erroExtras){toast('Erro ao salvar no Supabase: '+erroExtras.message,'error');return;}
  Object.entries(DB.config.cf).forEach(([campo,valor])=>syncSheets('config','upsert',{campo,valor}));
+ syncSheets('config','upsert',{campo:'custosFixosExtras',valor:JSON.stringify(extras)});
  toast('Configurações de custo salvas!','success');}
 async function saveCondPagto(){if(!guard())return;
  const parc={};for(let n=1;n<=10;n++)parc['taxaParc'+n]=Math.max(0,num('cfg-taxa-p'+n));
@@ -2567,6 +2589,7 @@ async function carregarConfigSupabase(){
  if(error){toast('Erro ao carregar configurações do Supabase: '+error.message,'error');return;}
  (data||[]).forEach(({campo,valor})=>{
   if(campo==='mdoTipos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr)&&arr.length)DB.config.mdoTipos=arr;}catch(e){}}
+  else if(campo==='custosFixosExtras'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.custosFixosExtras=arr;}catch(e){}}
   else if(campo==='empresaInfo'){try{const obj=JSON.parse(valor);if(obj&&typeof obj==='object')DB.config.empresa=obj;}catch(e){}}
   else if(DB.config.cf[campo]!==undefined)DB.config.cf[campo]=Number(valor)||0;});
  saveDB();
