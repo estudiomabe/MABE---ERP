@@ -801,7 +801,7 @@ function closeModal(id){$(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
 /* ================= DATABASE ================= */
-const DKEY='erp_mabe_db_v2', SKEY='erp_mabe_session';
+const DKEY='erp_mabe_db_v2', SKEY='erp_mabe_session', LASTSEC_KEY='erp_mabe_last_section';
 let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Admin',status:'Ativo',ultimo:''}],
@@ -888,10 +888,14 @@ function doLogin(){const l=$('login-user').value.trim(),p=$('login-pass').value;
  $('login-err').classList.remove('show');USER=u;u.ultimo=new Date().toLocaleString('pt-BR');saveDB();
  localStorage.setItem(SKEY,u.id);$('login-screen').classList.add('hidden');afterLogin();}
 function doLogout(){localStorage.removeItem(SKEY);location.reload();}
+function secaoInicial(){let sec=null;try{sec=localStorage.getItem(LASTSEC_KEY);}catch(e){}
+ if(!sec||!TITLES[sec])return 'dashboard';
+ if(sec==='usuarios'&&!isAdmin())return 'dashboard';
+ return sec;}
 function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
  $('sidebar-avatar').textContent=ini;$('sidebar-username').textContent=USER.nome;$('sidebar-role').textContent=USER.perfil;
  $('nav-usuarios').style.display=isAdmin()?'flex':'none';
- navigate('dashboard');updateBadges();
+ navigate(secaoInicial());updateBadges();
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
  if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
  carregarClientesSupabase();
@@ -916,6 +920,7 @@ let CUR='dashboard';
 function toggleSidebar(){$('sidebar').classList.toggle('open');}
 function closeSidebar(){$('sidebar').classList.remove('open');}
 function navigate(sec){CUR=sec;
+ try{localStorage.setItem(LASTSEC_KEY,sec);}catch(e){}
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
  const el=$('section-'+sec); if(el)el.classList.add('active');
  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',(n.getAttribute('onclick')||'').indexOf("'"+sec+"'")>-1));
