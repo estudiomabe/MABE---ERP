@@ -1446,14 +1446,21 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
   const {data,error}=await supa.from('vendas').insert(vendaParaSupabase(nova)).select().single();
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
   nova.num=data.num;
+  let opCriada=false;
   if(nova.status!=='Cancelado'){for(const it of nova.itens){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Math.max(0,Number(p.est)-it.qty);await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
    nova.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',nova.id);
    const finReg={id:uid(),tipo:'Entrada',data:nova.data,desc:'Pedido V-'+pad(nova.num)+' — '+cliName(cliId),cat:'Pedidos',val:total,status:nova.status==='Entregue'?'Pago':'Pendente'};
    await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
-   DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);}
-  DB.vendas.unshift(nova);commit('criar','Pedidos','V-'+pad(nova.num)+' — '+fmt(total));syncSheets('vendas','upsert',nova);
+   DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);
+   // Gera automaticamente uma Ordem de Produção (PCP) em Planejamento pra este pedido
+   const op={id:uid(),titulo:'Pedido V-'+pad(nova.num)+' — '+cliName(cliId),cliId,prazo:addDays(nova.data||today(),15),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:nova.itens.map(it=>'• '+it.desc+' × '+it.qty).join('\n')+'\n(Gerado automaticamente do Pedido V-'+pad(nova.num)+')'};
+   const {data:dop,error:erroOp}=await supa.from('producao').insert(opParaSupabase(op)).select().single();
+   if(erroOp){toast('Pedido salvo, mas houve erro ao criar a ordem de produção: '+erroOp.message,'error');}
+   else{op.num=dop.num;DB.producao.push(op);syncSheets('pcp','upsert',op);opCriada=true;}}
+  DB.vendas.unshift(nova);commit('criar','Pedidos','V-'+pad(nova.num)+' — '+fmt(total)+(opCriada?' + OP-'+pad(DB.producao[DB.producao.length-1].num)+' em Planejamento':''));syncSheets('vendas','upsert',nova);
+  closeModal('modal-vendas');toast('Pedido salvo!'+(opCriada?' Estoque, financeiro e produção (PCP) atualizados.':' Estoque e financeiro atualizados.'),'success');return;
  }
- closeModal('modal-vendas');toast('Pedido salvo! Estoque e financeiro atualizados.','success');}
+ closeModal('modal-vendas');toast('Pedido atualizado!','success');}
 async function delVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===id);if(!confirm('Excluir pedido V-'+pad(v.num)+'?'))return;
  if(v.baixa)for(const it of (v.itens||[])){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Number(p.est)+it.qty;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
  const {error}=await supa.from('vendas').delete().eq('id',id);
