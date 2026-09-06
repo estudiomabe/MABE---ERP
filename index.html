@@ -1446,8 +1446,8 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
   nova.num=data.num;
   let opCriada=false;
-  if(nova.status!=='Cancelado'){for(const it of nova.itens){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Math.max(0,Number(p.est)-it.qty);await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
-   nova.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',nova.id);
+  if(nova.status!=='Cancelado'){for(const it of nova.itens){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){const antes=Number(p.est);p.est=Math.max(0,antes-it.qty);it.deb=antes-p.est;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
+   nova.baixa=true;await supa.from('vendas').update({baixa:true,itens:nova.itens}).eq('id',nova.id);
    const finReg={id:uid(),tipo:'Entrada',data:nova.data,desc:'Pedido V-'+pad(nova.num)+' — '+cliName(cliId),cat:'Pedidos',val:total,status:nova.status==='Entregue'?'Pago':'Pendente'};
    await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
    DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);
@@ -1461,7 +1461,7 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
  }
  closeModal('modal-vendas');toast('Pedido atualizado!','success');}
 async function delVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===id);if(!confirm('Excluir pedido V-'+pad(v.num)+'?'))return;
- if(v.baixa)for(const it of (v.itens||[])){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Number(p.est)+it.qty;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
+ if(v.baixa)for(const it of (v.itens||[])){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){const devolver=(it.deb!==undefined&&it.deb!==null)?Number(it.deb):Number(it.qty);p.est=Number(p.est)+devolver;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
  const {error}=await supa.from('vendas').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.vendas=DB.vendas.filter(x=>x.id!==id);commit('excluir','Pedidos','V-'+pad(v.num));syncSheets('vendas','delete',{id});toast('Pedido excluído (estoque devolvido).','info');}
@@ -1830,8 +1830,8 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
  const {data:dv,error:erroVenda}=await supa.from('vendas').insert(vendaParaSupabase(novaVenda)).select().single();
  if(erroVenda){toast('Erro ao gerar pedido no Supabase: '+erroVenda.message,'error');return;}
  novaVenda.num=dv.num;
- for(const it of itens){if(it.tipo==='catalogo'&&it.prodId){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Math.max(0,Number(p.est)-(it.qty||1));await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}}
- if(itens.some(it=>it.tipo==='catalogo')){novaVenda.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',novaVenda.id);}
+ for(let ix=0;ix<itens.length;ix++){const it=itens[ix];if(it.tipo==='catalogo'&&it.prodId){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){const antes=Number(p.est);p.est=Math.max(0,antes-(it.qty||1));if(novaVenda.itens[ix])novaVenda.itens[ix].deb=antes-p.est;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}}
+ if(itens.some(it=>it.tipo==='catalogo')){novaVenda.baixa=true;await supa.from('vendas').update({baixa:true,itens:novaVenda.itens}).eq('id',novaVenda.id);}
  DB.vendas.unshift(novaVenda);syncSheets('vendas','upsert',novaVenda);
 
  // 2) Gerar contas a receber conforme a forma de pagamento
