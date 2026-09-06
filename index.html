@@ -275,7 +275,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Pedidos do Período</div><div class="kpi-value" id="kpi-vendas">R$0</div><div class="kpi-sub" id="kpi-vsub">pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Entradas</div><div class="kpi-value" id="kpi-entradas">R$0</div><div class="kpi-sub">recebido no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Saídas</div><div class="kpi-value" id="kpi-saidas">R$0</div><div class="kpi-sub">pago no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Margem</div><div class="kpi-value" id="kpi-resultado">R$0</div><div class="kpi-sub" id="kpi-rsub">entradas − saídas</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Faturamento</div><div class="kpi-value" id="kpi-resultado">R$0</div><div class="kpi-sub" id="kpi-rsub">entradas − saídas</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
       </div>
       <div class="charts-grid">
         <div class="chart-card"><div class="chart-title">Evolução de Pedidos <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><canvas id="chart-vendas" height="180"></canvas></div>
@@ -1083,7 +1083,7 @@ function renderDashboard(){
  $('kpi-saidas').textContent=fmtK(saidas);
  $('kpi-resultado').textContent=fmtK(resultado);
  $('kpi-resultado').style.color=resultado>=0?'var(--success)':'var(--danger)';
- $('kpi-rsub').textContent=resultado>=0?'superávit no período':'déficit no período';
+ $('kpi-rsub').textContent=resultado>=0?'faturamento no período':'déficit no período';
 
  const crit=DB.produtos.filter(p=>Number(p.est)<=Number(p.min));
  $('dash-estoque').innerHTML=crit.length?crit.slice(0,6).map(p=>'<tr><td>'+esc(p.nome)+'</td><td class="mono" style="color:var(--danger);font-weight:700">'+p.est+'</td><td class="mono">'+p.min+'</td></tr>').join(''):'<tr><td colspan="3" style="color:var(--text-muted)">Nenhum item crítico 👍</td></tr>';
@@ -1154,7 +1154,7 @@ function gerarPdfDashboard(){
    ['Pedidos do Período',fmt(vPer.reduce((s,v)=>s+Number(v.total||0),0))+'  ('+vPer.length+' pedido(s))'],
    ['Entradas',fmt(entradas)],
    ['Saídas',fmt(saidas)],
-   ['Margem',(resultado<0?'- ':'')+fmt(Math.abs(resultado))]
+   ['Faturamento',(resultado<0?'- ':'')+fmt(Math.abs(resultado))]
   ],theme:'plain',
   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3,bottom:3,left:3,right:3}},
   bodyStyles:{fontSize:9,textColor:DARK,cellPadding:{top:3,bottom:3,left:3,right:3}},
