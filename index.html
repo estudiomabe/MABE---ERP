@@ -201,7 +201,6 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
     <div class="nav-item" onclick="navigate('vendas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Pedidos</div>
     <span class="nav-label">Produção</span>
     <div class="nav-item" onclick="navigate('pcp')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="11"/><rect x="17" y="3" width="5" height="15"/></svg>Produção (PCP)<span class="nav-badge" id="badge-pcp" style="display:none">!</span></div>
-    <div class="nav-item" onclick="navigate('entregas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Entregas</div>
     <div class="nav-item" onclick="navigate('ferramentas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Máquinas<span class="nav-badge" id="badge-manut" style="display:none">!</span></div>
     <div class="nav-item" onclick="navigate('calendario')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendário</div>
     <span class="nav-label">Estoque</span>
@@ -302,7 +301,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <select class="form-control" id="vnd-per-ano-sel" style="width:auto;min-width:90px" onchange="onVndChange()"></select>
         <span id="vnd-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
       </div>
-      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos</div></div><table><thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
+      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos</div></div><table><thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>STATUS R$</th><th>STATUS PCP</th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
     </div>
 
     <div class="section" id="section-financeiro">
@@ -372,7 +371,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 
     <!-- CALENDÁRIO DE ENTREGAS -->
     <div class="section" id="section-calendario">
-      <div class="table-toolbar" style="margin-bottom:14px"><div class="table-toolbar-title">📅 Calendário de Entregas</div></div>
+      <div class="table-toolbar" style="margin-bottom:14px"><div class="table-toolbar-title">📅 Calendário de Entregas</div><button class="btn btn-primary btn-sm" onclick="openEntrega()">+ Nova Entrega</button></div>
       <div class="period-bar">
         <button class="btn btn-ghost btn-sm" onclick="calMudarMes(-1)">‹</button>
         <span id="cal-label" style="font-weight:700;font-size:15px;min-width:170px;text-align:center"></span>
@@ -1355,18 +1354,29 @@ async function carregarVendasSupabase(){
  if(CUR==='vendas')renderVendas();}
 let VND_EXPANDIDOS=new Set();
 function toggleItensVenda(id){if(VND_EXPANDIDOS.has(id))VND_EXPANDIDOS.delete(id);else VND_EXPANDIDOS.add(id);renderVendas();}
+function opDoPedido(v){
+ const porTitulo=DB.producao.find(o=>(o.titulo||'').includes('V-'+pad(v.num))||(o.obs||'').includes('V-'+pad(v.num)));
+ if(porTitulo)return porTitulo;
+ const m=(v.obs||'').match(/ORC-(\d+)/);
+ if(m){const orc=DB.orcamentos.find(o=>Number(o.num)===Number(m[1]));
+  if(orc){const op=DB.producao.find(o=>o.orcId===orc.id);if(op)return op;}}
+ return null;}
+function statusPcpCelula(v){const op=opDoPedido(v);
+ if(!op)return '<span class="badge badge-muted" title="Nenhuma ordem de produção vinculada">—</span>';
+ if(op.status==='Concluída')return '<span class="badge badge-success" title="OP-'+pad(op.num)+'">✅ Concluída</span>';
+ return '<span class="badge badge-info" title="OP-'+pad(op.num)+'">'+(ETAPAS[op.etapa]||'—')+'</span>';}
 function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const lista=DB.vendas.filter(v=>matchPer(v.data,PER_VND));
  $('tb-vendas').innerHTML=lista.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
  const itens=v.itens||[];
  const expandido=VND_EXPANDIDOS.has(v.id);
  const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(expandido?'Recolher itens':'Ver itens do pedido')+'" onclick="event.stopPropagation();toggleItensVenda(\''+v.id+'\')">'+(expandido?'▾':'▸')+'</button>':'<span style="display:inline-block;width:29px"></span>';
- const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td><div style="display:flex;gap:4px;align-items:center">'+(canEdit()?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button><button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
+ const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+(canEdit()?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button><button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
  let linhasItens='';
  if(expandido&&itens.length){
-  linhasItens=itens.map(it=>'<tr style="background:var(--surface2)"><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td></tr>').join('');
+  linhasItens=itens.map(it=>'<tr style="background:var(--surface2)"><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
  }
- return linhaHeader+linhasItens;}).join('')||emptyRow(8,'Nenhum pedido no período selecionado');}
+ return linhaHeader+linhasItens;}).join('')||emptyRow(9,'Nenhum pedido no período selecionado');}
 function abrirInfoNotaFiscal(id){openModal('modal-nfe-info');}
 function gerarReciboVenda(id){const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
