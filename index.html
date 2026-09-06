@@ -381,6 +381,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warning);margin-right:4px"></span>Agendada</span>
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text);margin-right:4px"></span>Em rota</span>
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:4px"></span>Entregue/Instalada</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;border:1px dashed var(--accent);margin-right:4px"></span>🔮 Previsão (pedido em produção)</span>
         </span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:center">
@@ -954,9 +955,9 @@ function navigate(sec){CUR=sec;
  if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas')carregarFerramentasSupabase();
- if(sec==='vendas')carregarVendasSupabase();
+ if(sec==='vendas'||sec==='calendario')carregarVendasSupabase();
  if(sec==='orcamentos')carregarOrcamentosSupabase();
- if(sec==='pcp')carregarProducaoSupabase();
+ if(sec==='pcp'||sec==='calendario')carregarProducaoSupabase();
  if(sec==='entregas'||sec==='calendario')carregarEntregasSupabase();
  if(sec==='compras')carregarComprasSupabase();
  if(sec==='financeiro'||sec==='centrocustos')carregarFinanceiroSupabase();
@@ -1351,7 +1352,8 @@ async function carregarVendasSupabase(){
  const {data,error}=await supa.from('vendas').select('*').order('num',{ascending:false});
  if(error){toast('Erro ao carregar pedidos do Supabase: '+error.message,'error');return;}
  DB.vendas=(data||[]).map(vendaDeSupabase);saveDB();
- if(CUR==='vendas')renderVendas();}
+ if(CUR==='vendas')renderVendas();
+ if(CUR==='calendario')renderCalendario();}
 let VND_EXPANDIDOS=new Set();
 function toggleItensVenda(id){if(VND_EXPANDIDOS.has(id))VND_EXPANDIDOS.delete(id);else VND_EXPANDIDOS.add(id);renderVendas();}
 function opDoPedido(v){
@@ -2077,7 +2079,8 @@ async function carregarProducaoSupabase(){
  const {data,error}=await supa.from('producao').select('*').order('num',{ascending:false});
  if(error){toast('Erro ao carregar produção do Supabase: '+error.message,'error');return;}
  DB.producao=(data||[]).map(opDeSupabase);saveDB();
- if(CUR==='pcp')renderPCP();}
+ if(CUR==='pcp')renderPCP();
+ if(CUR==='calendario')renderCalendario();}
 function renderPCP(){const t=today();const ativas=DB.producao.filter(o=>o.status!=='Concluída');
  const atras=ativas.filter(o=>o.prazo&&o.prazo<t).length;
  const ym=t.slice(0,7);const concMes=DB.producao.filter(o=>o.status==='Concluída'&&String(o.fim||'').slice(0,7)===ym).length;
@@ -2139,23 +2142,32 @@ function calMudarMes(delta){CAL.mes+=delta;if(CAL.mes<0){CAL.mes=11;CAL.ano--;}e
 function calHoje(){const d=new Date();CAL.ano=d.getFullYear();CAL.mes=d.getMonth();renderCalendario();}
 function renderCalendario(){
  $('cal-label').textContent=MESES[CAL.mes]+' de '+CAL.ano;
+ const t=today();
  const porDia={};
- DB.entregas.forEach(e=>{if(!e.data)return;const partes=String(e.data).slice(0,10).split('-').map(Number);
-  if(partes[0]===CAL.ano&&partes[1]-1===CAL.mes)(porDia[partes[2]]=porDia[partes[2]]||[]).push(e);});
+ const addAoDia=(iso,item)=>{if(!iso)return;const partes=String(iso).slice(0,10).split('-').map(Number);
+  if(partes[0]===CAL.ano&&partes[1]-1===CAL.mes)(porDia[partes[2]]=porDia[partes[2]]||[]).push(item);};
+ const stCor={'Agendada':['var(--warning)','rgba(160,120,48,0.12)'],'Em rota':['var(--text)','rgba(26,23,20,0.08)'],'Entregue':['var(--success)','rgba(61,107,79,0.12)'],'Instalada':['var(--success)','rgba(61,107,79,0.12)']};
+ DB.entregas.forEach(e=>{const cor=stCor[e.status]||['var(--text-muted)','var(--surface2)'];
+  addAoDia(e.data,{label:e.peca||'—',cor,dashed:false,atrasa:e.status==='Agendada'&&e.data<t,
+   title:(e.peca||'—')+' — '+(e.cliId?cliName(e.cliId):'—')+' ('+e.status+')',onclick:"editEntrega('"+e.id+"')"});});
+ const opsComEntrega=new Set(DB.entregas.map(e=>e.opId).filter(Boolean));
+ DB.vendas.forEach(v=>{if(v.status==='Cancelado')return;
+  const op=opDoPedido(v);
+  if(!op||op.status==='Concluída'||!op.prazo||opsComEntrega.has(op.id))return;
+  addAoDia(op.prazo,{label:'🔮 V-'+pad(v.num),cor:['var(--accent)','rgba(200,169,110,0.14)'],dashed:true,atrasa:op.prazo<t,
+   title:'Previsão de entrega — Pedido V-'+pad(v.num)+' ('+cliName(v.cliId)+') — OP-'+pad(op.num)+' em '+(ETAPAS[op.etapa]||'—'),
+   onclick:"editVenda('"+v.id+"')"});});
  const primeiroDia=new Date(CAL.ano,CAL.mes,1).getDay();
  const totalDias=new Date(CAL.ano,CAL.mes+1,0).getDate();
- const t=today();
- const stCor={'Agendada':['var(--warning)','rgba(160,120,48,0.12)'],'Em rota':['var(--text)','rgba(26,23,20,0.08)'],'Entregue':['var(--success)','rgba(61,107,79,0.12)'],'Instalada':['var(--success)','rgba(61,107,79,0.12)']};
  let html='';
  for(let i=0;i<primeiroDia;i++)html+='<div></div>';
  for(let d=1;d<=totalDias;d++){
   const iso=CAL.ano+'-'+String(CAL.mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-  const ents=(porDia[d]||[]).slice().sort((a,b)=>(a.peca||'').localeCompare(b.peca||''));
+  const lista=(porDia[d]||[]).slice().sort((a,b)=>a.label.localeCompare(b.label));
   const isHoje=iso===t;
-  const temAtrasada=ents.some(e=>e.status==='Agendada'&&e.data<t);
-  const itens=ents.slice(0,3).map(e=>{const cor=stCor[e.status]||['var(--text-muted)','var(--surface2)'];
-   return '<div style="font-size:10px;padding:2px 4px;border-radius:4px;margin-bottom:2px;cursor:pointer;background:'+cor[1]+';color:'+cor[0]+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(e.peca)+' — '+esc(e.cliId?cliName(e.cliId):'—')+' ('+e.status+')" onclick="editEntrega(\''+e.id+'\')">'+esc(e.peca)+'</div>';}).join('');
-  const mais=ents.length>3?'<div style="font-size:9.5px;color:var(--text-muted)">+'+(ents.length-3)+' mais</div>':'';
+  const temAtrasada=lista.some(x=>x.atrasa);
+  const itens=lista.slice(0,3).map(x=>'<div style="font-size:10px;padding:2px 4px;border-radius:4px;margin-bottom:2px;cursor:pointer;background:'+x.cor[1]+';color:'+x.cor[0]+(x.dashed?';border:1px dashed '+x.cor[0]:'')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(x.title)+'" onclick="'+x.onclick+'">'+esc(x.label)+'</div>').join('');
+  const mais=lista.length>3?'<div style="font-size:9.5px;color:var(--text-muted)">+'+(lista.length-3)+' mais</div>':'';
   html+='<div style="min-height:86px;border:1px solid '+(temAtrasada?'var(--danger)':'var(--border)')+';border-radius:8px;padding:6px;background:'+(isHoje?'var(--surface2)':'var(--surface)')+'">'
    +'<div style="font-size:11px;font-weight:700;color:'+(isHoje?'var(--accent)':'var(--text-muted)')+';margin-bottom:4px">'+d+'</div>'+itens+mais+'</div>';
  }
