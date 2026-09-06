@@ -672,6 +672,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 <div class="modal-overlay" id="modal-aprovar-orc"><div class="modal"><div class="modal-header"><div class="modal-title">✔ Aprovar Orçamento</div><button class="modal-close" onclick="closeModal('modal-aprovar-orc')">✕</button></div><div class="modal-body">
 <input type="hidden" id="aprv-orc-id">
 <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px" id="aprv-orc-desc"></p>
+<div class="form-group"><label class="form-label">Quais itens foram aprovados pelo cliente? *</label><div id="aprv-itens-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px"></div></div>
 <div class="form-grid">
 <div class="form-group"><label class="form-label">Forma de Pagamento escolhida pelo cliente *</label><select class="form-control" id="aprv-pag" onchange="atualizarPreviewAprov()">
 <option value="pix">PIX — antecipado + na entrega</option>
@@ -1732,36 +1733,48 @@ function abrirAprovarOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.
  if(o.status==='Aprovado'){toast('Este orçamento já está aprovado.','info');return;}
  if(!itensOrc(o).length){toast('Adicione ao menos um item antes de aprovar.','error');return;}
  $('aprv-orc-id').value=id;$('aprv-orc-desc').textContent=resumoOrc(o)+' — '+cliName(o.cliId)+' — '+fmt(o.preco);
+ $('aprv-itens-lista').innerHTML=aprvItensChecklistHtml(itensOrc(o));
  $('aprv-pag').value='pix';$('aprv-prazo').value=o.validade||addDays(today(),30);
  popularParcelasSelect(o.preco);
  atualizarPreviewAprov();
  openModal('modal-aprovar-orc');}
+function aprvItensChecklistHtml(itens){return itens.map((it,i)=>'<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" class="aprv-item-chk" data-idx="'+i+'" checked onchange="atualizarPreviewAprov()"><span style="flex:1">'+esc(it.desc)+'</span><span class="mono" style="font-weight:700">'+fmt(it.preco)+'</span></label>').join('');}
+function itensSelecionadosAprov(o){const itens=itensOrc(o);const sel=[];document.querySelectorAll('.aprv-item-chk').forEach(c=>{if(c.checked)sel.push(itens[Number(c.dataset.idx)]);});return sel;}
 function atualizarPreviewAprov(){const o=DB.orcamentos.find(x=>x.id===$('aprv-orc-id').value);if(!o)return;
  const pag=$('aprv-pag').value,cf=DB.config.cf,prazo=$('aprv-prazo').value;
  $('aprv-parc-wrap').style.display=pag==='cartao'?'block':'none';
+ const itensSel=itensSelecionadosAprov(o);const totalSel=itensSel.reduce((s,it)=>s+Number(it.preco||0),0);
+ if(!itensSel.length){$('aprv-preview').innerHTML='<span style="color:var(--danger)">Selecione ao menos um item aprovado para gerar o pedido.</span>';return;}
+ if(pag==='cartao'){const selAtual=$('aprv-parcelas').value;popularParcelasSelect(totalSel);if(selAtual)$('aprv-parcelas').value=selAtual;}
  let html='';
- if(pag==='pix'){const pct=Number(cf.pixAntecipado)||50;const p1=Math.round(o.preco*pct/100*100)/100,p2=Math.round((o.preco-p1)*100)/100;
+ if(pag==='pix'){const pct=Number(cf.pixAntecipado)||50;const p1=Math.round(totalSel*pct/100*100)/100,p2=Math.round((totalSel-p1)*100)/100;
   html='💰 '+pct+'% antecipado (hoje): <strong>'+fmt(p1)+'</strong><br>💰 '+(100-pct)+'% na entrega ('+fmtD(prazo)+'): <strong>'+fmt(p2)+'</strong><br>→ Gera 2 contas a receber.';}
- else if(pag==='cartao'){const n=Number($('aprv-parcelas').value)||1;const taxa=taxaParcela(n);const total=Math.round(o.preco*(1+taxa/100)*100)/100;
+ else if(pag==='cartao'){const n=Number($('aprv-parcelas').value)||1;const taxa=taxaParcela(n);const total=Math.round(totalSel*(1+taxa/100)*100)/100;
   html='💳 Cartão de Crédito em <strong>'+n+'x de '+fmt(total/n)+'</strong>'+(taxa?' (+'+fmtN(taxa,1)+'% de juros — total '+fmt(total)+')':'')+'.<br>→ Gera '+n+' conta(s) a receber'+(n>1?', mensalmente a partir de hoje':' (à vista)')+'.';}
- else if(pag==='boleto'){html='📄 100% na entrega ('+fmtD(prazo)+'): <strong>'+fmt(o.preco)+'</strong><br>→ Gera 1 conta a receber.';}
- else{html='💵 100% antecipado (hoje): <strong>'+fmt(o.preco)+'</strong><br>→ Gera 1 conta a receber (já paga).';}
+ else if(pag==='boleto'){html='📄 100% na entrega ('+fmtD(prazo)+'): <strong>'+fmt(totalSel)+'</strong><br>→ Gera 1 conta a receber.';}
+ else{html='💵 100% antecipado (hoje): <strong>'+fmt(totalSel)+'</strong><br>→ Gera 1 conta a receber (já paga).';}
+ if(itensSel.length<itensOrc(o).length)html+='<br>⚠️ '+(itensOrc(o).length-itensSel.length)+' item(ns) não aprovado(s) — ficarão fora do pedido.';
  $('aprv-preview').innerHTML=html;}
 async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  const veioDaDetalhe=$('orc-detalhe-view').style.display!=='none';
  const pagKey=$('aprv-pag').value,pagLabel=PAG_LABELS[pagKey]||pagKey;
  const prazoEntrega=$('aprv-prazo').value;
  if(!prazoEntrega){toast('Informe a data de entrega combinada.','error');return;}
+ const itensSel=itensSelecionadosAprov(o);
+ if(!itensSel.length){toast('Selecione ao menos um item aprovado para gerar o pedido.','error');return;}
+ const itensNaoAprovados=itensOrc(o).length-itensSel.length;
  closeModal('modal-aprovar-orc');
  o.status='Aprovado';
- const {error:erroStatus}=await supa.from('orcamentos').update({status:'Aprovado'}).eq('id',id);
+ o.itens=itensSel;recomputeHeaderTotais(o);
+ const {error:erroStatus}=await supa.from('orcamentos').update(orcParaSupabase(o)).eq('id',id);
  if(erroStatus){toast('Erro ao aprovar no Supabase: '+erroStatus.message,'error');return;}
  const cf=DB.config.cf;
- const itens=itensOrc(o);
+ const itens=itensSel;
+ const totalAprovado=o.preco;
 
- // 1) Gerar pedido (venda) com todos os itens do orçamento
+ // 1) Gerar pedido (venda) apenas com os itens aprovados
  const itensVenda=itens.map(it=>({prodId:it.prodId||null,desc:it.desc,qty:it.qty||1,preco:(it.qty||1)?Math.round((it.preco/(it.qty||1))*100)/100:it.preco}));
- const vendaObj={cliId:o.cliId||'',data:today(),pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega),itens:itensVenda,total:o.preco};
+ const vendaObj={cliId:o.cliId||'',data:today(),pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':''),itens:itensVenda,total:totalAprovado};
  const novaVenda=Object.assign({id:uid(),baixa:false},vendaObj);
  const {data:dv,error:erroVenda}=await supa.from('vendas').insert(vendaParaSupabase(novaVenda)).select().single();
  if(erroVenda){toast('Erro ao gerar pedido no Supabase: '+erroVenda.message,'error');return;}
@@ -1775,20 +1788,20 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
  const finEntries=[];
  if(pagKey==='pix'){
   const pct=Number(cf.pixAntecipado)||50;
-  const p1=Math.round(o.preco*pct/100*100)/100,p2=Math.round((o.preco-p1)*100)/100;
+  const p1=Math.round(totalAprovado*pct/100*100)/100,p2=Math.round((totalAprovado-p1)*100)/100;
   finEntries.push({tipo:'Entrada',data:today(),desc:baseDesc+' — PIX '+pct+'% antecipado',cat:'Pedidos',val:p1,status:'Pago'});
   finEntries.push({tipo:'Entrada',data:prazoEntrega,desc:baseDesc+' — PIX '+(100-pct)+'% na entrega',cat:'Pedidos',val:p2,status:'Pendente'});
  } else if(pagKey==='cartao'){
   const n=Math.max(1,Number($('aprv-parcelas').value)||1);
   const taxa=taxaParcela(n);
-  const total=Math.round(o.preco*(1+taxa/100)*100)/100;
+  const total=Math.round(totalAprovado*(1+taxa/100)*100)/100;
   const parcela=Math.round((total/n)*100)/100;
   for(let i=0;i<n;i++){const ultima=i===n-1;const val=ultima?Math.round((total-parcela*(n-1))*100)/100:parcela;
    finEntries.push({tipo:'Entrada',data:i===0?today():addMonths(today(),i),desc:baseDesc+' — Cartão de Crédito '+(n>1?'Parcela '+(i+1)+'/'+n:'à vista')+(taxa?' (taxa '+fmtN(taxa,1)+'%)':''),cat:'Pedidos',val,status:i===0?'Pago':'Pendente'});}
  } else if(pagKey==='boleto'){
-  finEntries.push({tipo:'Entrada',data:prazoEntrega,desc:baseDesc+' — Boleto na entrega',cat:'Pedidos',val:o.preco,status:'Pendente'});
+  finEntries.push({tipo:'Entrada',data:prazoEntrega,desc:baseDesc+' — Boleto na entrega',cat:'Pedidos',val:totalAprovado,status:'Pendente'});
  } else {
-  finEntries.push({tipo:'Entrada',data:today(),desc:baseDesc+' — '+pagLabel+' (antecipado)',cat:'Pedidos',val:o.preco,status:'Pago'});
+  finEntries.push({tipo:'Entrada',data:today(),desc:baseDesc+' — '+pagLabel+' (antecipado)',cat:'Pedidos',val:totalAprovado,status:'Pago'});
  }
  for(const fe of finEntries){const reg=Object.assign({id:uid()},fe);
   const {error:erroFin}=await supa.from('financeiro').insert(financeiroParaSupabase(reg));
@@ -1805,8 +1818,8 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
  const {error:erroLink}=await supa.from('orcamentos').update({op_id:op.id}).eq('id',o.id);
  if(erroLink){toast('Erro ao vincular ordem de produção no Supabase: '+erroLink.message,'error');return;}
 
- commit('editar','Orçamentos','Aprovado ORC-'+pad(o.num)+' ('+pagLabel+') → V-'+pad(novaVenda.num)+' + '+finEntries.length+' conta(s) a receber + OP em Planejamento');
- toast('Orçamento aprovado! Pedido, contas a receber e ordem de produção criados. 🎉','success');
+ commit('editar','Orçamentos','Aprovado ORC-'+pad(o.num)+' ('+pagLabel+') → V-'+pad(novaVenda.num)+' + '+finEntries.length+' conta(s) a receber + OP em Planejamento'+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) não aprovado(s) removido(s) do orçamento':''));
+ toast(itensNaoAprovados?'Orçamento aprovado parcialmente! Pedido gerado com os itens aprovados. 🎉':'Orçamento aprovado! Pedido, contas a receber e ordem de produção criados. 🎉','success');
  if(veioDaDetalhe){orcShow('detalhe');renderOrcDetalhe();}}
 async function rejeitarOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  const veioDaDetalhe=$('orc-detalhe-view').style.display!=='none';
