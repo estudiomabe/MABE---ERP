@@ -382,6 +382,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text);margin-right:4px"></span>Em rota</span>
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:4px"></span>Entregue/Instalada</span>
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;border:1px dashed var(--accent);margin-right:4px"></span>🔮 Previsão (pedido em produção)</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-muted);margin-right:4px"></span>🔧 Manutenção de máquina</span>
         </span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:center">
@@ -955,7 +956,7 @@ function navigate(sec){CUR=sec;
  if(sec==='fornecedores')carregarFornecedoresSupabase();
  if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
- if(sec==='ferramentas')carregarFerramentasSupabase();
+ if(sec==='ferramentas'||sec==='calendario')carregarFerramentasSupabase();
  if(sec==='vendas'||sec==='calendario')carregarVendasSupabase();
  if(sec==='orcamentos')carregarOrcamentosSupabase();
  if(sec==='pcp'||sec==='calendario')carregarProducaoSupabase();
@@ -2159,27 +2160,39 @@ function renderCalendario(){
   if(partes[0]===CAL.ano&&partes[1]-1===CAL.mes)(porDia[partes[2]]=porDia[partes[2]]||[]).push(item);};
  const stCor={'Agendada':['var(--warning)','rgba(160,120,48,0.12)'],'Em rota':['var(--text)','rgba(26,23,20,0.08)'],'Entregue':['var(--success)','rgba(61,107,79,0.12)'],'Instalada':['var(--success)','rgba(61,107,79,0.12)']};
  DB.entregas.forEach(e=>{const cor=stCor[e.status]||['var(--text-muted)','var(--surface2)'];
-  addAoDia(e.data,{label:e.peca||'—',cor,dashed:false,atrasa:e.status==='Agendada'&&e.data<t,
-   title:(e.peca||'—')+' — '+(e.cliId?cliName(e.cliId):'—')+' ('+e.status+')',onclick:"editEntrega('"+e.id+"')"});});
+  const cliente=e.cliId?cliName(e.cliId):'—';
+  addAoDia(e.data,{cliente,itemTxt:e.peca||'—',cor,dashed:false,atrasa:e.status==='Agendada'&&e.data<t,
+   title:(e.peca||'—')+' — '+cliente+' ('+e.status+')',onclick:"editEntrega('"+e.id+"')"});});
  const opsComEntrega=new Set(DB.entregas.map(e=>e.opId).filter(Boolean));
  DB.vendas.forEach(v=>{if(v.status==='Cancelado')return;
   const op=opDoPedido(v);
   if(!op||op.status==='Concluída'||!op.prazo||opsComEntrega.has(op.id))return;
-  addAoDia(op.prazo,{label:'🔮 V-'+pad(v.num),cor:['var(--accent)','rgba(200,169,110,0.14)'],dashed:true,atrasa:op.prazo<t,
-   title:'Previsão de entrega — Pedido V-'+pad(v.num)+' ('+cliName(v.cliId)+') — OP-'+pad(op.num)+' em '+(ETAPAS[op.etapa]||'—'),
+  const cliente=cliName(v.cliId);
+  const itensTxt=(v.itens||[]).map(it=>it.desc).filter(Boolean).join(', ')||'—';
+  addAoDia(op.prazo,{cliente:'🔮 '+cliente,itemTxt:itensTxt,cor:['var(--accent)','rgba(200,169,110,0.14)'],dashed:true,atrasa:op.prazo<t,
+   title:'Previsão de entrega — Pedido V-'+pad(v.num)+' ('+cliente+') — Itens: '+itensTxt+' — OP-'+pad(op.num)+' em '+(ETAPAS[op.etapa]||'—'),
    onclick:"editVenda('"+v.id+"')"});});
+ DB.ferramentas.forEach(f=>{const prox=ferProx(f);if(!prox)return;
+  const atrasada=prox<t,proxima=!atrasada&&prox<=addDays(t,7);
+  const cor=atrasada?['var(--danger)','rgba(181,64,64,0.1)']:proxima?['var(--warning)','rgba(160,120,48,0.12)']:['var(--text-muted)','var(--surface2)'];
+  addAoDia(prox,{cliente:'🔧 '+f.nome,itemTxt:'Manutenção'+(f.tipo?' — '+f.tipo:''),cor,dashed:false,atrasa:atrasada,
+   title:'Manutenção preventiva — '+f.nome+(f.tipo?' ('+f.tipo+')':'')+' — prevista para '+fmtD(prox),
+   onclick:"editFerramenta('"+f.id+"')"});});
  const primeiroDia=new Date(CAL.ano,CAL.mes,1).getDay();
  const totalDias=new Date(CAL.ano,CAL.mes+1,0).getDate();
+ const MAX_VISIVEIS=2;
  let html='';
  for(let i=0;i<primeiroDia;i++)html+='<div></div>';
  for(let d=1;d<=totalDias;d++){
   const iso=CAL.ano+'-'+String(CAL.mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-  const lista=(porDia[d]||[]).slice().sort((a,b)=>a.label.localeCompare(b.label));
+  const lista=(porDia[d]||[]).slice().sort((a,b)=>a.cliente.localeCompare(b.cliente));
   const isHoje=iso===t;
   const temAtrasada=lista.some(x=>x.atrasa);
-  const itens=lista.slice(0,3).map(x=>'<div style="font-size:10px;padding:2px 4px;border-radius:4px;margin-bottom:2px;cursor:pointer;background:'+x.cor[1]+';color:'+x.cor[0]+(x.dashed?';border:1px dashed '+x.cor[0]:'')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(x.title)+'" onclick="'+x.onclick+'">'+esc(x.label)+'</div>').join('');
-  const mais=lista.length>3?'<div style="font-size:9.5px;color:var(--text-muted)">+'+(lista.length-3)+' mais</div>':'';
-  html+='<div style="min-height:86px;border:1px solid '+(temAtrasada?'var(--danger)':'var(--border)')+';border-radius:8px;padding:6px;background:'+(isHoje?'var(--surface2)':'var(--surface)')+'">'
+  const itens=lista.slice(0,MAX_VISIVEIS).map(x=>'<div style="padding:2px 4px;border-radius:4px;margin-bottom:2px;cursor:pointer;background:'+x.cor[1]+(x.dashed?';border:1px dashed '+x.cor[0]:'')+'" title="'+esc(x.title)+'" onclick="'+x.onclick+'">'
+   +'<div style="font-size:9.5px;font-weight:700;color:'+x.cor[0]+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.cliente)+'</div>'
+   +'<div style="font-size:9px;color:'+x.cor[0]+';opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.itemTxt)+'</div></div>').join('');
+  const mais=lista.length>MAX_VISIVEIS?'<div style="font-size:9.5px;color:var(--text-muted)">+'+(lista.length-MAX_VISIVEIS)+' mais</div>':'';
+  html+='<div style="min-height:96px;border:1px solid '+(temAtrasada?'var(--danger)':'var(--border)')+';border-radius:8px;padding:6px;background:'+(isHoje?'var(--surface2)':'var(--surface)')+'">'
    +'<div style="font-size:11px;font-weight:700;color:'+(isHoje?'var(--accent)':'var(--text-muted)')+';margin-bottom:4px">'+d+'</div>'+itens+mais+'</div>';
  }
  $('cal-grid').innerHTML=html;}
@@ -2234,7 +2247,8 @@ async function carregarFerramentasSupabase(){
  const {data,error}=await supa.from('ferramentas').select('*').order('nome');
  if(error){toast('Erro ao carregar máquinas do Supabase: '+error.message,'error');return;}
  DB.ferramentas=(data||[]).map(ferramentaDeSupabase);saveDB();
- if(CUR==='ferramentas')renderFerramentas();}
+ if(CUR==='ferramentas')renderFerramentas();
+ if(CUR==='calendario')renderCalendario();}
 function renderFerramentas(){const t=today();
  $('tb-ferramentas').innerHTML=DB.ferramentas.map(f=>{const prox=ferProx(f);
   const st=!prox?['—','badge-muted']:prox<t?['Vencida','badge-danger']:prox<=addDays(t,7)?['Próxima','badge-warning']:['Em dia','badge-success'];
