@@ -2159,17 +2159,20 @@ function renderCalendario(){
  const addAoDia=(iso,item)=>{if(!iso)return;const partes=String(iso).slice(0,10).split('-').map(Number);
   if(partes[0]===CAL.ano&&partes[1]-1===CAL.mes)(porDia[partes[2]]=porDia[partes[2]]||[]).push(item);};
  const stCor={'Agendada':['var(--warning)','rgba(160,120,48,0.12)'],'Em rota':['var(--text)','rgba(26,23,20,0.08)'],'Entregue':['var(--success)','rgba(61,107,79,0.12)'],'Instalada':['var(--success)','rgba(61,107,79,0.12)']};
+ const opPorId={};DB.vendas.forEach(v=>{if(v.status==='Cancelado')return;const op=opDoPedido(v);if(op)opPorId[op.id]=v;});
  DB.entregas.forEach(e=>{const cor=stCor[e.status]||['var(--text-muted)','var(--surface2)'];
   const cliente=e.cliId?cliName(e.cliId):'—';
-  addAoDia(e.data,{cliente,itemTxt:e.peca||'—',cor,dashed:false,atrasa:e.status==='Agendada'&&e.data<t,
-   title:(e.peca||'—')+' — '+cliente+' ('+e.status+')',onclick:"editEntrega('"+e.id+"')"});});
+  const vPedido=e.opId?opPorId[e.opId]:null;
+  const codigo=vPedido?'V-'+pad(vPedido.num)+' · ':'';
+  addAoDia(e.data,{cliente:codigo+cliente,itemTxt:e.peca||'—',cor,dashed:false,atrasa:e.status==='Agendada'&&e.data<t,
+   title:(vPedido?'Pedido V-'+pad(vPedido.num)+' — ':'')+(e.peca||'—')+' — '+cliente+' ('+e.status+')',onclick:"editEntrega('"+e.id+"')"});});
  const opsComEntrega=new Set(DB.entregas.map(e=>e.opId).filter(Boolean));
  DB.vendas.forEach(v=>{if(v.status==='Cancelado')return;
   const op=opDoPedido(v);
   if(!op||op.status==='Concluída'||!op.prazo||opsComEntrega.has(op.id))return;
   const cliente=cliName(v.cliId);
   const itensTxt=(v.itens||[]).map(it=>it.desc).filter(Boolean).join(', ')||'—';
-  addAoDia(op.prazo,{cliente:'🔮 '+cliente,itemTxt:itensTxt,cor:['var(--accent)','rgba(200,169,110,0.14)'],dashed:true,atrasa:op.prazo<t,
+  addAoDia(op.prazo,{cliente:'🔮 V-'+pad(v.num)+' · '+cliente,itemTxt:itensTxt,cor:['var(--accent)','rgba(200,169,110,0.14)'],dashed:true,atrasa:op.prazo<t,
    title:'Previsão de entrega — Pedido V-'+pad(v.num)+' ('+cliente+') — Itens: '+itensTxt+' — OP-'+pad(op.num)+' em '+(ETAPAS[op.etapa]||'—'),
    onclick:"editVenda('"+v.id+"')"});});
  DB.ferramentas.forEach(f=>{const prox=ferProx(f);if(!prox)return;
