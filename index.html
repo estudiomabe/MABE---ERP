@@ -272,12 +272,14 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
       </div>
       <div class="kpi-grid">
         <div class="kpi-card" style="--card-accent:var(--text-muted)"><div class="kpi-label">Orçamentos do Período</div><div class="kpi-value" id="kpi-orcamentos">R$0</div><div class="kpi-sub" id="kpi-osub">orçamentos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Pedidos do Período</div><div class="kpi-value" id="kpi-vendas">R$0</div><div class="kpi-sub" id="kpi-vsub">pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kpi-ticket">R$0</div><div class="kpi-sub" id="kpi-ticketsub">por pedido</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V4a1.2 1.2 0 0 1 1.2-1.2h8a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Entradas</div><div class="kpi-value" id="kpi-entradas">R$0</div><div class="kpi-sub">recebido no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Saídas</div><div class="kpi-value" id="kpi-saidas">R$0</div><div class="kpi-sub">pago no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Faturamento</div><div class="kpi-value" id="kpi-resultado">R$0</div><div class="kpi-sub" id="kpi-rsub">soma dos pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--danger)"><div class="kpi-label">Despesas Fixas</div><div class="kpi-value" id="kpi-despfixas">R$0</div><div class="kpi-sub" id="kpi-dfsub">custo fixo + folha</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="7" y1="15" x2="13" y2="15"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Lucro</div><div class="kpi-value" id="kpi-lucro">R$0</div><div class="kpi-sub" id="kpi-lucrosub">faturamento − despesas fixas</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">A Receber</div><div class="kpi-value" id="kpi-areceber">R$0</div><div class="kpi-sub" id="kpi-arsub">entradas pendentes</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Margem</div><div class="kpi-value" id="kpi-margem">0%</div><div class="kpi-sub" id="kpi-margemsub">lucro ÷ faturamento</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></div></div>
       </div>
       <div class="charts-grid">
         <div class="chart-card"><div class="chart-title">Evolução de Pedidos <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><canvas id="chart-vendas" height="180"></canvas></div>
@@ -1092,8 +1094,9 @@ function renderDashboard(){
  const saidas=pagos.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
  /* faturamento = soma dos pedidos do periodo (nao cancelados), nao o caixa do financeiro */
  const faturamento=vPer.reduce((s,v)=>s+Number(v.total||0),0);
- $('kpi-vendas').textContent=fmtK(faturamento);
- $('kpi-vsub').textContent=vPer.length+' pedido(s)';
+ const ticket=vPer.length?faturamento/vPer.length:0;
+ $('kpi-ticket').textContent=fmtK(ticket);
+ $('kpi-ticketsub').textContent=vPer.length?('média de '+vPer.length+' pedido(s)'):'sem pedidos no período';
  $('kpi-entradas').textContent=fmtK(entradas);
  $('kpi-saidas').textContent=fmtK(saidas);
  $('kpi-resultado').textContent=fmtK(faturamento);
@@ -1110,6 +1113,14 @@ function renderDashboard(){
  $('kpi-lucro').textContent=fmtK(lucro);
  $('kpi-lucro').style.color=lucro>=0?'var(--success)':'var(--danger)';
  $('kpi-lucrosub').textContent=lucro>=0?'faturamento - despesas fixas':'prejuízo no período';
+ const aReceber=DB.financeiro.filter(f=>f.tipo==='Entrada'&&f.status==='Pendente'&&inPer(f.data));
+ const totReceber=aReceber.reduce((s,f)=>s+Number(f.val||0),0);
+ $('kpi-areceber').textContent=fmtK(totReceber);
+ $('kpi-arsub').textContent=aReceber.length?(aReceber.length+' entrada(s) pendente(s)'):'nada pendente no período';
+ const margem=faturamento>0?lucro/faturamento*100:0;
+ $('kpi-margem').textContent=fmtN(margem,1)+'%';
+ $('kpi-margem').style.color=margem>=0?'var(--success)':'var(--danger)';
+ $('kpi-margemsub').textContent=faturamento>0?'lucro ÷ faturamento':'sem faturamento no período';
 
  const crit=DB.produtos.filter(p=>Number(p.est)<=Number(p.min));
  $('dash-estoque').innerHTML=crit.length?crit.slice(0,6).map(p=>'<tr><td>'+esc(p.nome)+'</td><td class="mono" style="color:var(--danger);font-weight:700">'+p.est+'</td><td class="mono">'+p.min+'</td></tr>').join(''):'<tr><td colspan="3" style="color:var(--text-muted)">Nenhum item crítico 👍</td></tr>';
@@ -1172,6 +1183,8 @@ function gerarPdfDashboard(){
  const entradas=pagos.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
  const saidas=pagos.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
  const faturamento=vPer.reduce((s,v)=>s+Number(v.total||0),0);
+ const ticketDash=vPer.length?faturamento/vPer.length:0;
+ const aReceberDash=DB.financeiro.filter(f=>f.tipo==='Entrada'&&f.status==='Pendente'&&inPer(f.data));
  const cfgDash=DB.config.cf;
  const custoFixoMensalDash=(['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfgDash[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0))*mesesNoPeriodo(PER);
  const folhaPagamentoDash=(DB.config.folhaPagamento||[]).reduce((s,c)=>s+(Number(c.salario)||0),0)*mesesNoPeriodo(PER);
@@ -1180,12 +1193,14 @@ function gerarPdfDashboard(){
   head:[['Indicador','Valor']],
   body:[
    ['Orçamentos do Período',fmt(oPer.reduce((s,o)=>s+Number(o.preco||0),0))+'  ('+oPer.length+' orçamento(s))'],
-   ['Pedidos do Período',fmt(faturamento)+'  ('+vPer.length+' pedido(s))'],
+   ['Ticket Médio',fmt(ticketDash)+'  ('+vPer.length+' pedido(s))'],
    ['Entradas',fmt(entradas)],
    ['Saídas',fmt(saidas)],
    ['Faturamento',fmt(faturamento)+'  (soma dos pedidos)'],
    ['Despesas Fixas',fmt(custoFixoMensalDash+folhaPagamentoDash)],
-   ['Lucro',((faturamento-(custoFixoMensalDash+folhaPagamentoDash))<0?'- ':'')+fmt(Math.abs(faturamento-(custoFixoMensalDash+folhaPagamentoDash)))]
+   ['Lucro',((faturamento-(custoFixoMensalDash+folhaPagamentoDash))<0?'- ':'')+fmt(Math.abs(faturamento-(custoFixoMensalDash+folhaPagamentoDash)))],
+   ['A Receber',fmt(aReceberDash.reduce((s,f)=>s+Number(f.val||0),0))+'  ('+aReceberDash.length+' entrada(s) pendente(s))'],
+   ['Margem',(faturamento>0?fmtN((faturamento-(custoFixoMensalDash+folhaPagamentoDash))/faturamento*100,1):'0,0')+'%  (lucro / faturamento)']
   ],theme:'plain',
   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3,bottom:3,left:3,right:3}},
   bodyStyles:{fontSize:9,textColor:DARK,cellPadding:{top:3,bottom:3,left:3,right:3}},
