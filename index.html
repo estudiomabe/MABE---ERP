@@ -1099,10 +1099,11 @@ function renderDashboard(){
  $('kpi-rsub').textContent=resultado>=0?'faturamento no período':'déficit no período';
  const cfg=DB.config.cf;
  const custoFixoMensal=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
- const custoFixoPeriodo=custoFixoMensal*mesesNoPeriodo(PER);
- const folhaPagamento=pagos.filter(f=>f.tipo==='Saída'&&f.centroCusto==='Folha de Pagamento').reduce((s,f)=>s+Number(f.val||0),0);
- $('kpi-despfixas').textContent=fmtK(custoFixoPeriodo+folhaPagamento);
- $('kpi-dfsub').textContent='custo fixo '+fmtK(custoFixoPeriodo)+' + folha '+fmtK(folhaPagamento);
+ const folhaMensal=(DB.config.folhaPagamento||[]).reduce((s,c)=>s+(Number(c.salario)||0),0);
+ const mesesPer=mesesNoPeriodo(PER);
+ const custoFixoPeriodo=custoFixoMensal*mesesPer,folhaPeriodo=folhaMensal*mesesPer;
+ $('kpi-despfixas').textContent=fmtK(custoFixoPeriodo+folhaPeriodo);
+ $('kpi-dfsub').textContent='custo fixo '+fmtK(custoFixoPeriodo)+' + folha '+fmtK(folhaPeriodo);
 
  const crit=DB.produtos.filter(p=>Number(p.est)<=Number(p.min));
  $('dash-estoque').innerHTML=crit.length?crit.slice(0,6).map(p=>'<tr><td>'+esc(p.nome)+'</td><td class="mono" style="color:var(--danger);font-weight:700">'+p.est+'</td><td class="mono">'+p.min+'</td></tr>').join(''):'<tr><td colspan="3" style="color:var(--text-muted)">Nenhum item crítico 👍</td></tr>';
@@ -1167,7 +1168,7 @@ function gerarPdfDashboard(){
  const resultado=entradas-saidas;
  const cfgDash=DB.config.cf;
  const custoFixoMensalDash=(['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfgDash[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0))*mesesNoPeriodo(PER);
- const folhaPagamentoDash=pagos.filter(f=>f.tipo==='Saída'&&f.centroCusto==='Folha de Pagamento').reduce((s,f)=>s+Number(f.val||0),0);
+ const folhaPagamentoDash=(DB.config.folhaPagamento||[]).reduce((s,c)=>s+(Number(c.salario)||0),0)*mesesNoPeriodo(PER);
 
  doc.autoTable({startY:70,margin:{left:marginX,right:14},
   head:[['Indicador','Valor']],
