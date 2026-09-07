@@ -2999,112 +2999,276 @@ function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.'
  if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
- const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],CREAM=[245,240,232];
- const marginX=14;
- const pintarFundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
- const origAddPage=doc.addPage.bind(doc);
- doc.addPage=function(...args){const r=origAddPage(...args);pintarFundo();return r;};
- pintarFundo();
+ /* ---- Identidade visual Estúdio Mabe ---- */
+ const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],
+       CREAM=[245,240,232],ZEBRA=[250,247,242],LINHA=[221,213,200];
+ const MX=14,LARG=182,TOPO=30,RODAPE=283;
+ const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
+ const origAdd=doc.addPage.bind(doc);
+ doc.addPage=function(...a){const r=origAdd(...a);fundo();return r;};
+ fundo();
+ /* ---- Helpers de texto ---- */
+ const t=v=>(v===undefined||v===null||v==='')?'—':String(v);
+ const listaItens=arr=>{const s=(arr||[]).map(i=>{const n=String(i.desc||'').trim();if(!n)return '';
+   const q=Number(i.qty)||1;return (q>1?q+'x ':'')+n;}).filter(Boolean).join('; ');return s||'—';};
 
- const logoTop=14,iconW=9,iconGap=2.5;
- const textX=marginX+iconW+iconGap;
- doc.setFillColor(...DARK);doc.rect(marginX,logoTop,iconW,iconW,'F');
- doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...DARK);
- doc.text('estúdio',textX,logoTop+7);
- doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(...DARK);
- doc.text('mabe.',textX,logoTop+18);
- doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
- doc.text('MARCENARIA · MADEIRA MACIÇA',marginX,logoTop+24);
+ /* ================= CAPA ================= */
+ doc.setFillColor(...DARK);doc.rect(MX,26,11,11,'F');
+ doc.setFont('helvetica','normal');doc.setFontSize(12);doc.setTextColor(...DARK);
+ doc.text('estúdio',MX+15,32.5);
+ doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
+ doc.text('mabe.',MX+15,42.5);
+ doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+ doc.text('M A R C E N A R I A   ·   M A D E I R A   M A C I Ç A',MX,50);
 
- doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);
- doc.text('BACKUP COMPLETO',marginX,48);
- doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
- doc.text('Gerado em '+fmtD(today())+' · todos os módulos do ERP',marginX,54);
- doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(marginX,60,196,60);
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(1.2);doc.line(MX,86,MX+46,86);
+ doc.setFont('helvetica','bold');doc.setFontSize(30);doc.setTextColor(...DARK);
+ doc.text('BACKUP',MX,104);
+ doc.text('COMPLETO',MX,117);
+ doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);
+ doc.text('Todos os módulos do ERP · gerado em '+fmtD(today()),MX,127);
 
- let y=70;
- function novaSecao(titulo,head,rows,colStyles){
-  const nLinhas=rows.length||1;
-  const alturaEstimada=8+8+Math.min(nLinhas,8)*7+3;
-  if(y+alturaEstimada>282&&y>75){doc.addPage();pintarFundo();y=20;}
-  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...DARK);
-  doc.text(titulo,marginX,y);
-  doc.autoTable({startY:y+4,margin:{left:marginX,right:14},
-   head:[head],body:rows.length?rows:[['Nenhum registro cadastrado'].concat(Array(head.length-1).fill(''))],theme:'plain',
-   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold',cellPadding:{top:2,bottom:2,left:3,right:3}},
-   bodyStyles:{fontSize:7.5,textColor:DARK,cellPadding:{top:2,bottom:2,left:3,right:3}},
-   alternateRowStyles:{fillColor:[250,247,242]},
-   columnStyles:colStyles||{}});
-  y=doc.lastAutoTable.finalY+9;}
-
- // Resumo geral
+ const emp=DB.config.empresa||{};
+ const rodapeCapa=[emp.endereco,emp.telefone,emp.email,emp.site].filter(Boolean);
  const resumo=[
   ['Clientes',DB.clientes.length],['Orçamentos',DB.orcamentos.length],['Pedidos',DB.vendas.length],
-  ['Produção (OPs)',DB.producao.length],['Entregas',DB.entregas.length],['Lançamentos Financeiros',DB.financeiro.length],
-  ['Portfólio',DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').length],['Insumos',DB.produtos.filter(p=>p.tipo==='Insumo').length],
-  ['Madeiras',DB.madeiras.length],['Máquinas/Ferramentas',DB.ferramentas.length],['Fornecedores',DB.fornecedores.length],
-  ['Compras',DB.compras.length],['Registros no Histórico',DB.historico.length]
- ];
- doc.autoTable({startY:y,margin:{left:marginX,right:14},
-  head:[['Módulo','Quantidade']],body:resumo.map(r=>[r[0],String(r[1])]),theme:'plain',
-  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3,bottom:3,left:3,right:3}},
-  bodyStyles:{fontSize:9,textColor:DARK,cellPadding:{top:3,bottom:3,left:3,right:3}},
-  alternateRowStyles:{fillColor:[250,247,242]},
-  columnStyles:{1:{halign:'right',fontStyle:'bold'}}});
- y=doc.lastAutoTable.finalY+10;
+  ['Ordens de Produção',DB.producao.length],['Entregas',DB.entregas.length],
+  ['Lançamentos Financeiros',DB.financeiro.length],
+  ['Portfólio',DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').length],
+  ['Insumos',DB.produtos.filter(p=>p.tipo==='Insumo').length],
+  ['Madeiras',DB.madeiras.length],['Máquinas & Ferramentas',DB.ferramentas.length],
+  ['Fornecedores',DB.fornecedores.length],['Ordens de Compra',DB.compras.length],
+  ['Usuários',DB.usuarios.length],['Registros no Histórico',DB.historico.length]];
+ doc.autoTable({startY:140,margin:{left:MX,right:MX},
+  head:[['Módulo','Registros']],body:resumo.map(r=>[r[0],String(r[1])]),theme:'grid',
+  styles:{fontSize:8.5,cellPadding:{top:2,bottom:2,left:3,right:3},lineColor:LINHA,lineWidth:0.1,textColor:DARK},
+  headStyles:{fillColor:DARK,textColor:CREAM,fontSize:8.5,fontStyle:'bold',lineColor:DARK},
+  bodyStyles:{fillColor:WHITE},alternateRowStyles:{fillColor:ZEBRA},
+  columnStyles:{1:{halign:'right',fontStyle:'bold',cellWidth:32}}});
+ let yCapa=doc.lastAutoTable.finalY+9;
+ doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(...MUTED);
+ if(yCapa<=RODAPE-6)doc.text('As senhas de usuários não são incluídas neste arquivo, por segurança.',MX,yCapa);
+ if(rodapeCapa.length&&yCapa+5<=RODAPE-6)doc.text(rodapeCapa.join('   ·   '),MX,yCapa+5);
 
- novaSecao('Clientes',['Nome','Telefone','E-mail','Cidade','Status'],
-  DB.clientes.map(c=>[c.nome,c.tel||'—',c.email||'—',c.cidade||'—',c.status]));
+ /* ================= SEÇÕES ================= */
+ doc.addPage();let y=TOPO;
+ function espaco(h){if(y+h>RODAPE){doc.addPage();y=TOPO;}}
+ function secao(titulo,contagem){
+  espaco(22);
+  doc.setFillColor(...DARK);doc.rect(MX,y,LARG,8,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...CREAM);
+  doc.text(String(titulo).toUpperCase(),MX+3,y+5.5);
+  if(contagem!==undefined){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...ACCENT);
+   doc.text(contagem+(contagem===1?' registro':' registros'),MX+LARG-3,y+5.5,{align:'right'});}
+  y+=8;doc.setFillColor(...ACCENT);doc.rect(MX,y,LARG,0.9,'F');y+=0.9+3.5;}
+ function tabela(head,rows,colStyles){
+  doc.autoTable({startY:y,margin:{left:MX,right:MX,top:TOPO},
+   head:[head],
+   body:rows.length?rows:[['Nenhum registro cadastrado'].concat(Array(head.length-1).fill(''))],
+   theme:'grid',
+   styles:{fontSize:7.2,cellPadding:{top:1.9,bottom:1.9,left:2.4,right:2.4},
+    lineColor:LINHA,lineWidth:0.1,textColor:DARK,overflow:'linebreak',valign:'middle'},
+   headStyles:{fillColor:DARK,textColor:CREAM,fontSize:7.2,fontStyle:'bold',lineColor:DARK,lineWidth:0.1},
+   bodyStyles:{fillColor:WHITE},alternateRowStyles:{fillColor:ZEBRA},
+   columnStyles:colStyles||{}});
+  y=doc.lastAutoTable.finalY+8;}
+ function subTitulo(txtSub){espaco(12);
+  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...DARK);
+  doc.text(txtSub,MX,y+3);y+=5.5;}
 
- novaSecao('Orçamentos',['#','Cliente','Data','Status','Valor'],
-  DB.orcamentos.slice().sort((a,b)=>b.num-a.num).map(o=>['ORC-'+pad(o.num),cliName(o.cliId),fmtD(o.data),o.status,fmt(o.preco)]),
-  {4:{halign:'right'}});
+ /* ---- Clientes ---- */
+ secao('Clientes',DB.clientes.length);
+ tabela(['Nome','CPF/CNPJ','Telefone','E-mail','Cidade','Endereço','Status'],
+  DB.clientes.map(c=>[t(c.nome),t(c.doc),t(c.tel),t(c.email),t(c.cidade),t(c.end),t(c.status)]),
+  {0:{cellWidth:34,fontStyle:'bold'},1:{cellWidth:24},2:{cellWidth:22},3:{cellWidth:36},4:{cellWidth:22},6:{cellWidth:16}});
 
- novaSecao('Pedidos',['#','Cliente','Data','Pagamento','Status','Total'],
-  DB.vendas.slice().sort((a,b)=>b.num-a.num).map(v=>['V-'+pad(v.num),cliName(v.cliId),fmtD(v.data),v.pag||'—',v.status,fmt(v.total)]),
-  {5:{halign:'right'}});
+ /* ---- Orçamentos ---- */
+ const orcs=DB.orcamentos.slice().sort((a,b)=>b.num-a.num);
+ secao('Orçamentos',orcs.length);
+ tabela(['#','Cliente','Data','Validade','Status','Itens','Custo','Preço','Lucro'],
+  orcs.map(o=>['ORC-'+pad(o.num),t(cliName(o.cliId)),fmtD(o.data),fmtD(o.validade),t(o.status),
+   listaItens(itensOrc(o)),fmt(o.custo),fmt(o.preco),fmt(o.lucro)]),
+  {0:{cellWidth:17,fontStyle:'bold'},1:{cellWidth:24},2:{cellWidth:19,halign:'center'},3:{cellWidth:19,halign:'center'},
+   4:{cellWidth:17},6:{cellWidth:19,halign:'right'},7:{cellWidth:19,halign:'right'},8:{cellWidth:19,halign:'right'}});
 
- novaSecao('Produção (PCP)',['#','Título','Cliente','Prazo','Etapa','Status'],
-  DB.producao.slice().sort((a,b)=>b.num-a.num).map(o=>['OP-'+pad(o.num),o.titulo,cliName(o.cliId),fmtD(o.prazo),ETAPAS[o.etapa]||'—',o.status]));
+ const itOrc=[];orcs.forEach(o=>itensOrc(o).forEach(i=>itOrc.push(
+  ['ORC-'+pad(o.num),t(cliName(o.cliId)),t(i.desc),String(Number(i.qty)||1),fmt(i.custo),fmt(i.preco)])));
+ subTitulo('Detalhamento dos itens');
+ tabela(['Orçamento','Cliente','Item','Qtd','Custo','Preço'],itOrc,
+  {0:{cellWidth:20,fontStyle:'bold'},1:{cellWidth:32},3:{cellWidth:14,halign:'right'},
+   4:{cellWidth:24,halign:'right'},5:{cellWidth:24,halign:'right'}});
 
- novaSecao('Entregas',['Peça','Cliente','Data','Status'],
-  DB.entregas.map(e=>[e.peca||'—',cliName(e.cliId),fmtD(e.data),e.status]));
+ /* ---- Pedidos ---- */
+ const peds=DB.vendas.slice().sort((a,b)=>b.num-a.num);
+ secao('Pedidos',peds.length);
+ tabela(['#','Cliente','Data','Pagamento','Status','Itens','Total'],
+  peds.map(v=>['V-'+pad(v.num),t(cliName(v.cliId)),fmtD(v.data),t(v.pag),t(v.status),
+   listaItens(v.itens),fmt(v.total)]),
+  {0:{cellWidth:15,fontStyle:'bold'},1:{cellWidth:28},2:{cellWidth:19,halign:'center'},
+   3:{cellWidth:24},4:{cellWidth:19},6:{cellWidth:23,halign:'right'}});
 
- novaSecao('Financeiro',['Data','Descrição','Pedido','Centro de Custo','Tipo','Valor','Status'],
-  DB.financeiro.map(f=>[fmtD(f.data),f.desc,f.cat||'—',f.centroCusto||'—',f.tipo,fmt(f.val),f.status]),
-  {5:{halign:'right'}});
+ const itPed=[];peds.forEach(v=>(v.itens||[]).forEach(i=>{const q=Number(i.qty)||1,p=Number(i.preco)||0;
+  itPed.push(['V-'+pad(v.num),t(cliName(v.cliId)),t(i.desc),String(q),fmt(p),fmt(q*p)]);}));
+ subTitulo('Detalhamento dos itens');
+ tabela(['Pedido','Cliente','Item','Qtd','Valor unitário','Subtotal'],itPed,
+  {0:{cellWidth:18,fontStyle:'bold'},1:{cellWidth:32},3:{cellWidth:14,halign:'right'},
+   4:{cellWidth:26,halign:'right'},5:{cellWidth:24,halign:'right'}});
 
- novaSecao('Portfólio',['Nome','Categoria','Preço Venda','Custo','Estoque'],
-  DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').map(p=>[p.nome,p.cat||'—',fmt(p.preco),fmt(p.custo),String(p.est)+' '+(p.un||'un')]),
-  {2:{halign:'right'},3:{halign:'right'}});
+ /* ---- Produção ---- */
+ const ops=DB.producao.slice().sort((a,b)=>b.num-a.num);
+ secao('Produção (PCP)',ops.length);
+ tabela(['#','Título','Cliente','Prazo','Etapa','Prioridade','Responsável','Status'],
+  ops.map(o=>['OP-'+pad(o.num),t(o.titulo),t(cliName(o.cliId)),fmtD(o.prazo),
+   t(ETAPAS[o.etapa]),t(o.prio),t(o.resp),t(o.status)]),
+  {0:{cellWidth:16,fontStyle:'bold'},2:{cellWidth:26},3:{cellWidth:19,halign:'center'},
+   4:{cellWidth:28},5:{cellWidth:18},6:{cellWidth:22},7:{cellWidth:19}});
 
- novaSecao('Insumos',['Nome','Categoria','Custo','Estoque'],
-  DB.produtos.filter(p=>p.tipo==='Insumo').map(p=>[p.nome,p.cat||'—',fmt(p.custo),String(p.est)+' '+(p.un||'un')]),
-  {2:{halign:'right'}});
+ /* ---- Entregas ---- */
+ const ents=DB.entregas.slice().sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')));
+ secao('Entregas & Instalações',ents.length);
+ tabela(['Data','Cliente','Peça / Móvel','Endereço','Responsável','Status'],
+  ents.map(e=>[fmtD(e.data),t(cliName(e.cliId)),t(e.peca),t(e.end),t(e.resp),t(e.status)]),
+  {0:{cellWidth:19,halign:'center'},1:{cellWidth:30},4:{cellWidth:24},5:{cellWidth:20}});
 
- novaSecao('Madeiras',['Espécie','Tipo','Volume (m³)','Custo'],
-  DB.madeiras.map(m=>[m.especie,m.tipo||'—',fmtN(madM3(m),3),fmt(m.custo)]),
-  {2:{halign:'right'},3:{halign:'right'}});
+ /* ---- Financeiro ---- */
+ const fins=DB.financeiro.slice().sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')));
+ const totEnt=fins.filter(f=>f.tipo==='Entrada'&&f.status==='Pago').reduce((s,f)=>s+Number(f.val||0),0);
+ const totSai=fins.filter(f=>f.tipo==='Saída'&&f.status==='Pago').reduce((s,f)=>s+Number(f.val||0),0);
+ secao('Financeiro',fins.length);
+ tabela(['Data','Tipo','Descrição','Pedido / Categoria','Centro de Custo','Valor','Status'],
+  fins.map(f=>[fmtD(f.data),t(f.tipo),t(f.desc),t(f.cat),t(f.centroCusto),fmt(f.val),t(f.status)]),
+  {0:{cellWidth:19,halign:'center'},1:{cellWidth:15,halign:'center'},3:{cellWidth:27},
+   4:{cellWidth:25},5:{cellWidth:24,halign:'right'},6:{cellWidth:17}});
+ espaco(16);
+ doc.autoTable({startY:y,margin:{left:MX,right:MX,top:TOPO},
+  head:[['Resumo do financeiro (lançamentos pagos)','Valor']],
+  body:[['Total de entradas',fmt(totEnt)],['Total de saídas',fmt(totSai)],
+   ['Resultado',(totEnt-totSai<0?'- ':'')+fmt(Math.abs(totEnt-totSai))]],
+  theme:'grid',
+  styles:{fontSize:8,cellPadding:{top:2.2,bottom:2.2,left:3,right:3},lineColor:LINHA,lineWidth:0.1,textColor:DARK},
+  headStyles:{fillColor:DARK,textColor:CREAM,fontSize:8,fontStyle:'bold',lineColor:DARK},
+  bodyStyles:{fillColor:WHITE},alternateRowStyles:{fillColor:ZEBRA},
+  columnStyles:{1:{halign:'right',fontStyle:'bold',cellWidth:36}}});
+ y=doc.lastAutoTable.finalY+8;
 
- novaSecao('Máquinas & Ferramentas',['Nome','Tipo','Última Manutenção','Intervalo (dias)'],
-  DB.ferramentas.map(f=>[f.nome,f.tipo||'—',fmtD(f.ult),String(f.int||'—')]));
+ /* ---- Portfólio ---- */
+ const tp=DB.config.temposProducao||{};
+ const portf=DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio');
+ secao('Portfólio & Estoque',portf.length);
+ tabela(['Produto','Categoria','Tempo prod.','Preço venda','Custo','Estoque','Mínimo','Un'],
+  portf.map(p=>[t(p.nome),t(p.cat),tp[p.id]?fmtN(tp[p.id],1)+' d':'—',fmt(p.preco),fmt(p.custo),
+   String(Number(p.est)||0),String(Number(p.min)||0),t(p.un)]),
+  {0:{cellWidth:40,fontStyle:'bold'},1:{cellWidth:28},2:{cellWidth:20,halign:'right'},
+   3:{cellWidth:24,halign:'right'},4:{cellWidth:22,halign:'right'},
+   5:{cellWidth:16,halign:'right'},6:{cellWidth:16,halign:'right'},7:{cellWidth:12,halign:'center'}});
 
- novaSecao('Fornecedores',['Nome','CNPJ','Telefone','Cidade','Status'],
-  DB.fornecedores.map(f=>[f.nome,f.cnpj||'—',f.tel||'—',f.cidade||'—',f.status]));
+ const mats=[];portf.forEach(p=>(p.materiais||[]).forEach(m=>{const q=Number(m.qty)||0,c=Number(m.custo)||0;
+  mats.push([t(p.nome),t(m.desc),fmtN(q,3),fmt(c),fmt(q*c)]);}));
+ subTitulo('Materiais necessários por produto (para 1 unidade)');
+ tabela(['Produto','Material / Insumo','Qtd','Custo unitário','Custo total'],mats,
+  {0:{cellWidth:44,fontStyle:'bold'},2:{cellWidth:20,halign:'right'},
+   3:{cellWidth:26,halign:'right'},4:{cellWidth:26,halign:'right'}});
 
- novaSecao('Compras',['#','Fornecedor','Data','Total','Status'],
-  DB.compras.slice().sort((a,b)=>b.num-a.num).map(c=>['OC-'+pad(c.num),fornName(c.forId),fmtD(c.data),fmt(c.total),c.status]),
-  {3:{halign:'right'}});
+ /* ---- Insumos ---- */
+ const insus=DB.produtos.filter(p=>p.tipo==='Insumo');
+ secao('Materiais / Insumos',insus.length);
+ tabela(['Material / Insumo','Categoria','Custo','Estoque','Mínimo','Un'],
+  insus.map(p=>[t(p.nome),t(p.cat),fmt(p.custo),String(Number(p.est)||0),String(Number(p.min)||0),t(p.un)]),
+  {0:{cellWidth:52,fontStyle:'bold'},1:{cellWidth:34},2:{cellWidth:26,halign:'right'},
+   3:{cellWidth:20,halign:'right'},4:{cellWidth:20,halign:'right'},5:{cellWidth:14,halign:'center'}});
 
- novaSecao('Histórico de Edições',['Data/Hora','Usuário','Ação','Módulo','Detalhe'],
-  DB.historico.map(h=>[h.dt,h.user,h.acao,h.modulo,h.detalhe]));
+ /* ---- Madeiras ---- */
+ secao('Estoque de Madeiras',DB.madeiras.length);
+ tabela(['Espécie','Tipo','Dimensões (cm)','Peças','Volume (m³)','Custo/m³','Valor','Umid.','Fornecedor'],
+  DB.madeiras.map(m=>[t(m.especie),t(m.tipo),
+   fmtN(m.esp,1)+' x '+fmtN(m.larg,1)+' x '+fmtN(m.comp,0),String(Number(m.qtd)||0),
+   fmtN(madM3(m),3),fmt(m.custo),fmt(madM3(m)*(Number(m.custo)||0)),fmtN(m.umidade,1)+'%',
+   m.forn?t(fornName(m.forn)):'—']),
+  {0:{cellWidth:26,fontStyle:'bold'},1:{cellWidth:18},2:{cellWidth:28,halign:'center'},
+   3:{cellWidth:13,halign:'right'},4:{cellWidth:20,halign:'right'},5:{cellWidth:22,halign:'right'},
+   6:{cellWidth:22,halign:'right'},7:{cellWidth:14,halign:'right'}});
 
- const totalPaginas=doc.internal.getNumberOfPages();
- for(let p=1;p<=totalPaginas;p++){doc.setPage(p);
-  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(marginX,285,196,285);
+ /* ---- Máquinas ---- */
+ secao('Máquinas & Ferramentas',DB.ferramentas.length);
+ tabela(['Equipamento','Tipo','Última manutenção','Intervalo','Próxima manutenção','Observações'],
+  DB.ferramentas.map(f=>[t(f.nome),t(f.tipo),fmtD(f.ult),f.int?String(f.int)+' dias':'—',
+   fmtD(ferProx(f)),t(f.obs)]),
+  {0:{cellWidth:36,fontStyle:'bold'},1:{cellWidth:30},2:{cellWidth:26,halign:'center'},
+   3:{cellWidth:20,halign:'center'},4:{cellWidth:26,halign:'center'}});
+
+ /* ---- Fornecedores ---- */
+ secao('Fornecedores',DB.fornecedores.length);
+ tabela(['Nome','CNPJ','Telefone','E-mail','Cidade','Status'],
+  DB.fornecedores.map(f=>[t(f.nome),t(f.cnpj),t(f.tel),t(f.email),t(f.cidade),t(f.status)]),
+  {0:{cellWidth:38,fontStyle:'bold'},1:{cellWidth:28},2:{cellWidth:24},4:{cellWidth:24},5:{cellWidth:16}});
+
+ /* ---- Compras ---- */
+ const cps=DB.compras.slice().sort((a,b)=>b.num-a.num);
+ secao('Ordens de Compra',cps.length);
+ tabela(['#','Fornecedor','Data','Total','Status','Observações'],
+  cps.map(c=>['OC-'+pad(c.num),t(c.forId?fornName(c.forId):''),fmtD(c.data),fmt(c.total),t(c.status),t(c.obs)]),
+  {0:{cellWidth:17,fontStyle:'bold'},1:{cellWidth:38},2:{cellWidth:19,halign:'center'},
+   3:{cellWidth:24,halign:'right'},4:{cellWidth:20}});
+
+ /* ---- Usuários ---- */
+ secao('Usuários do Sistema',DB.usuarios.length);
+ tabela(['Login','Nome','Perfil','Status','Último acesso'],
+  DB.usuarios.map(u=>[t(u.login),t(u.nome),t(u.perfil),t(u.status),t(u.ultimo)]),
+  {0:{cellWidth:28,fontStyle:'bold'},1:{cellWidth:44},2:{cellWidth:24},3:{cellWidth:20},4:{cellWidth:40}});
+
+ /* ---- Configurações ---- */
+ const cf=DB.config.cf||{};
+ secao('Configurações do Sistema');
+ subTitulo('Custos fixos mensais');
+ const custosFixos=[['Aluguel',fmt(cf.aluguel)],['IPTU',fmt(cf.iptu)],['Água',fmt(cf.agua)],
+  ['Energia',fmt(cf.energia)],['Contador',fmt(cf.contador)],['Outros',fmt(cf.outros)]];
+ (DB.config.custosFixosExtras||[]).forEach(c=>custosFixos.push([t(c.nome),fmt(c.valor)]));
+ const somaFixos=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cf[k])||0),0)
+  +(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
+ custosFixos.push(['TOTAL',fmt(somaFixos)]);
+ tabela(['Item','Valor'],custosFixos,{0:{cellWidth:80},1:{cellWidth:40,halign:'right'}});
+
+ subTitulo('Parâmetros de precificação');
+ tabela(['Parâmetro','Valor'],[
+  ['Horas trabalhadas por mês',String(cf.hmes||0)],['Imposto',fmtN(cf.imposto,1)+'%'],
+  ['Margem de lucro',fmtN(cf.markup,1)+'%'],['Fundo de reserva',fmtN(cf.reserva,1)+'%']],
+  {0:{cellWidth:80},1:{cellWidth:40,halign:'right'}});
+
+ subTitulo('Tipos de mão de obra');
+ tabela(['Tipo','Valor por hora'],
+  (DB.config.mdoTipos||[]).map(m=>[t(m.nome),fmt(m.valorHora)]),
+  {0:{cellWidth:80},1:{cellWidth:40,halign:'right'}});
+
+ subTitulo('Condições de pagamento');
+ const cond=[['PIX — % antecipado',fmtN(cf.pixAntecipado,0)+'%']];
+ for(let n=1;n<=10;n++)cond.push(['Cartão '+n+'x — taxa',fmtN(cf['taxaParc'+n],1)+'%']);
+ tabela(['Condição','Valor'],cond,{0:{cellWidth:80},1:{cellWidth:40,halign:'right'}});
+
+ subTitulo('Dados do estúdio');
+ tabela(['Campo','Valor'],[['Endereço',t(emp.endereco)],['Telefone / WhatsApp',t(emp.telefone)],
+  ['E-mail',t(emp.email)],['Site / Instagram',t(emp.site)]],
+  {0:{cellWidth:50},1:{cellWidth:110}});
+
+ /* ---- Histórico ---- */
+ secao('Histórico de Edições',DB.historico.length);
+ tabela(['Data / Hora','Usuário','Ação','Módulo','Detalhe'],
+  DB.historico.map(h=>[t(h.dt),t(h.user||h.usuario),t(h.acao),t(h.modulo),t(h.detalhe)]),
+  {0:{cellWidth:30},1:{cellWidth:28},2:{cellWidth:18},3:{cellWidth:26}});
+
+ /* ================= CABEÇALHO CORRIDO E RODAPÉ ================= */
+ const total=doc.internal.getNumberOfPages();
+ for(let p=1;p<=total;p++){doc.setPage(p);
+  if(p>1){
+   doc.setFillColor(...DARK);doc.rect(MX,12,4.6,4.6,'F');
+   doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...DARK);
+   doc.text('estúdio mabe.',MX+6.6,15.8);
+   doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+   doc.text('Backup completo · '+fmtD(today()),MX+LARG,15.8,{align:'right'});
+   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.5);doc.line(MX,19,MX+LARG,19);}
+  doc.setDrawColor(...LINHA);doc.setLineWidth(0.3);doc.line(MX,RODAPE+2,MX+LARG,RODAPE+2);
   doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
-  doc.text('Estúdio Mabe — Backup completo gerado em '+fmtD(today()),marginX,290);
-  doc.text('Página '+p+' de '+totalPaginas,196,290,{align:'right'});}
+  doc.text('Estúdio Mabe — Marcenaria de madeira maciça',MX,RODAPE+6.5);
+  doc.text('Página '+p+' de '+total,MX+LARG,RODAPE+6.5,{align:'right'});}
 
  doc.save('Backup-ERP-Mabe-'+today()+'.pdf');
  toast('Backup completo em PDF gerado! Confira sua pasta de downloads.','success');}
