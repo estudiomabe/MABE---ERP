@@ -39,34 +39,17 @@
 --    ROLLBACK No fim do arquivo, para desligar tudo se algo der errado.
 --
 -- ---------------------------------------------------------------------
---  O QUE PRECISA MUDAR NO index.html ANTES DA ETAPA 3
+--  O LADO DO ERP JÁ ESTÁ PRONTO
 -- ---------------------------------------------------------------------
 --
---    1. Tela de login: trocar a busca em DB.usuarios por
---       supa.auth.signInWithPassword({ email, password }).
---       O campo "Login" passa a ser o e-mail cadastrado no Auth.
+--  O index.html já usa o Supabase Auth: login por e-mail, sessão pelo
+--  próprio Auth, criação de conta junto com o cadastro do usuário e
+--  redefinição de senha por link no e-mail.
 --
---    2. Sessão: trocar o id guardado em localStorage (SKEY) por
---       supa.auth.getSession(), e o logout por supa.auth.signOut().
---       Quem estiver logado continua logado ao recarregar a página,
---       e o token expira sozinho.
---
---    3. Carregar o perfil: depois do login, buscar em `usuarios` a
---       linha com auth_id = id do usuário do Auth. É dela que saem o
---       nome e o nível de acesso.
---
---    4. Criar usuário: o cadastro passa a ter duas partes — criar a
---       conta no Auth e gravar a linha em `usuarios` com o auth_id.
---       Como a criação pelo cliente derruba a sessão de quem está
---       logado, isso é feito com uma segunda instância do cliente
---       Supabase, descartada logo em seguida.
---
---    5. Recuperação de senha: a pergunta de segurança sai e entra
---       supa.auth.resetPasswordForEmail() — o Supabase manda o link
---       por e-mail.
---
---    6. Toda chamada ao banco continua igual: o supabase-js já anexa
---       o token da sessão automaticamente.
+--  Ele funciona nos dois modos ao mesmo tempo: se o Auth recusar o
+--  login, ele tenta o login antigo direto na tabela `usuarios`. É isso
+--  que permite trabalhar normalmente entre a etapa 1 e a etapa 3. Ao
+--  ligar o RLS, o caminho antigo perde o acesso à tabela e some sozinho.
 --
 -- =====================================================================
 
@@ -155,6 +138,11 @@ revoke all on function public.usuario_ativo()    from anon;
 --
 --  c) Volte aqui e rode o bloco 2.1 abaixo, uma linha por pessoa,
 --     trocando o e-mail e o login pelos valores certos.
+--
+--  ATALHO: a partir da etapa 1, o próprio ERP cria as contas. Em
+--  Usuários > Novo Usuário, o campo "E-mail" cria a conta no Auth e já
+--  grava o auth_id. Nesse caso você só precisa do item (a) acima e do
+--  2.1 para o SEU cadastro, que é anterior à mudança.
 
 -- 2.1 Liga cada conta do Auth ao cadastro correspondente em `usuarios`.
 --     Troque os valores e rode. Repita para cada pessoa.

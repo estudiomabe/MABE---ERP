@@ -262,11 +262,11 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <div class="login-sub">Faça login para continuar</div>
     <div class="login-form">
       <div id="login-err" class="login-err">Usuário ou senha incorretos.</div>
-      <div class="form-group"><label class="form-label">Usuário</label><input type="text" class="form-control" id="login-user" placeholder="seu.usuario" autocomplete="username"></div>
+      <div class="form-group"><label class="form-label">E-mail</label><input type="text" class="form-control" id="login-user" placeholder="voce@estudiomabe.com.br" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div class="form-group"><label class="form-label">Senha</label><input type="password" class="form-control" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;padding:11px" onclick="doLogin()">Entrar</button>
       <p style="text-align:center;margin-top:2px"><a href="#" onclick="event.preventDefault();openRecSenha()" style="font-size:12px;color:var(--text-muted);text-decoration:underline">Esqueci minha senha</a></p>
-      <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:6px">Primeiro acesso: <strong>admin</strong> / <strong>admin123</strong></p>
+      <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:6px">Logins antigos (sem e-mail) continuam funcionando durante a migração.</p>
     </div>
   </div>
 </div>
@@ -764,7 +764,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option><option>Marketing</option><option>Vendas</option><option>Pedidos</option><option>Folha de Pagamento</option><option>Administrativo</option><option>Manutenção</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-fornecedores"><div class="modal"><div class="modal-header"><div class="modal-title" id="mfor-title">Novo Fornecedor</div><button class="modal-close" onclick="closeModal('modal-fornecedores')">✕</button></div><div class="modal-body"><input type="hidden" id="for-id"><div class="form-grid"><div class="form-group"><label class="form-label">Razão Social *</label><input type="text" class="form-control" id="for-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CNPJ</label><input type="text" class="form-control" id="for-cnpj"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="for-tel"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="for-email"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="for-cidade"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="for-status"><option>Ativo</option><option>Inativo</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-fornecedores')">Cancelar</button><button class="btn btn-primary" onclick="saveFornecedor()">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-usuarios"><div class="modal"><div class="modal-header"><div class="modal-title" id="mu-title">Novo Usuário</div><button class="modal-close" onclick="closeModal('modal-usuarios')">✕</button></div><div class="modal-body"><input type="hidden" id="usr-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="usr-nome"></div><div class="form-group"><label class="form-label">Login *</label><input type="text" class="form-control" id="usr-login"></div></div><div class="form-group"><label class="form-label">Senha *</label><input type="password" class="form-control" id="usr-senha" placeholder="Mínimo 6 caracteres"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nível de Acesso</label><select class="form-control" id="usr-nivel" onchange="atualizarHintNivel()"></select><div id="usr-nivel-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.45"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="usr-status"><option>Ativo</option><option>Inativo</option></select></div></div>
+<div class="modal-overlay" id="modal-usuarios"><div class="modal"><div class="modal-header"><div class="modal-title" id="mu-title">Novo Usuário</div><button class="modal-close" onclick="closeModal('modal-usuarios')">✕</button></div><div class="modal-body"><input type="hidden" id="usr-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="usr-nome"></div><div class="form-group"><label class="form-label">E-mail *</label><input type="email" class="form-control" id="usr-login" placeholder="pessoa@estudiomabe.com.br" autocomplete="off"></div></div><div class="form-group" id="usr-senha-box"><label class="form-label">Senha *</label><input type="password" class="form-control" id="usr-senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password"><div style="font-size:11px;color:var(--text-muted);margin-top:4px">A conta de acesso é criada no Supabase Auth com este e-mail e esta senha.</div></div><div class="form-group" id="usr-reset-box" style="display:none"><label class="form-label">Senha</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" onclick="enviarResetDoModal()">✉️ Enviar link de redefinição</button><span style="font-size:11px;color:var(--text-muted)">Por segurança, ninguém — nem o administrador — troca a senha de outra pessoa: o link vai para o e-mail dela.</span></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nível de Acesso</label><select class="form-control" id="usr-nivel" onchange="atualizarHintNivel()"></select><div id="usr-nivel-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.45"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="usr-status"><option>Ativo</option><option>Inativo</option></select></div></div>
 <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:2px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">🔐 Recuperação de senha (opcional, mas recomendado)</div><div class="form-grid">
 <div class="form-group"><label class="form-label">Pergunta de segurança</label><input type="text" class="form-control" id="usr-pergunta" list="perguntas-sugeridas" placeholder="Ex: Nome do primeiro cliente da Mabe?"><datalist id="perguntas-sugeridas"><option value="Nome da sua mãe?"><option value="Nome do primeiro cliente da Mabe?"><option value="Cidade onde você nasceu?"><option value="Nome do seu primeiro animal de estimação?"><option value="Modelo do seu primeiro carro?"></datalist></div>
 <div class="form-group"><label class="form-label">Resposta</label><input type="text" class="form-control" id="usr-resposta" placeholder="Resposta (não diferencia maiúsculas)"></div>
@@ -774,8 +774,10 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <!-- MODAL RECUPERAÇÃO DE SENHA -->
 <div class="modal-overlay" id="modal-rec-senha"><div class="modal"><div class="modal-header"><div class="modal-title">🔐 Recuperar senha</div><button class="modal-close" onclick="closeModal('modal-rec-senha')">✕</button></div><div class="modal-body">
  <div id="rec-step-1">
-  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Informe seu usuário para continuar.</p>
-  <div class="form-group"><label class="form-label">Usuário</label><input type="text" class="form-control" id="rec-login" placeholder="seu.usuario" onkeydown="if(event.key==='Enter')recAvancarStep1()"></div>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Informe seu e-mail. Enviamos um link para você definir uma senha nova.</p>
+  <div class="form-group"><label class="form-label">E-mail</label><input type="text" class="form-control" id="rec-login" placeholder="voce@estudiomabe.com.br" onkeydown="if(event.key==='Enter')recAvancarStep1()"></div>
+  <p style="font-size:11px;color:var(--text-muted);margin-top:-6px">Se o seu acesso ainda for um login antigo, sem e-mail, digite o login: você responderá a pergunta de segurança.</p>
+  <div id="rec-ok-1" style="display:none;font-size:13px;color:var(--success);margin-top:12px;line-height:1.5"></div>
   <div id="rec-err-1" class="login-err" style="margin-top:12px"></div>
  </div>
  <div id="rec-step-2" style="display:none">
@@ -987,22 +989,49 @@ async function confereSegredo(txt,guardado){if(guardado===undefined||guardado===
  return g===String(txt);}
 const normResposta=r=>String(r===undefined||r===null?'':r).trim().toLowerCase();
 
-/* ================= USUÁRIOS NO SUPABASE =================
-   A coluna 'role' guarda o nível de acesso. 'ultimo' (último acesso) não
-   existe na tabela, então continua sendo por dispositivo, no localStorage. */
+/* ================= USUÁRIOS E AUTENTICAÇÃO =================
+   O login é feito pelo Supabase Auth: é o token dele que o RLS do banco
+   sabe ler. A tabela 'usuarios' guarda o perfil (nome, nível, status) e
+   a coluna auth_id liga cada cadastro à conta do Auth.
+
+   Durante a migração o login antigo (login + senha na tabela) continua
+   valendo: se o Auth recusar, caímos para ele. Quando o RLS for ligado,
+   esse caminho deixa de conseguir ler a tabela e morre sozinho. */
+
+let AUTH_USER=null;
+/* colunas que a tabela realmente tem — auth_id e ultimo só existem depois
+   da etapa 1 do script supabase/ativar-rls.sql */
+let COLS_USR=null;
+const temColuna=c=>!COLS_USR||COLS_USR.indexOf(c)>-1;
+const ehEmail=v=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v||'').trim());
+
 const ULTKEY='mabe_ultimo_acesso';
 function ultimosLocais(){try{return JSON.parse(localStorage.getItem(ULTKEY)||'{}');}catch(e){return {};}}
 function marcarUltimoAcesso(id){const m=ultimosLocais();m[id]=new Date().toLocaleString('pt-BR');
  try{localStorage.setItem(ULTKEY,JSON.stringify(m));}catch(e){}}
+
 function usuarioDoSupabase(r){const ult=ultimosLocais();
  return {id:r.id,login:r.login,senha:r.senha,nome:r.nome,
   perfil:NIVEIS[r.role]?r.role:(NIVEL_LEGADO[r.role]||NIVEL_PADRAO),
-  status:r.status||'Ativo',pergunta:r.pergunta||'',resposta:r.resposta||'',ultimo:ult[r.id]||''};}
-function usuarioParaSupabase(u){return {id:u.id,login:u.login,senha:u.senha,nome:u.nome,
- role:nivelDe(u),status:u.status||'Ativo',pergunta:u.pergunta||null,resposta:u.resposta||null};}
-async function salvarUsuarioSupabase(u){const {error}=await supa.from('usuarios').upsert(usuarioParaSupabase(u));
+  status:r.status||'Ativo',pergunta:r.pergunta||'',resposta:r.resposta||'',
+  authId:r.auth_id||'',ultimo:r.ultimo||ult[r.id]||''};}
+
+function usuarioParaSupabase(u){const o={id:u.id,login:u.login,senha:u.senha,nome:u.nome,
+ role:nivelDe(u),status:u.status||'Ativo',pergunta:u.pergunta||null,resposta:u.resposta||null};
+ if(temColuna('auth_id')&&u.authId)o.auth_id=u.authId;
+ if(temColuna('ultimo')&&u.ultimo)o.ultimo=u.ultimo;
+ return o;}
+
+async function salvarUsuarioSupabase(u){
+ let {error}=await supa.from('usuarios').upsert(usuarioParaSupabase(u));
+ /* a coluna auth_id/ultimo ainda não existe: grava sem ela e avisa */
+ if(error&&/auth_id|ultimo/.test(error.message||'')){
+  const o=usuarioParaSupabase(u);delete o.auth_id;delete o.ultimo;
+  const r2=await supa.from('usuarios').upsert(o);error=r2.error;
+  if(!error)toast('Salvo, mas sem vincular a conta de acesso: rode a etapa 1 do script ativar-rls.sql no Supabase.','warning');}
  if(error){toast('Erro ao salvar usuário no Supabase: '+error.message,'error');return false;}
  return true;}
+
 /* primeira execução: a tabela está vazia e os usuários só existem neste navegador */
 async function migrarUsuariosParaSupabase(){
  for(const u of DB.usuarios){
@@ -1011,26 +1040,77 @@ async function migrarUsuariosParaSupabase(){
  const {error}=await supa.from('usuarios').upsert(DB.usuarios.map(usuarioParaSupabase));
  if(error){toast('Erro ao enviar usuários para o Supabase: '+error.message,'error');return false;}
  saveDB();return true;}
+
 async function carregarUsuariosSupabase(silencioso){
  const {data,error}=await supa.from('usuarios').select('*').order('nome');
  if(error){if(!silencioso)toast('Erro ao carregar usuários do Supabase: '+error.message,'error');return false;}
  if(!(data||[]).length){if(DB.usuarios.length)await migrarUsuariosParaSupabase();return true;}
+ COLS_USR=Object.keys(data[0]);
  DB.usuarios=data.map(usuarioDoSupabase);saveDB();
  if(CUR==='usuarios')renderUsuarios();
  return true;}
 
-/* ================= LOGIN ================= */
-async function doLogin(){const l=$('login-user').value.trim(),p=$('login-pass').value;
+/* ---- perfil correspondente a uma conta do Supabase Auth ---- */
+async function perfilDoAuth(au){
  await carregarUsuariosSupabase(true);
- const cand=DB.usuarios.filter(x=>x.login===l&&x.status==='Ativo');
+ const email=String(au.email||'').toLowerCase();
+ return DB.usuarios.find(u=>u.authId&&u.authId===au.id)
+     || DB.usuarios.find(u=>String(u.login||'').toLowerCase()===email)
+     || null;}
+
+async function entrarComAuth(au){
+ const perfil=await perfilDoAuth(au);
+ if(!perfil){await supa.auth.signOut();
+  return erroLogin('Sua conta de acesso existe, mas não há cadastro correspondente em Usuários. Peça a um administrador para cadastrar você.');}
+ if(perfil.status!=='Ativo'){await supa.auth.signOut();
+  return erroLogin('Este usuário está inativo. Fale com um administrador.');}
+ /* liga o cadastro à conta do Auth na primeira entrada */
+ if(!perfil.authId&&temColuna('auth_id')){perfil.authId=au.id;await salvarUsuarioSupabase(perfil);}
+ USER=perfil;AUTH_USER=au;
+ marcarUltimoAcesso(perfil.id);perfil.ultimo=new Date().toLocaleString('pt-BR');
+ if(temColuna('ultimo'))supa.from('usuarios').update({ultimo:perfil.ultimo}).eq('id',perfil.id);
+ saveDB();
+ $('login-screen').classList.add('hidden');afterLogin();return true;}
+
+function erroLogin(msg){const el=$('login-err');el.textContent=msg||'Usuário ou senha incorretos.';el.classList.add('show');return false;}
+
+/* ---- redefinição de senha vinda do link do e-mail ---- */
+async function enviarResetSenha(email){
+ const {error}=await supa.auth.resetPasswordForEmail(String(email).trim(),{redirectTo:location.origin+location.pathname});
+ if(error){toast('Não foi possível enviar o e-mail: '+error.message,'error');return false;}
+ return true;}
+/* o link do e-mail volta para o ERP com type=recovery no fragmento da URL;
+   o supabase-js já criou a sessão, só falta a pessoa digitar a senha nova */
+function linkDeRecuperacao(){return /[#&]type=recovery/.test(location.hash||'');}
+function abrirDefinirNovaSenha(){
+ openModal('modal-rec-senha');
+ $('rec-step-1').style.display='none';$('rec-step-2').style.display='none';$('rec-step-3').style.display='block';
+ $('rec-btn-1').style.display='none';$('rec-btn-2').style.display='none';$('rec-btn-3').style.display='inline-flex';
+ RECUSER='__auth__';
+ setTimeout(()=>$('rec-nova-senha').focus(),80);}
+
+/* ================= LOGIN ================= */
+async function doLogin(){
+ const l=$('login-user').value.trim(),p=$('login-pass').value;
+ $('login-err').classList.remove('show');
+ if(!l||!p)return erroLogin('Informe o e-mail e a senha.');
+ /* 1) Supabase Auth */
+ if(ehEmail(l)){
+  const {data,error}=await supa.auth.signInWithPassword({email:l,password:p});
+  if(!error&&data&&data.user)return entrarComAuth(data.user);
+  if(error&&/email not confirmed/i.test(error.message||''))
+   return erroLogin('Conta ainda não confirmada. Desligue "Confirm email" em Authentication > Providers no Supabase, ou confirme pelo e-mail recebido.');
+ }
+ /* 2) login antigo, direto na tabela (some quando o RLS for ligado) */
+ await carregarUsuariosSupabase(true);
+ const cand=DB.usuarios.filter(x=>String(x.login).toLowerCase()===l.toLowerCase()&&x.status==='Ativo');
  let u=null;for(const c of cand){if(await confereSegredo(p,c.senha)){u=c;break;}}
- if(!u){$('login-err').classList.add('show');return;}
- $('login-err').classList.remove('show');USER=u;
- /* senha ainda em texto puro (base antiga): converte para hash agora */
+ if(!u)return erroLogin(ehEmail(l)?'E-mail ou senha incorretos.':'Usuário ou senha incorretos.');
+ USER=u;AUTH_USER=null;
  if(!String(u.senha||'').startsWith('sha256$')){u.senha=await hashSegredo(p);await salvarUsuarioSupabase(u);}
  marcarUltimoAcesso(u.id);u.ultimo=new Date().toLocaleString('pt-BR');saveDB();
- localStorage.setItem(SKEY,u.id);$('login-screen').classList.add('hidden');afterLogin();}
-function doLogout(){localStorage.removeItem(SKEY);location.reload();}
+ localStorage.setItem(SKEY,u.id);$('login-screen').classList.add('hidden');afterLogin();return true;}
+async function doLogout(){localStorage.removeItem(SKEY);try{await supa.auth.signOut();}catch(e){}location.reload();}
 function secaoInicial(){let sec=null;try{sec=localStorage.getItem(LASTSEC_KEY);}catch(e){}
  if(!sec||!TITLES[sec])return 'dashboard';
  if(!podeVer(sec))return 'dashboard';
@@ -2761,7 +2841,9 @@ function atualizarHintNivel(){const n=$('usr-nivel').value;$('usr-nivel-hint').t
 function renderUsuarios(){
  $('tb-usuarios').innerHTML=DB.usuarios.map(u=>{const nv=nivelDe(u);
   const sel='<select class="nivel-sel" data-nivel="'+nv+'" title="'+esc(NIVEIS[nv].desc)+'"'+(isAdmin()?'':' disabled')+' onchange="setNivelUsuario(\''+u.id+'\',this.value)">'+opcoesNivel(nv)+'</select>';
-  return '<tr><td class="mono">'+esc(u.login)+'</td><td><strong>'+esc(u.nome)+'</strong></td><td>'+sel+'</td><td class="mono" style="font-size:11px">'+esc(u.ultimo||'—')+'</td><td><span class="badge '+(u.status==='Ativo'?'badge-success':'badge-muted')+'">'+u.status+'</span></td><td>'+(isAdmin()?actionBtns("editUsuario('"+u.id+"')","delUsuario('"+u.id+"')"):'')+'</td></tr>';}).join('');
+  const semConta=temColuna('auth_id')&&!u.authId&&!ehEmail(u.login)
+   ?'<div style="font-size:10.5px;color:var(--warning);font-weight:600" title="Login antigo: cadastre o e-mail para migrar para o Supabase Auth">⚠ sem conta de acesso</div>':'';
+  return '<tr><td class="mono">'+esc(u.login)+semConta+'</td><td><strong>'+esc(u.nome)+'</strong></td><td>'+sel+'</td><td class="mono" style="font-size:11px">'+esc(u.ultimo||'—')+'</td><td><span class="badge '+(u.status==='Ativo'?'badge-success':'badge-muted')+'">'+u.status+'</span></td><td>'+(isAdmin()?actionBtns("editUsuario('"+u.id+"')","delUsuario('"+u.id+"')"):'')+'</td></tr>';}).join('');
  const lg=$('usr-legenda');
  if(lg)lg.innerHTML=Object.entries(NIVEIS).map(([n,i])=>'<div><strong>'+n+'</strong><span>'+esc(i.desc)+'</span></div>').join('');}
 /* troca o nível direto na tabela, sem abrir o modal */
@@ -2781,14 +2863,36 @@ async function setNivelUsuario(id,nivel){
  if(u.id===USER.id){USER.perfil=nivel;$('sidebar-role').textContent=nivel;aplicarPermissoes();}}
 function openUsuario(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  ['usr-id','usr-nome','usr-login','usr-senha','usr-pergunta','usr-resposta'].forEach(i=>$(i).value='');$('usr-senha').placeholder='Mínimo 6 caracteres';
+ $('usr-senha-box').style.display='';$('usr-reset-box').style.display='none';
  $('usr-nivel').innerHTML=opcoesNivel(NIVEL_PADRAO);atualizarHintNivel();
  $('usr-status').value='Ativo';$('mu-title').textContent='Novo Usuário';openModal('modal-usuarios');}
 function editUsuario(id){if(!isAdmin())return;const u=DB.usuarios.find(x=>x.id===id);if(!u)return;
  $('usr-id').value=u.id;$('usr-nome').value=u.nome;$('usr-login').value=u.login;$('usr-senha').value='';$('usr-senha').placeholder='Deixe vazio para manter';
+ /* a senha de outra pessoa não é editável: o Supabase Auth guarda o hash e só ela pode trocar */
+ $('usr-senha-box').style.display='none';$('usr-reset-box').style.display='';
  $('usr-nivel').innerHTML=opcoesNivel(nivelDe(u));atualizarHintNivel();
  $('usr-status').value=u.status;
  $('usr-pergunta').value=u.pergunta||'';$('usr-resposta').value=u.resposta||'';
  $('mu-title').textContent='Editar Usuário';openModal('modal-usuarios');}
+/* Cria a conta no Supabase Auth usando um segundo cliente: o signUp
+   autentica quem acabou de ser criado e derrubaria a sessão do admin.
+   Devolve o id da conta, '' quando não deu para descobrir, ou false em erro. */
+async function criarContaAuth(email,senha){
+ if(!window.supabase||!window.supabase.createClient){toast('Supabase não carregou; não foi possível criar a conta de acesso.','error');return false;}
+ const cli=window.supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+ const {data,error}=await cli.auth.signUp({email,password:senha});
+ if(error){
+  if(/already registered|already been registered/i.test(error.message||'')){
+   toast('Já existe uma conta de acesso com este e-mail. O cadastro será vinculado a ela no primeiro login.','warning');return '';}
+  toast('Erro ao criar a conta de acesso: '+error.message,'error');return false;}
+ if(data&&data.user&&!data.session)
+  toast('Conta criada, mas o Supabase está exigindo confirmação por e-mail. Desligue "Confirm email" em Authentication > Providers.','warning');
+ return (data&&data.user&&data.user.id)||'';}
+/* o admin não troca a senha de ninguém: manda o link de redefinição */
+async function enviarResetDoModal(){
+ const email=$('usr-login').value.trim();
+ if(!ehEmail(email)){toast('Este cadastro ainda não tem e-mail. Preencha o e-mail e salve antes.','error');return;}
+ if(await enviarResetSenha(email))toast('Link de redefinição enviado para '+email+'.','success');}
 async function saveUsuario(){if(!isAdmin())return;const nome=$('usr-nome').value.trim(),login=$('usr-login').value.trim(),senha=$('usr-senha').value;
  const pergunta=$('usr-pergunta').value.trim(),resposta=$('usr-resposta').value.trim();
  if(!nome||!login){toast('Informe nome e login.','error');return;}
@@ -2805,22 +2909,35 @@ async function saveUsuario(){if(!isAdmin())return;const nome=$('usr-nome').value
   if(!await salvarUsuarioSupabase(u))return;
   if(u.id===USER.id&&u.perfil!==nivelAntes){USER.perfil=u.perfil;$('sidebar-role').textContent=u.perfil;aplicarPermissoes();}
   commit('editar','Usuários',login);}
- else{const novo={id:uid(),login,senha:await hashSegredo(senha),nome,perfil:$('usr-nivel').value,status:$('usr-status').value,ultimo:'',pergunta,resposta:resposta?await hashSegredo(normResposta(resposta)):''};
+ else{if(!ehEmail(login)){toast('Informe um e-mail válido: é com ele que a pessoa faz login.','error');return;}
+  const conta=await criarContaAuth(login,senha);
+  if(conta===false)return;
+  const novo={id:uid(),login,senha:await hashSegredo(senha),nome,perfil:$('usr-nivel').value,status:$('usr-status').value,ultimo:'',pergunta,resposta:resposta?await hashSegredo(normResposta(resposta)):'',authId:conta||''};
   if(!await salvarUsuarioSupabase(novo))return;
   DB.usuarios.push(novo);commit('criar','Usuários',login);}
  closeModal('modal-usuarios');toast('Usuário salvo!','success');}
 
 /* ================= RECUPERAÇÃO DE SENHA ================= */
 let RECUSER=null;
-function openRecSenha(){RECUSER=null;$('rec-login').value='';$('rec-resposta').value='';$('rec-nova-senha').value='';$('rec-nova-senha-2').value='';
+function openRecSenha(){const ok=$('rec-ok-1');if(ok){ok.style.display='none';ok.textContent='';}
+RECUSER=null;$('rec-login').value='';$('rec-resposta').value='';$('rec-nova-senha').value='';$('rec-nova-senha-2').value='';
  ['rec-err-1','rec-err-2','rec-err-3'].forEach(i=>{$(i).textContent='';$(i).classList.remove('show');});
  $('rec-step-1').style.display='block';$('rec-step-2').style.display='none';$('rec-step-3').style.display='none';
  $('rec-btn-1').style.display='inline-flex';$('rec-btn-2').style.display='none';$('rec-btn-3').style.display='none';
  openModal('modal-rec-senha');setTimeout(()=>$('rec-login').focus(),50);}
 function recErro(id,msg){$(id).textContent=msg;$(id).classList.add('show');}
-function recAvancarStep1(){const login=$('rec-login').value.trim();
- const u=DB.usuarios.find(x=>x.login===login&&x.status==='Ativo');
- if(!u||!u.pergunta||!u.resposta){recErro('rec-err-1','Usuário não encontrado ou sem pergunta de segurança cadastrada. Peça a um administrador para redefinir sua senha em Usuários.');return;}
+async function recAvancarStep1(){const login=$('rec-login').value.trim();
+ if(!login){recErro('rec-err-1','Informe seu e-mail.');return;}
+ /* caminho normal: e-mail com link de redefinição do Supabase Auth */
+ if(ehEmail(login)){
+  if(!await enviarResetSenha(login))return;
+  $('rec-err-1').classList.remove('show');
+  const ok=$('rec-ok-1');ok.style.display='block';
+  ok.textContent='✔ Se existir uma conta com '+login+', o link de redefinição já está a caminho. Confira também a caixa de spam.';
+  $('rec-btn-1').style.display='none';return;}
+ /* reserva: login antigo, sem e-mail, com pergunta de segurança */
+ const u=DB.usuarios.find(x=>String(x.login).toLowerCase()===login.toLowerCase()&&x.status==='Ativo');
+ if(!u||!u.pergunta||!u.resposta){recErro('rec-err-1','Usuário não encontrado ou sem pergunta de segurança cadastrada. Peça a um administrador para cadastrar seu e-mail em Usuários.');return;}
  RECUSER=u.id;$('rec-pergunta-txt').textContent=u.pergunta;
  $('rec-step-1').style.display='none';$('rec-step-2').style.display='block';
  $('rec-btn-1').style.display='none';$('rec-btn-2').style.display='inline-flex';
@@ -2831,10 +2948,17 @@ async function recAvancarStep2(){const u=DB.usuarios.find(x=>x.id===RECUSER);if(
  $('rec-step-2').style.display='none';$('rec-step-3').style.display='block';
  $('rec-btn-2').style.display='none';$('rec-btn-3').style.display='inline-flex';
  setTimeout(()=>$('rec-nova-senha').focus(),50);}
-async function recFinalizar(){const u=DB.usuarios.find(x=>x.id===RECUSER);if(!u)return;
+async function recFinalizar(){
  const s1=$('rec-nova-senha').value,s2=$('rec-nova-senha-2').value;
  if(s1.length<6){recErro('rec-err-3','A senha deve ter no mínimo 6 caracteres.');return;}
  if(s1!==s2){recErro('rec-err-3','As senhas não coincidem.');return;}
+ /* veio do link enviado por e-mail: a sessão já existe, só falta gravar a senha */
+ if(RECUSER==='__auth__'){
+  const {error}=await supa.auth.updateUser({password:s1});
+  if(error){recErro('rec-err-3','Não foi possível redefinir: '+error.message);return;}
+  closeModal('modal-rec-senha');toast('Senha redefinida! Faça login com a nova senha.','success');
+  await supa.auth.signOut();setTimeout(()=>location.reload(),1200);return;}
+ const u=DB.usuarios.find(x=>x.id===RECUSER);if(!u)return;
  u.senha=await hashSegredo(s1);
  if(!await salvarUsuarioSupabase(u))return;
  log('editar','Usuários','Senha redefinida via recuperação: '+u.login);saveDB();
@@ -2844,7 +2968,8 @@ async function delUsuario(id){if(!isAdmin())return;const u=DB.usuarios.find(x=>x
  if(!confirm('Excluir usuário "'+u.login+'"?'))return;
  const {error}=await supa.from('usuarios').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
- DB.usuarios=DB.usuarios.filter(x=>x.id!==id);commit('excluir','Usuários',u.login);toast('Usuário excluído.','info');}
+ DB.usuarios=DB.usuarios.filter(x=>x.id!==id);commit('excluir','Usuários',u.login);
+ toast('Cadastro excluído — o acesso está cortado. A conta de e-mail continua no Supabase (Authentication > Users) e pode ser removida por lá.','info');}
 
 /* ================= HISTÓRICO & CONFIG ================= */
 function renderHistorico(){$('tb-historico').innerHTML=DB.historico.slice(0,200).map(h=>'<tr><td class="mono" style="font-size:11px">'+esc(h.dt)+'</td><td>'+esc(h.user)+'</td><td class="hist-action-'+h.acao+'" style="font-weight:700;text-transform:capitalize">'+h.acao+'</td><td>'+esc(h.modulo)+'</td><td style="font-size:12px;color:var(--text-muted)">'+esc(h.detalhe)+'</td></tr>').join('')||emptyRow(5,'Sem registros');}
@@ -3918,6 +4043,13 @@ function loadDemoData(){if(!guard())return;
 loadDB();
 (async function(){
  await carregarUsuariosSupabase(true);
+ /* 1) sessão do Supabase Auth */
+ try{const {data}=await supa.auth.getSession();
+  if(data&&data.session&&data.session.user){
+   if(linkDeRecuperacao()){history.replaceState(null,'',location.pathname);abrirDefinirNovaSenha();$('login-user').focus();return;}
+   if(await entrarComAuth(data.session.user))return;}
+ }catch(e){}
+ /* 2) sessão antiga, guardada no localStorage */
  const sid=localStorage.getItem(SKEY);
  if(sid){const u=DB.usuarios.find(x=>x.id===sid&&x.status==='Ativo');
   if(u){USER=u;$('login-screen').classList.add('hidden');afterLogin();return;}}
