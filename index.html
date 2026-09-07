@@ -1146,9 +1146,14 @@ function secaoInicial(){let sec=null;try{sec=localStorage.getItem(LASTSEC_KEY);}
  if(!sec||!TITLES[sec])return 'dashboard';
  if(!podeVer(sec))return 'dashboard';
  return sec;}
+/* mostra na sidebar por qual caminho a sessao entrou: enquanto disser "login antigo",
+   a conta do Supabase Auth da pessoa nao esta ativa e o RLS vai trancar ela do lado de fora */
+function atualizarRotuloSessao(){const el=$('sidebar-role');if(!el||!USER)return;
+ el.innerHTML=esc(nivelDe(USER))+(AUTH_USER
+  ?' <span title="Sessao autenticada pelo Supabase Auth" style="color:#6fcf97">&#128274;</span>'
+  :' <span title="Voce entrou pelo login antigo, direto na tabela. A conta do Supabase Auth deste usuario ainda nao esta ativa — resolva isso antes de ligar o RLS." style="color:#d9a441">&#9888; login antigo</span>');}
 function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
- $('sidebar-avatar').textContent=ini;$('sidebar-username').textContent=USER.nome;$('sidebar-role').textContent=USER.perfil;
- $('sidebar-role').textContent=nivelDe(USER);
+ $('sidebar-avatar').textContent=ini;$('sidebar-username').textContent=USER.nome;atualizarRotuloSessao();
  aplicarPermissoes();
  navigate(secaoInicial());updateBadges();
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
@@ -2891,7 +2896,7 @@ async function setNivelUsuario(id,nivel){
  commit('editar','Usuários',u.login+' — nível '+antes+' -> '+nivel);
  toast('Nível de '+u.nome+' alterado para '+nivel+'.','success');
  renderUsuarios();
- if(u.id===USER.id){USER.perfil=nivel;$('sidebar-role').textContent=nivel;aplicarPermissoes();}}
+ if(u.id===USER.id){USER.perfil=nivel;atualizarRotuloSessao();aplicarPermissoes();}}
 function openUsuario(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  ['usr-id','usr-nome','usr-login','usr-senha','usr-pergunta','usr-resposta'].forEach(i=>$(i).value='');$('usr-senha').placeholder='Mínimo 6 caracteres';
  $('usr-senha-box').style.display='';$('usr-reset-box').style.display='none';
@@ -2938,7 +2943,7 @@ async function saveUsuario(){if(!isAdmin())return;const nome=$('usr-nome').value
   u.nome=nome;u.login=login;if(senha)u.senha=await hashSegredo(senha);u.perfil=$('usr-nivel').value;u.status=$('usr-status').value;
   u.pergunta=pergunta;u.resposta=resposta?await hashSegredo(normResposta(resposta)):'';
   if(!await salvarUsuarioSupabase(u))return;
-  if(u.id===USER.id&&u.perfil!==nivelAntes){USER.perfil=u.perfil;$('sidebar-role').textContent=u.perfil;aplicarPermissoes();}
+  if(u.id===USER.id&&u.perfil!==nivelAntes){USER.perfil=u.perfil;atualizarRotuloSessao();aplicarPermissoes();}
   commit('editar','Usuários',login);}
  else{if(!ehEmail(login)){toast('Informe um e-mail válido: é com ele que a pessoa faz login.','error');return;}
   const conta=await criarContaAuth(login,senha);
