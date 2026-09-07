@@ -1041,12 +1041,38 @@ async function migrarUsuariosParaSupabase(){
  if(error){toast('Erro ao enviar usuários para o Supabase: '+error.message,'error');return false;}
  saveDB();return true;}
 
+/* marca que este navegador já subiu os usuários que só existiam nele */
+const MIGKEY='mabe_usuarios_migrados';
+const jaMigrouUsuarios=()=>{try{return localStorage.getItem(MIGKEY)==='1';}catch(e){return false;}};
+const marcarMigracaoUsuarios=()=>{try{localStorage.setItem(MIGKEY,'1');}catch(e){}};
+/* Sobe para o Supabase os usuários que existem só neste navegador.
+   Sem isto, a lista do servidor simplesmente substituiria a local e um
+   login criado antes da migração desapareceria — foi o que aconteceu com
+   o cadastro 'Mateus' quando a tabela foi populada por outra máquina. */
+async function subirUsuariosLocais(remotos){
+ const logins=new Set(remotos.map(r=>String(r.login||'').toLowerCase()));
+ const ids=new Set(remotos.map(r=>r.id));
+ const soLocais=DB.usuarios.filter(u=>u.login&&!logins.has(String(u.login).toLowerCase())&&!ids.has(u.id));
+ if(!soLocais.length){marcarMigracaoUsuarios();return false;}
+ for(const u of soLocais){
+  if(!String(u.senha||'').startsWith('sha256$'))u.senha=await hashSegredo(u.senha||'');
+  if(u.resposta&&!String(u.resposta).startsWith('sha256$'))u.resposta=await hashSegredo(normResposta(u.resposta));}
+ const {error}=await supa.from('usuarios').upsert(soLocais.map(usuarioParaSupabase));
+ if(error){toast('Não foi possível enviar os usuários deste computador: '+error.message,'error');return false;}
+ marcarMigracaoUsuarios();
+ toast('Migrado para o Supabase: '+soLocais.map(u=>u.login).join(', ')+'.','success');
+ return true;}
 async function carregarUsuariosSupabase(silencioso){
  const {data,error}=await supa.from('usuarios').select('*').order('nome');
  if(error){if(!silencioso)toast('Erro ao carregar usuários do Supabase: '+error.message,'error');return false;}
- if(!(data||[]).length){if(DB.usuarios.length)await migrarUsuariosParaSupabase();return true;}
- COLS_USR=Object.keys(data[0]);
- DB.usuarios=data.map(usuarioDoSupabase);saveDB();
+ let remotos=data||[];
+ if(!remotos.length){if(DB.usuarios.length)await migrarUsuariosParaSupabase();marcarMigracaoUsuarios();return true;}
+ /* primeira carga deste navegador: junta as duas listas antes de trocar */
+ if(!jaMigrouUsuarios()&&await subirUsuariosLocais(remotos)){
+  const r2=await supa.from('usuarios').select('*').order('nome');
+  if(!r2.error&&(r2.data||[]).length)remotos=r2.data;}
+ COLS_USR=Object.keys(remotos[0]);
+ DB.usuarios=remotos.map(usuarioDoSupabase);saveDB();
  if(CUR==='usuarios')renderUsuarios();
  return true;}
 
