@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
 :root {
   --bg: #f5f0e8; --surface: #faf7f2; --surface2: #ede8df; --surface3: #e0d9ce;
@@ -2764,21 +2764,232 @@ function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');re
  toast('Backup completo baixado! Guarde este arquivo em local seguro.','success');}
 function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!window.XLSX){toast('Biblioteca de planilha não carregou. Verifique sua conexão e tente novamente.','error');return;}
- const comNomeCliente=arr=>(arr||[]).map(r=>Object.assign({},r,{cliente_nome:r.cliId?cliName(r.cliId):''}));
- const tabelas={
-  clientes:DB.clientes,orcamentos:comNomeCliente(DB.orcamentos),pedidos:comNomeCliente(DB.vendas),
-  producao:comNomeCliente(DB.producao),entregas:comNomeCliente(DB.entregas),
-  financeiro:DB.financeiro,insumos_portfolio:DB.produtos,madeiras:DB.madeiras,ferramentas:DB.ferramentas,
-  fornecedores:DB.fornecedores,compras:DB.compras,historico:DB.historico,
-  usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,perfil:u.perfil,status:u.status,ultimo:u.ultimo}))
- };
- const achatarLinha=row=>{const r={};Object.entries(row).forEach(([k,v])=>{r[k]=(v&&typeof v==='object')?JSON.stringify(v):v;});return r;};
+ /* ---- Identidade visual Estúdio Mabe ---- */
+ const XL_DARK='FF1A1714',XL_ACCENT='FFC8A96E',XL_CREAM='FFF5F0E8',XL_SURF='FFFAF7F2',XL_MUTED='FF7A6F62',XL_BORDA='FFDDD5C8';
+ const bordaFina={style:'thin',color:{rgb:XL_BORDA}};
+ const estiloTitulo={font:{bold:true,sz:16,color:{rgb:XL_CREAM}},fill:{patternType:'solid',fgColor:{rgb:XL_DARK}},alignment:{vertical:'center'}};
+ const estiloSubtitulo={font:{sz:9,italic:true,color:{rgb:XL_MUTED}},alignment:{vertical:'center'}};
+ const estiloCabecalho={font:{bold:true,sz:10,color:{rgb:XL_CREAM}},fill:{patternType:'solid',fgColor:{rgb:XL_DARK}},
+  alignment:{vertical:'center',horizontal:'left',wrapText:true},
+  border:{top:bordaFina,bottom:{style:'medium',color:{rgb:XL_ACCENT}},left:bordaFina,right:bordaFina}};
+ const corpo=(par,fmt,alinha)=>({font:{sz:10,color:{rgb:'FF1A1714'}},
+  fill:{patternType:'solid',fgColor:{rgb:par?XL_SURF:'FFFFFFFF'}},
+  alignment:{vertical:'center',horizontal:alinha||'left'},
+  border:{top:bordaFina,bottom:bordaFina,left:bordaFina,right:bordaFina},numFmt:fmt||undefined});
+ const FMT_MOEDA='"R$" #,##0.00',FMT_DATA='dd/mm/yyyy',FMT_INT='#,##0',FMT_QTD='General',FMT_M3='#,##0.000';
+ /* ---- Helpers de valor ---- */
+ const dataExcel=iso=>{if(!iso)return '';const s=String(iso).slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return String(iso);
+  const p=s.split("-").map(Number);/* serial do Excel calculado so em UTC dos dois lados: imune a fuso horario */return Math.round((Date.UTC(p[0],p[1]-1,p[2])-Date.UTC(1899,11,30))/86400000);};
+ const simNao=v=>v?'Sim':'Não';
+ const txt=v=>(v===undefined||v===null)?'':String(v);
+ /* ---- Monta uma aba com faixa de título, cabeçalho e estilos ---- */
  const wb=XLSX.utils.book_new();
- Object.entries(tabelas).forEach(([nome,linhas])=>{
-  const dados=(linhas||[]).map(achatarLinha);
-  const ws=XLSX.utils.json_to_sheet(dados.length?dados:[{aviso:'Sem registros'}]);
-  XLSX.utils.book_append_sheet(wb,ws,nome.slice(0,31));
- });
+ function criarAba(nomeAba,tituloVisivel,colunas,registros){
+  const cabecalhos=colunas.map(c=>c.t);
+  const linhas=(registros||[]).map(reg=>colunas.map(c=>{const v=c.v(reg);return v===undefined?'':v;}));
+  const aoa=[[tituloVisivel],['Estúdio Mabe · Marcenaria de madeira maciça — backup gerado em '+fmtD(today())],[],cabecalhos];
+  if(linhas.length)aoa.push.apply(aoa,linhas);else aoa.push(['(nenhum registro cadastrado)']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  const nCols=colunas.length,linhaCab=3;
+  ws['!cols']=colunas.map(c=>({wch:c.w||16}));
+  ws['!rows']=[{hpx:30},{hpx:16},{hpx:6},{hpx:24}];
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:Math.max(0,nCols-1)}},{s:{r:1,c:0},e:{r:1,c:Math.max(0,nCols-1)}}];
+  for(let c=0;c<nCols;c++){const ref=XLSX.utils.encode_cell({r:0,c});
+   if(!ws[ref])ws[ref]={t:'s',v:''};ws[ref].s=estiloTitulo;}
+  for(let c=0;c<nCols;c++){const ref=XLSX.utils.encode_cell({r:1,c});
+   if(!ws[ref])ws[ref]={t:'s',v:''};ws[ref].s=estiloSubtitulo;}
+  for(let c=0;c<nCols;c++){const ref=XLSX.utils.encode_cell({r:linhaCab,c});
+   if(!ws[ref])ws[ref]={t:'s',v:''};ws[ref].s=estiloCabecalho;}
+  linhas.forEach((linha,i)=>{const r=linhaCab+1+i,par=i%2===1;
+   colunas.forEach((col,c)=>{const ref=XLSX.utils.encode_cell({r,c});
+    if(!ws[ref])ws[ref]={t:'s',v:''};
+    ws[ref].s=corpo(par,col.fmt,col.al);});});
+  if(linhas.length){
+   ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:linhaCab,c:0},e:{r:linhaCab+linhas.length,c:nCols-1}})};
+   ws['!freeze']={xSplit:'0',ySplit:String(linhaCab+1),topLeftCell:'A'+(linhaCab+2),activePane:'bottomLeft',state:'frozen'};}
+  XLSX.utils.book_append_sheet(wb,ws,nomeAba.slice(0,31));
+ }
+ /* ================= CAPA ================= */
+ (function(){
+  const resumo=[
+   ['Clientes',DB.clientes.length],['Orçamentos',DB.orcamentos.length],['Pedidos',DB.vendas.length],
+   ['Ordens de Produção',DB.producao.length],['Entregas',DB.entregas.length],
+   ['Lançamentos Financeiros',DB.financeiro.length],
+   ['Portfólio',DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').length],
+   ['Insumos',DB.produtos.filter(p=>p.tipo==='Insumo').length],
+   ['Madeiras',DB.madeiras.length],['Máquinas & Ferramentas',DB.ferramentas.length],
+   ['Fornecedores',DB.fornecedores.length],['Ordens de Compra',DB.compras.length],
+   ['Registros no Histórico',DB.historico.length]];
+  const aoa=[['estúdio mabe.',''],['MARCENARIA · MADEIRA MACIÇA',''],['',''],['BACKUP COMPLETO EM PLANILHAS',''],
+   ['Gerado em '+fmtD(today()),''],['',''],['Módulo','Registros']];
+  resumo.forEach(r=>aoa.push([r[0],r[1]]));
+  aoa.push(['','']);
+  aoa.push(['As senhas de usuários não são incluídas neste arquivo, por segurança.','']);
+  aoa.push(['Cada aba desta planilha corresponde a um módulo do ERP.','']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:36},{wch:14}];
+  ws['!rows']=[{hpx:36},{hpx:16},{hpx:10},{hpx:26},{hpx:18},{hpx:10},{hpx:22}];
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:1}},{s:{r:1,c:0},e:{r:1,c:1}},{s:{r:3,c:0},e:{r:3,c:1}},
+   {s:{r:4,c:0},e:{r:4,c:1}},{s:{r:aoa.length-2,c:0},e:{r:aoa.length-2,c:1}},{s:{r:aoa.length-1,c:0},e:{r:aoa.length-1,c:1}}];
+  const põe=(ref,st)=>{if(!ws[ref])ws[ref]={t:'s',v:''};ws[ref].s=st;};
+  põe('A1',{font:{bold:true,sz:26,color:{rgb:XL_DARK}},alignment:{vertical:'center'}});
+  põe('A2',{font:{sz:10,color:{rgb:XL_MUTED}},alignment:{vertical:'center'}});
+  põe('A4',{font:{bold:true,sz:14,color:{rgb:XL_DARK}},alignment:{vertical:'center'},
+   border:{bottom:{style:'medium',color:{rgb:XL_ACCENT}}}});
+  põe('B4',{border:{bottom:{style:'medium',color:{rgb:XL_ACCENT}}}});
+  põe('A5',{font:{sz:10,italic:true,color:{rgb:XL_MUTED}}});
+  põe('A7',estiloCabecalho);põe('B7',estiloCabecalho);
+  resumo.forEach((r,i)=>{const lin=8+i,par=i%2===1;
+   põe('A'+lin,corpo(par));põe('B'+lin,corpo(par,FMT_INT,'right'));});
+  põe('A'+(aoa.length-1),{font:{sz:9,italic:true,color:{rgb:XL_MUTED}}});
+  põe('A'+aoa.length,{font:{sz:9,italic:true,color:{rgb:XL_MUTED}}});
+  XLSX.utils.book_append_sheet(wb,ws,'Capa');
+ })();
+ /* ================= ABAS POR MÓDULO ================= */
+ const nCli=id=>id?cliName(id):'';
+ criarAba('Clientes','CLIENTES',[
+  {t:'Nome',w:28,v:c=>txt(c.nome)},{t:'E-mail',w:28,v:c=>txt(c.email)},{t:'Telefone',w:18,v:c=>txt(c.tel)},
+  {t:'CPF/CNPJ',w:20,v:c=>txt(c.doc)},{t:'Cidade',w:20,v:c=>txt(c.cidade)},{t:'Endereço',w:34,v:c=>txt(c.end)},
+  {t:'Status',w:12,v:c=>txt(c.status)}],DB.clientes);
+
+ criarAba('Orçamentos','ORÇAMENTOS',[
+  {t:'Nº',w:11,v:o=>'ORC-'+pad(o.num)},{t:'Cliente',w:26,v:o=>nCli(o.cliId)},
+  {t:'Data',w:12,fmt:FMT_DATA,al:'center',v:o=>dataExcel(o.data)},
+  {t:'Validade',w:12,fmt:FMT_DATA,al:'center',v:o=>dataExcel(o.validade)},
+  {t:'Status',w:14,v:o=>txt(o.status)},
+  {t:'Itens',w:8,fmt:FMT_INT,al:'right',v:o=>itensOrc(o).length},
+  {t:'Custo',w:14,fmt:FMT_MOEDA,al:'right',v:o=>Number(o.custo)||0},
+  {t:'Preço',w:14,fmt:FMT_MOEDA,al:'right',v:o=>Number(o.preco)||0},
+  {t:'Lucro',w:14,fmt:FMT_MOEDA,al:'right',v:o=>Number(o.lucro)||0},
+  {t:'Observações',w:40,v:o=>txt(o.obs)}],DB.orcamentos.slice().sort((a,b)=>b.num-a.num));
+
+ const itensOrcamentos=[];
+ DB.orcamentos.slice().sort((a,b)=>b.num-a.num).forEach(o=>{itensOrc(o).forEach(it=>{
+  itensOrcamentos.push({orc:'ORC-'+pad(o.num),cliente:nCli(o.cliId),desc:it.desc,qty:Number(it.qty)||1,
+   preco:Number(it.preco)||0,custo:Number(it.custo)||0,obs:it.obs||''});});});
+ criarAba('Itens dos Orçamentos','ITENS DOS ORÇAMENTOS',[
+  {t:'Orçamento',w:12,v:i=>i.orc},{t:'Cliente',w:26,v:i=>i.cliente},{t:'Item',w:40,v:i=>txt(i.desc)},
+  {t:'Qtd',w:8,fmt:FMT_QTD,al:'right',v:i=>i.qty},
+  {t:'Custo',w:14,fmt:FMT_MOEDA,al:'right',v:i=>i.custo},
+  {t:'Preço',w:14,fmt:FMT_MOEDA,al:'right',v:i=>i.preco},
+  {t:'Observações',w:34,v:i=>txt(i.obs)}],itensOrcamentos);
+
+ criarAba('Pedidos','PEDIDOS',[
+  {t:'Nº',w:11,v:v=>'V-'+pad(v.num)},{t:'Cliente',w:26,v:v=>nCli(v.cliId)},
+  {t:'Data',w:12,fmt:FMT_DATA,al:'center',v:v=>dataExcel(v.data)},
+  {t:'Pagamento',w:18,v:v=>txt(v.pag)},{t:'Status',w:14,v:v=>txt(v.status)},
+  {t:'Itens',w:8,fmt:FMT_INT,al:'right',v:v=>(v.itens||[]).length},
+  {t:'Total',w:15,fmt:FMT_MOEDA,al:'right',v:v=>Number(v.total)||0},
+  {t:'Baixa no estoque',w:16,al:'center',v:v=>simNao(v.baixa)},
+  {t:'Observações',w:40,v:v=>txt(v.obs)}],DB.vendas.slice().sort((a,b)=>b.num-a.num));
+
+ const itensPedidos=[];
+ DB.vendas.slice().sort((a,b)=>b.num-a.num).forEach(v=>{(v.itens||[]).forEach(it=>{
+  const q=Number(it.qty)||1,p=Number(it.preco)||0;
+  itensPedidos.push({ped:'V-'+pad(v.num),cliente:nCli(v.cliId),data:v.data,desc:it.desc,qty:q,unit:p,sub:q*p});});});
+ criarAba('Itens dos Pedidos','ITENS DOS PEDIDOS',[
+  {t:'Pedido',w:11,v:i=>i.ped},{t:'Cliente',w:26,v:i=>i.cliente},
+  {t:'Data',w:12,fmt:FMT_DATA,al:'center',v:i=>dataExcel(i.data)},
+  {t:'Item',w:40,v:i=>txt(i.desc)},
+  {t:'Qtd',w:8,fmt:FMT_QTD,al:'right',v:i=>i.qty},
+  {t:'Valor unitário',w:15,fmt:FMT_MOEDA,al:'right',v:i=>i.unit},
+  {t:'Subtotal',w:15,fmt:FMT_MOEDA,al:'right',v:i=>i.sub}],itensPedidos);
+
+ criarAba('Produção (PCP)','PRODUÇÃO — PCP',[
+  {t:'Nº',w:11,v:o=>'OP-'+pad(o.num)},{t:'Título',w:34,v:o=>txt(o.titulo)},
+  {t:'Cliente',w:26,v:o=>nCli(o.cliId)},
+  {t:'Prazo',w:12,fmt:FMT_DATA,al:'center',v:o=>dataExcel(o.prazo)},
+  {t:'Etapa',w:22,v:o=>ETAPAS[o.etapa]||''},{t:'Status',w:13,v:o=>txt(o.status)},
+  {t:'Prioridade',w:13,v:o=>txt(o.prio)},{t:'Responsável',w:18,v:o=>txt(o.resp)},
+  {t:'Conclusão',w:12,fmt:FMT_DATA,al:'center',v:o=>dataExcel(o.fim)},
+  {t:'Observações',w:40,v:o=>txt(o.obs)}],DB.producao.slice().sort((a,b)=>b.num-a.num));
+
+ criarAba('Entregas','ENTREGAS & INSTALAÇÕES',[
+  {t:'Data',w:12,fmt:FMT_DATA,al:'center',v:e=>dataExcel(e.data)},
+  {t:'Cliente',w:26,v:e=>nCli(e.cliId)},{t:'Peça / Móvel',w:34,v:e=>txt(e.peca)},
+  {t:'Endereço',w:36,v:e=>txt(e.end)},{t:'Responsável',w:18,v:e=>txt(e.resp)},
+  {t:'Status',w:14,v:e=>txt(e.status)},{t:'Observações',w:34,v:e=>txt(e.obs)}],
+  DB.entregas.slice().sort((a,b)=>String(b.data||'').localeCompare(String(a.data||''))));
+
+ criarAba('Financeiro','FINANCEIRO',[
+  {t:'Data',w:12,fmt:FMT_DATA,al:'center',v:f=>dataExcel(f.data)},
+  {t:'Tipo',w:11,al:'center',v:f=>txt(f.tipo)},{t:'Descrição',w:44,v:f=>txt(f.desc)},
+  {t:'Pedido / Categoria',w:20,v:f=>txt(f.cat)},{t:'Centro de Custo',w:22,v:f=>txt(f.centroCusto)},
+  {t:'Valor',w:15,fmt:FMT_MOEDA,al:'right',v:f=>Number(f.val)||0},
+  {t:'Status',w:13,v:f=>txt(f.status)}],
+  DB.financeiro.slice().sort((a,b)=>String(b.data||'').localeCompare(String(a.data||''))));
+
+ const temposProd=DB.config.temposProducao||{};
+ criarAba('Portfólio','PORTFÓLIO & ESTOQUE',[
+  {t:'Produto',w:34,v:p=>txt(p.nome)},{t:'Categoria',w:22,v:p=>txt(p.cat)},
+  {t:'Tempo de produção (dias)',w:20,fmt:FMT_QTD,al:'right',v:p=>Number(temposProd[p.id])||''},
+  {t:'Preço de venda',w:15,fmt:FMT_MOEDA,al:'right',v:p=>Number(p.preco)||0},
+  {t:'Custo',w:14,fmt:FMT_MOEDA,al:'right',v:p=>Number(p.custo)||0},
+  {t:'Estoque',w:11,fmt:FMT_INT,al:'right',v:p=>Number(p.est)||0},
+  {t:'Estoque mínimo',w:15,fmt:FMT_INT,al:'right',v:p=>Number(p.min)||0},
+  {t:'Unidade',w:10,al:'center',v:p=>txt(p.un)},
+  {t:'Materiais cadastrados',w:20,fmt:FMT_INT,al:'right',v:p=>(p.materiais||[]).length}],
+  DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio'));
+
+ const matsProduto=[];
+ DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').forEach(p=>{(p.materiais||[]).forEach(m=>{
+  matsProduto.push({prod:p.nome,desc:m.desc,qty:Number(m.qty)||0,custo:Number(m.custo)||0});});});
+ criarAba('Materiais por Produto','MATERIAIS NECESSÁRIOS POR PRODUTO',[
+  {t:'Produto',w:34,v:m=>txt(m.prod)},{t:'Material / Insumo',w:38,v:m=>txt(m.desc)},
+  {t:'Qtd por unidade',w:16,fmt:FMT_QTD,al:'right',v:m=>m.qty},
+  {t:'Custo unitário',w:15,fmt:FMT_MOEDA,al:'right',v:m=>m.custo},
+  {t:'Custo total',w:15,fmt:FMT_MOEDA,al:'right',v:m=>m.qty*m.custo}],matsProduto);
+
+ criarAba('Insumos','MATERIAIS / INSUMOS',[
+  {t:'Material / Insumo',w:36,v:p=>txt(p.nome)},{t:'Categoria',w:22,v:p=>txt(p.cat)},
+  {t:'Custo',w:14,fmt:FMT_MOEDA,al:'right',v:p=>Number(p.custo)||0},
+  {t:'Estoque',w:11,fmt:FMT_INT,al:'right',v:p=>Number(p.est)||0},
+  {t:'Estoque mínimo',w:15,fmt:FMT_INT,al:'right',v:p=>Number(p.min)||0},
+  {t:'Unidade',w:10,al:'center',v:p=>txt(p.un)}],DB.produtos.filter(p=>p.tipo==='Insumo'));
+
+ criarAba('Madeiras','ESTOQUE DE MADEIRAS',[
+  {t:'Espécie',w:26,v:m=>txt(m.especie)},{t:'Tipo',w:14,v:m=>txt(m.tipo)},
+  {t:'Espessura (cm)',w:14,fmt:FMT_QTD,al:'right',v:m=>Number(m.esp)||0},
+  {t:'Largura (cm)',w:14,fmt:FMT_QTD,al:'right',v:m=>Number(m.larg)||0},
+  {t:'Comprimento (cm)',w:16,fmt:FMT_QTD,al:'right',v:m=>Number(m.comp)||0},
+  {t:'Peças',w:9,fmt:FMT_INT,al:'right',v:m=>Number(m.qtd)||0},
+  {t:'Volume (m³)',w:13,fmt:FMT_M3,al:'right',v:m=>madM3(m)},
+  {t:'Custo por m³',w:15,fmt:FMT_MOEDA,al:'right',v:m=>Number(m.custo)||0},
+  {t:'Valor em estoque',w:16,fmt:FMT_MOEDA,al:'right',v:m=>madM3(m)*(Number(m.custo)||0)},
+  {t:'Umidade (%)',w:13,fmt:FMT_QTD,al:'right',v:m=>Number(m.umidade)||0},
+  {t:'Fornecedor',w:24,v:m=>m.forn?fornName(m.forn):''}],DB.madeiras);
+
+ criarAba('Máquinas','MÁQUINAS & FERRAMENTAS',[
+  {t:'Equipamento',w:32,v:f=>txt(f.nome)},{t:'Tipo',w:22,v:f=>txt(f.tipo)},
+  {t:'Última manutenção',w:18,fmt:FMT_DATA,al:'center',v:f=>dataExcel(f.ult)},
+  {t:'Intervalo (dias)',w:15,fmt:FMT_INT,al:'right',v:f=>Number(f.int)||''},
+  {t:'Próxima manutenção',w:19,fmt:FMT_DATA,al:'center',v:f=>dataExcel(ferProx(f))},
+  {t:'Observações',w:34,v:f=>txt(f.obs)}],DB.ferramentas);
+
+ criarAba('Fornecedores','FORNECEDORES',[
+  {t:'Nome',w:30,v:f=>txt(f.nome)},{t:'CNPJ',w:22,v:f=>txt(f.cnpj)},{t:'Telefone',w:18,v:f=>txt(f.tel)},
+  {t:'E-mail',w:28,v:f=>txt(f.email)},{t:'Cidade',w:20,v:f=>txt(f.cidade)},
+  {t:'Status',w:12,v:f=>txt(f.status)}],DB.fornecedores);
+
+ criarAba('Compras','ORDENS DE COMPRA',[
+  {t:'Nº',w:11,v:c=>'OC-'+pad(c.num)},{t:'Fornecedor',w:30,v:c=>c.forId?fornName(c.forId):''},
+  {t:'Data',w:12,fmt:FMT_DATA,al:'center',v:c=>dataExcel(c.data)},
+  {t:'Total',w:15,fmt:FMT_MOEDA,al:'right',v:c=>Number(c.total)||0},
+  {t:'Status',w:14,v:c=>txt(c.status)},
+  {t:'Lançado no financeiro',w:19,al:'center',v:c=>simNao(c.lancado)},
+  {t:'Observações',w:40,v:c=>txt(c.obs)}],DB.compras.slice().sort((a,b)=>b.num-a.num));
+
+ criarAba('Usuários','USUÁRIOS DO SISTEMA',[
+  {t:'Login',w:20,v:u=>txt(u.login)},{t:'Nome',w:28,v:u=>txt(u.nome)},
+  {t:'Perfil',w:16,v:u=>txt(u.perfil)},{t:'Status',w:12,v:u=>txt(u.status)},
+  {t:'Último acesso',w:22,v:u=>txt(u.ultimo)}],DB.usuarios);
+
+ criarAba('Histórico','HISTÓRICO DE EDIÇÕES',[
+  {t:'Data / Hora',w:20,v:h=>txt(h.dt)},{t:'Usuário',w:22,v:h=>txt(h.user||h.usuario)},
+  {t:'Ação',w:14,v:h=>txt(h.acao)},{t:'Módulo',w:20,v:h=>txt(h.modulo)},
+  {t:'Detalhe',w:52,v:h=>txt(h.detalhe)}],DB.historico);
+
  XLSX.writeFile(wb,'Backup-ERP-Mabe-'+today()+'.xlsx');
  toast('Planilha de backup baixada! Guarde este arquivo em local seguro.','success');}
 function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
@@ -2939,7 +3150,7 @@ prompt pronto na última seção).
 - @supabase/supabase-js v2 — cliente de acesso ao banco de dados.
 - jsPDF 2.5.1 + jspdf-autotable 3.8.2 — geração de PDFs (orçamentos,
   relatórios, backups).
-- xlsx (SheetJS) 0.18.5 — exportação do backup em Excel.
+- xlsx-js-style 1.2.0 (fork do SheetJS com suporte a estilos de célula) — exportação do backup em Excel com a identidade visual do estúdio.
 - Google Fonts: "Plus Jakarta Sans" (textos) e "Fira Code" (números e
   valores monetários, monoespaçada).
 
