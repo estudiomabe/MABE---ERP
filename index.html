@@ -2783,6 +2783,7 @@ function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error
   const p=s.split("-").map(Number);/* serial do Excel calculado so em UTC dos dois lados: imune a fuso horario */return Math.round((Date.UTC(p[0],p[1]-1,p[2])-Date.UTC(1899,11,30))/86400000);};
  const simNao=v=>v?'Sim':'Não';
  const txt=v=>(v===undefined||v===null)?'':String(v);
+ const listaItens=arr=>(arr||[]).map(i=>{const n=txt(i.desc).trim();if(!n)return '';const qt=Number(i.qty)||1;return (qt>1?qt+'x ':'')+n;}).filter(Boolean).join('; ');
  /* ---- Monta uma aba com faixa de título, cabeçalho e estilos ---- */
  const wb=XLSX.utils.book_new();
  function criarAba(nomeAba,tituloVisivel,colunas,registros){
@@ -2859,6 +2860,7 @@ function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error
   {t:'Validade',w:12,fmt:FMT_DATA,al:'center',v:o=>dataExcel(o.validade)},
   {t:'Status',w:14,v:o=>txt(o.status)},
   {t:'Itens',w:8,fmt:FMT_INT,al:'right',v:o=>itensOrc(o).length},
+  {t:'Itens do orçamento',w:52,v:o=>listaItens(itensOrc(o))},
   {t:'Custo',w:14,fmt:FMT_MOEDA,al:'right',v:o=>Number(o.custo)||0},
   {t:'Preço',w:14,fmt:FMT_MOEDA,al:'right',v:o=>Number(o.preco)||0},
   {t:'Lucro',w:14,fmt:FMT_MOEDA,al:'right',v:o=>Number(o.lucro)||0},
@@ -2880,6 +2882,7 @@ function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error
   {t:'Data',w:12,fmt:FMT_DATA,al:'center',v:v=>dataExcel(v.data)},
   {t:'Pagamento',w:18,v:v=>txt(v.pag)},{t:'Status',w:14,v:v=>txt(v.status)},
   {t:'Itens',w:8,fmt:FMT_INT,al:'right',v:v=>(v.itens||[]).length},
+  {t:'Itens do pedido',w:52,v:v=>listaItens(v.itens)},
   {t:'Total',w:15,fmt:FMT_MOEDA,al:'right',v:v=>Number(v.total)||0},
   {t:'Baixa no estoque',w:16,al:'center',v:v=>simNao(v.baixa)},
   {t:'Observações',w:40,v:v=>txt(v.obs)}],DB.vendas.slice().sort((a,b)=>b.num-a.num));
