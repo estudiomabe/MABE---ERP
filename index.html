@@ -181,6 +181,28 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 @media (max-width:460px) {
   .kpi-grid, .pcp-stats { grid-template-columns:1fr; }
 }
+/* ===== NÍVEIS DE ACESSO ===== */
+.nivel-sel { font-family:inherit;font-size:11px;font-weight:700;padding:3px 20px 3px 8px;border-radius:20px;border:1px solid var(--border);background-color:var(--surface2);color:var(--text);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6f62' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:9px; }
+.nivel-sel:hover:not(:disabled) { border-color:var(--accent); }
+.nivel-sel:disabled { cursor:not-allowed;opacity:.65;background-image:none;padding-right:8px; }
+.nivel-sel[data-nivel="Administrador"] { background-color:#1a1714;color:var(--accent);border-color:#1a1714; }
+.nivel-sel[data-nivel="Financeiro"] { background-color:var(--surface3);color:var(--text); }
+.niveis-legenda { display:grid;gap:9px;padding:14px 16px 16px; }
+.niveis-legenda > div { display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:baseline;font-size:11.5px;color:var(--text-muted);line-height:1.55; }
+.niveis-legenda strong { font-size:11px;color:var(--text);letter-spacing:.3px; }
+/* níveis sem acesso a valores: esconde as colunas em R$ que sobram nas telas liberadas */
+body.sem-valores #section-vendas table th:nth-child(5), body.sem-valores #section-vendas tr:not(.venda-item-row) td:nth-child(5),
+body.sem-valores #section-vendas table th:nth-child(7), body.sem-valores #section-vendas tr:not(.venda-item-row) td:nth-child(7),
+body.sem-valores #section-vendas tr.venda-item-row td:nth-child(4), body.sem-valores #section-vendas tr.venda-item-row td:nth-child(5),
+body.sem-valores #section-vendas .row-actions, body.sem-valores #section-portfolio .row-actions, body.sem-valores #section-insumos .row-actions,
+body.sem-valores #section-insumos table th:nth-child(4), body.sem-valores #section-insumos table td:nth-child(4),
+body.sem-valores #section-insumos table th:nth-child(5), body.sem-valores #section-insumos table td:nth-child(5),
+body.sem-valores #section-portfolio table th:nth-child(5), body.sem-valores #section-portfolio table td:nth-child(5),
+body.sem-valores #section-portfolio table th:nth-child(6), body.sem-valores #section-portfolio table td:nth-child(6),
+body.sem-valores #dash-valores, body.sem-valores #dash-chart-vendas, body.sem-valores #dash-transacoes,
+body.sem-valores #dash-btn-pdf { display:none !important; }
+/* sem o gráfico de faturamento, o de status sobra sozinho e estica: limita a largura */
+body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </style>
 </head>
 <body>
@@ -268,9 +290,9 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <select class="form-control" id="per-mes-sel" style="width:auto;min-width:130px" onchange="onPerChange()"></select>
         <select class="form-control" id="per-ano-sel" style="width:auto;min-width:90px" onchange="onPerChange()"></select>
         <span id="per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
-        <button class="btn btn-primary btn-sm" onclick="gerarPdfDashboard()">📄 Gerar Relatório Dashboard em PDF</button>
+        <button class="btn btn-primary btn-sm" id="dash-btn-pdf" onclick="gerarPdfDashboard()">📄 Gerar Relatório Dashboard em PDF</button>
       </div>
-      <div class="kpi-grid">
+      <div class="kpi-grid" id="dash-valores">
         <div class="kpi-card" style="--card-accent:var(--text-muted)"><div class="kpi-label">Orçamentos do Período</div><div class="kpi-value" id="kpi-orcamentos">R$0</div><div class="kpi-sub" id="kpi-osub">orçamentos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kpi-ticket">R$0</div><div class="kpi-sub" id="kpi-ticketsub">por pedido</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V4a1.2 1.2 0 0 1 1.2-1.2h8a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Entradas</div><div class="kpi-value" id="kpi-entradas">R$0</div><div class="kpi-sub">recebido no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
@@ -282,12 +304,12 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Margem</div><div class="kpi-value" id="kpi-margem">0%</div><div class="kpi-sub" id="kpi-margemsub">lucro ÷ faturamento</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></div></div>
       </div>
       <div class="charts-grid">
-        <div class="chart-card"><div class="chart-title">Evolução de Pedidos <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><canvas id="chart-vendas" height="180"></canvas></div>
+        <div class="chart-card" id="dash-chart-vendas"><div class="chart-title">Evolução de Pedidos <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><canvas id="chart-vendas" height="180"></canvas></div>
         <div class="chart-card"><div class="chart-title">Status dos Pedidos</div><canvas id="chart-status" height="180"></canvas></div>
       </div>
       <div class="bottom-grid">
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">⚠️ Estoque Crítico</div></div><table><thead><tr><th>Produto</th><th>Atual</th><th>Mínimo</th></tr></thead><tbody id="dash-estoque"></tbody></table></div>
-        <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Últimas Transações</div></div><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Valor</th></tr></thead><tbody id="dash-fin"></tbody></table></div>
+        <div class="table-wrapper" id="dash-transacoes"><div class="table-toolbar"><div class="table-toolbar-title">Últimas Transações</div></div><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Valor</th></tr></thead><tbody id="dash-fin"></tbody></table></div>
       </div>
     </div>
 
@@ -601,7 +623,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 
     <div class="section" id="section-pcp"><div class="pcp-stats" id="pcp-stats"></div><div class="kanban-board" id="pcp-kanban"></div></div>
 
-    <div class="section" id="section-usuarios"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Usuários do Sistema</div></div><table><thead><tr><th>Login</th><th>Nome</th><th>Perfil</th><th>Último acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-usuarios"></tbody></table></div></div>
+    <div class="section" id="section-usuarios"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Usuários do Sistema</div></div><table><thead><tr><th>Login</th><th>Nome</th><th>Nível de Acesso</th><th>Último acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-usuarios"></tbody></table></div><div class="table-wrapper" style="margin-top:14px"><div class="table-toolbar"><div class="table-toolbar-title">O que cada nível enxerga</div></div><div class="niveis-legenda" id="usr-legenda"></div></div></div>
     <div class="section" id="section-historico"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Histórico de Edições</div><button class="btn btn-danger btn-sm" onclick="clearHistorico()">🗑️ Limpar</button></div><table><thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Módulo</th><th>Detalhe</th></tr></thead><tbody id="tb-historico"></tbody></table></div></div>
 
     <div class="section" id="section-configuracoes">
@@ -742,7 +764,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 </div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option><option>Marketing</option><option>Vendas</option><option>Pedidos</option><option>Folha de Pagamento</option><option>Administrativo</option><option>Manutenção</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-fornecedores"><div class="modal"><div class="modal-header"><div class="modal-title" id="mfor-title">Novo Fornecedor</div><button class="modal-close" onclick="closeModal('modal-fornecedores')">✕</button></div><div class="modal-body"><input type="hidden" id="for-id"><div class="form-grid"><div class="form-group"><label class="form-label">Razão Social *</label><input type="text" class="form-control" id="for-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CNPJ</label><input type="text" class="form-control" id="for-cnpj"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="for-tel"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="for-email"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="for-cidade"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="for-status"><option>Ativo</option><option>Inativo</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-fornecedores')">Cancelar</button><button class="btn btn-primary" onclick="saveFornecedor()">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-usuarios"><div class="modal"><div class="modal-header"><div class="modal-title" id="mu-title">Novo Usuário</div><button class="modal-close" onclick="closeModal('modal-usuarios')">✕</button></div><div class="modal-body"><input type="hidden" id="usr-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="usr-nome"></div><div class="form-group"><label class="form-label">Login *</label><input type="text" class="form-control" id="usr-login"></div></div><div class="form-group"><label class="form-label">Senha *</label><input type="password" class="form-control" id="usr-senha" placeholder="Mínimo 6 caracteres"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Perfil</label><select class="form-control" id="usr-perfil"><option value="Admin">Admin</option><option value="Operador">Operador</option><option value="Visualizador">Visualizador</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="usr-status"><option>Ativo</option><option>Inativo</option></select></div></div>
+<div class="modal-overlay" id="modal-usuarios"><div class="modal"><div class="modal-header"><div class="modal-title" id="mu-title">Novo Usuário</div><button class="modal-close" onclick="closeModal('modal-usuarios')">✕</button></div><div class="modal-body"><input type="hidden" id="usr-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="usr-nome"></div><div class="form-group"><label class="form-label">Login *</label><input type="text" class="form-control" id="usr-login"></div></div><div class="form-group"><label class="form-label">Senha *</label><input type="password" class="form-control" id="usr-senha" placeholder="Mínimo 6 caracteres"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nível de Acesso</label><select class="form-control" id="usr-nivel" onchange="atualizarHintNivel()"></select><div id="usr-nivel-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.45"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="usr-status"><option>Ativo</option><option>Inativo</option></select></div></div>
 <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:2px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">🔐 Recuperação de senha (opcional, mas recomendado)</div><div class="form-grid">
 <div class="form-group"><label class="form-label">Pergunta de segurança</label><input type="text" class="form-control" id="usr-pergunta" list="perguntas-sugeridas" placeholder="Ex: Nome do primeiro cliente da Mabe?"><datalist id="perguntas-sugeridas"><option value="Nome da sua mãe?"><option value="Nome do primeiro cliente da Mabe?"><option value="Cidade onde você nasceu?"><option value="Nome do seu primeiro animal de estimação?"><option value="Modelo do seu primeiro carro?"></datalist></div>
 <div class="form-group"><label class="form-label">Resposta</label><input type="text" class="form-control" id="usr-resposta" placeholder="Resposta (não diferencia maiúsculas)"></div>
@@ -835,12 +857,14 @@ document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click
 const DKEY='erp_mabe_db_v2', SKEY='erp_mabe_session', LASTSEC_KEY='erp_mabe_last_section';
 let DB=null, USER=null;
 function defaultDB(){return{
- usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Admin',status:'Ativo',ultimo:''}],
+ usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Administrador',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
  config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',telefone:'',email:'',site:''}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
+ /* converte os perfis antigos (Admin/Operador/Visualizador) para os níveis novos */
+ DB.usuarios.forEach(u=>{if(!NIVEIS[u.perfil])u.perfil=NIVEL_LEGADO[u.perfil]||NIVEL_PADRAO;});
  for(const k in d)if(DB[k]===undefined)DB[k]=d[k];
  if(!DB.config.cf)DB.config.cf=d.config.cf; if(!DB.seq)DB.seq=d.seq;
  for(const k in d.config.cf)if(DB.config.cf[k]===undefined)DB.config.cf[k]=d.config.cf[k];
@@ -907,9 +931,41 @@ function carregarDaPlanilha(silencioso){
 function buscarAtualizacoesManual(){if(!DB.config.sheetsUrl){toast('Configure a URL do Apps Script primeiro.','error');return;}
  if(!confirm('Isso vai substituir os dados locais pelos dados atuais da planilha. Alterações feitas aqui que ainda não foram sincronizadas podem ser perdidas. Continuar?'))return;
  toast('Buscando atualizações da planilha…','info');carregarDaPlanilha(false);}
-const canEdit=()=>USER&&USER.perfil!=='Visualizador';
-const isAdmin=()=>USER&&USER.perfil==='Admin';
-function guard(){if(!canEdit()){toast('Perfil Visualizador: sem permissão para editar.','error');return false;}return true;}
+/* ================= NÍVEIS DE ACESSO =================
+   secoes:null = todas. valores:false = não enxerga nada em R$.
+   Usuários e Configurações são exclusivos do Administrador. */
+const NIVEIS={
+ 'Administrador':{desc:'Acesso total, incluindo Usuários, Configurações e Folha de Pagamento.',edita:true,valores:true,secoes:null},
+ 'Financeiro':{desc:'Tudo, exceto Usuários e Configurações — não altera custos padrão nem a folha.',edita:true,valores:true,secoes:['dashboard','calendario','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','centrocustos','relatorios','compras','fornecedores','clientes','historico']},
+ 'Produção':{desc:'Calendário, PCP, Máquinas, Estoque, Pedidos e Clientes. Não vê Financeiro, Orçamentos, custos nem valores em R$.',edita:true,valores:false,secoes:['dashboard','calendario','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']},
+ 'Consulta':{desc:'Mesmas telas do nível Produção, somente leitura.',edita:false,valores:false,secoes:['dashboard','calendario','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']}
+};
+const NIVEL_PADRAO='Consulta';
+/* perfis antigos (Admin/Operador/Visualizador) convertidos na carga do banco */
+const NIVEL_LEGADO={'Admin':'Administrador','Operador':'Financeiro','Visualizador':'Consulta'};
+const nivelDe=u=>{const n=u&&u.perfil;return NIVEIS[n]?n:(NIVEL_LEGADO[n]||NIVEL_PADRAO);};
+const nivelInfo=u=>NIVEIS[nivelDe(u)];
+const canEdit=()=>!!(USER&&nivelInfo(USER).edita);
+const isAdmin=()=>!!(USER&&nivelDe(USER)==='Administrador');
+const verValores=()=>!!(USER&&nivelInfo(USER).valores);
+function podeVer(sec){if(!USER)return false;
+ if(sec==='usuarios'||sec==='configuracoes')return isAdmin();
+ const sc=nivelInfo(USER).secoes;return sc===null||sc.includes(sec);}
+function guard(){if(!canEdit()){toast('Nível '+nivelDe(USER)+': sem permissão para editar.','error');return false;}return true;}
+/* telas e modais que expõem preço/custo: bloqueados para os níveis sem acesso a valores */
+function guardValores(){if(!verValores()){toast('Nível '+nivelDe(USER)+': sem acesso a valores em R$.','error');return false;}return true;}
+/* esconde da sidebar o que o nível não alcança e some com os grupos que ficaram vazios */
+function aplicarPermissoes(){
+ document.body.classList.toggle('sem-valores',!verValores());
+ const filhos=[...document.querySelectorAll('#sidebar .nav-item, #sidebar .nav-label')];
+ let grupo=null,visiveis=0;
+ const fechar=()=>{if(grupo)grupo.style.display=visiveis?'':'none';};
+ filhos.forEach(el=>{
+  if(el.classList.contains('nav-label')){fechar();grupo=el;visiveis=0;return;}
+  const m=(el.getAttribute('onclick')||'').match(/navigate\('([a-z]+)'\)/);
+  const ok=!m||podeVer(m[1]);
+  el.style.display=ok?'':'none';if(ok)visiveis++;});
+ fechar();}
 const cliName=id=>{const c=DB.clientes.find(x=>x.id===id);return c?c.nome:'—';};
 const fornName=id=>{const f=DB.fornecedores.find(x=>x.id===id);return f?f.nome:'—';};
 function fillSel(id,arr,labelFn,cur,blank){const s=$(id);s.innerHTML=(blank!==undefined?'<option value="">'+blank+'</option>':'')+arr.map(x=>'<option value="'+x.id+'"'+(x.id===cur?' selected':'')+'>'+esc(labelFn(x))+'</option>').join('');}
@@ -923,11 +979,12 @@ function doLogin(){const l=$('login-user').value.trim(),p=$('login-pass').value;
 function doLogout(){localStorage.removeItem(SKEY);location.reload();}
 function secaoInicial(){let sec=null;try{sec=localStorage.getItem(LASTSEC_KEY);}catch(e){}
  if(!sec||!TITLES[sec])return 'dashboard';
- if(sec==='usuarios'&&!isAdmin())return 'dashboard';
+ if(!podeVer(sec))return 'dashboard';
  return sec;}
 function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
  $('sidebar-avatar').textContent=ini;$('sidebar-username').textContent=USER.nome;$('sidebar-role').textContent=USER.perfil;
- $('nav-usuarios').style.display=isAdmin()?'flex':'none';
+ $('sidebar-role').textContent=nivelDe(USER);
+ aplicarPermissoes();
  navigate(secaoInicial());updateBadges();
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
  if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
@@ -952,7 +1009,9 @@ const BTN_NEW_LABELS={orcamentos:'Novo Orçamento'};
 let CUR='dashboard';
 function toggleSidebar(){$('sidebar').classList.toggle('open');}
 function closeSidebar(){$('sidebar').classList.remove('open');}
-function navigate(sec){CUR=sec;
+function navigate(sec){
+ if(!podeVer(sec)){toast('Seu nível de acesso ('+nivelDe(USER)+') não inclui esta seção.','error');if(sec!=='dashboard')navigate('dashboard');return;}
+ CUR=sec;
  try{localStorage.setItem(LASTSEC_KEY,sec);}catch(e){}
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
  const el=$('section-'+sec); if(el)el.classList.add('active');
@@ -1150,7 +1209,7 @@ function renderDashboard(){
 function saldoFin(){return DB.financeiro.filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
 
 /* ================= RELATÓRIO DASHBOARD EM PDF ================= */
-function gerarPdfDashboard(){
+function gerarPdfDashboard(){if(!guardValores())return;
  if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
@@ -1334,9 +1393,9 @@ function resolverMaterialEstoque(ref){if(!ref)return null;const tipo=ref.slice(0
  if(tipo==='m'){const m=DB.madeiras.find(x=>x.id===mid);if(!m)return null;return{nome:m.especie+(m.tipo?' '+m.tipo:''),estoque:madM3(m),un:'m³'};}
  if(tipo==='p'){const pr=DB.produtos.find(x=>x.id===mid);if(!pr)return null;return{nome:pr.nome,estoque:Number(pr.est||0),un:pr.un||'un'};}
  return null;}
-function openProduto(tipoPadrao){PRODUTO_RAPIDO_ORC=false;['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-tempo').value='';$('prod-un').value='un';$('prod-tipo').value=tipoPadrao||'Portfólio';$('mp-title').textContent='Novo '+(tipoPadrao==='Insumo'?'Material/Insumo':'Produto');
+function openProduto(tipoPadrao){if(!guardValores())return;PRODUTO_RAPIDO_ORC=false;['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-tempo').value='';$('prod-un').value='un';$('prod-tipo').value=tipoPadrao||'Portfólio';$('mp-title').textContent='Novo '+(tipoPadrao==='Insumo'?'Material/Insumo':'Produto');
  PROD_MATERIAIS=[];renderProdMateriais();toggleProdMateriaisVisibility();openModal('modal-produtos');}
-function editProduto(id){if(!guard())return;const p=DB.produtos.find(x=>x.id===id);if(!p)return;
+function editProduto(id){if(!guard()||!guardValores())return;const p=DB.produtos.find(x=>x.id===id);if(!p)return;
  $('prod-id').value=p.id;$('prod-nome').value=p.nome;$('prod-tipo').value=p.tipo||'Portfólio';$('prod-cat').value=p.cat||'';$('prod-un').value=p.un||'un';$('prod-preco').value=p.preco;$('prod-custo').value=p.custo;$('prod-est').value=p.est;$('prod-min').value=p.min;$('prod-tempo').value=(DB.config.temposProducao||{})[p.id]||'';$('mp-title').textContent='Editar '+(p.tipo==='Insumo'?'Material/Insumo':'Produto');
  PROD_MATERIAIS=(p.materiais||[]).slice();renderProdMateriais();toggleProdMateriaisVisibility();openModal('modal-produtos');}
 async function saveProduto(){if(!guard())return;const nome=$('prod-nome').value.trim();if(!nome){toast('Informe o nome do produto.','error');return;}
@@ -1355,7 +1414,7 @@ async function saveProduto(){if(!guard())return;const nome=$('prod-nome').value.
  atualizarDatalistMateriais();
  if(PRODUTO_RAPIDO_ORC){PRODUTO_RAPIDO_ORC=false;addMaterial('catalogo',{ref:'p:'+registro.id,desc:registro.nome,qty:1,custo:registro.custo});}
  closeModal('modal-produtos');toast((o.tipo==='Insumo'?'Material/Insumo':'Produto')+' salvo!','success');}
-async function delProduto(id){if(!guard())return;const p=DB.produtos.find(x=>x.id===id);if(!confirm('Excluir "'+p.nome+'"?'))return;
+async function delProduto(id){if(!guard()||!guardValores())return;const p=DB.produtos.find(x=>x.id===id);if(!confirm('Excluir "'+p.nome+'"?'))return;
  const {error}=await supa.from('produtos').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.produtos=DB.produtos.filter(x=>x.id!==id);
@@ -1431,14 +1490,14 @@ function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const itens=v.itens||[];
  const expandido=VND_EXPANDIDOS.has(v.id);
  const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(expandido?'Recolher itens':'Ver itens do pedido')+'" onclick="event.stopPropagation();toggleItensVenda(\''+v.id+'\')">'+(expandido?'▾':'▸')+'</button>':'<span style="display:inline-block;width:29px"></span>';
- const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+(canEdit()?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button><button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
+ const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+(verValores()?'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button>':'')+'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
  let linhasItens='';
  if(expandido&&itens.length){
-  linhasItens=itens.map(it=>'<tr style="background:var(--surface2)"><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
+  linhasItens=itens.map(it=>'<tr class="venda-item-row" style="background:var(--surface2)"><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
  }
  return linhaHeader+linhasItens;}).join('')||emptyRow(9,'Nenhum pedido no período selecionado');}
 function abrirInfoNotaFiscal(id){openModal('modal-nfe-info');}
-function gerarReciboVenda(id){const v=DB.vendas.find(x=>x.id===id);if(!v)return;
+function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
@@ -1513,11 +1572,11 @@ function addItemVenda(it){const wrap=$('vnd-itens');const row=document.createEle
  wrap.appendChild(row);calcVenda();}
 function viProd(sel){const opt=sel.selectedOptions[0];const row=sel.parentElement;row.querySelector('.vi-preco').value=opt?opt.dataset.preco||0:0;calcVenda();}
 function calcVenda(){let t=0;document.querySelectorAll('#vnd-itens > div').forEach(r=>{const s=(parseFloat(r.querySelector('.vi-qty').value)||0)*(parseFloat(r.querySelector('.vi-preco').value)||0);r.querySelector('.vi-sub').textContent=fmt(s);t+=s;});$('vnd-total').textContent=fmt(t);return t;}
-function openVenda(){$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-pag').value='PIX';$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';openModal('modal-vendas');}
-function editVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
+function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-pag').value='PIX';$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';openModal('modal-vendas');}
+function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-pag').value=v.pag;$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';
  $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemVenda(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);openModal('modal-vendas');}
-function addItemVendaLista(id){editVenda(id);addItemVenda();}
+function addItemVendaLista(id){if(!guardValores())return;editVenda(id);addItemVenda();}
 async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(!cliId){toast('Selecione o cliente.','error');return;}
  const itens=[];document.querySelectorAll('#vnd-itens > div').forEach(r=>{const pid=r.querySelector('.vi-prod').value;const qty=parseFloat(r.querySelector('.vi-qty').value)||0;const preco=parseFloat(r.querySelector('.vi-preco').value)||0;
   if(pid&&qty>0){const p=DB.produtos.find(x=>x.id===pid);itens.push({prodId:pid,desc:p?p.nome:'',qty,preco});}});
@@ -1550,7 +1609,7 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
   closeModal('modal-vendas');toast('Pedido salvo!'+(opCriada?' Estoque, financeiro e produção (PCP) atualizados.':' Estoque e financeiro atualizados.'),'success');return;
  }
  closeModal('modal-vendas');toast('Pedido atualizado!','success');}
-async function delVenda(id){if(!guard())return;const v=DB.vendas.find(x=>x.id===id);if(!confirm('Excluir pedido V-'+pad(v.num)+'?'))return;
+async function delVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!confirm('Excluir pedido V-'+pad(v.num)+'?'))return;
  if(v.baixa)for(const it of (v.itens||[])){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Number(p.est)+it.qty;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
  const {error}=await supa.from('vendas').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
@@ -2642,12 +2701,35 @@ function gerarPdfRelatorio(){
  toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
 
 /* ================= USUÁRIOS ================= */
-function renderUsuarios(){$('tb-usuarios').innerHTML=DB.usuarios.map(u=>{const chip={'Admin':'chip-admin','Operador':'chip-operador','Visualizador':'chip-visualizador'}[u.perfil];
- return '<tr><td class="mono">'+esc(u.login)+'</td><td><strong>'+esc(u.nome)+'</strong></td><td><span class="'+chip+'">'+u.perfil+'</span></td><td class="mono" style="font-size:11px">'+esc(u.ultimo||'—')+'</td><td><span class="badge '+(u.status==='Ativo'?'badge-success':'badge-muted')+'">'+u.status+'</span></td><td>'+(isAdmin()?actionBtns("editUsuario('"+u.id+"')","delUsuario('"+u.id+"')"):'')+'</td></tr>';}).join('');}
+function opcoesNivel(sel){return Object.keys(NIVEIS).map(n=>'<option value="'+n+'"'+(n===sel?' selected':'')+'>'+n+'</option>').join('');}
+function atualizarHintNivel(){const n=$('usr-nivel').value;$('usr-nivel-hint').textContent=(NIVEIS[n]||{}).desc||'';}
+function renderUsuarios(){
+ $('tb-usuarios').innerHTML=DB.usuarios.map(u=>{const nv=nivelDe(u);
+  const sel='<select class="nivel-sel" data-nivel="'+nv+'" title="'+esc(NIVEIS[nv].desc)+'"'+(isAdmin()?'':' disabled')+' onchange="setNivelUsuario(\''+u.id+'\',this.value)">'+opcoesNivel(nv)+'</select>';
+  return '<tr><td class="mono">'+esc(u.login)+'</td><td><strong>'+esc(u.nome)+'</strong></td><td>'+sel+'</td><td class="mono" style="font-size:11px">'+esc(u.ultimo||'—')+'</td><td><span class="badge '+(u.status==='Ativo'?'badge-success':'badge-muted')+'">'+u.status+'</span></td><td>'+(isAdmin()?actionBtns("editUsuario('"+u.id+"')","delUsuario('"+u.id+"')"):'')+'</td></tr>';}).join('');
+ const lg=$('usr-legenda');
+ if(lg)lg.innerHTML=Object.entries(NIVEIS).map(([n,i])=>'<div><strong>'+n+'</strong><span>'+esc(i.desc)+'</span></div>').join('');}
+/* troca o nível direto na tabela, sem abrir o modal */
+function setNivelUsuario(id,nivel){
+ if(!isAdmin()){toast('Apenas o Administrador altera níveis de acesso.','error');renderUsuarios();return;}
+ const u=DB.usuarios.find(x=>x.id===id);if(!u||!NIVEIS[nivel])return;
+ const antes=nivelDe(u);
+ if(antes===nivel)return;
+ const admins=DB.usuarios.filter(x=>nivelDe(x)==='Administrador'&&x.status==='Ativo');
+ if(antes==='Administrador'&&admins.length===1&&nivel!=='Administrador'){toast('Não é possível rebaixar o último administrador.','error');renderUsuarios();return;}
+ if(u.id===USER.id&&nivel!=='Administrador'&&!confirm('Você está mudando o seu próprio nível para '+nivel+'. Vai perder o acesso a Usuários e Configurações. Continuar?')){renderUsuarios();return;}
+ u.perfil=nivel;commit('editar','Usuários',u.login+' — nível '+antes+' -> '+nivel);
+ toast('Nível de '+u.nome+' alterado para '+nivel+'.','success');
+ renderUsuarios();
+ if(u.id===USER.id){USER.perfil=nivel;$('sidebar-role').textContent=nivel;aplicarPermissoes();}}
 function openUsuario(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
- ['usr-id','usr-nome','usr-login','usr-senha','usr-pergunta','usr-resposta'].forEach(i=>$(i).value='');$('usr-senha').placeholder='Mínimo 6 caracteres';$('usr-perfil').value='Operador';$('usr-status').value='Ativo';$('mu-title').textContent='Novo Usuário';openModal('modal-usuarios');}
+ ['usr-id','usr-nome','usr-login','usr-senha','usr-pergunta','usr-resposta'].forEach(i=>$(i).value='');$('usr-senha').placeholder='Mínimo 6 caracteres';
+ $('usr-nivel').innerHTML=opcoesNivel(NIVEL_PADRAO);atualizarHintNivel();
+ $('usr-status').value='Ativo';$('mu-title').textContent='Novo Usuário';openModal('modal-usuarios');}
 function editUsuario(id){if(!isAdmin())return;const u=DB.usuarios.find(x=>x.id===id);if(!u)return;
- $('usr-id').value=u.id;$('usr-nome').value=u.nome;$('usr-login').value=u.login;$('usr-senha').value='';$('usr-senha').placeholder='Deixe vazio para manter';$('usr-perfil').value=u.perfil;$('usr-status').value=u.status;
+ $('usr-id').value=u.id;$('usr-nome').value=u.nome;$('usr-login').value=u.login;$('usr-senha').value='';$('usr-senha').placeholder='Deixe vazio para manter';
+ $('usr-nivel').innerHTML=opcoesNivel(nivelDe(u));atualizarHintNivel();
+ $('usr-status').value=u.status;
  $('usr-pergunta').value=u.pergunta||'';$('usr-resposta').value=u.resposta||'';
  $('mu-title').textContent='Editar Usuário';openModal('modal-usuarios');}
 function saveUsuario(){if(!isAdmin())return;const nome=$('usr-nome').value.trim(),login=$('usr-login').value.trim(),senha=$('usr-senha').value;
@@ -2658,11 +2740,13 @@ function saveUsuario(){if(!isAdmin())return;const nome=$('usr-nome').value.trim(
  if((pergunta&&!resposta)||(!pergunta&&resposta)){toast('Preencha a pergunta e a resposta juntas, ou deixe as duas vazias.','error');return;}
  if(DB.usuarios.some(u=>u.login===login&&u.id!==id)){toast('Login já existe.','error');return;}
  if(id){const u=DB.usuarios.find(x=>x.id===id);
-  const admins=DB.usuarios.filter(x=>x.perfil==='Admin'&&x.status==='Ativo');
-  if(u.perfil==='Admin'&&admins.length===1&&($('usr-perfil').value!=='Admin'||$('usr-status').value!=='Ativo')){toast('Não é possível remover o último administrador.','error');return;}
-  u.nome=nome;u.login=login;if(senha)u.senha=senha;u.perfil=$('usr-perfil').value;u.status=$('usr-status').value;u.pergunta=pergunta;u.resposta=resposta;
+  const admins=DB.usuarios.filter(x=>nivelDe(x)==='Administrador'&&x.status==='Ativo');
+  if(nivelDe(u)==='Administrador'&&admins.length===1&&($('usr-nivel').value!=='Administrador'||$('usr-status').value!=='Ativo')){toast('Não é possível remover o último administrador.','error');return;}
+  const nivelAntes=nivelDe(u);
+  u.nome=nome;u.login=login;if(senha)u.senha=senha;u.perfil=$('usr-nivel').value;u.status=$('usr-status').value;u.pergunta=pergunta;u.resposta=resposta;
+  if(u.id===USER.id&&u.perfil!==nivelAntes){USER.perfil=u.perfil;$('sidebar-role').textContent=u.perfil;aplicarPermissoes();}
   commit('editar','Usuários',login);}
- else{DB.usuarios.push({id:uid(),login,senha,nome,perfil:$('usr-perfil').value,status:$('usr-status').value,ultimo:'',pergunta,resposta});commit('criar','Usuários',login);}
+ else{DB.usuarios.push({id:uid(),login,senha,nome,perfil:$('usr-nivel').value,status:$('usr-status').value,ultimo:'',pergunta,resposta});commit('criar','Usuários',login);}
  closeModal('modal-usuarios');toast('Usuário salvo!','success');}
 
 /* ================= RECUPERAÇÃO DE SENHA ================= */
@@ -2811,7 +2895,7 @@ async function carregarConfigSupabase(){
  if(CUR==='configuracoes')renderConfig();}
 function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  const backup=Object.assign({},DB,{
-  usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,perfil:u.perfil,status:u.status,ultimo:u.ultimo})),
+  usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,nivelAcesso:nivelDe(u),status:u.status,ultimo:u.ultimo})),
   geradoEm:new Date().toISOString()
  });
  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
@@ -3041,7 +3125,7 @@ function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error
 
  criarAba('Usuários','USUÁRIOS DO SISTEMA',[
   {t:'Login',w:20,v:u=>txt(u.login)},{t:'Nome',w:28,v:u=>txt(u.nome)},
-  {t:'Perfil',w:16,v:u=>txt(u.perfil)},{t:'Status',w:12,v:u=>txt(u.status)},
+  {t:'Nível de Acesso',w:20,v:u=>txt(nivelDe(u))},{t:'Status',w:12,v:u=>txt(u.status)},
   {t:'Último acesso',w:22,v:u=>txt(u.ultimo)}],DB.usuarios);
 
  criarAba('Folha de Pagamento','FOLHA DE PAGAMENTO',[
@@ -3279,8 +3363,8 @@ function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.'
 
  /* ---- Usuários ---- */
  secao('Usuários do Sistema',DB.usuarios.length);
- tabela(['Login','Nome','Perfil','Status','Último acesso'],
-  DB.usuarios.map(u=>[t(u.login),t(u.nome),t(u.perfil),t(u.status),t(u.ultimo)]),
+ tabela(['Login','Nome','Nível de Acesso','Status','Último acesso'],
+  DB.usuarios.map(u=>[t(u.login),t(u.nome),t(nivelDe(u)),t(u.status),t(u.ultimo)]),
   {0:{cellWidth:28,fontStyle:'bold'},1:{cellWidth:44},2:{cellWidth:24},3:{cellWidth:20},4:{cellWidth:40}});
 
  /* ---- Configurações ---- */
