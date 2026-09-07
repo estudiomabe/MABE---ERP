@@ -634,6 +634,12 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
           <button class="btn btn-primary" onclick="saveCFConfig()">💾 Salvar Configurações de Custo</button>
         </div>
         <div class="config-card">
+          <div class="config-title">👥 Folha de Pagamento</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Cadastre os colaboradores e o salário mensal de cada um.</div>
+          <div id="cfg-folha" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="addColaboradorFolha()">+ Adicionar Colaborador</button><button class="btn btn-primary btn-sm" onclick="saveFolhaPagamento()">💾 Salvar Folha de Pagamento</button><span id="cfg-folha-total" style="margin-left:auto;font-size:12px;font-weight:700"></span></div>
+        </div>
+        <div class="config-card">
           <div class="config-title">👷 Tipos de Mão de Obra</div>
           <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Cadastre os tipos de mão de obra e o valor por hora de cada um. Eles aparecem como lista suspensa na hora de orçar.</div>
           <div id="cfg-mdo-tipos" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
@@ -828,7 +834,7 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Admin',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},empresa:{endereco:'',telefone:'',email:'',site:''}},
+ config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',telefone:'',email:'',site:''}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
@@ -838,6 +844,7 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];
  if(!DB.config.custosFixosExtras)DB.config.custosFixosExtras=[];
  if(!DB.config.temposProducao)DB.config.temposProducao={};
+ if(!DB.config.folhaPagamento)DB.config.folhaPagamento=[];
  if(!DB.config.empresa)DB.config.empresa={endereco:'',telefone:'',email:'',site:''};}
 function saveDB(){localStorage.setItem(DKEY,JSON.stringify(DB));}
 function log(acao,modulo,detalhe){const h={id:uid(),dt:new Date().toLocaleString('pt-BR'),user:USER?USER.nome:'—',usuario:USER?USER.nome:'—',login:USER?USER.login:'',acao,modulo,detalhe};DB.historico.unshift(h);if(DB.historico.length>400)DB.historico.length=400;syncSheets('historico','upsert',h);
@@ -2680,6 +2687,7 @@ function renderConfig(){$('sheets-url').value=DB.config.sheetsUrl||'';const cf=D
  $('cfg-pix-ant').value=cf.pixAntecipado;
  for(let n=1;n<=10;n++)$('cfg-taxa-p'+n).value=cf['taxaParc'+n];
  renderCustosFixosExtrasConfig();
+ renderFolhaConfig();
  renderMdoTiposConfig();
  const emp=DB.config.empresa||{};$('cfg-emp-endereco').value=emp.endereco||'';$('cfg-emp-telefone').value=emp.telefone||'';$('cfg-emp-email').value=emp.email||'';$('cfg-emp-site').value=emp.site||'';}
 async function saveEmpresaInfo(){if(!guard())return;
@@ -2695,6 +2703,29 @@ function saveConfig(){DB.config.sheetsUrl=$('sheets-url').value.trim();saveDB();
  pingSheets().then(r=>{if(r&&r.ok){st.textContent='✅ Conectado à planilha "'+(r.planilha||'')+'"!';st.style.color='var(--success)';}
   else{st.textContent='⚠️ URL respondeu, mas não reconheceu o formato esperado.';st.style.color='var(--warning)';}})
  .catch(()=>{st.textContent='❌ Não foi possível conectar. Confira a URL e a implantação do Apps Script.';st.style.color='var(--danger)';});}
+function renderFolhaConfig(){$('cfg-folha').innerHTML='';(DB.config.folhaPagamento||[]).forEach(c=>addColaboradorFolha(c));atualizarTotalFolha();}
+function addColaboradorFolha(c){const wrap=$('cfg-folha');const row=document.createElement('div');
+ row.dataset.id=c?c.id:uid();
+ row.style.cssText='display:grid;grid-template-columns:2fr 150px 28px;gap:8px;align-items:center';
+ row.innerHTML='<input type="text" class="form-control fp-nome" placeholder="Nome do colaborador" value="'+esc(c?c.nome:'')+'"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control fp-salario" step="0.01" min="0" placeholder="Salário" value="'+(c?c.salario:0)+'" oninput="atualizarTotalFolha()" style="border:none;background:transparent;padding-left:2px"></div><button class="btn btn-danger btn-sm" title="Remover colaborador" onclick="this.parentElement.remove();atualizarTotalFolha()">✕</button>';
+ wrap.appendChild(row);atualizarTotalFolha();}
+function totalFolha(){let t=0;document.querySelectorAll('#cfg-folha > div').forEach(r=>{t+=parseFloat(r.querySelector('.fp-salario').value)||0;});return t;}
+function atualizarTotalFolha(){const el=$('cfg-folha-total');if(!el)return;
+ const n=document.querySelectorAll('#cfg-folha > div').length;
+ el.textContent=n?('Total da folha: '+fmt(totalFolha())+' · '+n+(n===1?' colaborador':' colaboradores')):'';}
+async function saveFolhaPagamento(){if(!guard())return;
+ const lista=[];let temVazio=false;
+ document.querySelectorAll('#cfg-folha > div').forEach(r=>{const nome=r.querySelector('.fp-nome').value.trim();
+  const salario=parseFloat(r.querySelector('.fp-salario').value)||0;
+  if(!nome){temVazio=true;return;}
+  lista.push({id:r.dataset.id,nome,salario});});
+ if(temVazio){toast('Remova ou preencha as linhas sem nome do colaborador.','error');return;}
+ DB.config.folhaPagamento=lista;saveDB();log('editar','Configurações','Folha de pagamento atualizada');saveDB();
+ const {error}=await supa.from('config').upsert({campo:'folhaPagamento',valor:JSON.stringify(lista)});
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ syncSheets('config','upsert',{campo:'folhaPagamento',valor:JSON.stringify(lista)});
+ atualizarTotalFolha();
+ toast('Folha de pagamento salva!','success');}
 function renderCustosFixosExtrasConfig(){$('cfg-custos-extras').innerHTML='';(DB.config.custosFixosExtras||[]).forEach(c=>addCustoFixoExtraConfig(c));}
 function addCustoFixoExtraConfig(c){const wrap=$('cfg-custos-extras');const row=document.createElement('div');
  row.dataset.id=c?c.id:uid();
@@ -2750,6 +2781,7 @@ async function carregarConfigSupabase(){
   if(campo==='mdoTipos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr)&&arr.length)DB.config.mdoTipos=arr;}catch(e){}}
   else if(campo==='custosFixosExtras'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.custosFixosExtras=arr;}catch(e){}}
   else if(campo==='temposProducao'){try{const obj=JSON.parse(valor);if(obj&&typeof obj==='object')DB.config.temposProducao=obj;}catch(e){}}
+  else if(campo==='folhaPagamento'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.folhaPagamento=arr;}catch(e){}}
   else if(campo==='empresaInfo'){try{const obj=JSON.parse(valor);if(obj&&typeof obj==='object')DB.config.empresa=obj;}catch(e){}}
   else if(DB.config.cf[campo]!==undefined)DB.config.cf[campo]=Number(valor)||0;});
  saveDB();
@@ -2821,6 +2853,7 @@ function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error
    ['Insumos',DB.produtos.filter(p=>p.tipo==='Insumo').length],
    ['Madeiras',DB.madeiras.length],['Máquinas & Ferramentas',DB.ferramentas.length],
    ['Fornecedores',DB.fornecedores.length],['Ordens de Compra',DB.compras.length],
+   ['Folha de Pagamento',(DB.config.folhaPagamento||[]).length],
    ['Registros no Histórico',DB.historico.length]];
   const aoa=[['estúdio mabe.',''],['MARCENARIA · MADEIRA MACIÇA',''],['',''],['BACKUP COMPLETO EM PLANILHAS',''],
    ['Gerado em '+fmtD(today()),''],['',''],['Módulo','Registros']];
@@ -2988,6 +3021,10 @@ function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error
   {t:'Perfil',w:16,v:u=>txt(u.perfil)},{t:'Status',w:12,v:u=>txt(u.status)},
   {t:'Último acesso',w:22,v:u=>txt(u.ultimo)}],DB.usuarios);
 
+ criarAba('Folha de Pagamento','FOLHA DE PAGAMENTO',[
+  {t:'Colaborador',w:38,v:c=>txt(c.nome)},
+  {t:'Salário mensal',w:18,fmt:FMT_MOEDA,al:'right',v:c=>Number(c.salario)||0}],DB.config.folhaPagamento||[]);
+
  criarAba('Histórico','HISTÓRICO DE EDIÇÕES',[
   {t:'Data / Hora',w:20,v:h=>txt(h.dt)},{t:'Usuário',w:22,v:h=>txt(h.user||h.usuario)},
   {t:'Ação',w:14,v:h=>txt(h.acao)},{t:'Módulo',w:20,v:h=>txt(h.modulo)},
@@ -3008,8 +3045,15 @@ function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.'
  doc.addPage=function(...a){const r=origAdd(...a);fundo();return r;};
  fundo();
  /* ---- Helpers de texto ---- */
- const t=v=>(v===undefined||v===null||v==='')?'—':String(v);
- const listaItens=arr=>{const s=(arr||[]).map(i=>{const n=String(i.desc||'').trim();if(!n)return '';
+ /* jsPDF usa fontes Latin-1: setas e emojis corrompem a linha inteira (texto sai espacado) */
+ const limpar=s=>String(s===undefined||s===null?'':s)
+  .replace(/[←-⇿]/g,'->')
+  .replace(/[☀-➿]/g,'')
+  .replace(/[🀀-🫿]/gu,'')
+  .replace(/️/g,'')
+  .replace(/[ 	]{2,}/g,' ').trim();
+ const t=v=>{const s=limpar(v);return s===''?'—':s;};
+ const listaItens=arr=>{const s=(arr||[]).map(i=>{const n=limpar(i.desc);if(!n)return '';
    const q=Number(i.qty)||1;return (q>1?q+'x ':'')+n;}).filter(Boolean).join('; ');return s||'—';};
 
  /* ================= CAPA ================= */
@@ -3238,6 +3282,12 @@ function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.'
  tabela(['Tipo','Valor por hora'],
   (DB.config.mdoTipos||[]).map(m=>[t(m.nome),fmt(m.valorHora)]),
   {0:{cellWidth:80},1:{cellWidth:40,halign:'right'}});
+
+ subTitulo('Folha de pagamento');
+ const folha=DB.config.folhaPagamento||[];
+ const linhasFolha=folha.map(c=>[t(c.nome),fmt(c.salario)]);
+ if(folha.length)linhasFolha.push(['TOTAL',fmt(folha.reduce((s,c)=>s+(Number(c.salario)||0),0))]);
+ tabela(['Colaborador','Salário mensal'],linhasFolha,{0:{cellWidth:80},1:{cellWidth:40,halign:'right'}});
 
  subTitulo('Condições de pagamento');
  const cond=[['PIX — % antecipado',fmtN(cf.pixAntecipado,0)+'%']];
