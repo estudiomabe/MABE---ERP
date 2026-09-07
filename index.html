@@ -1014,6 +1014,11 @@ function matchPer(dateStr,p){if(p.modo==='tudo')return true;const s=String(dateS
  if(p.modo==='ano')return s.slice(0,4)===String(p.ano);
  return s.slice(0,7)===p.ano+'-'+String(p.mes+1).padStart(2,'0');}
 function inPer(dateStr){return matchPer(dateStr,PER);}
+function mesesNoPeriodo(p){if(p.modo==='mes')return 1;if(p.modo==='ano')return 12;
+ const todasDatas=[...DB.financeiro,...DB.vendas,...DB.orcamentos].map(x=>x.data).filter(Boolean).sort();
+ if(!todasDatas.length)return 1;
+ const d1=new Date(todasDatas[0]+'T12:00:00'),d2=new Date();
+ return Math.max(1,(d2.getFullYear()-d1.getFullYear())*12+(d2.getMonth()-d1.getMonth())+1);}
 function syncPerBar(pre,p){
  $(pre+'-mes-sel').innerHTML=MESES.map((m,i)=>'<option value="'+i+'"'+(i===p.mes?' selected':'')+'>'+m+'</option>').join('');
  $(pre+'-ano-sel').innerHTML=perYears().map(y=>'<option value="'+y+'"'+(y===p.ano?' selected':'')+'>'+y+'</option>').join('');
@@ -1087,9 +1092,10 @@ function renderDashboard(){
  $('kpi-rsub').textContent=resultado>=0?'faturamento no período':'déficit no período';
  const cfg=DB.config.cf;
  const custoFixoMensal=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
+ const custoFixoPeriodo=custoFixoMensal*mesesNoPeriodo(PER);
  const folhaPagamento=pagos.filter(f=>f.tipo==='Saída'&&f.centroCusto==='Folha de Pagamento').reduce((s,f)=>s+Number(f.val||0),0);
- $('kpi-despfixas').textContent=fmtK(custoFixoMensal+folhaPagamento);
- $('kpi-dfsub').textContent='custo fixo '+fmtK(custoFixoMensal)+' + folha '+fmtK(folhaPagamento);
+ $('kpi-despfixas').textContent=fmtK(custoFixoPeriodo+folhaPagamento);
+ $('kpi-dfsub').textContent='custo fixo '+fmtK(custoFixoPeriodo)+' + folha '+fmtK(folhaPagamento);
 
  const crit=DB.produtos.filter(p=>Number(p.est)<=Number(p.min));
  $('dash-estoque').innerHTML=crit.length?crit.slice(0,6).map(p=>'<tr><td>'+esc(p.nome)+'</td><td class="mono" style="color:var(--danger);font-weight:700">'+p.est+'</td><td class="mono">'+p.min+'</td></tr>').join(''):'<tr><td colspan="3" style="color:var(--text-muted)">Nenhum item crítico 👍</td></tr>';
@@ -1153,7 +1159,7 @@ function gerarPdfDashboard(){
  const saidas=pagos.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
  const resultado=entradas-saidas;
  const cfgDash=DB.config.cf;
- const custoFixoMensalDash=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfgDash[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
+ const custoFixoMensalDash=(['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfgDash[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0))*mesesNoPeriodo(PER);
  const folhaPagamentoDash=pagos.filter(f=>f.tipo==='Saída'&&f.centroCusto==='Folha de Pagamento').reduce((s,f)=>s+Number(f.val||0),0);
 
  doc.autoTable({startY:70,margin:{left:marginX,right:14},
