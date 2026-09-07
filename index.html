@@ -276,6 +276,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
         <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Entradas</div><div class="kpi-value" id="kpi-entradas">R$0</div><div class="kpi-sub">recebido no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Saídas</div><div class="kpi-value" id="kpi-saidas">R$0</div><div class="kpi-sub">pago no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Faturamento</div><div class="kpi-value" id="kpi-resultado">R$0</div><div class="kpi-sub" id="kpi-rsub">entradas − saídas</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--danger)"><div class="kpi-label">Despesas Fixas</div><div class="kpi-value" id="kpi-despfixas">R$0</div><div class="kpi-sub" id="kpi-dfsub">custo fixo + folha</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="7" y1="15" x2="13" y2="15"/></svg></div></div>
       </div>
       <div class="charts-grid">
         <div class="chart-card"><div class="chart-title">Evolução de Pedidos <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><canvas id="chart-vendas" height="180"></canvas></div>
@@ -1084,6 +1085,11 @@ function renderDashboard(){
  $('kpi-resultado').textContent=fmtK(resultado);
  $('kpi-resultado').style.color=resultado>=0?'var(--success)':'var(--danger)';
  $('kpi-rsub').textContent=resultado>=0?'faturamento no período':'déficit no período';
+ const cfg=DB.config.cf;
+ const custoFixoMensal=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
+ const folhaPagamento=pagos.filter(f=>f.tipo==='Saída'&&f.centroCusto==='Folha de Pagamento').reduce((s,f)=>s+Number(f.val||0),0);
+ $('kpi-despfixas').textContent=fmtK(custoFixoMensal+folhaPagamento);
+ $('kpi-dfsub').textContent='custo fixo '+fmtK(custoFixoMensal)+' + folha '+fmtK(folhaPagamento);
 
  const crit=DB.produtos.filter(p=>Number(p.est)<=Number(p.min));
  $('dash-estoque').innerHTML=crit.length?crit.slice(0,6).map(p=>'<tr><td>'+esc(p.nome)+'</td><td class="mono" style="color:var(--danger);font-weight:700">'+p.est+'</td><td class="mono">'+p.min+'</td></tr>').join(''):'<tr><td colspan="3" style="color:var(--text-muted)">Nenhum item crítico 👍</td></tr>';
@@ -1146,6 +1152,9 @@ function gerarPdfDashboard(){
  const entradas=pagos.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
  const saidas=pagos.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
  const resultado=entradas-saidas;
+ const cfgDash=DB.config.cf;
+ const custoFixoMensalDash=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfgDash[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
+ const folhaPagamentoDash=pagos.filter(f=>f.tipo==='Saída'&&f.centroCusto==='Folha de Pagamento').reduce((s,f)=>s+Number(f.val||0),0);
 
  doc.autoTable({startY:70,margin:{left:marginX,right:14},
   head:[['Indicador','Valor']],
@@ -1154,7 +1163,8 @@ function gerarPdfDashboard(){
    ['Pedidos do Período',fmt(vPer.reduce((s,v)=>s+Number(v.total||0),0))+'  ('+vPer.length+' pedido(s))'],
    ['Entradas',fmt(entradas)],
    ['Saídas',fmt(saidas)],
-   ['Faturamento',(resultado<0?'- ':'')+fmt(Math.abs(resultado))]
+   ['Faturamento',(resultado<0?'- ':'')+fmt(Math.abs(resultado))],
+   ['Despesas Fixas',fmt(custoFixoMensalDash+folhaPagamentoDash)]
   ],theme:'plain',
   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3,bottom:3,left:3,right:3}},
   bodyStyles:{fontSize:9,textColor:DARK,cellPadding:{top:3,bottom:3,left:3,right:3}},
