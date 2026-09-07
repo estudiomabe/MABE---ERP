@@ -623,7 +623,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 
     <div class="section" id="section-pcp"><div class="pcp-stats" id="pcp-stats"></div><div class="kanban-board" id="pcp-kanban"></div></div>
 
-    <div class="section" id="section-usuarios"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Usuários do Sistema</div></div><table><thead><tr><th>Login</th><th>Nome</th><th>Nível de Acesso</th><th>Último acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-usuarios"></tbody></table></div><div class="table-wrapper" style="margin-top:14px"><div class="table-toolbar"><div class="table-toolbar-title">O que cada nível enxerga</div></div><div class="niveis-legenda" id="usr-legenda"></div></div></div>
+    <div class="section" id="section-usuarios"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Usuários do Sistema</div></div><table><thead><tr><th>Login</th><th>Nome</th><th>Nível de Acesso</th><th title="Registrado por dispositivo: mostra o último acesso feito neste navegador">Último acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-usuarios"></tbody></table></div><div class="table-wrapper" style="margin-top:14px"><div class="table-toolbar"><div class="table-toolbar-title">O que cada nível enxerga</div></div><div class="niveis-legenda" id="usr-legenda"></div></div></div>
     <div class="section" id="section-historico"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Histórico de Edições</div><button class="btn btn-danger btn-sm" onclick="clearHistorico()">🗑️ Limpar</button></div><table><thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Módulo</th><th>Detalhe</th></tr></thead><tbody id="tb-historico"></tbody></table></div></div>
 
     <div class="section" id="section-configuracoes">
@@ -970,11 +970,65 @@ const cliName=id=>{const c=DB.clientes.find(x=>x.id===id);return c?c.nome:'—';
 const fornName=id=>{const f=DB.fornecedores.find(x=>x.id===id);return f?f.nome:'—';};
 function fillSel(id,arr,labelFn,cur,blank){const s=$(id);s.innerHTML=(blank!==undefined?'<option value="">'+blank+'</option>':'')+arr.map(x=>'<option value="'+x.id+'"'+(x.id===cur?' selected':'')+'>'+esc(labelFn(x))+'</option>').join('');}
 
+/* ================= SENHAS ==================
+   As senhas e as respostas de segurança nunca vão em texto puro para o
+   Supabase: guardamos sha256$<salt>$<hash>. O formato antigo (texto puro,
+   vindo do localStorage) continua sendo aceito no login e é convertido
+   para hash na primeira vez que a senha é gravada de novo. */
+const TEM_CRYPTO=!!(window.crypto&&window.crypto.subtle&&window.crypto.getRandomValues);
+function novoSalt(){const a=new Uint8Array(6);crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function sha256Hex(txt){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));
+ return [...new Uint8Array(buf)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function hashSegredo(txt,salt){if(!TEM_CRYPTO)return String(txt);
+ salt=salt||novoSalt();return 'sha256$'+salt+'$'+await sha256Hex(salt+'|'+txt);}
+async function confereSegredo(txt,guardado){if(guardado===undefined||guardado===null||guardado==='')return false;
+ const g=String(guardado);
+ if(g.indexOf('sha256$')===0){const partes=g.split('$');return (await hashSegredo(txt,partes[1]))===g;}
+ return g===String(txt);}
+const normResposta=r=>String(r===undefined||r===null?'':r).trim().toLowerCase();
+
+/* ================= USUÁRIOS NO SUPABASE =================
+   A coluna 'role' guarda o nível de acesso. 'ultimo' (último acesso) não
+   existe na tabela, então continua sendo por dispositivo, no localStorage. */
+const ULTKEY='mabe_ultimo_acesso';
+function ultimosLocais(){try{return JSON.parse(localStorage.getItem(ULTKEY)||'{}');}catch(e){return {};}}
+function marcarUltimoAcesso(id){const m=ultimosLocais();m[id]=new Date().toLocaleString('pt-BR');
+ try{localStorage.setItem(ULTKEY,JSON.stringify(m));}catch(e){}}
+function usuarioDoSupabase(r){const ult=ultimosLocais();
+ return {id:r.id,login:r.login,senha:r.senha,nome:r.nome,
+  perfil:NIVEIS[r.role]?r.role:(NIVEL_LEGADO[r.role]||NIVEL_PADRAO),
+  status:r.status||'Ativo',pergunta:r.pergunta||'',resposta:r.resposta||'',ultimo:ult[r.id]||''};}
+function usuarioParaSupabase(u){return {id:u.id,login:u.login,senha:u.senha,nome:u.nome,
+ role:nivelDe(u),status:u.status||'Ativo',pergunta:u.pergunta||null,resposta:u.resposta||null};}
+async function salvarUsuarioSupabase(u){const {error}=await supa.from('usuarios').upsert(usuarioParaSupabase(u));
+ if(error){toast('Erro ao salvar usuário no Supabase: '+error.message,'error');return false;}
+ return true;}
+/* primeira execução: a tabela está vazia e os usuários só existem neste navegador */
+async function migrarUsuariosParaSupabase(){
+ for(const u of DB.usuarios){
+  if(!String(u.senha||'').startsWith('sha256$'))u.senha=await hashSegredo(u.senha||'');
+  if(u.resposta&&!String(u.resposta).startsWith('sha256$'))u.resposta=await hashSegredo(normResposta(u.resposta));}
+ const {error}=await supa.from('usuarios').upsert(DB.usuarios.map(usuarioParaSupabase));
+ if(error){toast('Erro ao enviar usuários para o Supabase: '+error.message,'error');return false;}
+ saveDB();return true;}
+async function carregarUsuariosSupabase(silencioso){
+ const {data,error}=await supa.from('usuarios').select('*').order('nome');
+ if(error){if(!silencioso)toast('Erro ao carregar usuários do Supabase: '+error.message,'error');return false;}
+ if(!(data||[]).length){if(DB.usuarios.length)await migrarUsuariosParaSupabase();return true;}
+ DB.usuarios=data.map(usuarioDoSupabase);saveDB();
+ if(CUR==='usuarios')renderUsuarios();
+ return true;}
+
 /* ================= LOGIN ================= */
-function doLogin(){const l=$('login-user').value.trim(),p=$('login-pass').value;
- const u=DB.usuarios.find(x=>x.login===l&&x.senha===p&&x.status==='Ativo');
+async function doLogin(){const l=$('login-user').value.trim(),p=$('login-pass').value;
+ await carregarUsuariosSupabase(true);
+ const cand=DB.usuarios.filter(x=>x.login===l&&x.status==='Ativo');
+ let u=null;for(const c of cand){if(await confereSegredo(p,c.senha)){u=c;break;}}
  if(!u){$('login-err').classList.add('show');return;}
- $('login-err').classList.remove('show');USER=u;u.ultimo=new Date().toLocaleString('pt-BR');saveDB();
+ $('login-err').classList.remove('show');USER=u;
+ /* senha ainda em texto puro (base antiga): converte para hash agora */
+ if(!String(u.senha||'').startsWith('sha256$')){u.senha=await hashSegredo(p);await salvarUsuarioSupabase(u);}
+ marcarUltimoAcesso(u.id);u.ultimo=new Date().toLocaleString('pt-BR');saveDB();
  localStorage.setItem(SKEY,u.id);$('login-screen').classList.add('hidden');afterLogin();}
 function doLogout(){localStorage.removeItem(SKEY);location.reload();}
 function secaoInicial(){let sec=null;try{sec=localStorage.getItem(LASTSEC_KEY);}catch(e){}
@@ -1034,7 +1088,8 @@ function navigate(sec){
  if(sec==='compras')carregarComprasSupabase();
  if(sec==='financeiro'||sec==='centrocustos')carregarFinanceiroSupabase();
  if(sec==='configuracoes')carregarConfigSupabase();
- if(sec==='historico')carregarHistoricoSupabase();}
+ if(sec==='historico')carregarHistoricoSupabase();
+ if(sec==='usuarios')carregarUsuariosSupabase();}
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 function handleSearch(v){v=v.toLowerCase();
  document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(v)?'':'none';});
@@ -2710,7 +2765,7 @@ function renderUsuarios(){
  const lg=$('usr-legenda');
  if(lg)lg.innerHTML=Object.entries(NIVEIS).map(([n,i])=>'<div><strong>'+n+'</strong><span>'+esc(i.desc)+'</span></div>').join('');}
 /* troca o nível direto na tabela, sem abrir o modal */
-function setNivelUsuario(id,nivel){
+async function setNivelUsuario(id,nivel){
  if(!isAdmin()){toast('Apenas o Administrador altera níveis de acesso.','error');renderUsuarios();return;}
  const u=DB.usuarios.find(x=>x.id===id);if(!u||!NIVEIS[nivel])return;
  const antes=nivelDe(u);
@@ -2718,7 +2773,9 @@ function setNivelUsuario(id,nivel){
  const admins=DB.usuarios.filter(x=>nivelDe(x)==='Administrador'&&x.status==='Ativo');
  if(antes==='Administrador'&&admins.length===1&&nivel!=='Administrador'){toast('Não é possível rebaixar o último administrador.','error');renderUsuarios();return;}
  if(u.id===USER.id&&nivel!=='Administrador'&&!confirm('Você está mudando o seu próprio nível para '+nivel+'. Vai perder o acesso a Usuários e Configurações. Continuar?')){renderUsuarios();return;}
- u.perfil=nivel;commit('editar','Usuários',u.login+' — nível '+antes+' -> '+nivel);
+ u.perfil=nivel;
+ if(!await salvarUsuarioSupabase(u)){u.perfil=antes;renderUsuarios();return;}
+ commit('editar','Usuários',u.login+' — nível '+antes+' -> '+nivel);
  toast('Nível de '+u.nome+' alterado para '+nivel+'.','success');
  renderUsuarios();
  if(u.id===USER.id){USER.perfil=nivel;$('sidebar-role').textContent=nivel;aplicarPermissoes();}}
@@ -2732,7 +2789,7 @@ function editUsuario(id){if(!isAdmin())return;const u=DB.usuarios.find(x=>x.id==
  $('usr-status').value=u.status;
  $('usr-pergunta').value=u.pergunta||'';$('usr-resposta').value=u.resposta||'';
  $('mu-title').textContent='Editar Usuário';openModal('modal-usuarios');}
-function saveUsuario(){if(!isAdmin())return;const nome=$('usr-nome').value.trim(),login=$('usr-login').value.trim(),senha=$('usr-senha').value;
+async function saveUsuario(){if(!isAdmin())return;const nome=$('usr-nome').value.trim(),login=$('usr-login').value.trim(),senha=$('usr-senha').value;
  const pergunta=$('usr-pergunta').value.trim(),resposta=$('usr-resposta').value.trim();
  if(!nome||!login){toast('Informe nome e login.','error');return;}
  const id=$('usr-id').value;
@@ -2743,10 +2800,14 @@ function saveUsuario(){if(!isAdmin())return;const nome=$('usr-nome').value.trim(
   const admins=DB.usuarios.filter(x=>nivelDe(x)==='Administrador'&&x.status==='Ativo');
   if(nivelDe(u)==='Administrador'&&admins.length===1&&($('usr-nivel').value!=='Administrador'||$('usr-status').value!=='Ativo')){toast('Não é possível remover o último administrador.','error');return;}
   const nivelAntes=nivelDe(u);
-  u.nome=nome;u.login=login;if(senha)u.senha=senha;u.perfil=$('usr-nivel').value;u.status=$('usr-status').value;u.pergunta=pergunta;u.resposta=resposta;
+  u.nome=nome;u.login=login;if(senha)u.senha=await hashSegredo(senha);u.perfil=$('usr-nivel').value;u.status=$('usr-status').value;
+  u.pergunta=pergunta;u.resposta=resposta?await hashSegredo(normResposta(resposta)):'';
+  if(!await salvarUsuarioSupabase(u))return;
   if(u.id===USER.id&&u.perfil!==nivelAntes){USER.perfil=u.perfil;$('sidebar-role').textContent=u.perfil;aplicarPermissoes();}
   commit('editar','Usuários',login);}
- else{DB.usuarios.push({id:uid(),login,senha,nome,perfil:$('usr-nivel').value,status:$('usr-status').value,ultimo:'',pergunta,resposta});commit('criar','Usuários',login);}
+ else{const novo={id:uid(),login,senha:await hashSegredo(senha),nome,perfil:$('usr-nivel').value,status:$('usr-status').value,ultimo:'',pergunta,resposta:resposta?await hashSegredo(normResposta(resposta)):''};
+  if(!await salvarUsuarioSupabase(novo))return;
+  DB.usuarios.push(novo);commit('criar','Usuários',login);}
  closeModal('modal-usuarios');toast('Usuário salvo!','success');}
 
 /* ================= RECUPERAÇÃO DE SENHA ================= */
@@ -2764,21 +2825,25 @@ function recAvancarStep1(){const login=$('rec-login').value.trim();
  $('rec-step-1').style.display='none';$('rec-step-2').style.display='block';
  $('rec-btn-1').style.display='none';$('rec-btn-2').style.display='inline-flex';
  setTimeout(()=>$('rec-resposta').focus(),50);}
-function recAvancarStep2(){const u=DB.usuarios.find(x=>x.id===RECUSER);if(!u)return;
- const resp=$('rec-resposta').value.trim();
- if(resp.toLowerCase()!==String(u.resposta||'').trim().toLowerCase()){recErro('rec-err-2','Resposta incorreta. Tente novamente.');return;}
+async function recAvancarStep2(){const u=DB.usuarios.find(x=>x.id===RECUSER);if(!u)return;
+ const resp=normResposta($('rec-resposta').value);
+ if(!await confereSegredo(resp,u.resposta)){recErro('rec-err-2','Resposta incorreta. Tente novamente.');return;}
  $('rec-step-2').style.display='none';$('rec-step-3').style.display='block';
  $('rec-btn-2').style.display='none';$('rec-btn-3').style.display='inline-flex';
  setTimeout(()=>$('rec-nova-senha').focus(),50);}
-function recFinalizar(){const u=DB.usuarios.find(x=>x.id===RECUSER);if(!u)return;
+async function recFinalizar(){const u=DB.usuarios.find(x=>x.id===RECUSER);if(!u)return;
  const s1=$('rec-nova-senha').value,s2=$('rec-nova-senha-2').value;
  if(s1.length<6){recErro('rec-err-3','A senha deve ter no mínimo 6 caracteres.');return;}
  if(s1!==s2){recErro('rec-err-3','As senhas não coincidem.');return;}
- u.senha=s1;log('editar','Usuários','Senha redefinida via recuperação: '+u.login);saveDB();
+ u.senha=await hashSegredo(s1);
+ if(!await salvarUsuarioSupabase(u))return;
+ log('editar','Usuários','Senha redefinida via recuperação: '+u.login);saveDB();
  closeModal('modal-rec-senha');toast('Senha redefinida! Faça login com a nova senha.','success');}
-function delUsuario(id){if(!isAdmin())return;const u=DB.usuarios.find(x=>x.id===id);
+async function delUsuario(id){if(!isAdmin())return;const u=DB.usuarios.find(x=>x.id===id);
  if(u.id===USER.id){toast('Você não pode excluir seu próprio usuário.','error');return;}
  if(!confirm('Excluir usuário "'+u.login+'"?'))return;
+ const {error}=await supa.from('usuarios').delete().eq('id',id);
+ if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.usuarios=DB.usuarios.filter(x=>x.id!==id);commit('excluir','Usuários',u.login);toast('Usuário excluído.','info');}
 
 /* ================= HISTÓRICO & CONFIG ================= */
@@ -3851,7 +3916,9 @@ function loadDemoData(){if(!guard())return;
 
 /* ================= INIT ================= */
 loadDB();
-(function(){const sid=localStorage.getItem(SKEY);
+(async function(){
+ await carregarUsuariosSupabase(true);
+ const sid=localStorage.getItem(SKEY);
  if(sid){const u=DB.usuarios.find(x=>x.id===sid&&x.status==='Ativo');
   if(u){USER=u;$('login-screen').classList.add('hidden');afterLogin();return;}}
  $('login-user').focus();})();
