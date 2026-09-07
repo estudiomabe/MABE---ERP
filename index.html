@@ -1779,7 +1779,7 @@ function renderOrcamentos(){orcShow('lista');syncPerBar('orc-per',PER_ORC);
   const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" title="Reprovar orçamento" onclick="rejeitarOrcamento(\''+o.id+'\')">✗</button>':'';
   const prodBtn=(o.status==='Aprovado'&&!o.opId&&canEdit())?'<button class="btn btn-primary btn-sm" title="Enviar para produção" onclick="orcParaProducao(\''+o.id+'\')">▶</button>':'';
   const tipoL={'sob_medida':'🔨','catalogo':'📦','novo_produto':'🆕'};
-  const colapsado=ORC_COLAPSADOS.has(o.id);
+  const colapsado=!ORC_EXPANDIDOS.has(o.id);
   const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(colapsado?'Expandir itens':'Recolher itens')+'" onclick="event.stopPropagation();toggleItensOrc(\''+o.id+'\')">'+(colapsado?'▸':'▾')+'</button>':'<span style="display:inline-block;width:29px"></span>';
   const linhaHeader='<tr style="cursor:pointer;background:var(--surface2);border-left:3px solid '+(stB==='badge-success'?'var(--success)':stB==='badge-danger'?'var(--danger)':stB==='badge-info'?'var(--primary)':'transparent')+'" onclick="if(event.target.closest(\'button\'))return;abrirDetalheOrc(\''+o.id+'\')">'
    +'<td class="mono" style="white-space:nowrap;font-weight:700;color:var(--text)">'+chevron+'ORC-'+pad(o.num)+'</td>'
@@ -1801,8 +1801,8 @@ function renderOrcamentos(){orcShow('lista');syncPerBar('orc-per',PER_ORC);
    if(canEdit())linhasItens+='<tr style="background:var(--surface)"><td></td><td colspan="7" style="padding:6px 14px"><a href="#" onclick="event.preventDefault();event.stopPropagation();abrirDetalheOrc(\''+o.id+'\');abrirAdicionarItem();" style="font-size:11.5px;color:var(--accent);font-weight:600;text-decoration:none">+ Novo Item</a></td></tr>';
   }
   return linhaHeader+linhasItens;}).join('')||emptyRow(8,'Nenhum orçamento no período selecionado');}
-let ORC_COLAPSADOS=new Set();
-function toggleItensOrc(id){if(ORC_COLAPSADOS.has(id))ORC_COLAPSADOS.delete(id);else ORC_COLAPSADOS.add(id);renderOrcamentos();}
+let ORC_EXPANDIDOS=new Set();
+function toggleItensOrc(id){if(ORC_EXPANDIDOS.has(id))ORC_EXPANDIDOS.delete(id);else ORC_EXPANDIDOS.add(id);renderOrcamentos();}
 function abrirWhatsappOrc(id){const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  const cli=DB.clientes.find(c=>c.id===o.cliId);if(!cli||!cli.tel){toast('Cliente sem telefone cadastrado.','error');return;}
  let digits=String(cli.tel).replace(/\D/g,'');if(!digits){toast('Telefone do cliente inválido.','error');return;}
