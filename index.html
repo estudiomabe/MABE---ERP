@@ -151,7 +151,7 @@ select.form-control { cursor:pointer; } select.form-control option { background:
 code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding:1px 5px;border-radius:4px;color:#7a5c20;border:1px solid var(--border); }
 #toast-container { position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px; }
 .toast { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 15px;min-width:260px;display:flex;align-items:center;gap:10px;font-size:13px;animation:slideIn 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.1); }
-.toast.success { border-left:3px solid var(--success); } .toast.error { border-left:3px solid var(--danger); } .toast.info { border-left:3px solid var(--primary); }
+.toast.success { border-left:3px solid var(--success); } .toast.error { border-left:3px solid var(--danger); } .toast.info { border-left:3px solid var(--primary); } .toast.warning { border-left:3px solid var(--warning); }
 @keyframes slideIn { from { opacity:0;transform:translateX(20px); } to { opacity:1;transform:translateX(0); } }
 .table-wrapper { overflow-x:auto; }
 #vnd-itens, #orc-materiais, #orc-servicos, #orc-mdo { overflow-x:auto; }
@@ -850,7 +850,7 @@ const fmtD=d=>d?String(d).slice(0,10).split('-').reverse().join('/'):'—';
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const pad=n=>String(n).padStart(4,'0');
 const addDays=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);};
-function toast(msg,type){const c=$('toast-container');const t=document.createElement('div');t.className='toast '+(type||'info');t.innerHTML=(type==='success'?'✅ ':type==='error'?'⚠️ ':'ℹ️ ')+esc(msg);c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},3200);}
+function toast(msg,type,ms){const c=$('toast-container');const t=document.createElement('div');t.className='toast '+(type||'info');t.innerHTML=(type==='success'?'✅ ':type==='error'?'⚠️ ':type==='warning'?'⚠️ ':'ℹ️ ')+esc(msg);c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},ms||3200);}
 function openModal(id){$(id).classList.add('open');}
 function closeModal(id){$(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
@@ -1135,7 +1135,12 @@ async function doLogin(){
  USER=u;AUTH_USER=null;
  if(!String(u.senha||'').startsWith('sha256$')){u.senha=await hashSegredo(p);await salvarUsuarioSupabase(u);}
  marcarUltimoAcesso(u.id);u.ultimo=new Date().toLocaleString('pt-BR');saveDB();
- localStorage.setItem(SKEY,u.id);$('login-screen').classList.add('hidden');afterLogin();return true;}
+ localStorage.setItem(SKEY,u.id);$('login-screen').classList.add('hidden');afterLogin();
+ /* entrou pela tabela mesmo tendo e-mail: a conta do Auth ainda nao esta ativa.
+    Com a protecao de enumeracao ligada o Supabase responde 'Invalid login credentials'
+    tambem para conta nao confirmada, entao esse aviso e a unica pista antes do RLS. */
+ if(ehEmail(l))toast('Você entrou pelo login antigo: a conta do Supabase Auth deste e-mail ainda não está ativa. Confirme o e-mail (ou desligue "Confirm email") antes de ligar o RLS, senão este acesso para de funcionar.','warning',9000);
+ return true;}
 async function doLogout(){localStorage.removeItem(SKEY);try{await supa.auth.signOut();}catch(e){}location.reload();}
 function secaoInicial(){let sec=null;try{sec=localStorage.getItem(LASTSEC_KEY);}catch(e){}
  if(!sec||!TITLES[sec])return 'dashboard';
