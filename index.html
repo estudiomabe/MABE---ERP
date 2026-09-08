@@ -4,7 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Estúdio MABE — ERP Marcenaria</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='8' fill='%231a1714'/></svg>">
+<meta name="theme-color" content="#1a1714">
+<meta name="description" content="Gestão do Estúdio MABE: orçamentos, pedidos, produção, estoque e financeiro.">
+<!-- icone na aba e na tela inicial: o PNG embutido serve o arquivo solto,
+     o icon.png serve o iOS, que nao aceita data URI em apple-touch-icon -->
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mabe ERP">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -396,7 +406,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     </div></div>
 
     <div class="section" id="section-fornecedores"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Fornecedores</div></div><table><thead><tr><th>#</th><th>Nome</th><th>CNPJ</th><th>Email</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-fornecedores"></tbody></table></div></div>
-    <div class="section" id="section-compras"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
+    <div class="section" id="section-compras"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button><input type="file" id="nf-xml-input" accept=".xml,text/xml,application/xml" style="display:none" onchange="importarNfXml(this)"></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
 
     <!-- MADEIRAS -->
     <div class="section" id="section-madeiras">
@@ -799,6 +809,30 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div class="form-group"><label class="form-label">Resposta</label><input type="text" class="form-control" id="usr-resposta" placeholder="Resposta (não diferencia maiúsculas)"></div>
 </div></div>
 </div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-usuarios')">Cancelar</button><button class="btn btn-primary" onclick="saveUsuario()">Salvar</button></div></div></div>
+
+<!-- MODAL IMPORTAR NF-e -->
+<div class="modal-overlay" id="modal-nf"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">📥 Importar Nota Fiscal</div><button class="modal-close" onclick="closeModal('modal-nf')">✕</button></div><div class="modal-body">
+ <div id="nf-cabecalho" style="background:var(--surface2);border-radius:10px;padding:14px 16px;margin-bottom:14px"></div>
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+  <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Itens da nota</div>
+  <div style="display:flex;gap:10px;align-items:center">
+   <button class="btn btn-ghost btn-sm" onclick="nfMarcarTodos(true)">Marcar todos</button>
+   <button class="btn btn-ghost btn-sm" onclick="nfMarcarTodos(false)">Desmarcar</button>
+  </div>
+ </div>
+ <div class="table-wrapper" style="max-height:340px;overflow:auto">
+  <table><thead><tr><th style="width:34px"></th><th>Material</th><th style="width:78px">Qtd</th><th style="width:74px">Un</th><th style="width:104px">Custo unit.</th><th style="width:210px">Destino no estoque</th></tr></thead><tbody id="nf-itens"></tbody></table>
+ </div>
+ <div style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:14px;display:flex;flex-direction:column;gap:9px">
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="nf-criar-oc" checked style="cursor:pointer">Registrar uma ordem de compra com esta nota</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="nf-lancar-fin" checked style="cursor:pointer">Lançar a nota como saída no Financeiro</label>
+  <div id="nf-aviso-dup" style="display:none;font-size:11.5px;color:var(--warning);line-height:1.45"></div>
+ </div>
+</div><div class="modal-footer">
+ <span id="nf-resumo" style="margin-right:auto;font-size:12px;color:var(--text-muted)"></span>
+ <button class="btn btn-ghost" onclick="closeModal('modal-nf')">Cancelar</button>
+ <button class="btn btn-primary" id="nf-btn-importar" onclick="confirmarImportNf()">Importar</button>
+</div></div></div>
 
 <!-- MODAL RECUPERAÇÃO DE SENHA -->
 <div class="modal-overlay" id="modal-rec-senha"><div class="modal"><div class="modal-header"><div class="modal-title">🔐 Recuperar senha</div><button class="modal-close" onclick="closeModal('modal-rec-senha')">✕</button></div><div class="modal-body">
@@ -1812,6 +1846,243 @@ async function delMadeira(id){if(!guard())return;const m=DB.madeiras.find(x=>x.i
  const {error}=await supa.from('madeiras').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.madeiras=DB.madeiras.filter(x=>x.id!==id);commit('excluir','Madeiras',m.especie);syncSheets('madeiras','delete',{id});toast('Madeira excluída.','info');}
+
+
+/* ================= IMPORTAR NF-e (.xml) =================
+   Le o XML da nota de compra, mostra os itens para conferencia e cadastra
+   ou atualiza cada um no estoque de Material/Insumo. O custo gravado e o
+   custo real da linha (valor do produto - desconto + frete/seguro/outros,
+   dividido pela quantidade), que e o que precisa entrar no orcamento. */
+let NF_DADOS=null;
+
+/* o XML da NF-e usa namespace; procuramos sempre pelo nome local da tag */
+function nfTag(el,nome){
+ if(!el)return null;
+ const lista=el.getElementsByTagName(nome);
+ if(lista&&lista.length)return lista[0];
+ const todos=el.getElementsByTagName('*');
+ for(let i=0;i<todos.length;i++){if(todos[i].localName===nome)return todos[i];}
+ return null;}
+function nfTxt(el,nome,padrao){const t=nfTag(el,nome);return t&&t.textContent!==null?t.textContent.trim():(padrao!==undefined?padrao:'');}
+function nfNum(el,nome){const v=parseFloat(String(nfTxt(el,nome,'0')).replace(',','.'));return isNaN(v)?0:v;}
+/* a unidade da nota vem em formatos variados; o ERP so tem estas seis */
+const NF_UNIDADES={UN:'un',UND:'un',UNID:'un',PC:'un',PCT:'un',PÇ:'un',PECA:'un','PEÇA':'un',CJ:'un',
+ KG:'kg',KGS:'kg',G:'kg',
+ M:'m',MT:'m',ML:'m',METRO:'m','M2':'m','M²':'m','M3':'m','M³':'m',
+ L:'L',LT:'L',LTS:'L',LITRO:'L',
+ CX:'cx',CAIXA:'cx',
+ PAR:'par',PR:'par'};
+const nfUnidade=u=>NF_UNIDADES[String(u||'').trim().toUpperCase()]||'un';
+const nfData=d=>{const m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[0]:today();};
+
+function parseNfe(texto){
+ const doc=new DOMParser().parseFromString(texto,'application/xml');
+ if(doc.getElementsByTagName('parsererror').length)throw new Error('O arquivo não é um XML válido.');
+ const inf=nfTag(doc,'infNFe');
+ if(!inf)throw new Error('Não encontrei a nota dentro do XML. Envie o XML da NF-e, não o DANFE em PDF nem o recibo do portal.');
+ const ide=nfTag(inf,'ide'),emit=nfTag(inf,'emit');
+ const totalNode=nfTag(inf,'ICMSTot');
+ const chave=(inf.getAttribute('Id')||'').replace(/^NFe/,'');
+ const itens=[];
+ const dets=inf.getElementsByTagName('*');
+ for(let i=0;i<dets.length;i++){
+  const det=dets[i];
+  if(det.localName!=='det')continue;
+  const prod=nfTag(det,'prod');
+  if(!prod)continue;
+  const qtd=nfNum(prod,'qCom')||1;
+  const vProd=nfNum(prod,'vProd');
+  /* custo real da linha: o que efetivamente saiu do caixa por esse item */
+  const liquido=vProd-nfNum(prod,'vDesc')+nfNum(prod,'vFrete')+nfNum(prod,'vSeg')+nfNum(prod,'vOutro');
+  itens.push({
+   cod:nfTxt(prod,'cProd'),
+   desc:nfTxt(prod,'xProd','(sem descrição)'),
+   ncm:nfTxt(prod,'NCM'),
+   un:nfUnidade(nfTxt(prod,'uCom')),
+   unOriginal:nfTxt(prod,'uCom'),
+   qtd,
+   vUnit:qtd>0?liquido/qtd:liquido,
+   vTotal:liquido});
+ }
+ if(!itens.length)throw new Error('A nota foi lida, mas não tem nenhum item de produto.');
+ return {
+  emit:{nome:nfTxt(emit,'xNome','Fornecedor sem nome'),fantasia:nfTxt(emit,'xFant'),
+        cnpj:nfTxt(emit,'CNPJ')||nfTxt(emit,'CPF'),
+        cidade:nfTxt(nfTag(emit,'enderEmit'),'xMun')},
+  nf:{numero:nfTxt(ide,'nNF'),serie:nfTxt(ide,'serie'),data:nfData(nfTxt(ide,'dhEmi')||nfTxt(ide,'dEmi')),chave},
+  total:nfNum(totalNode,'vNF')||itens.reduce((a,i)=>a+i.vTotal,0),
+  itens};}
+
+/* casa o item da nota com um insumo ja cadastrado, ignorando acento e caixa */
+const nfChave=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+function nfSugerirProduto(desc){
+ const alvo=nfChave(desc);
+ if(!alvo)return '';
+ const insumos=DB.produtos.filter(p=>p.tipo==='Insumo');
+ const exato=insumos.find(p=>nfChave(p.nome)===alvo);
+ if(exato)return exato.id;
+ const contem=insumos.find(p=>{const k=nfChave(p.nome);return k.length>6&&(alvo.includes(k)||k.includes(alvo));});
+ return contem?contem.id:'';}
+
+async function importarNfXml(input){
+ const arquivo=input.files&&input.files[0];
+ input.value='';
+ if(!arquivo)return;
+ if(!guard()||!guardValores())return;
+ try{
+  const texto=await arquivo.text();
+  NF_DADOS=parseNfe(texto);
+ }catch(e){toast(e.message||'Não consegui ler este XML.','error',7000);return;}
+ renderNfPreview();
+ openModal('modal-nf');}
+
+function renderNfPreview(){
+ const d=NF_DADOS;if(!d)return;
+ const forn=DB.fornecedores.find(f=>f.cnpj&&f.cnpj.replace(/\D/g,'')===d.emit.cnpj.replace(/\D/g,''));
+ $('nf-cabecalho').innerHTML=
+  '<div style="font-size:15px;font-weight:700;color:var(--text)">'+esc(d.emit.nome)+'</div>'
+  +'<div style="font-size:12px;color:var(--text-muted);margin-top:3px">'
+  +(d.emit.cnpj?'CNPJ '+esc(mascaraCnpjTexto(d.emit.cnpj)):'sem CNPJ')
+  +(d.emit.cidade?' · '+esc(d.emit.cidade):'')
+  +'</div>'
+  +'<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:9px;font-size:12.5px">'
+  +'<span style="color:var(--text-muted)">NF <strong style="color:var(--text);font-family:var(--mono)">'+esc(d.nf.numero||'—')+'</strong></span>'
+  +'<span style="color:var(--text-muted)">Emissão <strong style="color:var(--text);font-family:var(--mono)">'+fmtD(d.nf.data)+'</strong></span>'
+  +'<span style="color:var(--text-muted)">Total <strong style="color:var(--text);font-family:var(--mono)">'+fmt(d.total)+'</strong></span>'
+  +'<span style="color:var(--text-muted)">Itens <strong style="color:var(--text);font-family:var(--mono)">'+d.itens.length+'</strong></span>'
+  +'</div>'
+  +'<div style="font-size:11.5px;margin-top:8px;color:'+(forn?'var(--success)':'var(--accent)')+'">'
+  +(forn?'✔ Fornecedor já cadastrado: '+esc(forn.nome):'＋ Fornecedor novo — será cadastrado na importação')+'</div>';
+
+ const insumos=DB.produtos.filter(p=>p.tipo==='Insumo').sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+ $('nf-itens').innerHTML=d.itens.map((it,i)=>{
+  const sug=nfSugerirProduto(it.desc);
+  const opcoes='<option value="">＋ Criar novo insumo</option>'
+   +insumos.map(p=>'<option value="'+p.id+'"'+(p.id===sug?' selected':'')+'>'+esc(p.nome)+'</option>').join('');
+  return '<tr>'
+   +'<td><input type="checkbox" class="nf-chk" data-i="'+i+'" checked onchange="atualizarResumoNf()" style="cursor:pointer"></td>'
+   +'<td><input type="text" class="form-control nf-nome" value="'+esc(it.desc)+'" style="font-size:12.5px;padding:5px 7px">'
+     +(it.cod?'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;font-family:var(--mono)">cód. '+esc(it.cod)+(it.ncm?' · NCM '+esc(it.ncm):'')+'</div>':'')+'</td>'
+   +'<td><input type="number" class="form-control nf-qtd" value="'+it.qtd+'" step="0.001" min="0" onchange="atualizarResumoNf()" style="font-size:12.5px;padding:5px 7px"></td>'
+   +'<td><select class="form-control nf-un" style="font-size:12.5px;padding:5px 7px">'
+     +['un','kg','m','L','cx','par'].map(u=>'<option'+(u===it.un?' selected':'')+'>'+u+'</option>').join('')
+     +'</select>'+(it.unOriginal&&nfUnidade(it.unOriginal)!==it.unOriginal?'<div style="font-size:10px;color:var(--text-muted);margin-top:2px">NF: '+esc(it.unOriginal)+'</div>':'')+'</td>'
+   +'<td><input type="number" class="form-control nf-custo" value="'+it.vUnit.toFixed(2)+'" step="0.01" min="0" onchange="atualizarResumoNf()" style="font-size:12.5px;padding:5px 7px"></td>'
+   +'<td><select class="form-control nf-destino" data-i="'+i+'" onchange="atualizarResumoNf()" style="font-size:12.5px;padding:5px 7px">'+opcoes+'</select>'
+     +'<div class="nf-destino-hint" style="font-size:10px;color:var(--text-muted);margin-top:2px"></div></td>'
+   +'</tr>';}).join('');
+
+ /* a mesma nota ja foi importada antes? */
+ const jaTem=DB.compras.some(c=>String(c.obs||'').includes('NF '+d.nf.numero+' ')&&d.nf.numero);
+ const av=$('nf-aviso-dup');
+ av.style.display=jaTem?'block':'none';
+ if(jaTem)av.textContent='⚠️ Já existe uma ordem de compra registrada com a NF '+d.nf.numero+'. Importar de novo vai somar as quantidades ao estoque outra vez.';
+ atualizarResumoNf();}
+
+function mascaraCnpjTexto(v){const d=String(v||'').replace(/\D/g,'');
+ if(d.length===14)return d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/'+d.slice(8,12)+'-'+d.slice(12);
+ if(d.length===11)return d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9);
+ return v;}
+
+function nfMarcarTodos(v){document.querySelectorAll('.nf-chk').forEach(c=>{c.checked=v;});atualizarResumoNf();}
+
+function nfLinhasSelecionadas(){
+ const linhas=[];
+ document.querySelectorAll('#nf-itens tr').forEach((tr,i)=>{
+  const chk=tr.querySelector('.nf-chk');
+  if(!chk||!chk.checked)return;
+  linhas.push({i,tr,
+   nome:tr.querySelector('.nf-nome').value.trim(),
+   qtd:parseFloat(tr.querySelector('.nf-qtd').value)||0,
+   un:tr.querySelector('.nf-un').value,
+   custo:parseFloat(tr.querySelector('.nf-custo').value)||0,
+   destino:tr.querySelector('.nf-destino').value});});
+ return linhas;}
+
+function atualizarResumoNf(){
+ let novos=0,atualizados=0,total=0;
+ document.querySelectorAll('#nf-itens tr').forEach(tr=>{
+  const hint=tr.querySelector('.nf-destino-hint');
+  const destino=tr.querySelector('.nf-destino').value;
+  const custo=parseFloat(tr.querySelector('.nf-custo').value)||0;
+  if(destino){
+   const p=DB.produtos.find(x=>x.id===destino);
+   if(p){
+    const dif=custo-Number(p.custo||0);
+    hint.textContent='estoque '+p.est+' → '+(Number(p.est)+(parseFloat(tr.querySelector('.nf-qtd').value)||0))
+     +(Math.abs(dif)>0.005?' · custo '+fmt(p.custo)+' → '+fmt(custo):' · custo mantido');
+    hint.style.color=Math.abs(dif)>0.005?'var(--warning)':'var(--text-muted)';}
+  }else{hint.textContent='novo cadastro em Material/Insumo';hint.style.color='var(--text-muted)';}
+  if(!tr.querySelector('.nf-chk').checked)return;
+  total+=custo*(parseFloat(tr.querySelector('.nf-qtd').value)||0);
+  if(destino)atualizados++;else novos++;});
+ $('nf-resumo').textContent=(novos+atualizados)===0?'Nenhum item selecionado'
+  :(novos+' novo(s) · '+atualizados+' atualizado(s) · '+fmt(total));
+ $('nf-btn-importar').disabled=(novos+atualizados)===0;}
+
+async function confirmarImportNf(){
+ if(!guard()||!guardValores())return;
+ const d=NF_DADOS;if(!d)return;
+ const linhas=nfLinhasSelecionadas();
+ if(!linhas.length){toast('Selecione ao menos um item.','error');return;}
+ if(linhas.some(l=>!l.nome)){toast('Há item selecionado sem nome. Preencha ou desmarque.','error');return;}
+ const btn=$('nf-btn-importar');btn.disabled=true;btn.textContent='Importando…';
+ try{
+  /* 1. fornecedor */
+  const cnpjLimpo=d.emit.cnpj.replace(/\D/g,'');
+  let forn=DB.fornecedores.find(f=>f.cnpj&&f.cnpj.replace(/\D/g,'')===cnpjLimpo&&cnpjLimpo);
+  if(!forn){
+   forn={id:uid(),nome:d.emit.nome,cnpj:mascaraCnpjTexto(d.emit.cnpj),tel:'',email:'',cidade:d.emit.cidade||'',status:'Ativo'};
+   const {error}=await supa.from('fornecedores').upsert(forn);
+   if(error)throw new Error('fornecedor: '+error.message);
+   DB.fornecedores.push(forn);syncSheets('fornecedores','upsert',forn);}
+
+  /* 2. itens no estoque */
+  let novos=0,atualizados=0;
+  for(const l of linhas){
+   if(l.destino){
+    const p=DB.produtos.find(x=>x.id===l.destino);
+    if(!p)continue;
+    p.est=Number(p.est||0)+l.qtd;
+    p.custo=l.custo;
+    if(p.tipo==='Insumo')p.preco=l.custo;
+    const {error}=await supa.from('produtos').update({est:p.est,custo:p.custo,preco:p.preco}).eq('id',p.id);
+    if(error)throw new Error('estoque de "'+p.nome+'": '+error.message);
+    syncSheets('produtos','upsert',p);atualizados++;
+   }else{
+    const novo={id:uid(),nome:l.nome,tipo:'Insumo',cat:'',un:l.un,
+     preco:l.custo,custo:l.custo,est:l.qtd,min:0,materiais:[]};
+    const {error}=await supa.from('produtos').upsert(novo);
+    if(error)throw new Error('cadastro de "'+l.nome+'": '+error.message);
+    DB.produtos.push(novo);syncSheets('produtos','upsert',novo);novos++;}}
+
+  /* 3. ordem de compra */
+  /* arredonda: custo x quantidade em ponto flutuante gera centavos fantasma */
+  const totalLinhas=Math.round(linhas.reduce((a,l)=>a+l.custo*l.qtd,0)*100)/100;
+  let compra=null;
+  if($('nf-criar-oc').checked){
+   const obs='NF '+d.nf.numero+' — '+linhas.length+' item(ns) importado(s) do XML';
+   compra={id:uid(),forId:forn.id,data:d.nf.data,total:totalLinhas,status:'Recebido',obs,lancado:false};
+   const {data:linha,error}=await supa.from('compras').insert(compraParaSupabase(compra)).select().single();
+   if(error)throw new Error('ordem de compra: '+error.message);
+   compra.num=linha.num;
+   DB.compras.unshift(compra);syncSheets('compras','upsert',compra);}
+
+  /* 4. financeiro */
+  if($('nf-lancar-fin').checked){
+   const desc=(compra?'OC-'+pad(compra.num)+' — ':'')+'NF '+d.nf.numero+' — '+forn.nome;
+   const fin={id:uid(),tipo:'Saída',data:d.nf.data,desc,cat:'Compras',centroCusto:'',val:totalLinhas,status:'Pago'};
+   const {error}=await supa.from('financeiro').insert(financeiroParaSupabase(fin));
+   if(error)throw new Error('financeiro: '+error.message);
+   DB.financeiro.unshift(fin);syncSheets('financeiro','upsert',fin);
+   if(compra){compra.lancado=true;await supa.from('compras').update({lancado:true}).eq('id',compra.id);}}
+
+  commit('criar','Compras','NF '+d.nf.numero+' importada — '+novos+' insumo(s) novo(s), '+atualizados+' atualizado(s)');
+  closeModal('modal-nf');NF_DADOS=null;
+  toast('NF '+d.nf.numero+' importada: '+novos+' insumo(s) criado(s) e '+atualizados+' atualizado(s).','success',7000);
+ }catch(e){
+  toast('Importação interrompida — '+(e.message||e)+'. Os itens já gravados foram mantidos.','error',9000);
+ }finally{btn.disabled=false;btn.textContent='Importar';}}
 
 /* ================= VENDAS ================= */
 function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data||null,pag:v.pag||null,status:v.status||null,obs:v.obs||null,itens:v.itens||[],total:v.total||0,baixa:!!v.baixa};if(v.num!==undefined&&v.num!==null)o.num=v.num;return o;}
