@@ -3023,7 +3023,11 @@ async function clearHistorico(){if(!isAdmin()){toast('Apenas administradores.','
  const {error}=await supa.from('historico').delete().gte('id',0);
  if(error){toast('Erro ao limpar histórico no Supabase: '+error.message,'error');return;}
  DB.historico=[];saveDB();renderHistorico();toast('Histórico limpo.','info');}
-function renderConfig(){$('sheets-url').value=DB.config.sheetsUrl||'';const cf=DB.config.cf;
+/* A carga do Supabase re-renderiza Configuracoes. Sem esta trava ela apaga
+   o que a pessoa esta digitando quando a resposta chega no meio do
+   preenchimento — foi assim que um CEP ja digitado se perdeu. */
+let CFG_EDITANDO=false;
+function renderConfig(){CFG_EDITANDO=false;$('sheets-url').value=DB.config.sheetsUrl||'';const cf=DB.config.cf;
  $('cfg-aluguel').value=cf.aluguel;$('cfg-iptu').value=cf.iptu;$('cfg-agua').value=cf.agua;$('cfg-energia').value=cf.energia;$('cfg-contador').value=cf.contador;$('cfg-outros').value=cf.outros;
  $('cfg-hmes').value=cf.hmes;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;$('cfg-reserva').value=cf.reserva;
  $('cfg-pix-ant').value=cf.pixAntecipado;
@@ -3140,7 +3144,7 @@ async function carregarConfigSupabase(){
   else if(campo==='empresaInfo'){try{const obj=JSON.parse(valor);if(obj&&typeof obj==='object')DB.config.empresa=obj;}catch(e){}}
   else if(DB.config.cf[campo]!==undefined)DB.config.cf[campo]=Number(valor)||0;});
  saveDB();
- if(CUR==='configuracoes')renderConfig();}
+ if(CUR==='configuracoes'&&!CFG_EDITANDO)renderConfig();}
 function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  const backup=Object.assign({},DB,{
   usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,nivelAcesso:nivelDe(u),status:u.status,ultimo:u.ultimo})),
@@ -4099,6 +4103,9 @@ function loadDemoData(){if(!guard())return;
  renderSection(CUR);updateBadges();toast('Dados de demonstração carregados! 🪵','success');}
 
 /* ================= INIT ================= */
+/* qualquer digitacao em Configuracoes trava o auto-refresh ate salvar ou sair */
+(function(){const sec=$('section-configuracoes');if(!sec)return;
+ ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 loadDB();
 (async function(){
  await carregarUsuariosSupabase(true);
