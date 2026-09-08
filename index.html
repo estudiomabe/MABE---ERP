@@ -543,7 +543,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <div style="display:flex;flex-direction:column;gap:6px">
             <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Custo Total</span><span id="orcd-custo" style="font-family:var(--mono)">R$ 0,00</span></div>
             <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;color:var(--accent);font-weight:700">Total do Orçamento</span><span id="orcd-preco" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent)">R$ 0,00</span></div>
-            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:rgba(250,247,242,0.5)">Lucro estimado</span><span id="orcd-lucro" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#6fcf97">R$ 0,00</span></div>
+            <div id="orcd-comissao-linha" style="display:none;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:#d9b978" id="orcd-comissao-lbl">Comissão</span><span id="orcd-comissao" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#d9b978">R$ 0,00</span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:rgba(250,247,242,0.5)">Lucro estimado</span><span id="orcd-lucro" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#6fcf97">R$ 0,00</span></div>
           </div>
         </div>
       </div>
@@ -581,10 +581,10 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
               <button class="btn btn-ghost btn-sm" onclick="addMdoItem()">+ Adicionar Mão de Obra</button>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between;margin-top:10px"><span style="font-size:12px;color:var(--text-muted)">Total MDO</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-mdo">R$ 0,00</span></div>
             </div>
-            <div class="config-card" style="margin:0"><div class="config-title">📊 Reserva, Impostos & Markup</div><div class="form-grid form-2">
+            <div class="config-card" style="margin:0"><div class="config-title">📊 Reserva, Impostos, Comissão & Markup</div><div class="form-grid form-2">
               <div class="form-group"><label class="form-label">Fundo de Reserva (%)</label><input type="number" class="form-control" id="orc-reserva" step="0.5" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Reserva sobre o custo, separada do lucro</div></div>
               <div class="form-group"><label class="form-label">Imposto (%)</label><input type="number" class="form-control" id="orc-imposto" step="0.1" oninput="calcOrc()"></div>
-              <div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="orc-markup" step="1" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">% do preço final que vira lucro</div></div>
+              <div class="form-group"><label class="form-label">Comissão (%)</label><input type="number" class="form-control" id="orc-comissao" step="0.5" min="0" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Entra no preço, como o imposto — não sai do seu lucro</div></div><div class="form-group"><label class="form-label">Quem recebe a comissão</label><input type="text" class="form-control" id="orc-comissao-nome" placeholder="Arquiteto, indicação, parceiro..." list="comissao-sugestoes"><datalist id="comissao-sugestoes"></datalist></div><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="orc-markup" step="1" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">% do preço final que vira lucro</div></div>
             </div></div>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
@@ -609,7 +609,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
                 <div style="height:1px;background:rgba(255,255,255,0.1);margin:4px 0"></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.8)"><span>Custo Total</span><span id="res-custo" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:#6fa8e0"><span>Fundo de Reserva</span><span id="res-reserva" style="font-family:var(--mono)">R$ 0,00</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Imposto</span><span id="res-imposto" style="font-family:var(--mono)">R$ 0,00</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Imposto</span><span id="res-imposto" style="font-family:var(--mono)">R$ 0,00</span></div><div id="res-comissao-linha" style="display:none;justify-content:space-between;font-size:13px;color:#d9b978"><span id="res-comissao-lbl">Comissão</span><span id="res-comissao" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="height:1px;background:rgba(255,255,255,0.1);margin:4px 0"></div>
                 <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--accent);font-weight:700">Preço Final</span><div style="display:flex;align-items:center;gap:5px"><span style="color:var(--accent);font-size:13px">R$</span><input type="number" id="res-preco-input" step="0.01" min="0" oninput="onPrecoManual()" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent);background:transparent;border:none;border-bottom:1px dashed rgba(200,169,110,0.45);text-align:right;width:130px;outline:none"></div></div>
                 <div id="preco-manual-hint" style="display:none;font-size:10.5px;color:rgba(250,247,242,0.45);text-align:right;margin-top:-2px">✏️ Ajustado manualmente — <a href="#" onclick="event.preventDefault();resetPrecoManual()" style="color:var(--accent);text-decoration:underline">recalcular automático</a></div>
@@ -671,7 +671,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <div class="form-grid form-2"><div class="form-group"><label class="form-label">Água (R$)</label><input type="number" class="form-control" id="cfg-agua" step="0.01"></div><div class="form-group"><label class="form-label">Energia (R$)</label><input type="number" class="form-control" id="cfg-energia" step="0.01"></div></div>
           <div class="form-grid form-2"><div class="form-group"><label class="form-label">Contador (R$)</label><input type="number" class="form-control" id="cfg-contador" step="0.01"></div><div class="form-group"><label class="form-label">Outros (R$)</label><input type="number" class="form-control" id="cfg-outros" step="0.01"></div></div>
           <div class="form-grid form-2"><div class="form-group"><label class="form-label">Horas/Mês</label><input type="number" class="form-control" id="cfg-hmes"></div><div class="form-group"><label class="form-label">Imposto (%)</label><input type="number" class="form-control" id="cfg-imposto" step="0.1"></div></div>
-          <div class="form-grid form-2"><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="cfg-markup" step="1"></div><div class="form-group"><label class="form-label">Fundo de Reserva Padrão (%)</label><input type="number" class="form-control" id="cfg-reserva" step="0.5"></div></div>
+          <div class="form-grid form-2"><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="cfg-markup" step="1"></div><div class="form-group"><label class="form-label">Fundo de Reserva Padrão (%)</label><input type="number" class="form-control" id="cfg-reserva" step="0.5"></div><div class="form-group"><label class="form-label">Comissão Padrão (%)</label><input type="number" class="form-control" id="cfg-comissao" step="0.5" min="0"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Sugerida em todo item novo. Deixe 0 se a comissão for caso a caso.</div></div></div>
           <div style="margin-top:4px">
             <label class="form-label" style="display:block;margin-bottom:8px">Outros Custos Fixos</label>
             <div id="cfg-custos-extras" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
@@ -890,7 +890,7 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Administrador',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
+ config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,comissao:0,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
@@ -2119,7 +2119,7 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
   if(it.precoManual&&it.precoSugerido){const desvioPct=(it.preco-it.precoSugerido)/it.precoSugerido*100;
    precoCell+='<div style="font-size:10px;margin-top:2px" title="Sugerido: '+fmt(it.precoSugerido)+'"><span class="badge '+(desvioPct<0?'badge-danger':desvioPct>0?'badge-info':'badge-muted')+'" style="font-size:9px">✏️ manual '+(desvioPct>=0?'+':'')+fmtN(desvioPct,1)+'%</span></div>';}
   return '<tr><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong></td><td class="mono">'+(it.qty||1)+'</td><td class="mono">'+precoCell+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>';}).join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
- $('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);
+ atualizarResumoComissaoOrc(o);$('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);
  renderAnexosOrc(o);}
 function renderAnexosOrc(o){const anexos=o.anexos||[];
  $('orc-anexos-lista').innerHTML=anexos.map(a=>{
@@ -2161,6 +2161,7 @@ function resetOrcForm(tipo){const cf=DB.config.cf;
  $('orc-id').value='';$('orc-tipo').value=tipo;$('orc-desc').value='';$('orc-obs').value='';
  $('orc-mdo').innerHTML='';
  $('orc-imposto').value=cf.imposto;$('orc-markup').value=cf.markup;$('orc-reserva').value=cf.reserva!==undefined?cf.reserva:10;
+ $('orc-comissao').value=cf.comissao||0;$('orc-comissao-nome').value='';atualizarSugestoesComissao();
  $('orc-materiais').innerHTML='';
  $('card-novo-produto').style.display=tipo==='novo_produto'?'block':'none';
  $('res-novo-produto').style.display=tipo==='novo_produto'?'block':'none';
@@ -2223,22 +2224,46 @@ function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua',
  document.querySelectorAll('#orc-servicos > div').forEach(r=>{const valor=parseFloat(r.querySelector('.sv-valor').value)||0;serv+=valor;
   servicos.push({fornId:r.querySelector('.sv-forn').value,desc:r.querySelector('.sv-desc').value.trim(),valor});});
  const custo=cfRat+mdo+mat+serv;const rsv=num('orc-reserva'),margem=Math.max(0,num('orc-markup')),imp=Math.max(0,num('orc-imposto'));
+ /* a comissão é percentual do preço final, igual ao imposto: entra na conta
+    para que quem paga seja o preço, e não a sua margem */
+ const com=Math.max(0,num('orc-comissao'));
+ const comissaoNome=($('orc-comissao-nome')?$('orc-comissao-nome').value:'').trim();
  const reservaVal=custo*rsv/100;const custoBase=custo+reservaVal;
- const combinado=Math.min(imp+margem,95);
+ const combinado=Math.min(imp+com+margem,95);
  const precoAuto=custoBase/(1-combinado/100);
  let preco,impostoVal,lucro;
+ let comissaoVal;
  if(PRECO_MANUAL){
   preco=parseFloat($('res-preco-input').value)||0;
-  impostoVal=preco*imp/100;
-  lucro=preco-custoBase-impostoVal;
+  impostoVal=preco*imp/100;comissaoVal=preco*com/100;
+  lucro=preco-custoBase-impostoVal-comissaoVal;
  } else {
   preco=precoAuto;
-  impostoVal=preco*imp/100;lucro=preco*margem/100;
+  impostoVal=preco*imp/100;comissaoVal=preco*com/100;lucro=preco*margem/100;
  }
- return{cfRat,mdo,mdoLinhas,mat,materiais,serv,servicos,custo,reservaVal,custoBase,precoAuto,impostoVal,preco,lucro};}
+ return{cfRat,mdo,mdoLinhas,mat,materiais,serv,servicos,custo,reservaVal,custoBase,precoAuto,impostoVal,comissaoPct:com,comissaoNome,comissaoVal,preco,lucro};}
 let PRECO_MANUAL=false;
 function onPrecoManual(){PRECO_MANUAL=true;$('preco-manual-hint').style.display='block';calcOrc();}
 function resetPrecoManual(){PRECO_MANUAL=false;$('preco-manual-hint').style.display='none';calcOrc();}
+/* quem já recebeu comissão antes vira sugestão, para não escrever o nome
+   de dez jeitos diferentes e depois não conseguir somar por pessoa */
+function atualizarResumoComissaoOrc(o){const linha=$('orcd-comissao-linha');if(!linha)return;
+ const total=comissaoOrc(o);
+ linha.style.display=total>0?'flex':'none';
+ if(total<=0)return;
+ $('orcd-comissao').textContent=fmt(total);
+ const por=comissaoPorPessoa(o),nomes=Object.keys(por);
+ $('orcd-comissao-lbl').textContent='Comissão'+(nomes.length===1?' — '+nomes[0]:(nomes.length>1?' ('+nomes.length+' beneficiários)':''));}
+function atualizarSugestoesComissao(){const dl=$('comissao-sugestoes');if(!dl)return;
+ const nomes=new Set();
+ (DB.orcamentos||[]).forEach(o=>(o.itens||[]).forEach(i=>{if(i.comissaoNome)nomes.add(i.comissaoNome);}));
+ dl.innerHTML=[...nomes].sort().map(n=>'<option value="'+esc(n)+'">').join('');}
+/* soma da comissão de um orçamento inteiro */
+function comissaoOrc(o){return itensOrc(o).reduce((s,i)=>s+(Number(i.comissaoVal)||0),0);}
+function comissaoPorPessoa(o){const m={};
+ itensOrc(o).forEach(i=>{const v=Number(i.comissaoVal)||0;if(v<=0)return;
+  const k=(i.comissaoNome||'Sem beneficiário').trim();m[k]=(m[k]||0)+v;});
+ return m;}
 function calcOrc(){const t=computeOrc();
  $('orc-total-cf').textContent=fmt(t.cfRat);$('orc-total-mdo').textContent=fmt(t.mdo);$('orc-total-mat').textContent=fmt(t.mat);$('orc-total-serv').textContent=fmt(t.serv);
  $('res-cf').textContent=fmt(t.cfRat);$('res-mat').textContent=fmt(t.mat);$('res-mdo').textContent=fmt(t.mdo);$('res-serv').textContent=fmt(t.serv);$('res-custo').textContent=fmt(t.custo);
@@ -2246,7 +2271,11 @@ function calcOrc(){const t=computeOrc();
  if(!PRECO_MANUAL)$('res-preco-input').value=t.preco.toFixed(2);
  $('lucro-negativo-hint').style.display=t.lucro<0?'block':'none';
  $('res-lucro').style.color=t.lucro<0?'var(--danger)':'#6fcf97';
- $('res-imposto').textContent=fmt(t.impostoVal);$('res-lucro').textContent=fmt(t.lucro);}
+ $('res-imposto').textContent=fmt(t.impostoVal);$('res-lucro').textContent=fmt(t.lucro);
+ const linha=$('res-comissao-linha');
+ if(linha){linha.style.display=t.comissaoPct>0?'flex':'none';
+  $('res-comissao').textContent=fmt(t.comissaoVal);
+  $('res-comissao-lbl').textContent='Comissão'+(t.comissaoPct?' ('+fmtN(t.comissaoPct,t.comissaoPct%1?1:0)+'%)':'')+(t.comissaoNome?' — '+t.comissaoNome:'');}}
 async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value.trim();if(!desc){toast('Informe a descrição.','error');return;}
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o){toast('Orçamento não encontrado.','error');return;}
  const tipo=$('orc-tipo').value;const t=computeOrc();
@@ -2257,7 +2286,7 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
   DB.produtos.push(novoProd);syncSheets('produtos','upsert',novoProd);
   toast('Produto "'+nome+'" cadastrado no catálogo!','success');}
  const cfgAtual=DB.config.cf;
- const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal,imposto:num('orc-imposto'),markup:num('orc-markup'),precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto,qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
+ const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal,imposto:num('orc-imposto'),comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal,markup:num('orc-markup'),precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto,qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
@@ -2282,6 +2311,7 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
   if(it.mdo.qhaux)addMdoItem({tipoId:'auxiliar',horas:it.mdo.qhaux});
  }
  $('orc-imposto').value=it.imposto;$('orc-markup').value=it.markup;$('orc-reserva').value=it.reserva!==undefined?it.reserva:0;
+ $('orc-comissao').value=it.comissao||0;$('orc-comissao-nome').value=it.comissaoNome||'';atualizarSugestoesComissao();
  $('orc-materiais').innerHTML='';(it.materiais||[]).forEach(m=>addMaterial(m.mode||'livre',m));
  $('orc-servicos').innerHTML='';(it.servicos||[]).forEach(sv=>addServico(sv));
  $('orc-form-title').textContent='Editar Item';
@@ -3244,7 +3274,7 @@ async function clearHistorico(){if(!isAdmin()){toast('Apenas administradores.','
 let CFG_EDITANDO=false;
 function renderConfig(){CFG_EDITANDO=false;$('sheets-url').value=DB.config.sheetsUrl||'';const cf=DB.config.cf;
  $('cfg-aluguel').value=cf.aluguel;$('cfg-iptu').value=cf.iptu;$('cfg-agua').value=cf.agua;$('cfg-energia').value=cf.energia;$('cfg-contador').value=cf.contador;$('cfg-outros').value=cf.outros;
- $('cfg-hmes').value=cf.hmes;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;$('cfg-reserva').value=cf.reserva;
+ $('cfg-hmes').value=cf.hmes;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;$('cfg-reserva').value=cf.reserva;$('cfg-comissao').value=cf.comissao||0;
  $('cfg-pix-ant').value=cf.pixAntecipado;
  for(let n=1;n<=10;n++)$('cfg-taxa-p'+n).value=cf['taxaParc'+n];
  renderCustosFixosExtrasConfig();
@@ -3336,7 +3366,7 @@ async function saveCFConfig(){if(!guard())return;
   if(!nome){temVazio=true;return;}
   extras.push({id:r.dataset.id,nome,valor});});
  if(temVazio){toast('Remova ou preencha as linhas de custo fixo sem nome.','error');return;}
- Object.assign(DB.config.cf,{aluguel:num('cfg-aluguel'),iptu:num('cfg-iptu'),agua:num('cfg-agua'),energia:num('cfg-energia'),contador:num('cfg-contador'),outros:num('cfg-outros'),hmes:num('cfg-hmes')||176,imposto:num('cfg-imposto'),markup:num('cfg-markup'),reserva:num('cfg-reserva')});
+ Object.assign(DB.config.cf,{aluguel:num('cfg-aluguel'),iptu:num('cfg-iptu'),agua:num('cfg-agua'),energia:num('cfg-energia'),contador:num('cfg-contador'),outros:num('cfg-outros'),hmes:num('cfg-hmes')||176,imposto:num('cfg-imposto'),markup:num('cfg-markup'),reserva:num('cfg-reserva'),comissao:num('cfg-comissao')});
  DB.config.custosFixosExtras=extras;
  saveDB();log('editar','Configurações','Custos fixos padrão atualizados');saveDB();
  const {error}=await supa.from('config').upsert(Object.entries(DB.config.cf).map(([campo,valor])=>({campo,valor})));
