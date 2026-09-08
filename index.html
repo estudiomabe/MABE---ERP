@@ -701,7 +701,15 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div class="config-title">🏢 Dados do Estúdio (para documentos)</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Aparecem no PDF de orçamento e outros documentos gerados.</div>
         <div class="form-grid">
-          <div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cfg-emp-endereco" placeholder="Rua, número, bairro, cidade - UF"></div>
+          <div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cfg-emp-endereco" placeholder="Rua, número"></div>
+          <div class="form-grid form-2">
+            <div class="form-group"><label class="form-label">Bairro</label><input type="text" class="form-control" id="cfg-emp-bairro" placeholder="Vila Madalena"></div>
+            <div class="form-group"><label class="form-label">CEP</label><input type="text" class="form-control" id="cfg-emp-cep" placeholder="00000-000" maxlength="9" inputmode="numeric" oninput="mascararCep(this)"></div>
+          </div>
+          <div class="form-grid form-2">
+            <div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cfg-emp-cidade" placeholder="São Paulo"></div>
+            <div class="form-group"><label class="form-label">Estado</label><select class="form-control" id="cfg-emp-estado"><option value="">—</option><option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option></select></div>
+          </div>
           <div class="form-grid form-2">
             <div class="form-group"><label class="form-label">Telefone/WhatsApp</label><input type="text" class="form-control" id="cfg-emp-telefone" placeholder="(11) 99999-9999"></div>
             <div class="form-group"><label class="form-label">E-mail</label><input type="text" class="form-control" id="cfg-emp-email" placeholder="contato@estudiomabe.com"></div>
@@ -861,7 +869,7 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Administrador',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',telefone:'',email:'',site:''}},
+ config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
@@ -874,7 +882,8 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  if(!DB.config.custosFixosExtras)DB.config.custosFixosExtras=[];
  if(!DB.config.temposProducao)DB.config.temposProducao={};
  if(!DB.config.folhaPagamento)DB.config.folhaPagamento=[];
- if(!DB.config.empresa)DB.config.empresa={endereco:'',telefone:'',email:'',site:''};}
+ if(!DB.config.empresa)DB.config.empresa={endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''};
+ ['endereco','bairro','cep','cidade','estado','telefone','email','site'].forEach(k=>{if(DB.config.empresa[k]===undefined)DB.config.empresa[k]='';});}
 function saveDB(){localStorage.setItem(DKEY,JSON.stringify(DB));}
 function log(acao,modulo,detalhe){const h={id:uid(),dt:new Date().toLocaleString('pt-BR'),user:USER?USER.nome:'—',usuario:USER?USER.nome:'—',login:USER?USER.login:'',acao,modulo,detalhe};DB.historico.unshift(h);if(DB.historico.length>400)DB.historico.length=400;syncSheets('historico','upsert',h);
  supa.from('historico').insert(historicoParaSupabase(h)).then(({error})=>{if(error)console.error('Erro ao salvar histórico no Supabase:',error.message);});}
@@ -1730,7 +1739,7 @@ function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.find(x
 
  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(marginX,285,196,285);
  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
- const rodape=[emp.endereco,emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
+ const rodape=[enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
  doc.text(rodape,marginX,290);
 
  const nomeArquivoCli=cliName(v.cliId).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'');
@@ -2299,7 +2308,7 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  let sy=tableStartY+8;
  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
  const sidebarLinhas=[];
- if(emp.endereco)sidebarLinhas.push(['ENDEREÇO',emp.endereco]);
+ if(enderecoEstudio(emp))sidebarLinhas.push(['ENDEREÇO',enderecoEstudio(emp)]);
  if(emp.telefone)sidebarLinhas.push(['TELEFONE',emp.telefone]);
  if(emp.email)sidebarLinhas.push(['E-MAIL',emp.email]);
  if(emp.site)sidebarLinhas.push(['SITE',emp.site]);
@@ -2332,7 +2341,7 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  // Rodapé
  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(marginX,285,196,285);
  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
- const rodape=[emp.endereco,emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
+ const rodape=[enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
  doc.text(rodape,marginX,290);
  doc.text('Válido até '+fmtD(o.validade),196,290,{align:'right'});
 
@@ -3022,9 +3031,22 @@ function renderConfig(){$('sheets-url').value=DB.config.sheetsUrl||'';const cf=D
  renderCustosFixosExtrasConfig();
  renderFolhaConfig();
  renderMdoTiposConfig();
- const emp=DB.config.empresa||{};$('cfg-emp-endereco').value=emp.endereco||'';$('cfg-emp-telefone').value=emp.telefone||'';$('cfg-emp-email').value=emp.email||'';$('cfg-emp-site').value=emp.site||'';}
+ const emp=DB.config.empresa||{};$('cfg-emp-endereco').value=emp.endereco||'';$('cfg-emp-bairro').value=emp.bairro||'';
+ $('cfg-emp-cep').value=emp.cep||'';$('cfg-emp-cidade').value=emp.cidade||'';$('cfg-emp-estado').value=emp.estado||'';
+ $('cfg-emp-telefone').value=emp.telefone||'';$('cfg-emp-email').value=emp.email||'';$('cfg-emp-site').value=emp.site||'';}
+function mascararCep(el){const d=String(el.value).replace(/\D/g,'').slice(0,8);
+ el.value=d.length>5?d.slice(0,5)+'-'+d.slice(5):d;}
+/* junta os campos em uma linha só, do jeito que vai para os documentos:
+   Rua, 123 — Bairro, Cidade - UF, CEP 00000-000 */
+function enderecoEstudio(emp){emp=emp||DB.config.empresa||{};
+ const rua=[emp.endereco,emp.bairro].filter(Boolean).join(' — ');
+ const cidade=[emp.cidade,emp.estado].filter(Boolean).join(' - ');
+ const local=[cidade,emp.cep?'CEP '+emp.cep:''].filter(Boolean).join(', ');
+ return [rua,local].filter(Boolean).join(', ');}
 async function saveEmpresaInfo(){if(!guard())return;
- const info={endereco:$('cfg-emp-endereco').value.trim(),telefone:$('cfg-emp-telefone').value.trim(),email:$('cfg-emp-email').value.trim(),site:$('cfg-emp-site').value.trim()};
+ const info={endereco:$('cfg-emp-endereco').value.trim(),bairro:$('cfg-emp-bairro').value.trim(),
+  cep:$('cfg-emp-cep').value.trim(),cidade:$('cfg-emp-cidade').value.trim(),estado:$('cfg-emp-estado').value,
+  telefone:$('cfg-emp-telefone').value.trim(),email:$('cfg-emp-email').value.trim(),site:$('cfg-emp-site').value.trim()};
  DB.config.empresa=info;saveDB();log('editar','Configurações','Dados do estúdio atualizados');saveDB();
  const {error}=await supa.from('config').upsert({campo:'empresaInfo',valor:JSON.stringify(info)});
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
@@ -3406,7 +3428,7 @@ function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.'
  doc.text('Todos os módulos do ERP · gerado em '+fmtD(today()),MX,127);
 
  const emp=DB.config.empresa||{};
- const rodapeCapa=[emp.endereco,emp.telefone,emp.email,emp.site].filter(Boolean);
+ const rodapeCapa=[enderecoEstudio(emp),emp.telefone,emp.email,emp.site].filter(Boolean);
  const resumo=[
   ['Clientes',DB.clientes.length],['Orçamentos',DB.orcamentos.length],['Pedidos',DB.vendas.length],
   ['Ordens de Produção',DB.producao.length],['Entregas',DB.entregas.length],
@@ -3628,7 +3650,8 @@ function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.'
  tabela(['Condição','Valor'],cond,{0:{cellWidth:80},1:{cellWidth:40,halign:'right'}});
 
  subTitulo('Dados do estúdio');
- tabela(['Campo','Valor'],[['Endereço',t(emp.endereco)],['Telefone / WhatsApp',t(emp.telefone)],
+ tabela(['Campo','Valor'],[['Endereço',t(emp.endereco)],['Bairro',t(emp.bairro)],['CEP',t(emp.cep)],
+  ['Cidade',t(emp.cidade)],['Estado',t(emp.estado)],['Telefone / WhatsApp',t(emp.telefone)],
   ['E-mail',t(emp.email)],['Site / Instagram',t(emp.site)]],
   {0:{cellWidth:50},1:{cellWidth:110}});
 
