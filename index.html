@@ -2296,16 +2296,16 @@ function textoPagamentoPedido(v){const fins=finsDoPedido(v);
  return fmtD(maisRecente);}
 /* "Visao Geral" do pedido: as 5 datas do ciclo de vida, todas derivadas do que ja existe (sem nova coluna no Supabase) */
 function renderVisaoGeralPedido(v){const alvo=$('vnd-visao-geral');if(!alvo)return;
- if(!v){alvo.style.display='none';return;}
+ if(!v){alvo.style.display='none';$('vnd-visao-geral-corpo').innerHTML='';return;}
  const orc=orcDoPedido(v);const op=opDoPedido(v);
  const mEnt=(v.obs||'').match(/Entregue em: (\d{2}\/\d{2}\/\d{4})/);
- const item=(label,valor)=>'<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.02em">'+label+'</span><span class="mono" style="font-size:13px;font-weight:600">'+esc(valor||'—')+'</span></div>';
+ const item=(label,valor,html)=>'<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.02em">'+label+'</span><span class="mono" style="font-size:13px;font-weight:600">'+(html?valor:esc(valor||'—'))+'</span></div>';
  $('vnd-visao-geral-corpo').innerHTML=
   item('Orçamento',orc?fmtD(orc.data):'—')+
   item('Pedido',fmtD(v.data))+
   item('Pagamento',textoPagamentoPedido(v))+
   item('Entrega Prevista',(op&&op.prazo)?fmtD(op.prazo):'—')+
-  item('Entregue em',mEnt?mEnt[1]:'—');
+  item('Entregue em','<input type="date" class="form-control" id="vnd-entregue-em" value="'+(mEnt?mEnt[1].split('/').reverse().join('-'):'')+'" style="width:auto;padding:4px 8px;font-size:13px">',true);
  alvo.style.display='block';}
 function statusPcpCelula(v){const op=opDoPedido(v);
  if(!op)return '<span class="badge badge-muted" title="Nenhuma ordem de produção vinculada">—</span>';
@@ -2475,8 +2475,13 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
  const id=$('vnd-id').value;const statusAnterior=id?(DB.vendas.find(x=>x.id===id)||{}).status:null;
  const statusForm=$('vnd-status').value;
  let obsForm=$('vnd-obs').value.trim();
- /* carimba a data de entrega real na 1ª vez que o pedido vira "Entregue" — sem coluna nova no Supabase, mesmo truque de texto já usado em "Entrega combinada" */
- if(statusForm==='Entregue'&&statusAnterior!=='Entregue'&&!/Entregue em:/.test(obsForm))obsForm=(obsForm?obsForm+' · ':'')+'Entregue em: '+fmtD(today());
+ /* data de entrega real vive no obs ("Entregue em: dd/mm/aaaa"), sem coluna nova no Supabase — mesmo truque de "Entrega combinada".
+    A data escolhida na Visão Geral manda; se ficou vazia e o pedido acabou de virar Entregue, carimba hoje. */
+ const campoEntregue=$('vnd-entregue-em');
+ let dataEntregue=campoEntregue?campoEntregue.value:'';
+ obsForm=obsForm.replace(/\s*·?\s*Entregue em: \d{2}\/\d{2}\/\d{4}/,'').trim();
+ if(!dataEntregue&&statusForm==='Entregue'&&statusAnterior!=='Entregue')dataEntregue=today();
+ if(dataEntregue)obsForm=(obsForm?obsForm+' · ':'')+'Entregue em: '+fmtD(dataEntregue);
  const o={cliId,data:$('vnd-data').value||today(),pag:$('vnd-pag').value,status:statusForm,obs:obsForm,itens,total};
  if(id){
   const v2=Object.assign(DB.vendas.find(x=>x.id===id),o);
