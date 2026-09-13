@@ -214,7 +214,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
    A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
    fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
-#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards { display:none; }
+#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards { display:none; }
 .prod-card .pc-topo { align-items:center; }
 .prod-card .pc-num { color:var(--text-muted);font-weight:600; }
 .pd-meta { font-size:12px;color:var(--text-muted); }
@@ -283,8 +283,8 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 /* niveis sem acesso a valores nao veem dinheiro tambem nos cartoes */
 body.sem-valores .pc-valor, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
-  #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela { display:none; }
-  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards { display:block; }
+  #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
+  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards { display:block; }
 }
 /* busca global */
 .search-box { position:relative; }
@@ -431,7 +431,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     </div>
 
     <div class="section" id="section-clientes"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Clientes — CRM</div></div><table><thead><tr><th>#</th><th>Nome</th><th>Email</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-clientes"></tbody></table></div></div>
-    <div class="section" id="section-insumos"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Material/Insumo & Estoque</div></div><table><thead><tr><th>#</th><th>Material/Insumo</th><th>Categoria</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-insumos"></tbody></table></div></div>
+    <div class="section" id="section-insumos"><div id="insumos-cards"></div><div class="table-wrapper" id="insumos-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Material/Insumo & Estoque</div></div><table><thead><tr><th>#</th><th>Material/Insumo</th><th>Categoria</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-insumos"></tbody></table></div></div>
     <div class="section" id="section-portfolio"><div id="portfolio-cards"></div><div class="table-wrapper" id="portfolio-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Portfólio & Estoque</div></div><table><thead><tr><th>#</th><th>Produto</th><th>Categoria</th><th>Tempo de Produção</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-portfolio"></tbody></table></div></div>
     <div class="section" id="section-vendas">
       <div class="period-bar">
@@ -1858,7 +1858,9 @@ function linhaProduto(p,i){const est=Number(p.est||0),min=Number(p.min||0);
  const tempoCel=isPortfolio?'<td class="mono">'+(tempoDias?fmtN(tempoDias,1)+' dia'+(Number(tempoDias)===1?'':'s'):'—')+'</td>':'';
  const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+(i+1)+'</td><td><strong>'+esc(p.nome)+'</strong>'+matHint+'</td><td>'+esc(p.cat||'—')+'</td>'+tempoCel+'<td class="mono">'+(Number(p.preco)>0?fmt(p.preco):'—')+'</td><td class="mono">'+fmt(p.custo)+'</td><td><span class="mono">'+est+' '+esc(p.un||'un')+'</span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+st[2]+'"></div></div></td><td><span class="badge '+st[1]+'" title="'+st[3]+'">'+st[0]+'</span></td><td>'+actionBtns("editProduto('"+p.id+"')","delProduto('"+p.id+"')")+'</td></tr>';
  return linhaHeader+(expandido?linhasMateriaisProduto(p):'');}
-function renderInsumos(){$('tb-insumos').innerHTML=DB.produtos.filter(p=>p.tipo==='Insumo').map(linhaProduto).join('')||emptyRow(8,'Nenhum material/insumo cadastrado');}
+function renderInsumos(){const lista=DB.produtos.filter(p=>p.tipo==='Insumo');
+ $('tb-insumos').innerHTML=lista.map(linhaProduto).join('')||emptyRow(8,'Nenhum material/insumo cadastrado');
+ renderProdutoCards(lista,'insumos-cards',false);}
 function renderPortfolio(){const lista=DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio');
  $('tb-portfolio').innerHTML=lista.map(linhaProduto).join('')||emptyRow(9,'Nenhum produto cadastrado');
  renderPortfolioCards(lista);}
@@ -1880,26 +1882,32 @@ function materiaisDoCartao(p){
   return '<div class="pd-mat-item"><div class="pd-mat-topo"><span>• '+esc(m.desc||info.nome)+'</span><strong>'+fmt(custoTotal)+'</strong></div>'
    +'<div class="pd-mat-baixo"><span>precisa '+fmtN(necessario,3)+' '+esc(info.un)+'</span><span>tem '+fmtN(info.estoque,3)+' '+esc(info.un)+'</span>'+sit+'</div></div>';}).join('');
  return cabeca+'<div class="pd-mat">'+itens+'</div>';}
-function renderPortfolioCards(lista){
- const alvo=$('portfolio-cards');if(!alvo)return;
- if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum produto cadastrado</div>';return;}
+const renderPortfolioCards=lista=>renderProdutoCards(lista,'portfolio-cards',true);
+/* o mesmo cartao serve as duas telas. No insumo nao existe arvore de
+   materiais nem tempo de producao, e o preco de venda e copia do custo:
+   mostrar os dois seria repetir o mesmo numero. */
+function renderProdutoCards(lista,alvoId,isPortfolio){
+ const alvo=$(alvoId);if(!alvo)return;
+ if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">'+(isPortfolio?'Nenhum produto cadastrado':'Nenhum material/insumo cadastrado')+'</div>';return;}
  alvo.innerHTML=lista.map((p,i)=>{
   const est=Number(p.est||0),min=Number(p.min||0);
   const st=statusEstoque(est,min);
   const pct=min>0?Math.min(100,est/(min*2)*100):0;
-  const aberto=PORT_MAT_EXPANDIDOS.has(p.id);
-  const tempo=(DB.config.temposProducao||{})[p.id];
+  const aberto=isPortfolio&&PORT_MAT_EXPANDIDOS.has(p.id);
+  const tempo=isPortfolio?(DB.config.temposProducao||{})[p.id]:0;
   const meta=[p.cat||'',tempo?fmtN(tempo,1)+' dia'+(Number(tempo)===1?'':'s')+' de produção':''].filter(Boolean).join(' · ');
   const nMat=(p.materiais||[]).length;
-  const btnMat=nMat
-   ?'<button class="pc-itens-btn" onclick="toggleMateriaisProduto(\''+p.id+'\')">'+(aberto?'▾':'▸')+' '+nMat+(nMat>1?' materiais':' material')+'</button>'
-   :'<button class="pc-itens-btn" onclick="toggleMateriaisProduto(\''+p.id+'\')">'+(aberto?'▾':'▸')+' sem materiais</button>';
+  const btnMat=!isPortfolio?''
+   :(nMat
+    ?'<button class="pc-itens-btn" onclick="toggleMateriaisProduto(\''+p.id+'\')">'+(aberto?'▾':'▸')+' '+nMat+(nMat>1?' materiais':' material')+'</button>'
+    :'<button class="pc-itens-btn" onclick="toggleMateriaisProduto(\''+p.id+'\')">'+(aberto?'▾':'▸')+' sem materiais</button>');
   const acoes=actionBtns("editProduto('"+p.id+"')","delProduto('"+p.id+"')");
   return '<div class="pedido-card prod-card">'
    +'<div class="pc-topo"><span class="pc-num">'+(i+1)+'</span><span class="badge '+st[1]+'" title="'+st[3]+'">'+st[0]+'</span></div>'
    +'<div class="pc-cliente">'+esc(p.nome)+'</div>'
    +(meta?'<div class="pd-meta">'+esc(meta)+'</div>':'')
-   +'<div class="pc-valor"><span class="pc-total">'+(Number(p.preco)>0?fmt(p.preco):'—')+'</span><span class="pd-custo">custo '+fmt(p.custo)+'</span></div>'
+   +'<div class="pc-valor"><span class="pc-total">'+(isPortfolio?(Number(p.preco)>0?fmt(p.preco):'—'):fmt(p.custo))+'</span>'
+    +'<span class="pd-custo">'+(isPortfolio?'custo '+fmt(p.custo):'preço de compra')+'</span></div>'
    +'<div class="pd-estoque">'
     +'<div class="pd-est-linha"><span class="pd-est-num">'+est+' '+esc(p.un||'un')+' em estoque</span>'
      +'<span class="pd-est-min">'+(min>0?'mín. '+min:'sem mínimo')+'</span></div>'
