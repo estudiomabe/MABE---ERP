@@ -1297,9 +1297,13 @@ async function doLogin(){
    return erroLogin('Conta ainda não confirmada. Desligue "Confirm email" em Authentication > Providers no Supabase, ou confirme pelo e-mail recebido.');
  }
  /* 2) login antigo, direto na tabela (some quando o RLS for ligado) */
- await carregarUsuariosSupabase(true);
+ const servidorRespondeu=await carregarUsuariosSupabase(true);
  const cand=DB.usuarios.filter(x=>String(x.login).toLowerCase()===l.toLowerCase()&&x.status==='Ativo');
  let u=null;for(const c of cand){if(await confereSegredo(p,c.senha)){u=c;break;}}
+ /* Com o Supabase fora do ar, o Auth falha por rede e a tabela nao carrega:
+    dizer 'senha incorreta' aqui manda a pessoa redefinir uma senha que esta certa.
+    Foi o que aconteceu quando o projeto do Supabase foi pausado em 13/09/2026. */
+ if(!u&&servidorRespondeu===false)return erroLogin('Sem conexão com o servidor. Não dá para conferir seu login agora — o problema não é a senha. Tente de novo em instantes; se persistir, o projeto no Supabase pode estar pausado.');
  if(!u)return erroLogin(ehEmail(l)?'E-mail ou senha incorretos.':'Usuário ou senha incorretos.');
  USER=u;AUTH_USER=null;
  if(!String(u.senha||'').startsWith('sha256$')){u.senha=await hashSegredo(p);await salvarUsuarioSupabase(u);}
