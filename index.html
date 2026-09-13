@@ -778,6 +778,14 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <button class="btn btn-primary" onclick="saveCFConfig()">💾 Salvar Configurações de Custo</button>
         </div>
         <div class="config-card">
+          <div class="config-title">💰 Saldo Inicial da Conta (Conciliação Bancária)</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">O "Saldo Atual" do Financeiro é calculado só com os lançamentos que existem no ERP. Se a conta já tinha saldo antes do primeiro lançamento, informe aqui para o valor bater com o extrato real do banco.</div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Saldo Inicial (R$)</label><input type="number" class="form-control" id="cfg-saldo-inicial" step="0.01"></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveCFConfig()">💾 Salvar Saldo Inicial</button>
+        </div>
+        <div class="config-card">
           <div class="config-title">👥 Folha de Pagamento</div>
           <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Cadastre os colaboradores e o salário mensal de cada um.</div>
           <div id="cfg-folha" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
@@ -1029,7 +1037,7 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Administrador',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,comissao:0,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
+ config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,comissao:0,saldoInicial:0,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
@@ -1689,7 +1697,8 @@ function renderDashboard(){
  const cores={'Pendente':'#a07830','Confirmado':'#c8a96e','Enviado':'#7a6f62','Entregue':'#3d6b4f','Cancelado':'#b54040'};
  const stKeys=Object.keys(sts);
  chStatus=new Chart($('chart-status'),{type:'doughnut',data:{labels:stKeys.length?stKeys:['Sem pedidos'],datasets:[{data:stKeys.length?Object.values(sts):[1],backgroundColor:stKeys.length?stKeys.map(k=>cores[k]||'#1a1714'):['#e0d9ce']}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}}},cutout:'65%'}});}
-function saldoFin(){return DB.financeiro.filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
+function saldoFin(){const inicial=Number(DB.config.cf.saldoInicial)||0;
+ return inicial+DB.financeiro.filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
 
 /* ================= RELATÓRIO DASHBOARD EM PDF ================= */
 function gerarPdfDashboard(){if(!guardValores())return;
@@ -3812,6 +3821,7 @@ let CFG_EDITANDO=false;
 function renderConfig(){CFG_EDITANDO=false;$('sheets-url').value=DB.config.sheetsUrl||'';const cf=DB.config.cf;
  $('cfg-aluguel').value=cf.aluguel;$('cfg-iptu').value=cf.iptu;$('cfg-agua').value=cf.agua;$('cfg-energia').value=cf.energia;$('cfg-contador').value=cf.contador;$('cfg-outros').value=cf.outros;
  $('cfg-hmes').value=cf.hmes;$('cfg-imposto').value=cf.imposto;$('cfg-markup').value=cf.markup;$('cfg-reserva').value=cf.reserva;$('cfg-comissao').value=cf.comissao||0;
+ $('cfg-saldo-inicial').value=cf.saldoInicial||0;
  $('cfg-pix-ant').value=cf.pixAntecipado;
  for(let n=1;n<=10;n++)$('cfg-taxa-p'+n).value=cf['taxaParc'+n];
  renderCustosFixosExtrasConfig();
@@ -3903,7 +3913,7 @@ async function saveCFConfig(){if(!guard())return;
   if(!nome){temVazio=true;return;}
   extras.push({id:r.dataset.id,nome,valor});});
  if(temVazio){toast('Remova ou preencha as linhas de custo fixo sem nome.','error');return;}
- Object.assign(DB.config.cf,{aluguel:num('cfg-aluguel'),iptu:num('cfg-iptu'),agua:num('cfg-agua'),energia:num('cfg-energia'),contador:num('cfg-contador'),outros:num('cfg-outros'),hmes:num('cfg-hmes')||176,imposto:num('cfg-imposto'),markup:num('cfg-markup'),reserva:num('cfg-reserva'),comissao:num('cfg-comissao')});
+ Object.assign(DB.config.cf,{aluguel:num('cfg-aluguel'),iptu:num('cfg-iptu'),agua:num('cfg-agua'),energia:num('cfg-energia'),contador:num('cfg-contador'),outros:num('cfg-outros'),hmes:num('cfg-hmes')||176,imposto:num('cfg-imposto'),markup:num('cfg-markup'),reserva:num('cfg-reserva'),comissao:num('cfg-comissao'),saldoInicial:num('cfg-saldo-inicial')});
  DB.config.custosFixosExtras=extras;
  saveDB();log('editar','Configurações','Custos fixos padrão atualizados');saveDB();
  const {error}=await supa.from('config').upsert(Object.entries(DB.config.cf).map(([campo,valor])=>({campo,valor})));
