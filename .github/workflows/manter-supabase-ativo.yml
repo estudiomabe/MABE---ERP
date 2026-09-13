@@ -20,6 +20,9 @@ on:
   schedule:
     - cron: "0 9 * * *"      # todo dia às 09:00 UTC = 06:00 de Brasília
   workflow_dispatch:          # permite rodar na mão pela aba Actions
+  push:                       # e roda sozinho sempre que ESTE arquivo mudar: autoverificacao
+    paths:
+      - ".github/workflows/manter-supabase-ativo.yml"
 
 jobs:
   ping:
