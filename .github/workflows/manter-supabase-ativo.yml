@@ -1,0 +1,44 @@
+# Mantém o projeto Supabase (plano gratuito) fora da pausa por inatividade.
+#
+# O Supabase pausa um projeto grátis após 7 dias sem nenhuma requisição —
+# foi o que aconteceu em 13/09/2026 e derrubou o login de todo mundo. Esta
+# tarefa faz uma única consulta de leitura por dia, o que zera o contador.
+#
+# Se o projeto for pausado mesmo assim, o curl falha, o job fica vermelho
+# e o GitHub avisa por e-mail — vira um alarme, além de prevenção.
+#
+# A chave abaixo é a chave PÚBLICA do projeto, a mesma que já está no
+# index.html de todo mundo que abre o site. Não é segredo aqui nem lá.
+#
+# Atenção: o GitHub desliga tarefas agendadas em repositórios que ficam
+# 60 dias sem commit (e avisa por e-mail). Se o ERP parar de mudar, é
+# preciso reativar em Actions > Manter Supabase ativo > Enable workflow.
+
+name: Manter Supabase ativo
+
+on:
+  schedule:
+    - cron: "0 9 * * *"      # todo dia às 09:00 UTC = 06:00 de Brasília
+  workflow_dispatch:          # permite rodar na mão pela aba Actions
+
+jobs:
+  ping:
+    name: Consulta leve no banco
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ler um id da tabela de clientes
+        env:
+          SUPABASE_URL: https://fzlkuceflazohljpnkgi.supabase.co
+          SUPABASE_KEY: sb_publishable_R_Az0yk8mfqTUs_8uoK70Q_yNg8-TAU
+        run: |
+          status=$(curl --silent --show-error --max-time 30 \
+            --output /dev/null --write-out "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/clientes?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+          echo "Supabase respondeu HTTP $status"
+          if [ "$status" != "200" ]; then
+            echo "::error::Supabase não respondeu 200 — o projeto pode estar pausado. Verifique em supabase.com/dashboard."
+            exit 1
+          fi
