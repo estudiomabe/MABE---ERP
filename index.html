@@ -218,6 +218,8 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 .prod-card .pc-topo { align-items:center; }
 .prod-card .pc-num { color:var(--text-muted);font-weight:600; }
 .pd-meta { font-size:12px;color:var(--text-muted); }
+#page-title .titulo-curto { display:none; }
+@media (max-width:860px) { #page-title .titulo-longo { display:none; } #page-title .titulo-curto { display:inline; } }
 .pd-custo { font-size:12.5px;color:var(--text-muted);font-family:var(--mono); }
 .pd-estoque { display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--border);padding-top:10px; }
 .pd-est-linha { display:flex;align-items:baseline;justify-content:space-between;gap:10px; }
@@ -391,7 +393,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div id="main">
   <div id="topbar">
     <button id="btn-menu" class="btn btn-ghost" onclick="toggleSidebar()" style="display:none;padding:7px 10px" aria-label="Abrir menu">☰</button>
-    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-title" id="page-title"><span class="titulo-longo">Dashboard</span><span class="titulo-curto">Dashboard</span></div>
     <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Buscar em todo o ERP..." id="global-search" autocomplete="off" oninput="handleSearch(this.value)" onkeydown="buscaTecla(event)" onfocus="if(this.value)handleSearch(this.value)"><div id="busca-resultados" hidden></div></div>
     <button class="btn btn-primary" id="btn-new" onclick="openNew()" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span id="btn-new-label">Novo</span></button>
   </div>
@@ -1405,6 +1407,11 @@ function prepararOrdenacao(sec){
 
 /* ================= NAVEGAÇÃO ================= */
 const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
+/* No celular o titulo longo empurrava o botao '+ Novo' para a linha de baixo.
+   So os nomes que sobram estao aqui; o resto usa o titulo normal. */
+const TITULOS_CURTOS={clientes:'Clientes',pcp:'Produção',entregas:'Entregas',ferramentas:'Máquinas',
+ calendario:'Calendário',insumos:'Material/Insumo',portfolio:'Portfólio',madeiras:'Madeiras',
+ compras:'Compras',historico:'Histórico'};
 const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','compras','usuarios'];
 const BTN_NEW_LABELS={orcamentos:'Novo Orçamento'};
 let CUR='dashboard';
@@ -1417,7 +1424,8 @@ function navigate(sec){
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
  const el=$('section-'+sec); if(el)el.classList.add('active');
  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',(n.getAttribute('onclick')||'').indexOf("'"+sec+"'")>-1));
- $('page-title').textContent=TITLES[sec]||sec;
+ document.querySelector('#page-title .titulo-longo').textContent=TITLES[sec]||sec;
+ document.querySelector('#page-title .titulo-curto').textContent=TITULOS_CURTOS[sec]||TITLES[sec]||sec;
  $('btn-new').style.display=(NEWABLE.includes(sec)&&canEdit())?'inline-flex':'none';
  $('btn-new-label').textContent=BTN_NEW_LABELS[sec]||'Novo';
  $('global-search').value='';fecharBusca();
