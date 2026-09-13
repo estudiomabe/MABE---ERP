@@ -2303,9 +2303,9 @@ function renderVisaoGeralPedido(v){const alvo=$('vnd-visao-geral');if(!alvo)retu
  $('vnd-visao-geral-corpo').innerHTML=
   item('Orçamento',orc?fmtD(orc.data):'—')+
   item('Pedido',fmtD(v.data))+
-  item('Pagamento',textoPagamentoPedido(v))+
   item('Entrega Prevista',(op&&op.prazo)?fmtD(op.prazo):'—')+
-  item('Entregue em','<input type="date" class="form-control" id="vnd-entregue-em" value="'+(mEnt?mEnt[1].split('/').reverse().join('-'):'')+'" style="width:auto;padding:4px 8px;font-size:13px">',true);
+  item('Entregue em','<input type="date" class="form-control" id="vnd-entregue-em" value="'+(mEnt?mEnt[1].split('/').reverse().join('-'):'')+'" style="width:auto;padding:4px 8px;font-size:13px">',true)+
+  item('Pagamento',textoPagamentoPedido(v));
  alvo.style.display='block';}
 function statusPcpCelula(v){const op=opDoPedido(v);
  if(!op)return '<span class="badge badge-muted" title="Nenhuma ordem de produção vinculada">—</span>';
