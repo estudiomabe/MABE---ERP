@@ -127,6 +127,8 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .stock-bar { height:3px;background:var(--surface3);border-radius:2px;margin-top:3px;width:70px; }
 .stock-bar-fill { height:100%;border-radius:2px; }
 .row-actions { display:flex;gap:4px;opacity:0;transition:opacity 0.15s; } tr:hover .row-actions { opacity:1; }
+/* em tela de toque nao existe hover: sem isto, editar e excluir ficam invisiveis */
+@media (hover:none) { .row-actions { opacity:1; } }
 .modal-overlay { position:fixed;inset:0;background:rgba(26,23,20,0.4);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity 0.2s; }
 #modal-rec-senha { z-index:9500; }
 .modal-overlay.open { opacity:1;pointer-events:all; }
@@ -208,6 +210,37 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 .niveis-legenda { display:grid;gap:9px;padding:14px 16px 16px; }
 .niveis-legenda > div { display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:baseline;font-size:11.5px;color:var(--text-muted);line-height:1.55; }
 .niveis-legenda strong { font-size:11px;color:var(--text);letter-spacing:.3px; }
+/* Pedidos em cartoes no celular.
+   A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
+   fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
+   a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
+#vendas-cards { display:none; }
+.pedido-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:0 1px 4px rgba(0,0,0,0.05);padding:13px 14px;display:flex;flex-direction:column;gap:10px; }
+.pedido-card + .pedido-card { margin-top:10px; }
+.pc-topo { display:flex;align-items:baseline;justify-content:space-between;gap:10px; }
+.pc-num { font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text); }
+.pc-data { font-family:var(--mono);font-size:11.5px;color:var(--text-muted); }
+.pc-cliente { font-size:16px;font-weight:700;line-height:1.25;color:var(--text);word-break:break-word; }
+.pc-valor { display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap; }
+.pc-total { font-family:var(--mono);font-size:19px;font-weight:800;color:var(--text); }
+.pc-pag { font-size:12px;color:var(--text-muted); }
+.pc-status { display:flex;gap:7px;flex-wrap:wrap;align-items:center; }
+.pc-itens-btn { background:none;border:none;padding:0;font:inherit;font-size:12.5px;color:var(--text-muted);
+  cursor:pointer;display:flex;align-items:center;gap:6px;text-align:left; }
+.pc-itens-btn:hover { color:var(--text); }
+.pc-itens-lista { display:flex;flex-direction:column;gap:5px;padding:9px 11px;background:var(--surface2);border-radius:8px; }
+.pc-item { display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--text-muted);line-height:1.4; }
+.pc-item strong { font-weight:600;color:var(--text);font-family:var(--mono);white-space:nowrap; }
+.pc-acoes { display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:10px; }
+.pc-acoes .row-actions { display:flex;gap:6px;opacity:1; }
+.pc-vazio { padding:26px 14px;text-align:center;color:var(--text-muted);font-size:13px; }
+/* niveis sem acesso a valores nao veem dinheiro tambem nos cartoes */
+body.sem-valores .pc-valor, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
+@media (max-width:860px) {
+  #vendas-tabela { display:none; }
+  #vendas-cards { display:block; }
+}
 /* busca global */
 .search-box { position:relative; }
 #busca-resultados { position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:120;
@@ -366,7 +399,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <select class="form-control" id="vnd-per-ano-sel" style="width:auto;min-width:90px" onchange="onVndChange()"></select>
         <select class="form-control" id="vnd-status-filter" style="width:auto;min-width:150px" onchange="renderVendas()"><option value="">Todos os status</option><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select><span id="vnd-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
       </div>
-      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos</div></div><table><thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>STATUS R$</th><th>STATUS PCP</th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
+      <div id="vendas-cards"></div><div class="table-wrapper" id="vendas-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos</div></div><table><thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>STATUS R$</th><th>STATUS PCP</th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
     </div>
 
     <div class="section" id="section-financeiro">
@@ -2143,7 +2176,34 @@ function renderVendas(){syncPerBar('vnd-per',PER_VND);
  if(expandido&&itens.length){
   linhasItens=itens.map(it=>'<tr class="venda-item-row sub-row" style="background:var(--surface2)"><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
  }
- return linhaHeader+linhasItens;}).join('')||emptyRow(9,'Nenhum pedido no período selecionado');}
+ return linhaHeader+linhasItens;}).join('')||emptyRow(9,'Nenhum pedido no período selecionado');
+ renderVendasCards(lista);}
+/* mesma informacao da tabela, empilhada: nada de arrastar para o lado */
+function renderVendasCards(lista){
+ const alvo=$('vendas-cards');if(!alvo)return;
+ if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum pedido no período selecionado</div>';return;}
+ alvo.innerHTML=lista.map(v=>{
+  const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
+  const itens=v.itens||[];
+  const aberto=VND_EXPANDIDOS.has(v.id);
+  const listaItens=(aberto&&itens.length)?'<div class="pc-itens-lista">'+itens.map(it=>
+    '<div class="pc-item"><span>'+(it.qty||1)+'× '+esc(it.desc||'—')+'</span><strong>'+fmt((it.qty||1)*(it.preco||0))+'</strong></div>').join('')+'</div>':'';
+  const btnItens=itens.length
+   ?'<button class="pc-itens-btn" onclick="toggleItensVenda(\''+v.id+'\')">'+(aberto?'▾':'▸')+' '+itens.length+(itens.length>1?' itens':' item')+'</button>'
+   :'<span style="font-size:12.5px;color:var(--text-muted)">sem itens</span>';
+  const acoes=((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" onclick="addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')
+   +(verValores()?'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="gerarReciboVenda(\''+v.id+'\')">🧾</button>':'')
+   +'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'
+   +((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Duplicar pedido" onclick="duplicarVenda(\''+v.id+'\')">⧉</button>':'')
+   +actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')");
+  return '<div class="pedido-card">'
+   +'<div class="pc-topo"><span class="pc-num">V-'+pad(v.num)+'</span><span class="pc-data">'+fmtD(v.data)+'</span></div>'
+   +'<div class="pc-cliente">'+esc(cliName(v.cliId))+'</div>'
+   +'<div class="pc-valor"><span class="pc-total">'+fmt(v.total)+'</span><span class="pc-pag">'+esc(v.pag||'—')+'</span></div>'
+   +'<div class="pc-status"><span class="badge badge-rs '+stB+'">'+v.status+'</span>'+statusPcpCelula(v)+'</div>'
+   +btnItens+listaItens
+   +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
+   +'</div>';}).join('');}
 /* ================= DUPLICAR =================
    Copia os itens e os valores, zera o que é do original (número, baixa de
    estoque, vínculo com OP) e devolve o registro em rascunho para edição.
