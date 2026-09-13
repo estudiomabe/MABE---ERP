@@ -180,8 +180,15 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   .kpi-grid { grid-template-columns:repeat(2,1fr); }
   .charts-grid, .bottom-grid, .form-2 { grid-template-columns:minmax(0,1fr); }
   .orc-tipo-grid, .orc-cols-2, .mad-dim-grid { grid-template-columns:minmax(0,1fr) !important; }
-  .stat-row { flex-direction:column; }
-  .pcp-stats { grid-template-columns:repeat(2,1fr); }
+  /* Os contadores sao numeros pequenos: empilhados um por linha eles comiam
+     quase uma tela inteira antes do primeiro card do PCP. Em duas colunas,
+     compactos, sobra espaco para o que interessa. */
+  .stat-row { display:grid;grid-template-columns:repeat(2,1fr);gap:10px; }
+  .stat-row .stat-box { min-width:0; }
+  .pcp-stats { grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px; }
+  .stat-box { padding:10px 11px; }
+  .stat-value { font-size:17px; }
+  .stat-label { font-size:9.5px;line-height:1.3; }
   .parc-taxa-grid { grid-template-columns:repeat(2,1fr) !important; }
   .modal, .modal-lg { width:94vw; }
   #vnd-itens>div, #orc-materiais>div { grid-template-columns:minmax(110px,2fr) 55px 70px 65px 24px !important; }
@@ -189,7 +196,8 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   #orc-mdo>div { grid-template-columns:minmax(110px,2fr) 70px 70px 24px !important; }
 }
 @media (max-width:460px) {
-  .kpi-grid, .pcp-stats { grid-template-columns:1fr; }
+  .kpi-grid { grid-template-columns:1fr; }
+  .pcp-stats { grid-template-columns:repeat(2,1fr); }
 }
 /* ===== NÍVEIS DE ACESSO ===== */
 .nivel-sel { font-family:inherit;font-size:11px;font-weight:700;padding:3px 20px 3px 8px;border-radius:20px;border:1px solid var(--border);background-color:var(--surface2);color:var(--text);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6f62' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:9px; }
@@ -913,6 +921,23 @@ const fmtD=d=>d?String(d).slice(0,10).split('-').reverse().join('/'):'—';
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const pad=n=>String(n).padStart(4,'0');
 const addDays=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);};
+/* Uma queda de conexão derruba as 14 cargas de uma vez. Sem agrupar, o ERP
+   dispara 14 avisos empilhados que cobrem a tela inteira — no celular fica
+   impossível usar o sistema. Junta tudo num aviso só. */
+let ERRO_CARGA_TIMER=null,ERRO_CARGA_LISTA=[],ERRO_CARGA_REDE=false;
+function erroDeCarga(entidade,error){
+ const msg=String((error&&error.message)||error||"");
+ if(/failed to fetch|networkerror|load failed|network request failed/i.test(msg))ERRO_CARGA_REDE=true;
+ ERRO_CARGA_LISTA.push(entidade);
+ clearTimeout(ERRO_CARGA_TIMER);
+ ERRO_CARGA_TIMER=setTimeout(()=>{
+  const n=ERRO_CARGA_LISTA.length;
+  const lista=ERRO_CARGA_LISTA.slice(0,3).join(", ")+(n>3?" e mais "+(n-3):"");
+  const rede=ERRO_CARGA_REDE;
+  ERRO_CARGA_LISTA=[];ERRO_CARGA_REDE=false;
+  if(rede)toast("Sem conexão com o servidor. O ERP está mostrando os últimos dados salvos neste aparelho — o que você editar agora pode não ser gravado.","error",10000);
+  else toast("Erro ao carregar "+lista+": "+msg,"error",9000);
+ },500);}
 function toast(msg,type,ms){const c=$('toast-container');const t=document.createElement('div');t.className='toast '+(type||'info');t.innerHTML=(type==='success'?'✅ ':type==='error'?'⚠️ ':type==='warning'?'⚠️ ':'ℹ️ ')+esc(msg);c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},ms||3200);}
 function openModal(id){$(id).classList.add('open');}
 function closeModal(id){$(id).classList.remove('open');}
@@ -946,7 +971,7 @@ function historicoParaSupabase(h){return{dt:h.dt,user_nome:h.user||h.usuario||nu
 function historicoDeSupabase(row){return{id:uid(),dt:row.dt,user:row.user_nome||'—',usuario:row.user_nome||'—',login:'',acao:row.acao,modulo:row.modulo,detalhe:row.detalhe};}
 async function carregarHistoricoSupabase(){
  const {data,error}=await supa.from('historico').select('*').order('id',{ascending:false}).limit(400);
- if(error){toast('Erro ao carregar histórico do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('histórico',error);return;}
  DB.historico=(data||[]).map(historicoDeSupabase);saveDB();
  if(CUR==='historico')renderHistorico();}
 function commit(acao,modulo,det){log(acao,modulo,det);saveDB();renderSection(CUR);updateBadges();}
@@ -1128,7 +1153,7 @@ async function subirUsuariosLocais(remotos){
  return true;}
 async function carregarUsuariosSupabase(silencioso){
  const {data,error}=await supa.from('usuarios').select('*').order('nome');
- if(error){if(!silencioso)toast('Erro ao carregar usuários do Supabase: '+error.message,'error');return false;}
+ if(error){if(!silencioso)erroDeCarga('usuários',error);return false;}
  let remotos=data||[];
  if(!remotos.length){if(DB.usuarios.length)await migrarUsuariosParaSupabase();marcarMigracaoUsuarios();return true;}
  /* primeira carga deste navegador: junta as duas listas antes de trocar */
@@ -1682,7 +1707,7 @@ function clienteDeSupabase(row){return{id:row.id,nome:row.nome,email:row.email||
 function clienteParaSupabase(c){return{id:c.id,nome:c.nome,email:c.email||null,tel:c.tel||null,doc:c.doc||null,cidade:c.cidade||null,endereco:c.end||null,status:c.status||'Ativo'};}
 async function carregarClientesSupabase(){
  const {data,error}=await supa.from('clientes').select('*').order('nome');
- if(error){toast('Erro ao carregar clientes do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('clientes',error);return;}
  DB.clientes=(data||[]).map(clienteDeSupabase);saveDB();
  if(CUR==='clientes')renderClientes();}
 
@@ -1714,7 +1739,7 @@ async function delCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.i
 /* ================= PRODUTOS ================= */
 async function carregarProdutosSupabase(){
  const {data,error}=await supa.from('produtos').select('*').order('nome');
- if(error){toast('Erro ao carregar produtos do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('produtos',error);return;}
  DB.produtos=data||[];saveDB();
  if(CUR==='insumos')renderInsumos();
  if(CUR==='portfolio')renderPortfolio();
@@ -1811,7 +1836,7 @@ async function delProduto(id){if(!guard()||!guardValores())return;const p=DB.pro
 const madM3=m=>(Number(m.esp)/100)*(Number(m.larg)/100)*(Number(m.comp)/100)*Number(m.qtd||0);
 async function carregarMadeirasSupabase(){
  const {data,error}=await supa.from('madeiras').select('*').order('especie');
- if(error){toast('Erro ao carregar madeiras do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('madeiras',error);return;}
  DB.madeiras=data||[];saveDB();
  if(CUR==='madeiras')renderMadeiras();}
 function renderMadeiras(){const tb=$('tb-madeiras');
@@ -2089,7 +2114,7 @@ function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data|
 function vendaDeSupabase(row){return{id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],total:row.total,baixa:row.baixa};}
 async function carregarVendasSupabase(){
  const {data,error}=await supa.from('vendas').select('*').order('num',{ascending:false});
- if(error){toast('Erro ao carregar pedidos do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('pedidos',error);return;}
  DB.vendas=(data||[]).map(vendaDeSupabase);saveDB();
  if(CUR==='vendas')renderVendas();
  if(CUR==='calendario')renderCalendario();}
@@ -2277,7 +2302,7 @@ function orcParaSupabase(o){const r={id:o.id,cli_id:o.cliId||null,data:o.data||n
 function orcDeSupabase(row){return{id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,desc:row.descricao||''};}
 async function carregarOrcamentosSupabase(){
  const {data,error}=await supa.from('orcamentos').select('*').order('num',{ascending:false});
- if(error){toast('Erro ao carregar orçamentos do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('orçamentos',error);return;}
  DB.orcamentos=(data||[]).map(orcDeSupabase);saveDB();
  if(CUR==='orcamentos'&&$('orc-lista-view').style.display!=='none')renderOrcamentos();}
 function itensOrc(o){return (o.itens&&o.itens.length)?o.itens:(o.desc?[{id:'legacy',tipo:o.tipo||'sob_medida',desc:o.desc,qty:o.qty||1,preco:o.preco||0,custo:o.custo||0,lucro:o.lucro||0}]:[]);}
@@ -2881,7 +2906,7 @@ function tickPCPTimers(){document.querySelectorAll('.kanban-card-timer[data-cria
 setInterval(tickPCPTimers,60000);
 async function carregarProducaoSupabase(){
  const {data,error}=await supa.from('producao').select('*').order('num',{ascending:false});
- if(error){toast('Erro ao carregar produção do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('produção',error);return;}
  DB.producao=(data||[]).map(opDeSupabase);saveDB();
  if(CUR==='pcp')renderPCP();
  if(CUR==='calendario')renderCalendario();}
@@ -3002,7 +3027,7 @@ function entregaParaSupabase(e){return{id:e.id,op_id:e.opId||null,data:e.data||n
 function entregaDeSupabase(row){return{id:row.id,opId:row.op_id,data:row.data,cliId:row.cli_id,peca:row.peca,end:row.endereco||'',resp:row.resp||'',status:row.status,obs:row.obs||''};}
 async function carregarEntregasSupabase(){
  const {data,error}=await supa.from('entregas').select('*').order('data',{ascending:false});
- if(error){toast('Erro ao carregar entregas do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('entregas',error);return;}
  DB.entregas=(data||[]).map(entregaDeSupabase);saveDB();
  if(CUR==='entregas')renderEntregas();
  if(CUR==='calendario')renderCalendario();}
@@ -3045,7 +3070,7 @@ function ferramentaDeSupabase(row){return{id:row.id,nome:row.nome,tipo:row.tipo|
 function ferramentaParaSupabase(f){return{id:f.id,nome:f.nome,tipo:f.tipo||null,ult:f.ult||null,intervalo:f.int||null,obs:f.obs||null};}
 async function carregarFerramentasSupabase(){
  const {data,error}=await supa.from('ferramentas').select('*').order('nome');
- if(error){toast('Erro ao carregar máquinas do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('máquinas',error);return;}
  DB.ferramentas=(data||[]).map(ferramentaDeSupabase);saveDB();
  if(CUR==='ferramentas')renderFerramentas();
  if(CUR==='calendario')renderCalendario();}
@@ -3119,7 +3144,7 @@ async function confirmarImportacaoOfx(){if(!guard())return;
  closeModal('modal-ofx');toast(novos.length+' lançamento(s) importado(s)!','success');}
 async function carregarFinanceiroSupabase(){
  const {data,error}=await supa.from('financeiro').select('*').order('data',{ascending:false});
- if(error){toast('Erro ao carregar financeiro do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('financeiro',error);return;}
  DB.financeiro=(data||[]).map(financeiroDeSupabase);saveDB();
  if(CUR==='financeiro')renderFinanceiro();
  if(CUR==='centrocustos')renderCentroCustos();
@@ -3181,7 +3206,7 @@ async function delFin(id){if(!guard())return;const f=DB.financeiro.find(x=>x.id=
 /* ================= FORNECEDORES & COMPRAS ================= */
 async function carregarFornecedoresSupabase(){
  const {data,error}=await supa.from('fornecedores').select('*').order('nome');
- if(error){toast('Erro ao carregar fornecedores do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('fornecedores',error);return;}
  DB.fornecedores=data||[];saveDB();
  if(CUR==='fornecedores')renderFornecedores();}
 function renderFornecedores(){$('tb-fornecedores').innerHTML=DB.fornecedores.map((f,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(f.nome)+'</strong></td><td class="mono">'+esc(f.cnpj||'—')+'</td><td>'+esc(f.email||'—')+'</td><td>'+esc(f.tel||'—')+'</td><td>'+esc(f.cidade||'—')+'</td><td><span class="badge '+(f.status==='Ativo'?'badge-success':'badge-muted')+'">'+f.status+'</span></td><td>'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum fornecedor cadastrado');}
@@ -3205,7 +3230,7 @@ function compraParaSupabase(c){const r={id:c.id,for_id:c.forId||null,data:c.data
 function compraDeSupabase(row){return{id:row.id,num:row.num,forId:row.for_id,data:row.data,total:row.total,status:row.status,obs:row.obs||'',lancado:row.lancado};}
 async function carregarComprasSupabase(){
  const {data,error}=await supa.from('compras').select('*').order('num',{ascending:false});
- if(error){toast('Erro ao carregar compras do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('compras',error);return;}
  DB.compras=(data||[]).map(compraDeSupabase);saveDB();
  if(CUR==='compras')renderCompras();}
 function renderCompras(){$('tb-compras').innerHTML=DB.compras.map(c=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Recebido':'badge-success','Cancelado':'badge-danger'}[c.status]||'badge-muted';
@@ -3675,7 +3700,7 @@ async function saveMdoTipos(){if(!guard())return;
  toast('Tipos de mão de obra salvos!','success');}
 async function carregarConfigSupabase(){
  const {data,error}=await supa.from('config').select('*');
- if(error){toast('Erro ao carregar configurações do Supabase: '+error.message,'error');return;}
+ if(error){erroDeCarga('configurações',error);return;}
  (data||[]).forEach(({campo,valor})=>{
   if(campo==='mdoTipos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr)&&arr.length)DB.config.mdoTipos=arr;}catch(e){}}
   else if(campo==='custosFixosExtras'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.custosFixosExtras=arr;}catch(e){}}
