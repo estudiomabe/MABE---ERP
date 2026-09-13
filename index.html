@@ -997,6 +997,24 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </div></div><div class="modal-footer"><button class="btn btn-danger" id="op-btn-del" style="margin-right:auto;display:none" onclick="delOPFromModal()">Excluir</button><button class="btn btn-ghost" onclick="closeModal('modal-producao')">Cancelar</button><button class="btn btn-primary" onclick="saveOP()">Salvar</button></div></div></div>
 
 <script>
+/* ================= ERRO VISÍVEL =================
+   Sem console no celular, um erro no JavaScript deixava a tela vazia sem
+   explicação. Aqui qualquer erro não tratado vira uma faixa no topo, com a
+   mensagem e a linha, para dar pra reportar. */
+function mostrarErroGlobal(msg){try{
+ let f=document.getElementById('faixa-erro');
+ if(!f){f=document.createElement('div');f.id='faixa-erro';
+  f.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#b54040;color:#fff;font:13px/1.4 system-ui,sans-serif;padding:10px 40px 10px 12px;white-space:pre-wrap;word-break:break-word';
+  const x=document.createElement('button');x.textContent='✕';x.setAttribute('aria-label','Fechar');
+  x.style.cssText='position:absolute;top:6px;right:8px;background:none;border:0;color:#fff;font-size:16px;cursor:pointer';
+  x.onclick=()=>f.remove();f.appendChild(x);
+  const t=document.createElement('div');t.id='faixa-erro-texto';f.appendChild(t);
+  (document.body||document.documentElement).appendChild(f);}
+ const t=document.getElementById('faixa-erro-texto');
+ t.textContent=(t.textContent?t.textContent+'\n':'')+'⚠ Erro interno: '+msg;
+}catch(e){}}
+window.addEventListener('error',e=>{mostrarErroGlobal((e.message||'erro')+(e.lineno?' (linha '+e.lineno+')':''));});
+window.addEventListener('unhandledrejection',e=>{const r=e.reason;mostrarErroGlobal('(promessa) '+(r&&r.message?r.message:String(r))+(r&&r.stack?' — '+String(r.stack).split('\n').slice(1,2).join('').trim():''));});
 /* ================= HELPERS ================= */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
