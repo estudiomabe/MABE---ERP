@@ -214,7 +214,19 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
    A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
    fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
-#vendas-cards { display:none; }
+#vendas-cards, #orcamentos-cards { display:none; }
+/* o cartao do orcamento carrega a faixa de cor do status na lateral,
+   que na tabela e a borda esquerda da linha */
+.orc-card { border-left-width:3px;border-left-style:solid;border-left-color:transparent; }
+.orc-card.st-aprovado { border-left-color:var(--success); }
+.orc-card.st-reprovado { border-left-color:var(--danger); }
+.orc-card.st-enviado { border-left-color:var(--primary); }
+.oc-validade { font-size:12px;color:var(--text-muted); }
+.oc-validade strong { color:var(--text);font-family:var(--mono);font-weight:600; }
+.oc-lucro { font-size:12px;color:var(--success);font-family:var(--mono); }
+.oc-decidir { display:flex;gap:6px;flex-wrap:wrap; }
+.oc-decidir .btn { flex:1;justify-content:center;min-width:84px; }
+body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 .pedido-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
   box-shadow:0 1px 4px rgba(0,0,0,0.05);padding:13px 14px;display:flex;flex-direction:column;gap:10px; }
 .pedido-card + .pedido-card { margin-top:10px; }
@@ -238,8 +250,8 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 /* niveis sem acesso a valores nao veem dinheiro tambem nos cartoes */
 body.sem-valores .pc-valor, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
-  #vendas-tabela { display:none; }
-  #vendas-cards { display:block; }
+  #vendas-tabela, #orcamentos-tabela { display:none; }
+  #vendas-cards, #orcamentos-cards { display:block; }
 }
 /* busca global */
 .search-box { position:relative; }
@@ -546,7 +558,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           </select>
           <span id="orc-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
         </div>
-        <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Orçamentos — Mabe</div></div>
+        <div id="orcamentos-cards"></div><div class="table-wrapper" id="orcamentos-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Orçamentos — Mabe</div></div>
         <table><thead><tr><th>#</th><th>Status</th><th>Data</th><th>Cliente</th><th>Entrega</th><th>Contato</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tb-orcamentos"></tbody></table></div>
       </div>
       <div id="orc-header-view" style="display:none">
@@ -2407,7 +2419,43 @@ function renderOrcamentos(){orcShow('lista');syncPerBar('orc-per',PER_ORC);
     +'<td class="mono" style="font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">'+fmt(it.preco)+'</td><td></td></tr>').join('');
    if(canEdit())linhasItens+='<tr class="sub-row" style="background:var(--surface)"><td></td><td colspan="7" style="padding:6px 14px"><a href="#" onclick="event.preventDefault();event.stopPropagation();abrirDetalheOrc(\''+o.id+'\');abrirAdicionarItem();" style="font-size:11.5px;color:var(--accent);font-weight:600;text-decoration:none">+ Novo Item</a></td></tr>';
   }
-  return linhaHeader+linhasItens;}).join('')||emptyRow(8,'Nenhum orçamento no período selecionado');}
+  return linhaHeader+linhasItens;}).join('')||emptyRow(8,'Nenhum orçamento no período selecionado');
+  renderOrcamentosCards(lista);}
+/* mesma informacao da tabela, empilhada para o celular */
+function renderOrcamentosCards(lista){
+ const alvo=$('orcamentos-cards');if(!alvo)return;
+ if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum orçamento no período selecionado</div>';return;}
+ const tipoL={'sob_medida':'🔨','catalogo':'📦','novo_produto':'🆕'};
+ const faixa={'Aprovado':'st-aprovado','Reprovado':'st-reprovado','Enviado':'st-enviado','Concluído':'st-aprovado'};
+ alvo.innerHTML=lista.map(o=>{
+  const itens=itensOrc(o);
+  const aberto=ORC_EXPANDIDOS.has(o.id);
+  const cliObj=DB.clientes.find(c=>c.id===o.cliId);
+  const podeDecidir=canEdit()&&itens.length>0&&o.status!=='Aprovado'&&o.status!=='Reprovado'&&o.status!=='Concluído';
+  const listaItens=(aberto&&itens.length)?'<div class="pc-itens-lista">'+itens.map(it=>
+    '<div class="pc-item"><span>'+(tipoL[it.tipo]||'•')+' '+(it.qty>1?it.qty+'× ':'')+esc(it.desc)+'</span><strong>'+fmt(it.preco)+'</strong></div>').join('')+'</div>':'';
+  const btnItens=itens.length
+   ?'<button class="pc-itens-btn" onclick="toggleItensOrc(\''+o.id+'\')">'+(aberto?'▾':'▸')+' '+itens.length+(itens.length>1?' itens':' item')+'</button>'
+   :'<span style="font-size:12.5px;color:var(--text-muted)">sem itens</span>';
+  /* aprovar e reprovar sao a decisao do cartao: ficam em cima, largos */
+  const decidir=podeDecidir
+   ?'<div class="oc-decidir"><button class="btn btn-primary btn-sm" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>'
+    +'<button class="btn btn-danger btn-sm" onclick="rejeitarOrcamento(\''+o.id+'\')">✗ Reprovar</button></div>':'';
+  const acoes=((o.status==='Aprovado'&&!o.opId&&canEdit())?'<button class="btn btn-primary btn-sm" title="Enviar para produção" onclick="orcParaProducao(\''+o.id+'\')">▶</button>':'')
+   +((cliObj&&cliObj.tel)?'<button class="btn btn-ghost btn-sm" title="Enviar no WhatsApp" onclick="abrirWhatsappOrc(\''+o.id+'\')">💬</button>':'')
+   +((cliObj&&cliObj.email)?'<button class="btn btn-ghost btn-sm" title="Enviar por E-mail" onclick="abrirEmailOrc(\''+o.id+'\')">✉️</button>':'')
+   +(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="abrirDetalheOrc(\''+o.id+'\');abrirAdicionarItem();">+ Item</button>':'')
+   +(itens.length?'<button class="btn btn-ghost btn-sm" title="Gerar PDF" onclick="abrirPdfOrcamentoLista(\''+o.id+'\')">📄</button>':'')
+   +(canEdit()?'<button class="btn btn-ghost btn-sm" title="Duplicar orçamento" onclick="duplicarOrcamento(\''+o.id+'\')">⧉</button>':'')
+   +(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editarCabecalhoOrc(\''+o.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delOrcamento(\''+o.id+'\')">🗑️</button>':'');
+  return '<div class="pedido-card orc-card '+(faixa[o.status]||'')+'">'
+   +'<div class="pc-topo"><span class="pc-num">ORC-'+pad(o.num)+'</span><span class="pc-data">'+fmtD(o.data)+'</span></div>'
+   +'<div class="pc-cliente" onclick="abrirDetalheOrc(\''+o.id+'\')" style="cursor:pointer">'+esc(cliName(o.cliId))+'</div>'
+   +'<div class="pc-valor"><span class="pc-total">'+fmt(o.preco)+'</span><span class="oc-lucro">lucro '+fmt(o.lucro)+'</span></div>'
+   +'<div class="pc-status">'+statusPillHtml(o.status)+'<span class="oc-validade">entrega <strong>'+fmtD(o.validade)+'</strong></span></div>'
+   +btnItens+listaItens+decidir
+   +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
+   +'</div>';}).join('');}
 let ORC_EXPANDIDOS=new Set();
 function toggleItensOrc(id){if(ORC_EXPANDIDOS.has(id))ORC_EXPANDIDOS.delete(id);else ORC_EXPANDIDOS.add(id);renderOrcamentos();}
 function abrirWhatsappOrc(id){const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
