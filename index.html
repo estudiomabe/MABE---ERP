@@ -456,7 +456,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div class="stat-box"><div class="stat-value" id="fin-sai" style="color:var(--danger)">R$0</div><div class="stat-label">Saídas (mês)</div></div>
         <div class="stat-box"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
       </div>
-      <div class="period-bar"><select class="form-control" id="fin-tipo-filter" style="width:auto;min-width:140px" onchange="renderFinanceiro()"><option value="">Entradas e saídas</option><option>Entrada</option><option>Saída</option></select><select class="form-control" id="fin-status-filter" style="width:auto;min-width:150px" onchange="renderFinanceiro()"><option value="">Todos os status</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select><span id="fin-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div id="financeiro-cards"></div><div class="table-wrapper" id="financeiro-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Pedido</th><th>Centro de Custo</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody></table></div>
+      <div class="period-bar"><select class="form-control" id="fin-tipo-filter" style="width:auto;min-width:140px" onchange="renderFinanceiro()"><option value="">Entradas e saídas</option><option>Entrada</option><option>Saída</option></select><select class="form-control" id="fin-status-filter" style="width:auto;min-width:150px" onchange="renderFinanceiro()"><option value="">Todos os status</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select><span id="fin-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div id="financeiro-cards"></div><div class="table-wrapper" id="financeiro-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><span id="ofx-ultima-atualizacao" style="font-size:10.5px;color:var(--text-muted)"></span></div><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Pedido</th><th>Centro de Custo</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody></table></div>
     </div>
 
     <div class="section" id="section-centrocustos">
@@ -1038,7 +1038,7 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Administrador',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,comissao:0,saldoInicial:0,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
+ config:{sheetsUrl:'',ultimaImportacaoOfx:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,reserva:10,comissao:0,saldoInicial:0,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
@@ -3397,8 +3397,10 @@ async function confirmarImportacaoOfx(){if(!guard())return;
  const {error}=await supa.from('financeiro').insert(novos.map(financeiroParaSupabase));
  if(error){toast('Erro ao importar no Supabase: '+error.message,'error');return;}
  DB.financeiro=novos.concat(DB.financeiro);
+ DB.config.ultimaImportacaoOfx=new Date().toLocaleString('pt-BR');
  commit('criar','Financeiro',novos.length+' lançamento(s) importado(s) do extrato OFX');
  novos.forEach(n=>syncSheets('financeiro','upsert',n));
+ supa.from('config').upsert({campo:'ultimaImportacaoOfx',valor:DB.config.ultimaImportacaoOfx}).then(({error})=>{if(error)toast('Não consegui salvar a data da última importação: '+error.message,'error');});
  closeModal('modal-ofx');
  if(OFX_SALDO_BANCO!==null){
   const dif=Math.round((saldoFin()-OFX_SALDO_BANCO)*100)/100;
@@ -3420,6 +3422,7 @@ function renderFinanceiro(){const ym=today().slice(0,7);
  $('fin-ent').textContent=fmtK(pagos.filter(f=>f.tipo==='Entrada'&&String(f.data).slice(0,7)===ym).reduce((s,f)=>s+Number(f.val),0));
  $('fin-sai').textContent=fmtK(pagos.filter(f=>f.tipo==='Saída'&&String(f.data).slice(0,7)===ym).reduce((s,f)=>s+Number(f.val),0));
  $('fin-pend').textContent=DB.financeiro.filter(f=>f.status==='Pendente').length;
+ if($('ofx-ultima-atualizacao'))$('ofx-ultima-atualizacao').textContent=DB.config.ultimaImportacaoOfx?('Última atualização: '+DB.config.ultimaImportacaoOfx):'Nenhuma importação de extrato ainda';
  const pedidos=pedidosOrdenados();
  const fTipo=$('fin-tipo-filter')?$('fin-tipo-filter').value:'';
  const fSt=$('fin-status-filter')?$('fin-status-filter').value:'';
@@ -4003,6 +4006,7 @@ async function carregarConfigSupabase(){
   else if(campo==='temposProducao'){try{const obj=JSON.parse(valor);if(obj&&typeof obj==='object')DB.config.temposProducao=obj;}catch(e){}}
   else if(campo==='folhaPagamento'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.folhaPagamento=arr;}catch(e){}}
   else if(campo==='empresaInfo'){try{const obj=JSON.parse(valor);if(obj&&typeof obj==='object')DB.config.empresa=obj;}catch(e){}}
+  else if(campo==='ultimaImportacaoOfx'){DB.config.ultimaImportacaoOfx=valor||'';}
   else if(DB.config.cf[campo]!==undefined)DB.config.cf[campo]=Number(valor)||0;});
  saveDB();
  if(CUR==='configuracoes'&&!CFG_EDITANDO)renderConfig();}
