@@ -487,6 +487,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       <div class="modal-header"><div class="modal-title">📥 Importar Extrato Bancário (OFX)</div><button class="modal-close" onclick="closeModal('modal-ofx')">✕</button></div>
       <div class="modal-body">
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Revise os lançamentos abaixo antes de confirmar. Itens já existentes no financeiro (mesma data/valor/descrição) vêm desmarcados.</div>
+        <div id="ofx-saldo-comparacao" style="margin-bottom:12px"></div>
         <div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn btn-ghost btn-sm" onclick="marcarTodosOfx(true)">Marcar todos</button><button class="btn btn-ghost btn-sm" onclick="marcarTodosOfx(false)">Desmarcar todos</button></div>
         <div id="ofx-itens-lista" style="display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto"></div>
       </div>
@@ -3326,30 +3327,69 @@ let OFX_ITENS=[];
 function parseOfxDate(s){const m=String(s||'').match(/^(\d{4})(\d{2})(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:'';}
 function parseOfx(texto){
  const blocos=texto.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/gi)||[];
- return blocos.map(b=>{
+ const itens=blocos.map(b=>{
   const get=tag=>{const m=b.match(new RegExp('<'+tag+'>([^\\r\\n<]*)','i'));return m?m[1].trim():'';};
   const amt=parseFloat(get('TRNAMT').replace(',','.'))||0;
   const data=parseOfxDate(get('DTPOSTED'));
   const desc=get('MEMO')||get('NAME')||'Lançamento importado';
   const fitid=get('FITID');
   return{data,val:Math.round(Math.abs(amt)*100)/100,tipo:amt>=0?'Entrada':'Saída',desc,fitid};
- }).filter(t=>t.data&&t.val>0);}
+ }).filter(t=>t.data&&t.val>0);
+ /* o extrato traz o saldo que o banco calcula (LEDGERBAL/BALAMT), fora da
+    lista de transacoes -- e o numero contra o qual comparamos o que o
+    ERP vai calcular depois de importar. */
+ let saldoBanco=null,dataSaldoBanco='';
+ const ledger=texto.match(/<LEDGERBAL>[\s\S]*?<\/LEDGERBAL>/i);
+ if(ledger){
+  const bm=ledger[0].match(/<BALAMT>([^\r\n<]*)/i);
+  const dm=ledger[0].match(/<DTASOF>([^\r\n<]*)/i);
+  if(bm)saldoBanco=parseFloat(bm[1].trim().replace(',','.'));
+  if(dm)dataSaldoBanco=parseOfxDate(dm[1].trim());
+  if(saldoBanco!==null&&isNaN(saldoBanco))saldoBanco=null;
+ }
+ return{itens,saldoBanco,dataSaldoBanco};}
 function jaExisteFinanceiro(t){return DB.financeiro.some(f=>f.data===t.data&&Math.abs(Number(f.val)-t.val)<0.005&&(f.desc||'').trim()===t.desc.trim());}
 function importarExtratoOfx(ev){const file=ev.target.files[0];ev.target.value='';if(!file)return;
  const reader=new FileReader();
  reader.onload=()=>{
-  let itens;
-  try{itens=parseOfx(reader.result);}catch(e){toast('Erro ao ler o arquivo OFX: '+e.message,'error');return;}
+  let resultado;
+  try{resultado=parseOfx(reader.result);}catch(e){toast('Erro ao ler o arquivo OFX: '+e.message,'error');return;}
+  const{itens,saldoBanco,dataSaldoBanco}=resultado;
   if(!itens.length){toast('Nenhum lançamento encontrado neste arquivo OFX.','error');return;}
-  OFX_ITENS=itens;
+  OFX_ITENS=itens;OFX_SALDO_BANCO=saldoBanco;OFX_DATA_SALDO_BANCO=dataSaldoBanco;
   $('ofx-itens-lista').innerHTML=itens.map((t,i)=>{const dup=jaExisteFinanceiro(t);
-   return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer"><input type="checkbox" class="ofx-item-check" value="'+i+'" '+(dup?'':'checked')+' style="width:16px;height:16px;flex-shrink:0"><div style="flex:1;min-width:0"><strong>'+esc(t.desc)+'</strong><div style="font-size:11px;color:var(--text-muted)">'+fmtD(t.data)+(dup?' · <span style="color:var(--warning)">já existe no financeiro</span>':'')+'</div></div><span class="mono" style="font-weight:700;flex-shrink:0;color:'+(t.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+(t.tipo==='Entrada'?'+':'−')+' '+fmt(t.val)+'</span></label>';
+   return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer"><input type="checkbox" class="ofx-item-check" value="'+i+'" onchange="atualizarComparacaoSaldoOfx()" '+(dup?'':'checked')+' style="width:16px;height:16px;flex-shrink:0"><div style="flex:1;min-width:0"><strong>'+esc(t.desc)+'</strong><div style="font-size:11px;color:var(--text-muted)">'+fmtD(t.data)+(dup?' · <span style="color:var(--warning)">já existe no financeiro</span>':'')+'</div></div><span class="mono" style="font-weight:700;flex-shrink:0;color:'+(t.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+(t.tipo==='Entrada'?'+':'−')+' '+fmt(t.val)+'</span></label>';
   }).join('');
+  atualizarComparacaoSaldoOfx();
   openModal('modal-ofx');
  };
  reader.onerror=()=>toast('Não foi possível ler o arquivo.','error');
  reader.readAsText(file);}
-function marcarTodosOfx(v){document.querySelectorAll('.ofx-item-check').forEach(c=>c.checked=v);}
+let OFX_SALDO_BANCO=null,OFX_DATA_SALDO_BANCO='';
+function marcarTodosOfx(v){document.querySelectorAll('.ofx-item-check').forEach(c=>c.checked=v);atualizarComparacaoSaldoOfx();}
+/* Recalcula a cada marca/desmarca: mostra o saldo atual do ERP, o que ele
+   ficaria depois de lancar os itens marcados, e o que o banco diz que a
+   conta tem -- avisando quando os dois nao batem. */
+function atualizarComparacaoSaldoOfx(){
+ const alvo=$('ofx-saldo-comparacao');if(!alvo)return;
+ const marcados=[...document.querySelectorAll('.ofx-item-check:checked')].map(c=>OFX_ITENS[Number(c.value)]);
+ const somaMarcados=marcados.reduce((s,t)=>s+(t.tipo==='Entrada'?1:-1)*t.val,0);
+ const saldoAtual=saldoFin();
+ const saldoProjetado=saldoAtual+somaMarcados;
+ const linhaAtual='<div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-muted)"><span>Saldo atual no ERP</span><span class="mono">'+fmt(saldoAtual)+'</span></div>';
+ const linhaProjetado='<div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--text)"><span>Saldo do ERP após esta importação</span><span class="mono">'+fmt(saldoProjetado)+'</span></div>';
+ if(OFX_SALDO_BANCO===null){
+  alvo.innerHTML='<div style="background:var(--surface2);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">'+linhaAtual+linhaProjetado
+   +'<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Este arquivo não trouxe o saldo declarado pelo banco (tag LEDGERBAL) — sem isso não dá pra conferir divergência.</div></div>';
+  return;}
+ const dif=Math.round((saldoProjetado-OFX_SALDO_BANCO)*100)/100;
+ const bate=Math.abs(dif)<0.01;
+ const linhaBanco='<div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-muted)"><span>Saldo segundo o banco'+(OFX_DATA_SALDO_BANCO?' (em '+fmtD(OFX_DATA_SALDO_BANCO)+')':'')+'</span><span class="mono">'+fmt(OFX_SALDO_BANCO)+'</span></div>';
+ const aviso=bate
+  ?'<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--success);margin-top:4px">✔ Bate com o extrato do banco</div>'
+  :'<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--danger);margin-top:4px">⚠ Diverge '+(dif>0?'R$ '+fmtN(Math.abs(dif),2)+' a mais':'R$ '+fmtN(Math.abs(dif),2)+' a menos')+' do que o banco diz — confira os itens marcados antes de lançar.</div>';
+ alvo.innerHTML='<div style="background:var(--surface2);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-left:3px solid '+(bate?'var(--success)':'var(--danger)')+'">'
+  +linhaAtual+linhaProjetado+linhaBanco+aviso+'</div>';}
 async function confirmarImportacaoOfx(){if(!guard())return;
  const idxs=Array.from(document.querySelectorAll('.ofx-item-check:checked')).map(c=>Number(c.value));
  if(!idxs.length){toast('Selecione ao menos um lançamento.','error');return;}
@@ -3359,7 +3399,12 @@ async function confirmarImportacaoOfx(){if(!guard())return;
  DB.financeiro=novos.concat(DB.financeiro);
  commit('criar','Financeiro',novos.length+' lançamento(s) importado(s) do extrato OFX');
  novos.forEach(n=>syncSheets('financeiro','upsert',n));
- closeModal('modal-ofx');toast(novos.length+' lançamento(s) importado(s)!','success');}
+ closeModal('modal-ofx');
+ if(OFX_SALDO_BANCO!==null){
+  const dif=Math.round((saldoFin()-OFX_SALDO_BANCO)*100)/100;
+  if(Math.abs(dif)<0.01)toast(novos.length+' lançamento(s) importado(s)! Saldo bate com o extrato: '+fmt(saldoFin())+'.','success',6000);
+  else toast(novos.length+' lançamento(s) importado(s), mas o saldo ainda diverge '+fmt(Math.abs(dif))+' do extrato. Confira os lançamentos não marcados.','error',9000);
+ }else toast(novos.length+' lançamento(s) importado(s)!','success');}
 async function carregarFinanceiroSupabase(){
  const {data,error}=await supa.from('financeiro').select('*').order('data',{ascending:false});
  if(error){erroDeCarga('financeiro',error);return;}
