@@ -882,7 +882,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this)"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-vendas"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="mv-title">Novo Pedido</div><button class="modal-close" onclick="closeModal('modal-vendas')">✕</button></div><div class="modal-body"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-vendas')">Cancelar</button><button class="btn btn-primary" onclick="saveVenda()">Salvar Pedido</button></div></div></div>
+<div class="modal-overlay" id="modal-vendas"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="mv-title">Novo Pedido</div><button class="modal-close" onclick="closeModal('modal-vendas')">✕</button></div><div class="modal-body"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-vendas')">Cancelar</button><button class="btn btn-primary" onclick="saveVenda()">Salvar Pedido</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
   <div class="modal-header"><div class="modal-title">📋 Nota Fiscal Eletrônica</div><button class="modal-close" onclick="closeModal('modal-nfe-info')">✕</button></div>
   <div class="modal-body" style="font-size:13px;line-height:1.7;color:var(--text)">
@@ -2305,25 +2305,32 @@ function opDoPedido(v){
 function orcDoPedido(v){const m=(v.obs||'').match(/ORC-(\d+)/);if(!m)return null;return DB.orcamentos.find(o=>Number(o.num)===Number(m[1]))||null;}
 /* contas a receber deste pedido: mesmo padrao de texto usado ao gerar o lancamento (ver aprovarOrcamento/saveVenda) */
 function finsDoPedido(v){const prefixo='Pedido V-'+pad(v.num);return DB.financeiro.filter(f=>(f.desc||'').indexOf(prefixo)===0);}
-function textoPagamentoPedido(v){const fins=finsDoPedido(v);
- if(!fins.length)return '—';
- if(fins.some(f=>f.status==='Pendente'))return 'Pendente';
- const pagos=fins.filter(f=>f.status==='Pago');
- if(!pagos.length)return '—';
- const maisRecente=pagos.reduce((m,f)=>(!m||f.data>m)?f.data:m,'');
- return fmtD(maisRecente);}
+/* último lançamento pago do pedido (é o que a data de Pagamento move no Financeiro) e se ainda há parcela pendente */
+function pagamentoDoPedido(v){const fins=finsDoPedido(v);
+ const ultimoPago=fins.filter(f=>f.status==='Pago').reduce((m,f)=>(!m||f.data>m.data)?f:m,null);
+ return {temLancamento:fins.length>0,ultimoPago,pendente:fins.some(f=>f.status==='Pendente')};}
+/* datas guardadas no texto de observações do pedido ("Rótulo: dd/mm/aaaa"), sem coluna nova no Supabase */
+function lerMarcaObs(obs,rotulo){const m=(obs||'').match(new RegExp(rotulo+': (\\d{2})\\/(\\d{2})\\/(\\d{4})'));return m?m[3]+'-'+m[2]+'-'+m[1]:'';}
+function marcaObs(obs,rotulo,iso){obs=obs||'';const re=new RegExp(rotulo+': \\d{2}\\/\\d{2}\\/\\d{4}');
+ if(iso){const txt=rotulo+': '+fmtD(iso);return re.test(obs)?obs.replace(re,txt):(obs?obs+' · ':'')+txt;}
+ return obs.replace(new RegExp('\\s*·\\s*'+rotulo+': \\d{2}\\/\\d{2}\\/\\d{4}'),'').replace(re,'').replace(/^\s*·\s*/,'').trim();}
 /* "Visao Geral" do pedido: as 5 datas do ciclo de vida, todas derivadas do que ja existe (sem nova coluna no Supabase) */
 function renderVisaoGeralPedido(v){const alvo=$('vnd-visao-geral');if(!alvo)return;
  if(!v){alvo.style.display='none';$('vnd-visao-geral-corpo').innerHTML='';return;}
- const orc=orcDoPedido(v);const op=opDoPedido(v);
- const mEnt=(v.obs||'').match(/Entregue em: (\d{2}\/\d{2}\/\d{4})/);
- const item=(label,valor,html)=>'<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.02em">'+label+'</span><span class="mono" style="font-size:13px;font-weight:600">'+(html?valor:esc(valor||'—'))+'</span></div>';
+ const orc=orcDoPedido(v);const op=opDoPedido(v);const pag=pagamentoDoPedido(v);
+ /* data-original: só grava na origem (orçamento, OP, Financeiro) o que de fato mudou */
+ const campo=(id,valor,extra)=>'<input type="date" class="form-control" id="'+id+'" value="'+esc(valor||'')+'" data-original="'+esc(valor||'')+'" '+(extra||'')+' style="width:auto;padding:4px 8px;font-size:13px">';
+ const nota=t=>'<span style="font-size:10.5px;font-weight:500;color:var(--text-muted);font-family:var(--font)">'+t+'</span>';
+ const item=(label,html)=>'<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.02em">'+label+'</span><span class="mono" style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px">'+html+'</span></div>';
+ const pagHtml=pag.ultimoPago
+  ?(pag.pendente?nota('parcial'):'')+campo('vg-pagamento',pag.ultimoPago.data,'data-fin-id="'+esc(pag.ultimoPago.id)+'" title="Muda a data do último lançamento pago deste pedido no Financeiro"')
+  :nota(pag.temLancamento?'Pendente':'sem lançamento')+campo('vg-pagamento','','disabled title="Nenhum lançamento pago deste pedido no Financeiro para alterar"');
  $('vnd-visao-geral-corpo').innerHTML=
-  item('Orçamento',orc?fmtD(orc.data):'—')+
-  item('Pedido',fmtD(v.data))+
-  item('Entrega Prevista',(op&&op.prazo)?fmtD(op.prazo):'—')+
-  item('Entregue em','<input type="date" class="form-control" id="vnd-entregue-em" value="'+(mEnt?mEnt[1].split('/').reverse().join('-'):'')+'" style="width:auto;padding:4px 8px;font-size:13px">',true)+
-  item('Pagamento',textoPagamentoPedido(v));
+  item('Orçamento',campo('vg-orcamento',orc?orc.data:lerMarcaObs(v.obs,'Orçamento em'),orc?'data-orc-id="'+esc(orc.id)+'" title="Muda a data do orçamento ORC-'+pad(orc.num)+'"':''))+
+  item('Pedido',campo('vg-pedido',v.data,'oninput="$(\'vnd-data\').value=this.value"'))+
+  item('Entrega Prevista',campo('vg-entrega-prevista',op?op.prazo:lerMarcaObs(v.obs,'Entrega combinada'),op?'data-op-id="'+esc(op.id)+'" title="Muda o prazo da ordem de produção OP-'+pad(op.num)+' (Calendário e PCP)"':''))+
+  item('Entregue em',campo('vnd-entregue-em',lerMarcaObs(v.obs,'Entregue em')))+
+  item('Pagamento',pagHtml);
  alvo.style.display='block';}
 function statusPcpCelula(v){const op=opDoPedido(v);
  if(!op)return '<span class="badge badge-muted" title="Nenhuma ordem de produção vinculada">—</span>';
@@ -2497,16 +2504,16 @@ let ITEM_PARA_PEDIDO=null;
 function capturarPedido(){const itens=[];
  document.querySelectorAll('#vnd-itens > div').forEach(r=>{const sel=r.querySelector('.vi-prod'),desc=r.querySelector('.vi-desc');
   itens.push({tipo:r.dataset.tipo,prodId:sel?sel.value:'',desc:desc?desc.value:'',qty:parseFloat(r.querySelector('.vi-qty').value)||1,preco:parseFloat(r.querySelector('.vi-preco').value)||0});});
- const entregue=$('vnd-entregue-em');
  return {id:$('vnd-id').value,cliId:$('vnd-cli').value,data:$('vnd-data').value,pag:$('vnd-pag').value,status:$('vnd-status').value,
   obs:$('vnd-obs').value,titulo:$('mv-title').textContent,visaoGeral:$('vnd-visao-geral-corpo').innerHTML,
-  visaoGeralVisivel:$('vnd-visao-geral').style.display,entregue:entregue?entregue.value:'',itens};}
+  visaoGeralVisivel:$('vnd-visao-geral').style.display,
+  visaoGeralValores:[...document.querySelectorAll('#vnd-visao-geral-corpo input')].map(i=>[i.id,i.value]),itens};}
 function restaurarPedido(r){
  $('vnd-id').value=r.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,r.cliId,'— Selecionar —');
  $('vnd-data').value=r.data;$('vnd-pag').value=r.pag;$('vnd-status').value=r.status;$('vnd-obs').value=r.obs;
  $('mv-title').textContent=r.titulo;
  $('vnd-visao-geral-corpo').innerHTML=r.visaoGeral;$('vnd-visao-geral').style.display=r.visaoGeralVisivel;
- if($('vnd-entregue-em'))$('vnd-entregue-em').value=r.entregue;
+ r.visaoGeralValores.forEach(([id,valor])=>{if($(id))$(id).value=valor;});
  $('vnd-itens').innerHTML='';
  r.itens.forEach(it=>it.tipo==='livre'?addItemLivreVenda(it):addItemVenda(it));
  openModal('modal-vendas');}
@@ -2523,6 +2530,31 @@ function voltarAoPedido(item){const r=ITEM_PARA_PEDIDO;ITEM_PARA_PEDIDO=null;
  if(item)r.itens.push(item);
  navigate('vendas');restaurarPedido(r);}
 function addItemVendaLista(id){if(!guardValores())return;editVenda(id);abrirTipoItemPedido();}
+/* Datas que não têm registro de origem vivem no texto do pedido. "Entregue em": a data escolhida manda;
+   vazia, e o pedido acabou de virar Entregue, carimba hoje. "Entrega combinada" também é atualizada quando
+   já aparece no texto (pedidos vindos de orçamento), para não contradizer o prazo da OP. */
+function marcasVisaoGeral(obs,statusForm,statusAnterior){
+ const orc=$('vg-orcamento'),prev=$('vg-entrega-prevista'),ent=$('vnd-entregue-em');
+ if(orc&&!orc.dataset.orcId)obs=marcaObs(obs,'Orçamento em',orc.value);
+ if(prev&&(!prev.dataset.opId||(prev.value&&/Entrega combinada: /.test(obs))))obs=marcaObs(obs,'Entrega combinada',prev.value);
+ let dataEntregue=ent?ent.value:'';
+ if(!dataEntregue&&statusForm==='Entregue'&&statusAnterior!=='Entregue')dataEntregue=today();
+ return marcaObs(obs,'Entregue em',dataEntregue);}
+async function gravarDatasNaOrigem(){
+ const mudou=i=>i&&!i.disabled&&i.value&&i.value!==i.dataset.original;
+ const orc=$('vg-orcamento'),prev=$('vg-entrega-prevista'),pag=$('vg-pagamento');
+ if(mudou(orc)&&orc.dataset.orcId){const o=DB.orcamentos.find(x=>x.id===orc.dataset.orcId);
+  if(o){const {error}=await supa.from('orcamentos').update({data:orc.value}).eq('id',o.id);
+   if(error)toast('Pedido salvo, mas a data do orçamento não mudou: '+error.message,'error');
+   else{o.data=orc.value;syncSheets('orcamentos','upsert',o);}}}
+ if(mudou(prev)&&prev.dataset.opId){const op=DB.producao.find(x=>x.id===prev.dataset.opId);
+  if(op){const {error}=await supa.from('producao').update({prazo:prev.value}).eq('id',op.id);
+   if(error)toast('Pedido salvo, mas o prazo da ordem de produção não mudou: '+error.message,'error');
+   else{op.prazo=prev.value;syncSheets('pcp','upsert',op);}}}
+ if(mudou(pag)&&pag.dataset.finId){const f=DB.financeiro.find(x=>x.id===pag.dataset.finId);
+  if(f){const {error}=await supa.from('financeiro').update({data:pag.value}).eq('id',f.id);
+   if(error)toast('Pedido salvo, mas a data do pagamento no Financeiro não mudou: '+error.message,'error');
+   else{f.data=pag.value;syncSheets('financeiro','upsert',f);}}}}
 async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(!cliId){toast('Selecione o cliente.','error');return;}
  const itens=[];document.querySelectorAll('#vnd-itens > div').forEach(r=>{
   const qty=parseFloat(r.querySelector('.vi-qty').value)||0;const preco=parseFloat(r.querySelector('.vi-preco').value)||0;
@@ -2536,18 +2568,13 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
  const id=$('vnd-id').value;const statusAnterior=id?(DB.vendas.find(x=>x.id===id)||{}).status:null;
  const statusForm=$('vnd-status').value;
  let obsForm=$('vnd-obs').value.trim();
- /* data de entrega real vive no obs ("Entregue em: dd/mm/aaaa"), sem coluna nova no Supabase — mesmo truque de "Entrega combinada".
-    A data escolhida na Visão Geral manda; se ficou vazia e o pedido acabou de virar Entregue, carimba hoje. */
- const campoEntregue=$('vnd-entregue-em');
- let dataEntregue=campoEntregue?campoEntregue.value:'';
- obsForm=obsForm.replace(/\s*·?\s*Entregue em: \d{2}\/\d{2}\/\d{4}/,'').trim();
- if(!dataEntregue&&statusForm==='Entregue'&&statusAnterior!=='Entregue')dataEntregue=today();
- if(dataEntregue)obsForm=(obsForm?obsForm+' · ':'')+'Entregue em: '+fmtD(dataEntregue);
+ obsForm=marcasVisaoGeral(obsForm,statusForm,statusAnterior);
  const o={cliId,data:$('vnd-data').value||today(),pag:$('vnd-pag').value,status:statusForm,obs:obsForm,itens,total};
  if(id){
   const v2=Object.assign(DB.vendas.find(x=>x.id===id),o);
   const {error}=await supa.from('vendas').update(vendaParaSupabase(v2)).eq('id',id);
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+  await gravarDatasNaOrigem();
   commit('editar','Pedidos','V-'+pad(v2.num));syncSheets('vendas','upsert',v2);
  }
  else{
