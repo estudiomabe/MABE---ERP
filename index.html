@@ -3217,11 +3217,19 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  doc.setFont('helvetica','normal');doc.setFontSize(8.5);
  const obsL=obs?doc.splitTextToSize(obs,104):[];
  const boxW=66,boxH=14,boxX=R-boxW;
- const blocoAlt=Math.max(obs?8.5+obsL.length*3.9:0,boxH);
+ /* o % do PIX vem da mesma configuração usada ao aprovar o orçamento, para o PDF não prometer outra divisão */
+ const pctPix=Number(DB.config.cf.pixAntecipado)||50;
+ const formasPag=['PIX: '+fmtN(pctPix,pctPix%1?1:0)+'% inicial e '+fmtN(100-pctPix,pctPix%1?1:0)+'% na entrega.','Cartão de crédito em até 6x'];
+ const pagAlt=boxH+7+formasPag.length*4.4+1;
+ const blocoAlt=Math.max(obs?8.5+obsL.length*3.9:0,pagAlt);
  if(fy+blocoAlt>RODAPE_Y-6)fy=novaPagina();
  doc.setFillColor(...DARK);doc.roundedRect(boxX,fy,boxW,boxH,1.5,1.5,'F');
  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...ACCENT);doc.text('TOTAL',boxX+5,fy+boxH/2+1.4);
  doc.setFontSize(13);doc.setTextColor(...WHITE);doc.text(fmt(total),R-5,fy+boxH/2+1.8,{align:'right'});
+ let py=fy+boxH+7;
+ doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text('FORMAS DE PAGAMENTO',boxX+1,py);
+ doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
+ formasPag.forEach(t=>{py+=4.4;doc.text(t,boxX+1,py);});
  if(obs){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...DARK);doc.text('OBSERVAÇÕES',M,fy+3);
   doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);doc.text(obsL,M,fy+8.5,{lineHeightFactor:1.3});}
 
