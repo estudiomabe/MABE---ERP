@@ -684,7 +684,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             <div class="config-card" style="margin:0"><div class="config-title">📊 Reserva, Impostos, Comissão & Markup</div><div class="form-grid form-2">
               <div class="form-group"><label class="form-label">Fundo de Reserva (%)</label><input type="number" class="form-control" id="orc-reserva" step="0.5" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Reserva sobre o custo, separada do lucro</div></div>
               <div class="form-group"><label class="form-label">Imposto (%)</label><input type="number" class="form-control" id="orc-imposto" step="0.1" oninput="calcOrc()"></div>
-              <div class="form-group"><label class="form-label">Comissão (%)</label><input type="number" class="form-control" id="orc-comissao" step="0.5" min="0" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Entra no preço, como o imposto — não sai do seu lucro</div></div><div class="form-group"><label class="form-label">Quem recebe a comissão</label><input type="text" class="form-control" id="orc-comissao-nome" placeholder="Arquiteto, indicação, parceiro..." list="comissao-sugestoes"><datalist id="comissao-sugestoes"></datalist></div><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="orc-markup" step="1" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">% do preço final que vira lucro</div></div>
+              <div class="form-group"><label class="form-label">Comissão (%)</label><input type="number" class="form-control" id="orc-comissao" step="0.5" min="0" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Entra no preço, como o imposto — não sai do seu lucro</div></div><div class="form-group"><label class="form-label">Quem recebe a comissão</label><input type="text" class="form-control" id="orc-comissao-nome" placeholder="Arquiteto, indicação, parceiro..." list="comissao-sugestoes"><datalist id="comissao-sugestoes"></datalist></div><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="orc-markup" step="any" oninput="onMargemEditada()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">% do preço final que vira lucro</div></div>
             </div></div>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
@@ -2798,7 +2798,7 @@ function voltarDeItem(){if(ITEM_PARA_PEDIDO)return voltarAoPedido(null);
 function selecionarTipoOrc(tipo){if(tipo==='catalogo'){resetOrcCatalogo();orcShow('catalogo');return;}
  resetOrcForm(tipo);orcShow('form');}
 function resetOrcForm(tipo){const cf=DB.config.cf;
- PRECO_MANUAL=false;$('preco-manual-hint').style.display='none';
+ PRECO_MANUAL=false;MARGEM_SUGERIDA=null;$('preco-manual-hint').style.display='none';
  atualizarDatalistMateriais();
  $('orc-id').value='';$('orc-tipo').value=tipo;$('orc-desc').value='';$('orc-qty').value=1;$('orc-obs').value='';
  $('orc-mdo').innerHTML='';
@@ -2865,7 +2865,7 @@ function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua',
  let serv=0;const servicos=[];
  document.querySelectorAll('#orc-servicos > div').forEach(r=>{const valor=parseFloat(r.querySelector('.sv-valor').value)||0;serv+=valor;
   servicos.push({fornId:r.querySelector('.sv-forn').value,desc:r.querySelector('.sv-desc').value.trim(),valor});});
- const custo=cfRat+mdo+mat+serv;const rsv=num('orc-reserva'),margem=Math.max(0,num('orc-markup')),imp=Math.max(0,num('orc-imposto'));
+ const custo=cfRat+mdo+mat+serv;const rsv=num('orc-reserva'),margem=Math.max(0,PRECO_MANUAL&&MARGEM_SUGERIDA!==null?MARGEM_SUGERIDA:num('orc-markup')),imp=Math.max(0,num('orc-imposto'));
  /* a comissão é percentual do preço final, igual ao imposto: entra na conta
     para que quem paga seja o preço, e não a sua margem */
  const com=Math.max(0,num('orc-comissao'));
@@ -2874,19 +2874,23 @@ function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua',
  const combinado=Math.min(imp+com+margem,95);
  const precoAuto=custoBase/(1-combinado/100);
  let preco,impostoVal,lucro;
- let comissaoVal;
+ let comissaoVal,margemImplicita=null;
  if(PRECO_MANUAL){
   preco=parseFloat($('res-preco-input').value)||0;
   impostoVal=preco*imp/100;comissaoVal=preco*com/100;
   lucro=preco-custoBase-impostoVal-comissaoVal;
+  margemImplicita=preco>0?lucro/preco*100:null;
  } else {
   preco=precoAuto;
   impostoVal=preco*imp/100;comissaoVal=preco*com/100;lucro=preco*margem/100;
  }
- return{cfRat,mdo,mdoLinhas,mat,materiais,serv,servicos,custo,reservaVal,custoBase,precoAuto,impostoVal,comissaoPct:com,comissaoNome,comissaoVal,preco,lucro};}
-let PRECO_MANUAL=false;
-function onPrecoManual(){PRECO_MANUAL=true;$('preco-manual-hint').style.display='block';calcOrc();}
-function resetPrecoManual(){PRECO_MANUAL=false;$('preco-manual-hint').style.display='none';calcOrc();}
+ return{cfRat,mdo,mdoLinhas,mat,materiais,serv,servicos,custo,reservaVal,custoBase,precoAuto,impostoVal,comissaoPct:com,comissaoNome,comissaoVal,preco,lucro,margemImplicita};}
+/* preço e margem andam juntos: digitar o preço recalcula a margem; digitar a margem recalcula o preço.
+   MARGEM_SUGERIDA guarda a margem de antes do ajuste, para "recalcular automático" e para o preço sugerido. */
+let PRECO_MANUAL=false,MARGEM_SUGERIDA=null;
+function onPrecoManual(){if(!PRECO_MANUAL)MARGEM_SUGERIDA=num('orc-markup');PRECO_MANUAL=true;$('preco-manual-hint').style.display='block';calcOrc();}
+function resetPrecoManual(){PRECO_MANUAL=false;$('preco-manual-hint').style.display='none';if(MARGEM_SUGERIDA!==null)$('orc-markup').value=MARGEM_SUGERIDA;MARGEM_SUGERIDA=null;calcOrc();}
+function onMargemEditada(){PRECO_MANUAL=false;MARGEM_SUGERIDA=null;$('preco-manual-hint').style.display='none';calcOrc();}
 /* quem já recebeu comissão antes vira sugestão, para não escrever o nome
    de dez jeitos diferentes e depois não conseguir somar por pessoa */
 function atualizarResumoComissaoOrc(o){const linha=$('orcd-comissao-linha');if(!linha)return;
@@ -2913,6 +2917,7 @@ function calcOrc(){const t=computeOrc();
  $('res-cf').textContent=fmt(t.cfRat);$('res-mat').textContent=fmt(t.mat);$('res-mdo').textContent=fmt(t.mdo);$('res-serv').textContent=fmt(t.serv);$('res-custo').textContent=fmt(t.custo);
  $('res-reserva').textContent=fmt(t.reservaVal);
  if(!PRECO_MANUAL)$('res-preco-input').value=t.preco.toFixed(2);
+ else if(t.margemImplicita!==null)$('orc-markup').value=Math.round(t.margemImplicita*100)/100;
  $('lucro-negativo-hint').style.display=t.lucro<0?'block':'none';
  $('res-lucro').style.color=t.lucro<0?'var(--danger)':'#6fcf97';
  $('res-imposto').textContent=fmt(t.impostoVal);$('res-lucro').textContent=fmt(t.lucro);
@@ -2942,7 +2947,7 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
  const tipo=$('orc-tipo').value;const t=computeOrc();
  if(tipo==='novo_produto'&&!await cadastrarProdutoDoItem(desc,t))return;
  const cfgAtual=DB.config.cf;const qty=qtdItemOrc();
- const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal*qty,imposto:num('orc-imposto'),comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal*qty,markup:num('orc-markup'),precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto*qty,qty,custo:t.custo*qty,preco:Math.round(Math.round(t.preco*100)*qty)/100,lucro:t.lucro*qty};
+ const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal*qty,imposto:num('orc-imposto'),comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal*qty,markup:num('orc-markup'),margemSugerida:PRECO_MANUAL?MARGEM_SUGERIDA:null,precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto*qty,qty,custo:t.custo*qty,preco:Math.round(Math.round(t.preco*100)*qty)/100,lucro:t.lucro*qty};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
@@ -2971,9 +2976,9 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
  $('orc-materiais').innerHTML='';(it.materiais||[]).forEach(m=>addMaterial(m.mode||'livre',m));
  $('orc-servicos').innerHTML='';(it.servicos||[]).forEach(sv=>addServico(sv));
  $('orc-form-title').textContent='Editar Item';
- if(it.precoManual){PRECO_MANUAL=true;$('preco-manual-hint').style.display='block';}
+ if(it.precoManual){PRECO_MANUAL=true;MARGEM_SUGERIDA=it.margemSugerida!=null?Number(it.margemSugerida):Number(it.markup);
+  $('res-preco-input').value=(Number(it.preco)/(it.qty||1)).toFixed(2);$('preco-manual-hint').style.display='block';}
  calcOrc();
- if(it.precoManual){$('res-preco-input').value=(Number(it.preco)/(it.qty||1)).toFixed(2);calcOrc();}
  ORC_ITEM_EDITANDO=itemId;ORC_VOLTAR='detalhe';orcShow('form');}
 async function excluirItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const it=(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
