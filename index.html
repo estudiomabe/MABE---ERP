@@ -831,6 +831,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div class="config-title">🏢 Dados do Estúdio (para documentos)</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Aparecem no PDF de orçamento e outros documentos gerados.</div>
         <div class="form-grid">
+          <div class="form-group"><label class="form-label">CNPJ</label><input type="text" class="form-control" id="cfg-emp-cnpj" placeholder="00.000.000/0000-00" maxlength="18" inputmode="numeric" oninput="mascararDoc(this)"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Também é a chave PIX mostrada nas formas de pagamento do PDF</div></div>
           <div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cfg-emp-endereco" placeholder="Rua, número"></div>
           <div class="form-grid form-2">
             <div class="form-group"><label class="form-label">Bairro</label><input type="text" class="form-control" id="cfg-emp-bairro" placeholder="Vila Madalena"></div>
@@ -3219,7 +3220,7 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  const boxW=66,boxH=14,boxX=R-boxW;
  /* o % do PIX vem da mesma configuração usada ao aprovar o orçamento, para o PDF não prometer outra divisão */
  const pctPix=Number(DB.config.cf.pixAntecipado)||50;
- const formasPag=['PIX: '+fmtN(pctPix,pctPix%1?1:0)+'% inicial e '+fmtN(100-pctPix,pctPix%1?1:0)+'% na entrega.','Chave PIX (CNPJ): 63.307.833/0001-10','Cartão de crédito em até 6x'];
+ const formasPag=['PIX: '+fmtN(pctPix,pctPix%1?1:0)+'% inicial e '+fmtN(100-pctPix,pctPix%1?1:0)+'% na entrega.',emp.cnpj?'Chave PIX (CNPJ): '+emp.cnpj:'','Cartão de crédito em até 6x'].filter(Boolean);
  const pagAlt=boxH+7+formasPag.length*4.4+1;
  const blocoAlt=Math.max(obs?8.5+obsL.length*3.9:0,pagAlt);
  if(fy+blocoAlt>RODAPE_Y-6)fy=novaPagina();
@@ -4028,7 +4029,7 @@ function renderConfig(){CFG_EDITANDO=false;$('sheets-url').value=DB.config.sheet
  renderCustosFixosExtrasConfig();
  renderFolhaConfig();
  renderMdoTiposConfig();
- const emp=DB.config.empresa||{};$('cfg-emp-endereco').value=emp.endereco||'';$('cfg-emp-bairro').value=emp.bairro||'';
+ const emp=DB.config.empresa||{};$('cfg-emp-cnpj').value=emp.cnpj||'';$('cfg-emp-endereco').value=emp.endereco||'';$('cfg-emp-bairro').value=emp.bairro||'';
  $('cfg-emp-cep').value=emp.cep||'';$('cfg-emp-cidade').value=emp.cidade||'';$('cfg-emp-estado').value=emp.estado||'';
  $('cfg-emp-telefone').value=emp.telefone||'';$('cfg-emp-email').value=emp.email||'';$('cfg-emp-site').value=emp.site||'';}
 function mascararCep(el){const d=String(el.value).replace(/\D/g,'').slice(0,8);
@@ -4065,7 +4066,7 @@ function enderecoEstudio(emp){emp=emp||DB.config.empresa||{};
  const local=[cidade,emp.cep?'CEP '+emp.cep:''].filter(Boolean).join(', ');
  return [rua,local].filter(Boolean).join(', ');}
 async function saveEmpresaInfo(){if(!guard())return;
- const info={endereco:$('cfg-emp-endereco').value.trim(),bairro:$('cfg-emp-bairro').value.trim(),
+ const info={cnpj:$('cfg-emp-cnpj').value.trim(),endereco:$('cfg-emp-endereco').value.trim(),bairro:$('cfg-emp-bairro').value.trim(),
   cep:$('cfg-emp-cep').value.trim(),cidade:$('cfg-emp-cidade').value.trim(),estado:$('cfg-emp-estado').value,
   telefone:$('cfg-emp-telefone').value.trim(),email:$('cfg-emp-email').value.trim(),site:$('cfg-emp-site').value.trim()};
  DB.config.empresa=info;saveDB();log('editar','Configurações','Dados do estúdio atualizados');saveDB();
