@@ -3219,7 +3219,7 @@ function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  const boxW=66,boxH=14,boxX=R-boxW;
  /* o % do PIX vem da mesma configuração usada ao aprovar o orçamento, para o PDF não prometer outra divisão */
  const pctPix=Number(DB.config.cf.pixAntecipado)||50;
- const formasPag=['PIX: '+fmtN(pctPix,pctPix%1?1:0)+'% inicial e '+fmtN(100-pctPix,pctPix%1?1:0)+'% na entrega.','Cartão de crédito em até 6x'];
+ const formasPag=['PIX: '+fmtN(pctPix,pctPix%1?1:0)+'% inicial e '+fmtN(100-pctPix,pctPix%1?1:0)+'% na entrega.','Chave PIX (CNPJ): 63.307.833/0001-10','Cartão de crédito em até 6x'];
  const pagAlt=boxH+7+formasPag.length*4.4+1;
  const blocoAlt=Math.max(obs?8.5+obsL.length*3.9:0,pagAlt);
  if(fy+blocoAlt>RODAPE_Y-6)fy=novaPagina();
