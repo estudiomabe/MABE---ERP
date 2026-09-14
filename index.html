@@ -665,6 +665,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             <div class="config-card" style="margin:0"><div class="config-title">📋 Dados</div><div class="form-grid">
               <input type="hidden" id="orc-id"><input type="hidden" id="orc-tipo">
               <div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="orc-desc" placeholder="Ex: Mesa de jantar em Tauari"></div>
+              <div class="form-group"><label class="form-label">Quantidade</label><input type="number" class="form-control" id="orc-qty" value="1" min="1" step="1" oninput="calcOrc()" style="max-width:140px"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Mão de obra, materiais e serviços abaixo valem para 1 unidade — o total do item é multiplicado pela quantidade</div></div>
               <div class="form-group"><label class="form-label">Descrição Detalhada do Item</label><textarea class="form-control" id="orc-obs" rows="5" style="resize:vertical;font-family:var(--font)" placeholder="Detalhe aqui: medidas (L×A×P), tipo de madeira, acabamento, ferragens, encaixes, referências de estilo, condições especiais..."></textarea></div>
             </div></div>
             <div class="config-card" style="margin:0;display:none" id="card-novo-produto"><div class="config-title">🆕 Dados do Novo Produto</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Será cadastrado automaticamente ao salvar</div><div class="form-grid">
@@ -710,9 +711,10 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:#6fa8e0"><span>Fundo de Reserva</span><span id="res-reserva" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Imposto</span><span id="res-imposto" style="font-family:var(--mono)">R$ 0,00</span></div><div id="res-comissao-linha" style="display:none;justify-content:space-between;font-size:13px;color:#d9b978"><span id="res-comissao-lbl">Comissão</span><span id="res-comissao" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="height:1px;background:rgba(255,255,255,0.1);margin:4px 0"></div>
-                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--accent);font-weight:700">Preço Final</span><div style="display:flex;align-items:center;gap:5px"><span style="color:var(--accent);font-size:13px">R$</span><input type="number" id="res-preco-input" step="0.01" min="0" oninput="onPrecoManual()" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent);background:transparent;border:none;border-bottom:1px dashed rgba(200,169,110,0.45);text-align:right;width:130px;outline:none"></div></div>
+                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--accent);font-weight:700" id="res-preco-lbl">Preço Final</span><div style="display:flex;align-items:center;gap:5px"><span style="color:var(--accent);font-size:13px">R$</span><input type="number" id="res-preco-input" step="0.01" min="0" oninput="onPrecoManual()" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent);background:transparent;border:none;border-bottom:1px dashed rgba(200,169,110,0.45);text-align:right;width:130px;outline:none"></div></div>
                 <div id="preco-manual-hint" style="display:none;font-size:10.5px;color:rgba(250,247,242,0.45);text-align:right;margin-top:-2px">✏️ Ajustado manualmente — <a href="#" onclick="event.preventDefault();resetPrecoManual()" style="color:var(--accent);text-decoration:underline">recalcular automático</a></div>
-                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px"><span style="font-size:12px;color:rgba(250,247,242,0.5)">Lucro estimado</span><span id="res-lucro" style="font-family:var(--mono);font-size:14px;font-weight:700;color:#6fcf97">R$ 0,00</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px"><span style="font-size:12px;color:rgba(250,247,242,0.5)" id="res-lucro-lbl">Lucro estimado</span><span id="res-lucro" style="font-family:var(--mono);font-size:14px;font-weight:700;color:#6fcf97">R$ 0,00</span></div>
+                <div id="res-qty-bloco" style="display:none;margin-top:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:13px;color:var(--accent);font-weight:700">Total do item</span><span id="res-qty-total" style="font-family:var(--mono);font-size:17px;font-weight:700;color:var(--accent);white-space:nowrap">R$ 0,00</span></div><div id="res-qty-lbl" style="font-size:11px;color:rgba(250,247,242,0.5);text-align:right;margin-top:-3px"></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:rgba(250,247,242,0.5)">Lucro total</span><span id="res-qty-lucro" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#6fcf97">R$ 0,00</span></div></div>
                 <div id="lucro-negativo-hint" style="display:none;font-size:10.5px;color:var(--danger);text-align:right;margin-top:-4px">⚠️ Preço abaixo do custo — prejuízo</div>
                 <div id="res-novo-produto" style="display:none;margin-top:8px;background:rgba(200,169,110,0.15);border:1px solid rgba(200,169,110,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--accent)">🆕 Ao salvar, o produto será cadastrado no catálogo</div>
               </div>
@@ -2797,7 +2799,7 @@ function selecionarTipoOrc(tipo){if(tipo==='catalogo'){resetOrcCatalogo();orcSho
 function resetOrcForm(tipo){const cf=DB.config.cf;
  PRECO_MANUAL=false;$('preco-manual-hint').style.display='none';
  atualizarDatalistMateriais();
- $('orc-id').value='';$('orc-tipo').value=tipo;$('orc-desc').value='';$('orc-obs').value='';
+ $('orc-id').value='';$('orc-tipo').value=tipo;$('orc-desc').value='';$('orc-qty').value=1;$('orc-obs').value='';
  $('orc-mdo').innerHTML='';
  $('orc-imposto').value=cf.imposto;$('orc-markup').value=cf.markup;$('orc-reserva').value=cf.reserva!==undefined?cf.reserva:10;
  $('orc-comissao').value=cf.comissao||0;$('orc-comissao-nome').value='';atualizarSugestoesComissao();
@@ -2903,6 +2905,8 @@ function comissaoPorPessoa(o){const m={};
  itensOrc(o).forEach(i=>{const v=Number(i.comissaoVal)||0;if(v<=0)return;
   const k=(i.comissaoNome||'Sem beneficiário').trim();m[k]=(m[k]||0)+v;});
  return m;}
+/* a tela de precificação calcula 1 unidade; o item guarda os valores já multiplicados pela quantidade */
+function qtdItemOrc(){const el=$('orc-qty');return Math.max(1,el?(parseFloat(el.value)||1):1);}
 function calcOrc(){const t=computeOrc();
  $('orc-total-cf').textContent=fmt(t.cfRat);$('orc-total-mdo').textContent=fmt(t.mdo);$('orc-total-mat').textContent=fmt(t.mat);$('orc-total-serv').textContent=fmt(t.serv);
  $('res-cf').textContent=fmt(t.cfRat);$('res-mat').textContent=fmt(t.mat);$('res-mdo').textContent=fmt(t.mdo);$('res-serv').textContent=fmt(t.serv);$('res-custo').textContent=fmt(t.custo);
@@ -2911,6 +2915,10 @@ function calcOrc(){const t=computeOrc();
  $('lucro-negativo-hint').style.display=t.lucro<0?'block':'none';
  $('res-lucro').style.color=t.lucro<0?'var(--danger)':'#6fcf97';
  $('res-imposto').textContent=fmt(t.impostoVal);$('res-lucro').textContent=fmt(t.lucro);
+ const qty=qtdItemOrc();$('res-qty-bloco').style.display=qty>1?'flex':'none';
+ $('res-preco-lbl').textContent=qty>1?'Preço por unidade':'Preço Final';$('res-lucro-lbl').textContent=qty>1?'Lucro por unidade':'Lucro estimado';
+ if(qty>1){const unit=Math.round(t.preco*100)/100;$('res-qty-lbl').textContent=fmtN(qty,qty%1?2:0)+' × '+fmt(unit);
+  $('res-qty-total').textContent=fmt(unit*qty);$('res-qty-lucro').textContent=fmt(t.lucro*qty);$('res-qty-lucro').style.color=t.lucro<0?'var(--danger)':'#6fcf97';}
  const linha=$('res-comissao-linha');
  if(linha){linha.style.display=t.comissaoPct>0?'flex':'none';
   $('res-comissao').textContent=fmt(t.comissaoVal);
@@ -2925,15 +2933,15 @@ async function cadastrarProdutoDoItem(desc,t){const nome=$('np-nome').value.trim
 async function salvarItemCalculadoNoPedido(desc){const tipo=$('orc-tipo').value,t=computeOrc();
  let prod=null;
  if(tipo==='novo_produto'){prod=await cadastrarProdutoDoItem(desc,t);if(!prod)return;}
- voltarAoPedido({tipo:prod?'catalogo':'livre',prodId:prod?prod.id:'',desc:prod?prod.nome:desc,qty:1,preco:Math.round(t.preco*100)/100});
+ voltarAoPedido({tipo:prod?'catalogo':'livre',prodId:prod?prod.id:'',desc:prod?prod.nome:desc,qty:qtdItemOrc(),preco:Math.round(t.preco*100)/100});
  toast('Item adicionado ao pedido.','success');}
 async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value.trim();if(!desc){toast('Informe a descrição.','error');return;}
  if(ITEM_PARA_PEDIDO)return salvarItemCalculadoNoPedido(desc);
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o){toast('Orçamento não encontrado.','error');return;}
  const tipo=$('orc-tipo').value;const t=computeOrc();
  if(tipo==='novo_produto'&&!await cadastrarProdutoDoItem(desc,t))return;
- const cfgAtual=DB.config.cf;
- const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal,imposto:num('orc-imposto'),comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal,markup:num('orc-markup'),precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto,qty:1,custo:t.custo,preco:t.preco,lucro:t.lucro};
+ const cfgAtual=DB.config.cf;const qty=qtdItemOrc();
+ const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal*qty,imposto:num('orc-imposto'),comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal*qty,markup:num('orc-markup'),precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto*qty,qty,custo:t.custo*qty,preco:Math.round(Math.round(t.preco*100)*qty)/100,lucro:t.lucro*qty};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
@@ -2950,7 +2958,7 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
   $('orc-cat-qty').value=it.qty||1;$('orc-cat-desc-pct').value=it.descPct||0;$('orc-cat-obs').value=it.obs||'';
   selecionarProdCatalogo();ORC_ITEM_EDITANDO=itemId;ORC_VOLTAR='detalhe';orcShow('catalogo');return;}
  resetOrcForm(it.tipo);
- $('orc-id').value=it.id;$('orc-desc').value=it.desc;$('orc-obs').value=it.obs||'';
+ $('orc-id').value=it.id;$('orc-desc').value=it.desc;$('orc-qty').value=it.qty||1;$('orc-obs').value=it.obs||'';
  $('orc-mdo').innerHTML='';
  if(Array.isArray(it.mdo)){it.mdo.forEach(m=>addMdoItem(m));}
  else if(it.mdo&&(it.mdo.qhsocio||it.mdo.qhaux)){ // compatibilidade com itens antigos (Sócio/Auxiliar fixos)
@@ -2964,7 +2972,7 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
  $('orc-form-title').textContent='Editar Item';
  if(it.precoManual){PRECO_MANUAL=true;$('preco-manual-hint').style.display='block';}
  calcOrc();
- if(it.precoManual)$('res-preco-input').value=Number(it.preco).toFixed(2);
+ if(it.precoManual){$('res-preco-input').value=(Number(it.preco)/(it.qty||1)).toFixed(2);calcOrc();}
  ORC_ITEM_EDITANDO=itemId;ORC_VOLTAR='detalhe';orcShow('form');}
 async function excluirItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const it=(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
