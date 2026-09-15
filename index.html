@@ -489,7 +489,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <div class="modal-overlay" id="modal-ofx"><div class="modal" style="max-width:640px">
       <div class="modal-header"><div class="modal-title">📥 Importar Extrato Bancário (OFX)</div><button class="modal-close" onclick="closeModal('modal-ofx')">✕</button></div>
       <div class="modal-body">
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Revise os lançamentos abaixo antes de confirmar. Itens já existentes no financeiro (mesma data/valor/descrição) vêm desmarcados.</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Revise os lançamentos abaixo antes de confirmar. Itens já existentes no financeiro (mesma data/valor/descrição) e possíveis duplicados (mesmo valor, até 3 dias de diferença, mesmo com outra descrição) vêm desmarcados — confira antes de marcar.</div>
         <div id="ofx-saldo-comparacao" style="margin-bottom:12px"></div>
         <div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn btn-ghost btn-sm" onclick="marcarTodosOfx(true)">Marcar todos</button><button class="btn btn-ghost btn-sm" onclick="marcarTodosOfx(false)">Desmarcar todos</button></div>
         <div id="ofx-itens-lista" style="display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto"></div>
@@ -3588,6 +3588,11 @@ function parseOfx(texto){
  }
  return{itens,saldoBanco,dataSaldoBanco};}
 function jaExisteFinanceiro(t){return DB.financeiro.some(f=>f.data===t.data&&Math.abs(Number(f.val)-t.val)<0.005&&(f.desc||'').trim()===t.desc.trim());}
+/* mesmo tipo e valor, até 3 dias de diferença, descrição diferente: costuma ser o mesmo pagamento já lançado à mão
+   (ex.: "Salário - Jonathas" x "Transf Pix enviada - Jonathas…") */
+function possivelDuplicadoFinanceiro(t){const alvo=new Date(t.data+'T12:00:00');
+ return DB.financeiro.find(f=>f.status!=='Cancelado'&&f.tipo===t.tipo&&Math.abs(Number(f.val)-t.val)<0.005
+  &&Math.abs((new Date(String(f.data).slice(0,10)+'T12:00:00')-alvo)/864e5)<=3)||null;}
 function importarExtratoOfx(ev){const file=ev.target.files[0];ev.target.value='';if(!file)return;
  const reader=new FileReader();
  reader.onload=()=>{
@@ -3596,8 +3601,10 @@ function importarExtratoOfx(ev){const file=ev.target.files[0];ev.target.value=''
   const{itens,saldoBanco,dataSaldoBanco}=resultado;
   if(!itens.length){toast('Nenhum lançamento encontrado neste arquivo OFX.','error');return;}
   OFX_ITENS=itens;OFX_SALDO_BANCO=saldoBanco;OFX_DATA_SALDO_BANCO=dataSaldoBanco;
-  $('ofx-itens-lista').innerHTML=itens.map((t,i)=>{const dup=jaExisteFinanceiro(t);
-   return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer"><input type="checkbox" class="ofx-item-check" value="'+i+'" onchange="atualizarComparacaoSaldoOfx()" '+(dup?'':'checked')+' style="width:16px;height:16px;flex-shrink:0"><div style="flex:1;min-width:0"><strong>'+esc(t.desc)+'</strong><div style="font-size:11px;color:var(--text-muted)">'+fmtD(t.data)+(dup?' · <span style="color:var(--warning)">já existe no financeiro</span>':'')+'</div></div><span class="mono" style="font-weight:700;flex-shrink:0;color:'+(t.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+(t.tipo==='Entrada'?'+':'−')+' '+fmt(t.val)+'</span></label>';
+  $('ofx-itens-lista').innerHTML=itens.map((t,i)=>{const dup=jaExisteFinanceiro(t);const parecido=dup?null:possivelDuplicadoFinanceiro(t);
+   const aviso=dup?' · <span style="color:var(--warning)">já existe no financeiro</span>'
+    :parecido?' · <span style="color:var(--warning)">possível duplicado de "'+esc(parecido.desc)+'" ('+fmtD(parecido.data)+')</span>':'';
+   return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer"><input type="checkbox" class="ofx-item-check" value="'+i+'" onchange="atualizarComparacaoSaldoOfx()" '+(dup||parecido?'':'checked')+' style="width:16px;height:16px;flex-shrink:0"><div style="flex:1;min-width:0"><strong>'+esc(t.desc)+'</strong><div style="font-size:11px;color:var(--text-muted)">'+fmtD(t.data)+aviso+'</div></div><span class="mono" style="font-weight:700;flex-shrink:0;color:'+(t.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+(t.tipo==='Entrada'?'+':'−')+' '+fmt(t.val)+'</span></label>';
   }).join('');
   atualizarComparacaoSaldoOfx();
   openModal('modal-ofx');
