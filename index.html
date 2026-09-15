@@ -288,6 +288,9 @@ body.sem-valores .pc-valor, body.sem-valores .pc-item strong, body.sem-valores .
   #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
   #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards { display:block; }
 }
+/* parcelas da NF: 4 colunas; no celular a situação desce para a linha de baixo */
+.nf-parc { display:grid;grid-template-columns:34px minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center; }
+@media (max-width:520px) { .nf-parc { grid-template-columns:34px minmax(0,1fr) minmax(0,1fr); } .nf-parc .nf-parc-status { grid-column:2 / 4; } }
 /* busca global */
 .search-box { position:relative; }
 #busca-resultados { position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:120;
@@ -925,8 +928,14 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
  </div>
  <div style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:14px;display:flex;flex-direction:column;gap:9px">
   <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="nf-criar-oc" checked style="cursor:pointer">Registrar uma ordem de compra com esta nota</label>
-  <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="nf-lancar-fin" checked style="cursor:pointer">Lançar a nota como saída no Financeiro</label>
-  <div id="nf-aviso-dup" style="display:none;font-size:11.5px;color:var(--warning);line-height:1.45"></div>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="nf-lancar-fin" checked style="cursor:pointer" onchange="$('nf-parcelas-wrap').style.display=this.checked?'flex':'none'">Lançar a nota como saída no Financeiro</label>
+  <div id="nf-parcelas-wrap" style="display:flex;flex-direction:column;gap:6px">
+   <div id="nf-forma" style="font-size:11.5px;color:var(--text-muted)"></div>
+   <div id="nf-parcelas" style="display:flex;flex-direction:column;gap:6px"></div>
+   <div id="nf-parc-soma" style="font-size:11.5px;color:var(--text-muted);text-align:right"></div>
+  </div>
+  <div id="nf-aviso-dup" style="display:none;font-size:12px;color:var(--danger);line-height:1.45;font-weight:600"></div>
+  <label id="nf-dup-ok-wrap" style="display:none;align-items:center;gap:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="nf-dup-ok" style="cursor:pointer" onchange="nfAtualizarBotao()">Importar mesmo assim</label>
  </div>
 </div><div class="modal-footer">
  <span id="nf-resumo" style="margin-right:auto;font-size:12px;color:var(--text-muted)"></span>
@@ -2055,7 +2064,41 @@ async function delMadeira(id){if(!guard())return;const m=DB.madeiras.find(x=>x.i
    ou atualiza cada um no estoque de Material/Insumo. O custo gravado e o
    custo real da linha (valor do produto - desconto + frete/seguro/outros,
    dividido pela quantidade), que e o que precisa entrar no orcamento. */
-let NF_DADOS=null;
+let NF_DADOS=null,NF_PARCELAS=[];
+const NF_FORMAS={'01':'Dinheiro','02':'Cheque','03':'Cartão de crédito','04':'Cartão de débito','05':'Crédito loja','15':'Boleto','16':'Depósito','17':'PIX','18':'Transferência','90':'Sem pagamento','99':'Outros'};
+const NF_A_VISTA=['01','03','04','16','17','18'];
+/* com duplicatas: uma saída pendente por vencimento; sem duplicatas: uma só, paga se a forma da nota for à vista.
+   "peso" é o valor da nota — as parcelas acompanham, na mesma proporção, os itens que ficarem marcados */
+function nfParcelasIniciais(d){
+ if(d.dups.length)return d.dups.map(x=>({data:x.venc||d.nf.data,peso:x.valor,valor:x.valor,status:'Pendente'}));
+ return [{data:d.nf.data,peso:d.total,valor:d.total,status:NF_A_VISTA.includes(d.tPag)?'Pago':'Pendente'}];}
+function renderNfParcelas(){const d=NF_DADOS;const forma=NF_FORMAS[d.tPag];
+ $('nf-forma').textContent=(forma?'Forma na nota: '+forma+' · ':'')+(d.dups.length?d.dups.length+' duplicata(s) com vencimento':'sem duplicatas na nota');
+ $('nf-parcelas').innerHTML=NF_PARCELAS.map((pc,i)=>'<div class="nf-parc">'
+  +'<span style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">'+(i+1)+'/'+NF_PARCELAS.length+'</span>'
+  +'<input type="date" class="form-control nf-parc-data" value="'+esc(pc.data)+'" title="Vencimento" style="font-size:12.5px;padding:5px 7px">'
+  +'<input type="number" class="form-control nf-parc-valor" value="'+pc.valor.toFixed(2)+'" step="0.01" min="0" title="Valor" oninput="nfSomaParcelas()" style="font-size:12.5px;padding:5px 7px">'
+  +'<select class="form-control nf-parc-status" title="Situação" style="font-size:12.5px;padding:5px 7px"><option'+(pc.status==='Pendente'?' selected':'')+'>Pendente</option><option'+(pc.status==='Pago'?' selected':'')+'>Pago</option></select>'
+  +'</div>').join('');
+ nfSomaParcelas();}
+function nfSomaParcelas(){let t=0;document.querySelectorAll('.nf-parc-valor').forEach(i=>t+=parseFloat(i.value)||0);
+ $('nf-parc-soma').textContent='Total a lançar: '+fmt(t);}
+function nfLerParcelas(){return [...document.querySelectorAll('.nf-parc')].map(r=>({data:r.querySelector('.nf-parc-data').value,
+ valor:Math.round((parseFloat(r.querySelector('.nf-parc-valor').value)||0)*100)/100,status:r.querySelector('.nf-parc-status').value}));}
+/* nota já importada: pela chave de acesso (única no país); notas antigas, sem chave gravada, pelo número + fornecedor */
+function nfNotaJaImportada(d,forn){
+ if(d.nf.chave){const c=DB.compras.find(c=>String(c.obs||'').includes(d.nf.chave));if(c)return 'OC-'+pad(c.num);}
+ if(!d.nf.numero||!forn)return '';
+ const c=DB.compras.find(c=>c.forId===forn.id&&String(c.obs||'').includes('NF '+d.nf.numero+' '));
+ if(c)return 'OC-'+pad(c.num);
+ const f=DB.financeiro.find(f=>String(f.desc||'').includes('NF '+d.nf.numero+' — '+forn.nome));
+ return f?'lançamento de '+fmtD(f.data)+' no Financeiro':'';}
+/* custo médio ponderado: o estoque que já existia não passa a valer o preço da nota nova */
+function nfCustoMedio(est,custo,qtd,custoNota){
+ const v=(est>0&&custo>0&&est+qtd>0)?(est*custo+qtd*custoNota)/(est+qtd):custoNota;
+ return Math.round(v*10000)/10000;}
+function nfAtualizarBotao(){const nenhum=!document.querySelector('.nf-chk:checked');
+ $('nf-btn-importar').disabled=nenhum||(!!NF_DADOS&&NF_DADOS.duplicada&&!$('nf-dup-ok').checked);}
 
 /* o XML da NF-e usa namespace; procuramos sempre pelo nome local da tag */
 function nfTag(el,nome){
@@ -2095,7 +2138,10 @@ function parseNfe(texto){
   const qtd=nfNum(prod,'qCom')||1;
   const vProd=nfNum(prod,'vProd');
   /* custo real da linha: o que efetivamente saiu do caixa por esse item */
-  const liquido=vProd-nfNum(prod,'vDesc')+nfNum(prod,'vFrete')+nfNum(prod,'vSeg')+nfNum(prod,'vOutro');
+  const imp=nfTag(det,'imposto');
+  /* IPI e ICMS-ST (com FCP-ST) não se recuperam: são custo da mercadoria e saem do caixa junto com a nota */
+  const impostos=nfNum(nfTag(imp,'IPI'),'vIPI')+nfNum(imp,'vICMSST')+nfNum(imp,'vFCPST');
+  const liquido=vProd-nfNum(prod,'vDesc')+nfNum(prod,'vFrete')+nfNum(prod,'vSeg')+nfNum(prod,'vOutro')+impostos;
   itens.push({
    cod:nfTxt(prod,'cProd'),
    desc:nfTxt(prod,'xProd','(sem descrição)'),
@@ -2104,10 +2150,21 @@ function parseNfe(texto){
    unOriginal:nfTxt(prod,'uCom'),
    qtd,
    vUnit:qtd>0?liquido/qtd:liquido,
-   vTotal:liquido});
+   vTotal:liquido,
+   impostos});
  }
  if(!itens.length)throw new Error('A nota foi lida, mas não tem nenhum item de produto.');
+ const dups=[];
+ const cobr=nfTag(inf,'cobr');
+ if(cobr){const nos=cobr.getElementsByTagName('*');
+  for(let i=0;i<nos.length;i++){if(nos[i].localName!=='dup')continue;
+   const venc=String(nfTxt(nos[i],'dVenc')).match(/^\d{4}-\d{2}-\d{2}/);
+   const valor=nfNum(nos[i],'vDup');
+   if(valor>0)dups.push({venc:venc?venc[0]:'',valor});}}
  return {
+  dups,
+  tPag:nfTxt(nfTag(inf,'pag'),'tPag'),
+  totalItens:itens.reduce((a,i)=>a+i.vTotal,0),
   emit:{nome:nfTxt(emit,'xNome','Fornecedor sem nome'),fantasia:nfTxt(emit,'xFant'),
         cnpj:nfTxt(emit,'CNPJ')||nfTxt(emit,'CPF'),
         cidade:nfTxt(nfTag(emit,'enderEmit'),'xMun')},
@@ -2134,6 +2191,7 @@ async function importarNfXml(input){
  try{
   const texto=await arquivo.text();
   NF_DADOS=parseNfe(texto);
+  NF_PARCELAS=nfParcelasIniciais(NF_DADOS);
  }catch(e){toast(e.message||'Não consegui ler este XML.','error',7000);return;}
  renderNfPreview();
  openModal('modal-nf');}
@@ -2169,16 +2227,20 @@ function renderNfPreview(){
    +'<td><select class="form-control nf-un" style="font-size:12.5px;padding:5px 7px">'
      +['un','kg','m','L','cx','par'].map(u=>'<option'+(u===it.un?' selected':'')+'>'+u+'</option>').join('')
      +'</select>'+(it.unOriginal&&nfUnidade(it.unOriginal)!==it.unOriginal?'<div style="font-size:10px;color:var(--text-muted);margin-top:2px">NF: '+esc(it.unOriginal)+'</div>':'')+'</td>'
-   +'<td><input type="number" class="form-control nf-custo" value="'+it.vUnit.toFixed(2)+'" step="0.01" min="0" onchange="atualizarResumoNf()" style="font-size:12.5px;padding:5px 7px"></td>'
+   +'<td><input type="number" class="form-control nf-custo" value="'+it.vUnit.toFixed(2)+'" step="0.01" min="0" onchange="atualizarResumoNf()" style="font-size:12.5px;padding:5px 7px">'
+     +(it.impostos>0.005?'<div style="font-size:10px;color:var(--text-muted);margin-top:2px" title="IPI e ICMS-ST desta linha somados ao custo">inclui IPI/ST '+fmt(it.impostos)+'</div>':'')+'</td>'
    +'<td><select class="form-control nf-destino" data-i="'+i+'" onchange="atualizarResumoNf()" style="font-size:12.5px;padding:5px 7px">'+opcoes+'</select>'
      +'<div class="nf-destino-hint" style="font-size:10px;color:var(--text-muted);margin-top:2px"></div></td>'
    +'</tr>';}).join('');
 
- /* a mesma nota ja foi importada antes? */
- const jaTem=DB.compras.some(c=>String(c.obs||'').includes('NF '+d.nf.numero+' ')&&d.nf.numero);
+ const dup=nfNotaJaImportada(d,forn);
+ d.duplicada=!!dup;
  const av=$('nf-aviso-dup');
- av.style.display=jaTem?'block':'none';
- if(jaTem)av.textContent='⚠️ Já existe uma ordem de compra registrada com a NF '+d.nf.numero+'. Importar de novo vai somar as quantidades ao estoque outra vez.';
+ av.style.display=dup?'block':'none';
+ $('nf-dup-ok-wrap').style.display=dup?'flex':'none';$('nf-dup-ok').checked=false;
+ if(dup)av.textContent='⛔ Esta nota já foi importada ('+dup+'). Importar de novo soma as quantidades ao estoque e lança o pagamento outra vez.';
+ $('nf-lancar-fin').checked=true;$('nf-parcelas-wrap').style.display='flex';
+ renderNfParcelas();
  atualizarResumoNf();}
 
 function mascaraCnpjTexto(v){const d=String(v||'').replace(/\D/g,'');
@@ -2210,9 +2272,11 @@ function atualizarResumoNf(){
   if(destino){
    const p=DB.produtos.find(x=>x.id===destino);
    if(p){
-    const dif=custo-Number(p.custo||0);
-    hint.textContent='estoque '+p.est+' → '+(Number(p.est)+(parseFloat(tr.querySelector('.nf-qtd').value)||0))
-     +(Math.abs(dif)>0.005?' · custo '+fmt(p.custo)+' → '+fmt(custo):' · custo mantido');
+    const qtdL=parseFloat(tr.querySelector('.nf-qtd').value)||0,estAnt=Number(p.est||0),custoAnt=Number(p.custo||0);
+    const novoCusto=nfCustoMedio(estAnt,custoAnt,qtdL,custo);
+    const dif=novoCusto-custoAnt;
+    hint.textContent='estoque '+p.est+' → '+(estAnt+qtdL)
+     +(Math.abs(dif)>0.005?' · custo '+fmt(custoAnt)+' → '+fmt(novoCusto)+(estAnt>0&&custoAnt>0?' (média)':''):' · custo mantido');
     hint.style.color=Math.abs(dif)>0.005?'var(--warning)':'var(--text-muted)';}
   }else{hint.textContent='novo cadastro em Material/Insumo';hint.style.color='var(--text-muted)';}
   if(!tr.querySelector('.nf-chk').checked)return;
@@ -2220,7 +2284,14 @@ function atualizarResumoNf(){
   if(destino)atualizados++;else novos++;});
  $('nf-resumo').textContent=(novos+atualizados)===0?'Nenhum item selecionado'
   :(novos+' novo(s) · '+atualizados+' atualizado(s) · '+fmt(total));
- $('nf-btn-importar').disabled=(novos+atualizados)===0;}
+ /* parcelas acompanham os itens marcados, na proporção dos valores da nota */
+ if(NF_DADOS&&NF_PARCELAS.length){const fator=NF_DADOS.totalItens>0?total/NF_DADOS.totalItens:0;
+  const alvo=Math.round(NF_PARCELAS.reduce((a,pc)=>a+pc.peso,0)*fator*100)/100;let acum=0;
+  const campos=document.querySelectorAll('.nf-parc-valor');
+  NF_PARCELAS.forEach((pc,i)=>{pc.valor=i===NF_PARCELAS.length-1?Math.round((alvo-acum)*100)/100:Math.round(pc.peso*fator*100)/100;acum+=pc.valor;
+   if(campos[i])campos[i].value=pc.valor.toFixed(2);});
+  nfSomaParcelas();}
+ nfAtualizarBotao();}
 
 async function confirmarImportNf(){
  if(!guard()||!guardValores())return;
@@ -2228,6 +2299,11 @@ async function confirmarImportNf(){
  const linhas=nfLinhasSelecionadas();
  if(!linhas.length){toast('Selecione ao menos um item.','error');return;}
  if(linhas.some(l=>!l.nome)){toast('Há item selecionado sem nome. Preencha ou desmarque.','error');return;}
+ if(d.duplicada&&!$('nf-dup-ok').checked){toast('Esta nota já foi importada. Marque "Importar mesmo assim" para continuar.','error');return;}
+ const lancarFin=$('nf-lancar-fin').checked;
+ const parcelas=lancarFin?nfLerParcelas():[];
+ if(lancarFin&&parcelas.some(pc=>!pc.data)){toast('Informe o vencimento de todas as parcelas.','error');return;}
+ if(lancarFin&&!parcelas.some(pc=>pc.valor>0)){toast('As parcelas estão sem valor.','error');return;}
  const btn=$('nf-btn-importar');btn.disabled=true;btn.textContent='Importando…';
  try{
   /* 1. fornecedor */
@@ -2245,8 +2321,8 @@ async function confirmarImportNf(){
    if(l.destino){
     const p=DB.produtos.find(x=>x.id===l.destino);
     if(!p)continue;
+    p.custo=nfCustoMedio(Number(p.est||0),Number(p.custo||0),l.qtd,l.custo);
     p.est=Number(p.est||0)+l.qtd;
-    p.custo=l.custo;
     if(p.tipo==='Insumo')p.preco=l.custo;
     const {error}=await supa.from('produtos').update({est:p.est,custo:p.custo,preco:p.preco}).eq('id',p.id);
     if(error)throw new Error('estoque de "'+p.nome+'": '+error.message);
@@ -2263,7 +2339,7 @@ async function confirmarImportNf(){
   const totalLinhas=Math.round(linhas.reduce((a,l)=>a+l.custo*l.qtd,0)*100)/100;
   let compra=null;
   if($('nf-criar-oc').checked){
-   const obs='NF '+d.nf.numero+' — '+linhas.length+' item(ns) importado(s) do XML';
+   const obs='NF '+d.nf.numero+(d.nf.chave?' · Chave '+d.nf.chave:'')+' — '+linhas.length+' item(ns) importado(s) do XML';
    compra={id:uid(),forId:forn.id,data:d.nf.data,total:totalLinhas,status:'Recebido',obs,lancado:false};
    const {data:linha,error}=await supa.from('compras').insert(compraParaSupabase(compra)).select().single();
    if(error)throw new Error('ordem de compra: '+error.message);
@@ -2271,17 +2347,20 @@ async function confirmarImportNf(){
    DB.compras.unshift(compra);syncSheets('compras','upsert',compra);}
 
   /* 4. financeiro */
-  if($('nf-lancar-fin').checked){
-   const desc=(compra?'OC-'+pad(compra.num)+' — ':'')+'NF '+d.nf.numero+' — '+forn.nome;
-   const fin={id:uid(),tipo:'Saída',data:d.nf.data,desc,cat:'Compras',centroCusto:'',val:totalLinhas,status:'Pago'};
-   const {error}=await supa.from('financeiro').insert(financeiroParaSupabase(fin));
-   if(error)throw new Error('financeiro: '+error.message);
-   DB.financeiro.unshift(fin);syncSheets('financeiro','upsert',fin);
-   if(compra){compra.lancado=true;await supa.from('compras').update({lancado:true}).eq('id',compra.id);}}
+  let lancados=0;
+  if(lancarFin){
+   const comValor=parcelas.filter(pc=>pc.valor>0);
+   for(let k=0;k<comValor.length;k++){const pc=comValor[k];
+    const desc=(compra?'OC-'+pad(compra.num)+' — ':'')+'NF '+d.nf.numero+' — '+forn.nome+(comValor.length>1?' — parcela '+(k+1)+'/'+comValor.length:'');
+    const fin={id:uid(),tipo:'Saída',data:pc.data,desc,cat:'Compras',centroCusto:'',val:pc.valor,status:pc.status};
+    const {error}=await supa.from('financeiro').insert(financeiroParaSupabase(fin));
+    if(error)throw new Error('financeiro (parcela '+(k+1)+'): '+error.message);
+    DB.financeiro.unshift(fin);syncSheets('financeiro','upsert',fin);lancados++;}
+   if(compra&&lancados){compra.lancado=true;await supa.from('compras').update({lancado:true}).eq('id',compra.id);}}
 
   commit('criar','Compras','NF '+d.nf.numero+' importada — '+novos+' insumo(s) novo(s), '+atualizados+' atualizado(s)');
   closeModal('modal-nf');NF_DADOS=null;
-  toast('NF '+d.nf.numero+' importada: '+novos+' insumo(s) criado(s) e '+atualizados+' atualizado(s).','success',7000);
+  toast('NF '+d.nf.numero+' importada: '+novos+' insumo(s) criado(s) e '+atualizados+' atualizado(s)'+(lancados?' · '+lancados+' lançamento(s) no Financeiro':'')+'.','success',7000);
  }catch(e){
   toast('Importação interrompida — '+(e.message||e)+'. Os itens já gravados foram mantidos.','error',9000);
  }finally{btn.disabled=false;btn.textContent='Importar';}}
