@@ -54,6 +54,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 #main { margin-left:var(--sidebar-w); flex:1; display:flex;flex-direction:column; height:100vh; height:100dvh; overflow:hidden; }
 #topbar { height:58px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.04); }
 .topbar-title { font-size:17px;font-weight:700;flex:1;color:var(--text); }
+.fila-aviso { order:5;flex:none;font:inherit;font-size:12px;font-weight:700;padding:6px 11px;border-radius:20px;border:1px solid rgba(160,120,48,0.45);background:rgba(160,120,48,0.12);color:#7a5c20;cursor:pointer;white-space:nowrap; }
+.fila-aviso .fl-c { display:none; }
+.fila-aviso.erro { border-color:rgba(181,64,64,0.45);background:rgba(181,64,64,0.1);color:var(--danger); }
 .search-box { display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;width:220px; }
 .search-box input { background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:13px;width:100%; }
 .search-box input::placeholder { color:var(--text-muted); }
@@ -175,6 +178,8 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   #main { margin-left:0; }
   #topbar { flex-wrap:wrap;height:auto;min-height:58px;padding:10px 14px;row-gap:8px; }
   .topbar-title { order:1;flex:1 1 auto; }
+  .fila-aviso { order:2;padding:6px 10px;font-size:12px; }
+  .fila-aviso .fl-l { display:none; } .fila-aviso .fl-c { display:inline; }
   #btn-new { order:2; }
   .search-box { order:3;flex:1 1 100%;width:100%; }
   #content { padding:14px; }
@@ -501,7 +506,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div id="main">
   <div id="topbar">
     <button id="btn-menu" class="btn btn-ghost" onclick="toggleSidebar()" style="display:none;padding:7px 10px" aria-label="Abrir menu">☰</button>
-    <div class="topbar-title" id="page-title"><span class="titulo-longo">Dashboard</span><span class="titulo-curto">Dashboard</span></div>
+    <button id="fila-aviso" class="fila-aviso" onclick="abrirFilaEnvio()" style="display:none" title="Alterações guardadas neste aparelho"></button><div class="topbar-title" id="page-title"><span class="titulo-longo">Dashboard</span><span class="titulo-curto">Dashboard</span></div>
     <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Buscar em todo o ERP..." id="global-search" autocomplete="off" oninput="handleSearch(this.value)" onkeydown="buscaTecla(event)" onfocus="if(this.value)handleSearch(this.value)"><div id="busca-resultados" hidden></div></div>
     <button class="btn btn-primary" id="btn-new" onclick="openNew()" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span id="btn-new-label">Novo</span></button>
   </div>
@@ -1216,7 +1221,7 @@ function erroDeCarga(entidade,error){
   const lista=ERRO_CARGA_LISTA.slice(0,3).join(", ")+(n>3?" e mais "+(n-3):"");
   const rede=ERRO_CARGA_REDE;
   ERRO_CARGA_LISTA=[];ERRO_CARGA_REDE=false;
-  if(rede)toast("Sem conexão com o servidor. O ERP está mostrando os últimos dados salvos neste aparelho — o que você editar agora pode não ser gravado.","error",10000);
+  if(rede)toast("Sem conexão com o servidor. O ERP está mostrando os últimos dados salvos neste aparelho — o que você alterar fica guardado e é enviado quando a conexão voltar.","info",10000);
   else toast("Erro ao carregar "+lista+": "+msg,"error",9000);
  },500);}
 function toast(msg,type,ms){const c=$('toast-container');const t=document.createElement('div');t.className='toast '+(type||'info');t.innerHTML=(type==='success'?'✅ ':type==='error'?'⚠️ ':type==='warning'?'⚠️ ':'ℹ️ ')+esc(msg);c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},ms||3200);}
@@ -1999,6 +2004,134 @@ function supaStub(){const err={message:'Supabase indisponível — o script não
 let supa;
 try{ if(!window.supabase)throw new Error('supabase-js não carregou'); supa=window.supabase.createClient(SUPA_URL,SUPA_KEY); }
 catch(e){ console.error('Falha ao iniciar Supabase:',e); supa=supaStub(); }
+
+/* ================= CAIXA DE SAÍDA (FILA DE ENVIO) =================
+   Com sinal ruim, cada gravação falhava e o que foi digitado se perdia ao fechar o app.
+   Agora toda gravação (insert/update/upsert/delete) passa por aqui:
+   - com conexão, vai direto ao banco e devolve o resultado de sempre (erros de validação continuam aparecendo);
+   - se a rede falhar, a gravação fica guardada no aparelho e é reenviada sozinha, na mesma ordem, quando o sinal voltar;
+   - criar documento numerado (ORC, V, OP, OC) precisa do número que o banco gera: sem rede, recusa com aviso claro.
+   Reenviar é seguro: update/upsert/delete dão o mesmo resultado se repetidos, e insert usa id gerado no aparelho
+   (se o primeiro envio chegou antes de a conexão cair, o repetido acusa "já existe" e é tratado como enviado). */
+const FILA_KEY='erp_mabe_fila_envio',FILA_FALHAS_KEY='erp_mabe_fila_falhas';
+const lerLista=k=>{try{const v=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}};
+let FILA=lerLista(FILA_KEY),FILA_FALHAS=lerLista(FILA_FALHAS_KEY),SEM_REDE=false,ULTIMA_FALHA_REDE=0,ENVIO_EM_CURSO=null;
+/* logo depois de uma falha, não adianta cada Salvar esperar o prazo da rede de novo: vai direto para a fila */
+const redeRuimAgora=()=>navigator.onLine===false||(SEM_REDE&&Date.now()-ULTIMA_FALHA_REDE<20000);
+const marcarSemRede=()=>{SEM_REDE=true;ULTIMA_FALHA_REDE=Date.now();};
+function gravarFila(){try{localStorage.setItem(FILA_KEY,JSON.stringify(FILA));localStorage.setItem(FILA_FALHAS_KEY,JSON.stringify(FILA_FALHAS));}catch(e){}
+ atualizarAvisoFila();}
+const MSG_PRECISA_REDE='sem conexão com a internet. Criar este documento precisa de conexão, porque é o servidor que dá o número (ORC, V, OP, OC). As demais alterações continuam funcionando e são enviadas quando o sinal voltar.';
+const ESCRITAS=['insert','update','upsert','delete'];
+const supaFromDireto=supa.from.bind(supa);
+function ehFalhaDeRede(r){
+ if(!r||r.__semResposta)return true;
+ if(!r.error)return false;
+ if(r.status===0||[502,503,504,520,521,522,523,524].includes(r.status))return true;
+ return /failed to fetch|networkerror|load failed|network request failed|fetch failed|tempo esgotado/i.test(String(r.error.message||''));}
+/* sinal fraco costuma deixar a conexão pendurada em vez de falhar: sem prazo, o botão Salvar ficaria girando */
+function comPrazoRede(consulta,ms){
+ return Promise.race([
+  Promise.resolve(consulta).then(r=>r,e=>({__semResposta:true,error:{message:String(e&&e.message||e)},status:0})),
+  new Promise(r=>setTimeout(()=>r({__semResposta:true,error:{message:'tempo esgotado'},status:0}),ms))]);}
+function montarConsulta(item){let q=supaFromDireto(item.tabela);for(const [m,a] of item.passos)q=q[m](...(a||[]));return q;}
+async function executarEscrita(item){
+ const precisaResposta=item.passos.some(([m])=>m==='select');
+ if(FILA.length&&!redeRuimAgora())await enviarFila();
+ const semRede=redeRuimAgora();
+ if(!precisaResposta&&(FILA.length||semRede)){enfileirar(item);return {data:null,error:null,status:202,naFila:true};}
+ if(precisaResposta&&navigator.onLine===false){marcarSemRede();atualizarAvisoFila();return {data:null,error:{message:MSG_PRECISA_REDE},status:0};}
+ const r=await comPrazoRede(montarConsulta(item),12000);
+ if(!ehFalhaDeRede(r)){if(SEM_REDE){SEM_REDE=false;atualizarAvisoFila();}return r;}
+ marcarSemRede();
+ if(precisaResposta){atualizarAvisoFila();return {data:null,error:{message:MSG_PRECISA_REDE},status:0};}
+ enfileirar(item);return {data:null,error:null,status:202,naFila:true};}
+function enfileirar(item){
+ FILA.push({id:uid(),tabela:item.tabela,passos:JSON.parse(JSON.stringify(item.passos)),quando:new Date().toISOString(),quem:USER?USER.nome:''});
+ gravarFila();}
+/* registra a cadeia de chamadas (.update(...).eq(...)) para poder executar agora ou guardar e repetir depois */
+function escritaGravavel(tabela,passos){
+ let promessa=null;const executar=()=>promessa||(promessa=executarEscrita({tabela,passos}));
+ const api=new Proxy({},{get(_,prop){
+  if(prop==='then')return (ok,falha)=>executar().then(ok,falha);
+  if(prop==='catch')return f=>executar().catch(f);
+  if(prop==='finally')return f=>executar().finally(f);
+  if(typeof prop!=='string')return undefined;
+  return (...args)=>{passos.push([prop,args]);return api;};}});
+ return api;}
+async function enviarFila(){
+ if(ENVIO_EM_CURSO)return ENVIO_EM_CURSO;
+ if(!FILA.length)return;
+ ENVIO_EM_CURSO=(async()=>{
+  const tabelas=new Set();let enviados=0,recusados=0;
+  while(FILA.length){
+   const item=FILA[0];
+   const r=await comPrazoRede(montarConsulta(item),15000);
+   if(ehFalhaDeRede(r)){marcarSemRede();break;}
+   SEM_REDE=false;
+   const jaExistia=r.error&&item.passos[0][0]==='insert'&&(r.error.code==='23505'||/duplicate key/i.test(r.error.message||''));
+   if(r.error&&!jaExistia){FILA_FALHAS.push(Object.assign({},item,{erro:r.error.message||String(r.error)}));recusados++;}
+   else enviados++;
+   tabelas.add(item.tabela);FILA.shift();gravarFila();}
+  if(enviados&&!FILA.length)toast(enviados===1?'A alteração guardada no aparelho foi enviada.':'As '+enviados+' alterações guardadas no aparelho foram enviadas.','success');
+  if(recusados)toast(recusados+' alteração(ões) guardada(s) foram recusadas pelo servidor. Toque no aviso no topo para ver.','error',9000);
+  /* com a fila vazia, busca de novo o que mudou: o servidor passa a ser a referência */
+  if(!FILA.length)tabelas.forEach(t=>{const f=CARREGADORES_ORIGINAIS[t];if(f)f().catch(()=>{});});
+ })().finally(()=>{ENVIO_EM_CURSO=null;atualizarAvisoFila();});
+ return ENVIO_EM_CURSO;}
+/* antes de criar documento numerado: confere a conexão e esvazia a fila, para o documento não ficar à frente de edições antigas */
+async function servidorResponde(){if(navigator.onLine===false)return false;
+ return !ehFalhaDeRede(await comPrazoRede(supaFromDireto('config').select('id').limit(1),6000));}
+async function exigeConexao(acao){
+ if(await servidorResponde()){SEM_REDE=false;if(FILA.length)await enviarFila();atualizarAvisoFila();return true;}
+ marcarSemRede();atualizarAvisoFila();
+ toast('Sem conexão: '+acao+' precisa de internet, porque gera um número de documento. Tente de novo quando o sinal voltar — as outras alterações continuam funcionando.','error',9000);
+ return false;}
+function atualizarAvisoFila(){const el=document.getElementById('fila-aviso');if(!el)return;
+ const n=FILA.length,f=FILA_FALHAS.length;
+ el.classList.toggle('erro',!!f);
+ const txt=(longo,curto)=>'<span class="fl-l">'+longo+'</span><span class="fl-c">'+curto+'</span>';
+ if(f)el.innerHTML=txt('⚠ '+f+' não enviada'+(f>1?'s':''),'⚠ '+f);
+ else if(n)el.innerHTML=txt('⏳ '+n+' aguardando envio','⏳ '+n);
+ else if(SEM_REDE)el.innerHTML=txt('📴 Sem conexão','📴');
+ else{el.style.display='none';return;}
+ el.style.display='';}
+const NOME_ACAO={insert:'incluir',update:'alterar',upsert:'salvar',delete:'excluir'};
+const descItemFila=i=>(NOME_ACAO[i.passos[0][0]]||i.passos[0][0])+' em '+i.tabela+' — '+new Date(i.quando).toLocaleString('pt-BR');
+async function abrirFilaEnvio(){
+ if(FILA_FALHAS.length){
+  const lista=FILA_FALHAS.slice(0,8).map(i=>'• '+descItemFila(i)+'\n   motivo: '+i.erro).join('\n');
+  if(confirm('O servidor recusou '+FILA_FALHAS.length+' alteração(ões) feitas sem conexão:\n\n'+lista+(FILA_FALHAS.length>8?'\n…':'')+'\n\nConfira esses registros e refaça o que for preciso. Toque em OK para limpar este aviso.')){FILA_FALHAS=[];gravarFila();}
+  return;}
+ if(FILA.length){toast('Tentando enviar '+FILA.length+' alteração(ões)...','info');await enviarFila();
+  if(FILA.length)toast('Ainda sem conexão. As alterações continuam guardadas neste aparelho e serão enviadas sozinhas.','info',7000);return;}
+ if(await servidorResponde()){SEM_REDE=false;atualizarAvisoFila();toast('Conexão de volta.','success');}
+ else toast('Continua sem conexão. Você pode seguir usando: as alterações ficam guardadas.','info',6000);}
+const CARREGADORES_ORIGINAIS={};
+function instalarFilaDeEnvio(){
+ if(!window.supabase||!window.supabase.createClient)return;
+ supa.from=function(tabela){
+  const real=supaFromDireto(tabela);
+  return new Proxy(real,{get(alvo,prop){
+   if(ESCRITAS.includes(prop))return (...args)=>escritaGravavel(tabela,[[prop,args]]);
+   const v=alvo[prop];return typeof v==='function'?v.bind(alvo):v;}});};
+ /* enquanto uma tabela tem alteração na fila, os dados do servidor estão atrasados em relação ao aparelho:
+    não sobrescreve a lista local até a fila esvaziar */
+ const mapa={clientes:'carregarClientesSupabase',fornecedores:'carregarFornecedoresSupabase',produtos:'carregarProdutosSupabase',
+  madeiras:'carregarMadeirasSupabase',ferramentas:'carregarFerramentasSupabase',vendas:'carregarVendasSupabase',
+  orcamentos:'carregarOrcamentosSupabase',producao:'carregarProducaoSupabase',entregas:'carregarEntregasSupabase',
+  compras:'carregarComprasSupabase',financeiro:'carregarFinanceiroSupabase',config:'carregarConfigSupabase',historico:'carregarHistoricoSupabase'};
+ Object.entries(mapa).forEach(([tab,nome])=>{const orig=window[nome];if(typeof orig!=='function')return;
+  CARREGADORES_ORIGINAIS[tab]=orig;
+  window[nome]=async function(...a){
+   if(FILA.some(i=>i.tabela===tab)){await enviarFila();if(FILA.some(i=>i.tabela===tab))return;}
+   return orig.apply(this,a);};});
+ window.addEventListener('online',()=>{enviarFila();atualizarAvisoFila();});
+ window.addEventListener('offline',()=>{marcarSemRede();atualizarAvisoFila();});
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&FILA.length)enviarFila();});
+ setInterval(()=>{if(FILA.length)enviarFila();},20000);
+ atualizarAvisoFila();
+ if(FILA.length)enviarFila();}
 function clienteDeSupabase(row){return{id:row.id,nome:row.nome,email:row.email||'',tel:row.tel||'',doc:row.doc||'',cidade:row.cidade||'',end:row.endereco||'',status:row.status||'Ativo'};}
 function clienteParaSupabase(c){return{id:c.id,nome:c.nome,email:c.email||null,tel:c.tel||null,doc:c.doc||null,cidade:c.cidade||null,endereco:c.end||null,status:c.status||'Ativo'};}
 async function carregarClientesSupabase(){
@@ -2518,6 +2651,8 @@ async function confirmarImportNf(){
  const parcelas=lancarFin?nfLerParcelas():[];
  if(lancarFin&&parcelas.some(pc=>!pc.data)){toast('Informe o vencimento de todas as parcelas.','error');return;}
  if(lancarFin&&!parcelas.some(pc=>pc.valor>0)){toast('As parcelas estão sem valor.','error');return;}
+ /* a importação cadastra fornecedor e estoque antes da ordem de compra: sem rede, pararia no meio */
+ if(!await exigeConexao('importar a nota'))return;
  const btn=$('nf-btn-importar');btn.disabled=true;btn.textContent='Importando…';
  try{
   /* 1. fornecedor */
@@ -3374,6 +3509,8 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
  const itensSel=itensSelecionadosAprov(o);
  if(!itensSel.length){toast('Selecione ao menos um item aprovado para gerar o pedido.','error');return;}
  const itensNaoAprovados=itensOrc(o).length-itensSel.length;
+ /* aprovar grava o orçamento antes de criar o pedido: sem rede, pararia no meio */
+ if(!await exigeConexao('aprovar o orçamento'))return;
  closeModal('modal-aprovar-orc');
  o.status='Aprovado';
  o.itens=itensSel;recomputeHeaderTotais(o);
@@ -5632,7 +5769,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.12';
+const APP_VERSAO='2026-09-18.13';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
@@ -5662,6 +5799,7 @@ function registrarServiceWorker(){
  let recarregando=false;
  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregando)return;recarregando=true;location.reload();});}
 registrarServiceWorker();
+instalarFilaDeEnvio();
 
 /* ================= ABERTURA VIGIADA =================
    No app instalado não há barra de endereço: se a abertura travar, a pessoa só vê tela branca
