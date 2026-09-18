@@ -3663,13 +3663,13 @@ function montarPdfOrcamento(o,itens,refs){
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],ZEBRA=[250,247,242],WHITE=[255,255,255];
  const emp=DB.config.empresa||{};
- const M=14,R=196,RODAPE_Y=283;
+ const M=18,R=192,RODAPE_Y=280;
  const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
- const novaPagina=()=>{doc.addPage();fundo();return 20;};
+ const novaPagina=()=>{doc.addPage();fundo();return 22;};
  fundo();
 
  // Marca: quadrado da altura das duas linhas, "estúdio" no topo e "mabe." rente à base
- const logoY=14,ico=11;
+ const logoY=18,ico=11;
  doc.setFillColor(...DARK);doc.rect(M,logoY,ico,ico,'F');
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...DARK);doc.text('estúdio',M+ico+2.6,logoY+3.4);
  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('mabe.',M+ico+2.2,logoY+ico);
@@ -3677,25 +3677,25 @@ function montarPdfOrcamento(o,itens,refs){
 
  // Contato do estúdio no canto direito do cabeçalho (antes era uma coluna lateral que espremia a tabela)
  let cy=logoY+2.6;
- doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...DARK);doc.text('ESTÚDIO MABE',R,cy,{align:'right'});cy+=4.6;
+ doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...DARK);doc.text('ESTÚDIO MABE',R,cy,{align:'right'});cy+=5;
  doc.setFont('helvetica','normal');doc.setFontSize(7.8);doc.setTextColor(...MUTED);
  [enderecoEstudio(emp),emp.telefone,emp.email,emp.site].filter(Boolean).forEach(t=>{
-  doc.splitTextToSize(String(t),80).forEach(l=>{doc.text(l,R,cy,{align:'right'});cy+=3.7;});});
+  doc.splitTextToSize(String(t),80).forEach(l=>{doc.text(l,R,cy,{align:'right'});cy+=4.1;});});
 
  // Título, número e régua dourada
- let y=Math.max(logoY+ico+19,cy+9);
+ let y=Math.max(logoY+ico+22,cy+12);
  doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);doc.text('ORÇAMENTO',M,y);
  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...MUTED);doc.text('Nº ORC-'+pad(o.num),R,y,{align:'right'});
- y+=5;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,y,R,y);
+ y+=6;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,y,R,y);
 
  // Cliente / Data / Entrega — nome longo quebra dentro da própria coluna
- y+=9;
- const meta=[{rot:'CLIENTE',val:cliName(o.cliId),x:M,w:104},{rot:'DATA',val:fmtD(o.data),x:126,w:32},{rot:'ENTREGA',val:fmtD(o.validade),x:164,w:32}];
+ y+=11;
+ const meta=[{rot:'CLIENTE',val:cliName(o.cliId),x:M,w:98},{rot:'DATA',val:fmtD(o.data),x:124,w:32},{rot:'ENTREGA',val:fmtD(o.validade),x:160,w:32}];
  let metaLinhas=1;
  meta.forEach(c=>{doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text(c.rot,c.x,y);
   doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...DARK);
-  const l=doc.splitTextToSize(String(c.val),c.w);doc.text(l,c.x,y+6);metaLinhas=Math.max(metaLinhas,l.length);});
- y+=6+(metaLinhas-1)*4.5+9;
+  const l=doc.splitTextToSize(String(c.val),c.w);doc.text(l,c.x,y+6.5);metaLinhas=Math.max(metaLinhas,l.length);});
+ y+=6.5+(metaLinhas-1)*4.8+12;
 
  // Itens: a descrição detalhada entra numa linha menor logo abaixo, com o mesmo fundo do item
  const linhas=[],info=[];
@@ -3704,47 +3704,52 @@ function montarPdfOrcamento(o,itens,refs){
   info.push({idx,det:false,temDet:!!det});
   if(det){linhas.push(['',{content:det,colSpan:4}]);info.push({idx,det:true});}});
  const cab=(t,a)=>({content:t,styles:{halign:a}});
+ const entrelinhaAntes=doc.getLineHeightFactor();doc.setLineHeightFactor(1.35);
  doc.autoTable({startY:y,margin:{left:M,right:210-R,top:20,bottom:297-RODAPE_Y+4},
-  head:[[cab('#','center'),'Item',cab('Qtd','right'),cab('Unitário','right'),cab('Subtotal','right')]],
+  head:[[cab('#','center'),'Item',cab('Qtd','center'),cab('Unitário','right'),cab('Subtotal','right')]],
   body:linhas,theme:'plain',rowPageBreak:'avoid',
-  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3.2,bottom:3.2,left:3,right:3}},
-  bodyStyles:{fontSize:9,textColor:DARK,valign:'top',cellPadding:{top:3.2,bottom:3.2,left:3,right:3}},
-  columnStyles:{0:{cellWidth:10,halign:'center',textColor:MUTED},2:{cellWidth:14,halign:'right'},3:{cellWidth:28,halign:'right'},4:{cellWidth:30,halign:'right',fontStyle:'bold'}},
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3.8,bottom:3.8,left:3.5,right:3.5}},
+  bodyStyles:{fontSize:9,textColor:DARK,valign:'top',cellPadding:{top:4.2,bottom:4.2,left:3.5,right:3.5}},
+  columnStyles:{0:{cellWidth:12,halign:'center',textColor:MUTED,cellPadding:{top:4.2,bottom:4.2,left:1,right:1}},2:{cellWidth:14,halign:'center'},3:{cellWidth:30,halign:'right'},4:{cellWidth:32,halign:'right',fontStyle:'bold'}},
   willDrawPage:d=>{if(d.pageNumber>1)fundo();},
+  /* pinta a linha inteira antes das células: sem isso o leitor de PDF mostra frestas finas entre as colunas */
+  willDrawCell:d=>{if(d.column.index!==0)return;const cor=d.cell.styles.fillColor;if(!cor)return;
+   doc.setFillColor(...cor);doc.rect(M,d.cell.y,R-M,d.row.height,'F');},
   didParseCell:d=>{if(d.section!=='body')return;const m=info[d.row.index];
    d.cell.styles.fillColor=m.idx%2?ZEBRA:WHITE;
-   if(m.det){d.cell.styles.fontSize=7.8;d.cell.styles.textColor=MUTED;d.cell.styles.cellPadding={top:0,bottom:3.4,left:3,right:3};}
-   else if(m.temDet)d.cell.styles.cellPadding={top:3.2,bottom:1.2,left:3,right:3};}});
+   if(m.det){d.cell.styles.fontSize=7.8;d.cell.styles.textColor=MUTED;d.cell.styles.cellPadding={top:0.4,bottom:4.4,left:3.5,right:3.5};}
+   else if(m.temDet)d.cell.styles.cellPadding={top:4.2,bottom:1.2,left:3.5,right:3.5};}});
+ doc.setLineHeightFactor(entrelinhaAntes);
 
  // Observações à esquerda, Total à direita — se não couber, vai para a página seguinte
- let fy=doc.lastAutoTable.finalY+8;
+ let fy=doc.lastAutoTable.finalY+12;
  const total=itens.reduce((s,it)=>s+Number(it.preco||0),0);
  const obs=textoPdf(o.obs);
  doc.setFont('helvetica','normal');doc.setFontSize(8.5);
- const obsL=obs?doc.splitTextToSize(obs,104):[];
- const boxW=66,boxH=14,boxX=R-boxW;
+ const obsL=obs?doc.splitTextToSize(obs,96):[];
+ const boxW=68,boxH=16,boxX=R-boxW;
  /* o % do PIX vem da mesma configuração usada ao aprovar o orçamento, para o PDF não prometer outra divisão */
  const pctPix=Number(DB.config.cf.pixAntecipado)||50;
  const formasPag=['PIX: '+fmtN(pctPix,pctPix%1?1:0)+'% inicial e '+fmtN(100-pctPix,pctPix%1?1:0)+'% na entrega.',emp.cnpj?'Chave PIX (CNPJ): '+emp.cnpj:'','Cartão de crédito em até 6x'].filter(Boolean);
- const pagAlt=boxH+7+formasPag.length*4.4+1;
- const blocoAlt=Math.max(obs?8.5+obsL.length*3.9:0,pagAlt);
+ const pagAlt=boxH+9+formasPag.length*5.2+1;
+ const blocoAlt=Math.max(obs?9.5+obsL.length*4.5:0,pagAlt);
  if(fy+blocoAlt>RODAPE_Y-6)fy=novaPagina();
  doc.setFillColor(...DARK);doc.roundedRect(boxX,fy,boxW,boxH,1.5,1.5,'F');
  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...ACCENT);doc.text('TOTAL',boxX+5,fy+boxH/2+1.4);
  doc.setFontSize(13);doc.setTextColor(...WHITE);doc.text(fmt(total),R-5,fy+boxH/2+1.8,{align:'right'});
- let py=fy+boxH+7;
+ let py=fy+boxH+9;
  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text('FORMAS DE PAGAMENTO',boxX+1,py);
  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
- formasPag.forEach(t=>{py+=4.4;doc.text(t,boxX+1,py);});
+ formasPag.forEach(t=>{py+=5.2;doc.text(t,boxX+1,py);});
  if(obs){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...DARK);doc.text('OBSERVAÇÕES',M,fy+3);
-  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);doc.text(obsL,M,fy+8.5,{lineHeightFactor:1.3});}
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);doc.text(obsL,M,fy+9.5,{lineHeightFactor:1.5});}
 
  // Assinaturas perto do rodapé; nunca por cima das observações
- let sy=fy+blocoAlt+18;
- if(sy>RODAPE_Y-10){novaPagina();sy=RODAPE_Y-22;}else sy=Math.max(sy,RODAPE_Y-22);
- doc.setDrawColor(...MUTED);doc.setLineWidth(0.2);doc.line(M,sy,M+78,sy);doc.line(R-78,sy,R,sy);
+ let sy=fy+blocoAlt+22;
+ if(sy>RODAPE_Y-14){novaPagina();sy=RODAPE_Y-26;}else sy=Math.max(sy,RODAPE_Y-26);
+ doc.setDrawColor(...MUTED);doc.setLineWidth(0.2);doc.line(M,sy,M+72,sy);doc.line(R-72,sy,R,sy);
  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
- doc.text('Assinatura do Estúdio',M,sy+4.5);doc.text('Assinatura do Cliente',R-78,sy+4.5);
+ doc.text('Assinatura do Estúdio',M,sy+5);doc.text('Assinatura do Cliente',R-72,sy+5);
 
  // Referências marcadas no orçamento: duas por página, cada uma inteira (sem cortar) no seu espaço.
  // Fotos em pé ficariam miúdas empilhadas: essas vão lado a lado, com a altura da página toda.
@@ -3753,7 +3758,7 @@ function montarPdfOrcamento(o,itens,refs){
    doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...DARK);doc.text('REFERÊNCIAS',M,ty);
    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text('Nº ORC-'+pad(o.num),R,ty,{align:'right'});
    ty+=4;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,ty,R,ty);return ty+7;};
-  const areaW=R-M,alturaToda=RODAPE_Y-6-37,gap=8;
+  const areaW=R-M,alturaToda=RODAPE_Y-8-37,gap=8;
   const pos=(r,x,y,bw,bh,topo_)=>{const k=Math.min(bw/r.w,bh/r.h),w=r.w*k,h=r.h*k;
    doc.addImage(r.data,'JPEG',x+(bw-w)/2,topo_?y:y+(bh-h)/2,w,h,undefined,'FAST');};
   const emPe=r=>r.h>r.w*1.1;
@@ -3764,12 +3769,17 @@ function montarPdfOrcamento(o,itens,refs){
 
  // Rodapé em todas as páginas, com numeração
  const n=doc.internal.getNumberOfPages();
- const rodape=doc.splitTextToSize([enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.',148)[0];
+ doc.setFont('helvetica','normal');doc.setFontSize(7);
+ let rodape='';
+ for(const parte of [enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean)){
+  const tent=rodape?rodape+'   ·   '+parte:String(parte);
+  if(doc.getTextWidth(tent)<=(R-M)-24)rodape=tent;else break;}
+ rodape=rodape||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
  for(let pg=1;pg<=n;pg++){doc.setPage(pg);
   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(M,RODAPE_Y,R,RODAPE_Y);
   doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
-  doc.text(rodape,M,RODAPE_Y+5);
-  doc.text('Página '+pg+' de '+n,R,RODAPE_Y+5,{align:'right'});}
+  doc.text(rodape,M,RODAPE_Y+5.5);
+  doc.text('Página '+pg+' de '+n,R,RODAPE_Y+5.5,{align:'right'});}
 
  return doc;}
 /* imprime o mesmo PDF do "Gerar PDF" (todos os itens) — antes era uma página HTML à parte, que ficava desatualizada */
@@ -5769,7 +5779,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.15';
+const APP_VERSAO='2026-09-18.16';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
