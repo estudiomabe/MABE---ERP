@@ -3653,14 +3653,28 @@ async function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUA
  if(!idsSelecionados.length){toast('Selecione ao menos um item.','error');return;}
  if(!await libPronta('jspdf'))return;
  const itens=itensOrc(o).filter(it=>idsSelecionados.includes(it.id));
- const refs=await referenciasParaPdf(o);
+ const refs=await referenciasParaPdf(o);await carregarFontesPdf();
  montarPdfOrcamento(o,itens,refs).save(nomePdfOrcamento(o));
  closeModal('modal-pdf-orc');
  toast('PDF gerado! Confira sua pasta de downloads.','success');}
 function nomePdfOrcamento(o){return 'Orcamento-ORC-'+pad(o.num)+'-'+cliName(o.cliId).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'.pdf';}
+/* Fontes da identidade do estúdio: Cormorant Garamond (títulos) e Inter (textos).
+   Arquivos reduzidos só aos caracteres do português (~55–90 KB cada), buscados na primeira geração
+   e guardados pelo service worker; sem eles (offline na primeira vez) o PDF sai em Helvetica/Times. */
+let FONTES_PDF=null;
+async function carregarFontesPdf(){if(FONTES_PDF)return true;
+ try{const arqs=['inter-400','inter-600','cormorant-600','cormorant-700'];
+  const b64=await Promise.all(arqs.map(async a=>{const r=await fetch('vendor/fontes/'+a+'.ttf');if(!r.ok)throw new Error(a);
+   const buf=new Uint8Array(await r.arrayBuffer());let bin='';for(let i=0;i<buf.length;i+=0x8000)bin+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));return btoa(bin);}));
+  FONTES_PDF=Object.fromEntries(arqs.map((a,i)=>[a,b64[i]]));return true;}catch(e){return false;}}
+function registrarFontesPdf(doc){if(!FONTES_PDF)return false;
+ [['inter-400','Inter','normal'],['inter-600','Inter','bold'],['cormorant-600','Cormorant','normal'],['cormorant-700','Cormorant','bold']]
+  .forEach(([a,f,e])=>{doc.addFileToVFS(a+'.ttf',FONTES_PDF[a]);doc.addFont(a+'.ttf',f,e);});
+ return true;}
 function montarPdfOrcamento(o,itens,refs){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
+ const marca=registrarFontesPdf(doc),CORPO=marca?'Inter':'helvetica',TITULO=marca?'Cormorant':'times';
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],ZEBRA=[250,247,242],WHITE=[255,255,255];
  const emp=DB.config.empresa||{};
  const M=14,R=196,RODAPE_Y=283;
@@ -3671,29 +3685,29 @@ function montarPdfOrcamento(o,itens,refs){
  // Marca: quadrado da altura das duas linhas, "estúdio" no topo e "mabe." rente à base
  const logoY=14,ico=11;
  doc.setFillColor(...DARK);doc.rect(M,logoY,ico,ico,'F');
- doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...DARK);doc.text('estúdio',M+ico+2.6,logoY+3.4);
- doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('mabe.',M+ico+2.2,logoY+ico);
- doc.setFont('helvetica','normal');doc.setFontSize(6.8);doc.setTextColor(...MUTED);doc.text('MARCENARIA  ·  MADEIRA MACIÇA',M,logoY+ico+5.5);
+ doc.setFont(CORPO,'normal');doc.setFontSize(9);doc.setTextColor(...DARK);doc.text('estúdio',M+ico+2.6,logoY+3.4);
+ doc.setFont(TITULO,'bold');doc.setFontSize(22);doc.text('mabe.',M+ico+2.2,logoY+ico+0.6);
+ doc.setFont(CORPO,'normal');doc.setFontSize(6.8);doc.setTextColor(...MUTED);doc.text('MARCENARIA  ·  MADEIRA MACIÇA',M,logoY+ico+5.5,{charSpace:0.35});
 
  // Contato do estúdio no canto direito do cabeçalho (antes era uma coluna lateral que espremia a tabela)
  let cy=logoY+2.6;
- doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...DARK);doc.text('ESTÚDIO MABE',R,cy,{align:'right'});cy+=4.6;
- doc.setFont('helvetica','normal');doc.setFontSize(7.8);doc.setTextColor(...MUTED);
+ doc.setFont(CORPO,'bold');doc.setFontSize(8);doc.setTextColor(...DARK);doc.text('ESTÚDIO MABE',R,cy,{align:'right'});cy+=4.6;
+ doc.setFont(CORPO,'normal');doc.setFontSize(7.8);doc.setTextColor(...MUTED);
  [enderecoEstudio(emp),emp.telefone,emp.email,emp.site].filter(Boolean).forEach(t=>{
   doc.splitTextToSize(String(t),80).forEach(l=>{doc.text(l,R,cy,{align:'right'});cy+=3.7;});});
 
  // Título, número e régua dourada
  let y=Math.max(logoY+ico+19,cy+9);
- doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);doc.text('ORÇAMENTO',M,y);
- doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...MUTED);doc.text('Nº ORC-'+pad(o.num),R,y,{align:'right'});
+ doc.setFont(TITULO,'bold');doc.setFontSize(30);doc.setTextColor(...DARK);doc.text('Orçamento',M,y);
+ doc.setFont(CORPO,'normal');doc.setFontSize(9.5);doc.setTextColor(...MUTED);doc.text('Nº ORC-'+pad(o.num),R,y,{align:'right'});
  y+=5;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,y,R,y);
 
  // Cliente / Data / Entrega — nome longo quebra dentro da própria coluna
  y+=9;
  const meta=[{rot:'CLIENTE',val:cliName(o.cliId),x:M,w:104},{rot:'DATA',val:fmtD(o.data),x:126,w:32},{rot:'ENTREGA',val:fmtD(o.validade),x:164,w:32}];
  let metaLinhas=1;
- meta.forEach(c=>{doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text(c.rot,c.x,y);
-  doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...DARK);
+ meta.forEach(c=>{doc.setFont(CORPO,'bold');doc.setFontSize(6.8);doc.setTextColor(...MUTED);doc.text(c.rot,c.x,y,{charSpace:0.5});
+  if(c.rot==='CLIENTE'){doc.setFont(TITULO,'bold');doc.setFontSize(14);}else{doc.setFont(CORPO,'normal');doc.setFontSize(10.5);}doc.setTextColor(...DARK);
   const l=doc.splitTextToSize(String(c.val),c.w);doc.text(l,c.x,y+6);metaLinhas=Math.max(metaLinhas,l.length);});
  y+=6+(metaLinhas-1)*4.5+9;
 
@@ -3706,7 +3720,7 @@ function montarPdfOrcamento(o,itens,refs){
  const cab=(t,a)=>({content:t,styles:{halign:a}});
  doc.autoTable({startY:y,margin:{left:M,right:210-R,top:20,bottom:297-RODAPE_Y+4},
   head:[[cab('#','center'),'Item',cab('Qtd','right'),cab('Unitário','right'),cab('Subtotal','right')]],
-  body:linhas,theme:'plain',rowPageBreak:'avoid',
+  body:linhas,theme:'plain',rowPageBreak:'avoid',styles:{font:CORPO},
   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3.2,bottom:3.2,left:3,right:3}},
   bodyStyles:{fontSize:9,textColor:DARK,valign:'top',cellPadding:{top:3.2,bottom:3.2,left:3,right:3}},
   columnStyles:{0:{cellWidth:10,halign:'center',textColor:MUTED},2:{cellWidth:14,halign:'right'},3:{cellWidth:28,halign:'right'},4:{cellWidth:30,halign:'right',fontStyle:'bold'}},
@@ -3720,7 +3734,7 @@ function montarPdfOrcamento(o,itens,refs){
  let fy=doc.lastAutoTable.finalY+8;
  const total=itens.reduce((s,it)=>s+Number(it.preco||0),0);
  const obs=textoPdf(o.obs);
- doc.setFont('helvetica','normal');doc.setFontSize(8.5);
+ doc.setFont(CORPO,'normal');doc.setFontSize(8.5);
  const obsL=obs?doc.splitTextToSize(obs,104):[];
  const boxW=66,boxH=14,boxX=R-boxW;
  /* o % do PIX vem da mesma configuração usada ao aprovar o orçamento, para o PDF não prometer outra divisão */
@@ -3730,28 +3744,28 @@ function montarPdfOrcamento(o,itens,refs){
  const blocoAlt=Math.max(obs?8.5+obsL.length*3.9:0,pagAlt);
  if(fy+blocoAlt>RODAPE_Y-6)fy=novaPagina();
  doc.setFillColor(...DARK);doc.roundedRect(boxX,fy,boxW,boxH,1.5,1.5,'F');
- doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...ACCENT);doc.text('TOTAL',boxX+5,fy+boxH/2+1.4);
+ doc.setFont(CORPO,'bold');doc.setFontSize(8.5);doc.setTextColor(...ACCENT);doc.text('TOTAL',boxX+5,fy+boxH/2+1.4,{charSpace:0.5});
  doc.setFontSize(13);doc.setTextColor(...WHITE);doc.text(fmt(total),R-5,fy+boxH/2+1.8,{align:'right'});
  let py=fy+boxH+7;
- doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text('FORMAS DE PAGAMENTO',boxX+1,py);
- doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
+ doc.setFont(CORPO,'bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text('FORMAS DE PAGAMENTO',boxX+1,py,{charSpace:0.4});
+ doc.setFont(CORPO,'normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
  formasPag.forEach(t=>{py+=4.4;doc.text(t,boxX+1,py);});
- if(obs){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...DARK);doc.text('OBSERVAÇÕES',M,fy+3);
-  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);doc.text(obsL,M,fy+8.5,{lineHeightFactor:1.3});}
+ if(obs){doc.setFont(CORPO,'bold');doc.setFontSize(7.5);doc.setTextColor(...DARK);doc.text('OBSERVAÇÕES',M,fy+3,{charSpace:0.4});
+  doc.setFont(CORPO,'normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);doc.text(obsL,M,fy+8.5,{lineHeightFactor:1.3});}
 
  // Assinaturas perto do rodapé; nunca por cima das observações
  let sy=fy+blocoAlt+18;
  if(sy>RODAPE_Y-10){novaPagina();sy=RODAPE_Y-22;}else sy=Math.max(sy,RODAPE_Y-22);
  doc.setDrawColor(...MUTED);doc.setLineWidth(0.2);doc.line(M,sy,M+78,sy);doc.line(R-78,sy,R,sy);
- doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+ doc.setFont(CORPO,'normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
  doc.text('Assinatura do Estúdio',M,sy+4.5);doc.text('Assinatura do Cliente',R-78,sy+4.5);
 
  // Referências marcadas no orçamento: duas por página, cada uma inteira (sem cortar) no seu espaço.
  // Fotos em pé ficariam miúdas empilhadas: essas vão lado a lado, com a altura da página toda.
  if(refs&&refs.length){
   const topo=()=>{let ty=novaPagina()+4;
-   doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...DARK);doc.text('REFERÊNCIAS',M,ty);
-   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text('Nº ORC-'+pad(o.num),R,ty,{align:'right'});
+   doc.setFont(TITULO,'bold');doc.setFontSize(22);doc.setTextColor(...DARK);doc.text('Referências',M,ty);
+   doc.setFont(CORPO,'normal');doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text('Nº ORC-'+pad(o.num),R,ty,{align:'right'});
    ty+=4;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,ty,R,ty);return ty+7;};
   const areaW=R-M,alturaToda=RODAPE_Y-6-37,gap=8;
   const pos=(r,x,y,bw,bh,topo_)=>{const k=Math.min(bw/r.w,bh/r.h),w=r.w*k,h=r.h*k;
@@ -3767,7 +3781,7 @@ function montarPdfOrcamento(o,itens,refs){
  const rodape=doc.splitTextToSize([enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.',148)[0];
  for(let pg=1;pg<=n;pg++){doc.setPage(pg);
   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(M,RODAPE_Y,R,RODAPE_Y);
-  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+  doc.setFont(CORPO,'normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
   doc.text(rodape,M,RODAPE_Y+5);
   doc.text('Página '+pg+' de '+n,R,RODAPE_Y+5,{align:'right'});}
 
@@ -3777,6 +3791,7 @@ async function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUA
  const itens=itensOrc(o);
  if(!itens.length){toast('Este orçamento não tem itens.','error');return;}
  if(!await libPronta('jspdf'))return;
+ await carregarFontesPdf();
  const doc=montarPdfOrcamento(o,itens,await referenciasParaPdf(o));
  /* no celular um PDF aberto em aba não imprime: entrega o arquivo, que abre no leitor com a opção de imprimir */
  if(window.matchMedia('(hover:none)').matches){doc.save(nomePdfOrcamento(o));toast('PDF baixado — abra o arquivo para imprimir.','info',6000);return;}
@@ -5769,7 +5784,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.13';
+const APP_VERSAO='2026-09-18.14';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
