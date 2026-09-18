@@ -217,7 +217,11 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
    A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
    fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
-#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards { display:none; }
+#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards { display:none; }
+.cli-busca-barra { display:flex;gap:10px;align-items:center;margin-bottom:12px; }
+.cli-busca-barra input { flex:1;max-width:360px; }
+.cli-busca-n { font-size:12px;color:var(--text-muted);white-space:nowrap; }
+.compras-topo { display:none; }
 /* Produção no celular: as colunas lado a lado ficavam espremidas; mostra uma etapa por vez, escolhida nas abas */
 .orc-anexos-zona { position:relative;transition:border-color .15s,background .15s; }
 .orc-anexos-zona.arrastando { border:2px dashed var(--accent);background:var(--surface2); }
@@ -301,8 +305,10 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 body.sem-valores .pc-valor, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
   #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
-  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards { display:block; }
-  #entregas-tabela { display:none; }
+  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards { display:block; }
+  #entregas-tabela, #clientes-tabela, #compras-tabela { display:none; }
+  .cli-busca-barra input { max-width:none;font-size:16px; }
+  .compras-topo { display:flex;justify-content:flex-end;margin-bottom:12px; }
   .pcp-abas { display:flex;gap:6px;overflow-x:auto;margin:0 -2px 12px;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none; }
   .pcp-abas::-webkit-scrollbar { display:none; }
   .pcp-aba { flex:none;display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer; }
@@ -470,7 +476,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
     </div>
 
-    <div class="section" id="section-clientes"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Clientes — CRM</div></div><table><thead><tr><th>#</th><th>Nome</th><th>Email</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-clientes"></tbody></table></div></div>
+    <div class="section" id="section-clientes"><div class="cli-busca-barra"><input class="form-control" id="cli-busca" type="search" placeholder="🔎 Buscar cliente por nome, telefone, cidade..." oninput="renderClientes()" autocomplete="off"><span class="cli-busca-n" id="cli-busca-n"></span></div><div id="clientes-cards"></div><div class="table-wrapper" id="clientes-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Clientes — CRM</div></div><table><thead><tr><th>#</th><th>Nome</th><th>Email</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-clientes"></tbody></table></div></div>
     <div class="section" id="section-insumos"><div id="insumos-cards"></div><div class="table-wrapper" id="insumos-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Material/Insumo & Estoque</div></div><table><thead><tr><th>#</th><th>Material/Insumo</th><th>Categoria</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-insumos"></tbody></table></div></div>
     <div class="section" id="section-portfolio"><div id="portfolio-cards"></div><div class="table-wrapper" id="portfolio-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Portfólio & Estoque</div></div><table><thead><tr><th>#</th><th>Produto</th><th>Categoria</th><th>Tempo de Produção</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-portfolio"></tbody></table></div></div>
     <div class="section" id="section-vendas">
@@ -533,7 +539,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     </div></div>
 
     <div class="section" id="section-fornecedores"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Fornecedores</div></div><table><thead><tr><th>#</th><th>Nome</th><th>CNPJ</th><th>Email</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-fornecedores"></tbody></table></div></div>
-    <div class="section" id="section-compras"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button><input type="file" id="nf-xml-input" accept=".xml,text/xml,application/xml" style="display:none" onchange="importarNfXml(this)"></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
+    <div class="section" id="section-compras"><div class="compras-topo"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button></div><div id="compras-cards"></div><div class="table-wrapper" id="compras-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button><input type="file" id="nf-xml-input" accept=".xml,text/xml,application/xml" style="display:none" onchange="importarNfXml(this)"></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
 
     <!-- MADEIRAS -->
     <div class="section" id="section-madeiras">
@@ -1934,7 +1940,33 @@ async function carregarClientesSupabase(){
  if(CUR==='clientes')renderClientes();}
 
 /* ================= CLIENTES ================= */
-function renderClientes(){$('tb-clientes').innerHTML=DB.clientes.map((c,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(c.nome)+'</strong></td><td>'+esc(c.email||'—')+'</td><td>'+esc(c.tel||'—')+'</td><td class="mono">'+esc(c.doc||'—')+'</td><td>'+esc(c.cidade||'—')+'</td><td><span class="badge '+(c.status==='Ativo'?'badge-success':c.status==='Bloqueado'?'badge-danger':'badge-muted')+'">'+c.status+'</span></td><td>'+actionBtns("editCliente('"+c.id+"')","delCliente('"+c.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum cliente cadastrado');}
+/* busca sem acento e sem máscara: "joao" acha "João", "99123" acha "(11) 99123-4567" */
+const semAcento=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function clientesFiltrados(){const q=semAcento(($('cli-busca')||{}).value||'').trim();
+ if(!q)return DB.clientes;const qd=q.replace(/\D/g,'');
+ return DB.clientes.filter(c=>semAcento([c.nome,c.email,c.cidade].join(' ')).includes(q)
+  ||(qd.length>=3&&String((c.tel||'')+' '+(c.doc||'')).replace(/\D/g,'').includes(qd)));}
+function linkWhatsapp(tel){let d=String(tel||'').replace(/\D/g,'');if(d.length<10)return '';if(d.length<=11)d='55'+d;return 'https://wa.me/'+d;}
+function renderClientesCards(lista){const alvo=$('clientes-cards');if(!alvo)return;
+ if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">'+(DB.clientes.length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado')+'</div>';return;}
+ const pedidosDe={};DB.vendas.forEach(v=>{if(v.status==='Cancelado'||!v.cliId)return;const r=pedidosDe[v.cliId]||(pedidosDe[v.cliId]={n:0,ult:''});r.n++;if((v.data||'')>r.ult)r.ult=v.data||'';});
+ alvo.innerHTML=lista.slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR')).map(c=>{
+  const tel=String(c.tel||'').replace(/\D/g,''),wa=linkWhatsapp(c.tel),ped=pedidosDe[c.id];
+  const links=[tel?'<a class="pc-link" href="tel:'+tel+'">📞 Ligar</a>':'',wa?'<a class="pc-link" href="'+wa+'" target="_blank" rel="noopener">💬 WhatsApp</a>':'',
+   c.email?'<a class="pc-link" href="mailto:'+esc(c.email)+'">✉️ E-mail</a>':''].filter(Boolean).join('');
+  const detalhe=[c.tel,c.cidade].filter(Boolean).map(esc).join(' · ');
+  return '<div class="pedido-card">'
+   +'<div class="pc-topo"><div class="pc-cliente">'+esc(c.nome)+'</div><span class="badge '+(c.status==='Ativo'?'badge-success':c.status==='Bloqueado'?'badge-danger':'badge-muted')+'">'+esc(c.status||'—')+'</span></div>'
+   +(detalhe?'<div class="pc-pag">'+detalhe+'</div>':'')
+   +(c.email||c.doc?'<div class="pc-pag">'+[c.email,c.doc].filter(Boolean).map(esc).join(' · ')+'</div>':'')
+   +(ped?'<div class="pc-pag">🛒 '+ped.n+' pedido'+(ped.n>1?'s':'')+(ped.ult?' · último em '+fmtD(ped.ult):'')+'</div>':'')
+   +(links?'<div class="pc-links">'+links+'</div>':'')
+   +(canEdit()?'<div class="pc-acoes">'+actionBtns("editCliente('"+c.id+"')","delCliente('"+c.id+"')")+'</div>':'')
+   +'</div>';}).join('');}
+function renderClientes(){const lista=clientesFiltrados();
+ const n=$('cli-busca-n');if(n)n.textContent=lista.length===DB.clientes.length?DB.clientes.length+' clientes':lista.length+' de '+DB.clientes.length;
+ renderClientesCards(lista);
+ $('tb-clientes').innerHTML=lista.map((c,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(c.nome)+'</strong></td><td>'+esc(c.email||'—')+'</td><td>'+esc(c.tel||'—')+'</td><td class="mono">'+esc(c.doc||'—')+'</td><td>'+esc(c.cidade||'—')+'</td><td><span class="badge '+(c.status==='Ativo'?'badge-success':c.status==='Bloqueado'?'badge-danger':'badge-muted')+'">'+c.status+'</span></td><td>'+actionBtns("editCliente('"+c.id+"')","delCliente('"+c.id+"')")+'</td></tr>').join('')||emptyRow(8,DB.clientes.length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado');}
 function emptyRow(n,msg){return '<tr><td colspan="'+n+'" style="color:var(--text-muted);text-align:center;padding:26px">'+msg+'</td></tr>';}
 let CLIENTE_RAPIDO_ORC=false,CLIENTE_RAPIDO_VENDA=false;
 function abrirNovoClienteRapido(){openCliente();CLIENTE_RAPIDO_ORC=true;}
@@ -3985,7 +4017,29 @@ async function carregarComprasSupabase(){
  if(error){erroDeCarga('compras',error);return;}
  DB.compras=(data||[]).map(compraDeSupabase);saveDB();
  if(CUR==='compras')renderCompras();}
-function renderCompras(){$('tb-compras').innerHTML=DB.compras.map(c=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Recebido':'badge-success','Cancelado':'badge-danger'}[c.status]||'badge-muted';
+const COMPRA_STB={'Pendente':'badge-warning','Confirmado':'badge-info','Recebido':'badge-success','Cancelado':'badge-danger'};
+function renderComprasCards(){const alvo=$('compras-cards');if(!alvo)return;
+ if(!DB.compras.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhuma ordem de compra</div>';return;}
+ alvo.innerHTML=DB.compras.map(c=>{
+  const aberta=c.status==='Pendente'||c.status==='Confirmado';
+  const acoes=canEdit()?((aberta?'<button class="btn btn-primary btn-sm" onclick="receberCompra(\''+c.id+'\')">✔ Recebido</button>':'')
+   +((!c.lancado&&c.status!=='Cancelado')?'<button class="btn btn-ghost btn-sm" onclick="lancarCompra(\''+c.id+'\')">💰 Lançar no financeiro</button>':'')
+   +'<button class="btn btn-ghost btn-sm" title="Editar" onclick="editCompra(\''+c.id+'\')">✏️</button><button class="btn btn-danger btn-sm" title="Excluir" onclick="delCompra(\''+c.id+'\')">🗑️</button>'):'';
+  return '<div class="pedido-card">'
+   +'<div class="pc-topo"><span class="pc-num">OC-'+pad(c.num)+'</span><span class="pc-data">'+fmtD(c.data)+'</span></div>'
+   +'<div class="pc-cliente">'+esc(fornName(c.forId))+'</div>'
+   +'<div class="pc-valor"><span class="pc-total">'+fmt(c.total)+'</span><span class="pc-status"><span class="badge '+(COMPRA_STB[c.status]||'badge-muted')+'">'+esc(c.status)+'</span>'+(c.lancado?'<span class="badge badge-muted">💰 lançada</span>':'')+'</span></div>'
+   +(c.obs?'<div class="pc-itens-lista"><div class="pc-item">'+esc(c.obs)+'</div></div>':'')
+   +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
+   +'</div>';}).join('');}
+/* no celular, receber a mercadoria é o passo mais comum: um toque em vez de abrir o formulário */
+async function receberCompra(id){if(!guard())return;const c=DB.compras.find(x=>x.id===id);if(!c)return;
+ const antes=c.status;c.status='Recebido';
+ const {error}=await supa.from('compras').update(compraParaSupabase(c)).eq('id',id);
+ if(error){c.status=antes;toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ commit('editar','Compras','OC-'+pad(c.num)+' → Recebido');syncSheets('compras','upsert',c);
+ toast('OC-'+pad(c.num)+' marcada como recebida.','success');}
+function renderCompras(){renderComprasCards();$('tb-compras').innerHTML=DB.compras.map(c=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Recebido':'badge-success','Cancelado':'badge-danger'}[c.status]||'badge-muted';
  const lanc=(canEdit()&&!c.lancado&&c.status!=='Cancelado')?'<button class="btn btn-ghost btn-sm" title="Lançar no financeiro" onclick="lancarCompra(\''+c.id+'\')">💰</button>':'';
  return '<tr><td class="mono">OC-'+pad(c.num)+'</td><td class="mono">'+fmtD(c.data)+'</td><td>'+esc(fornName(c.forId))+'</td><td class="mono" style="font-weight:700">'+fmt(c.total)+'</td><td><span class="badge '+stB+'">'+c.status+'</span></td><td style="font-size:12px;color:var(--text-muted)">'+esc(c.obs||'—')+'</td><td><div class="row-actions">'+lanc+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editCompra(\''+c.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delCompra(\''+c.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(7,'Nenhuma ordem de compra');}
 async function lancarCompra(id){if(!guard())return;const c=DB.compras.find(x=>x.id===id);
@@ -5428,7 +5482,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.8';
+const APP_VERSAO='2026-09-18.9';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
