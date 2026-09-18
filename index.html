@@ -198,7 +198,11 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 }
 @media (max-width:460px) {
   .kpi-grid { grid-template-columns:1fr; }
-  .pcp-stats { grid-template-columns:repeat(2,1fr); }
+  /* 6 quadros em 3 colunas compactas: em 2 colunas ocupavam meia tela antes das ordens */
+  .pcp-stats { grid-template-columns:repeat(3,1fr);gap:8px; }
+  .pcp-stat { padding:9px 5px; }
+  .pcp-stat-val { font-size:18px; }
+  .pcp-stat-label { font-size:8.5px;letter-spacing:0.3px; }
 }
 /* ===== NÍVEIS DE ACESSO ===== */
 .nivel-sel { font-family:inherit;font-size:11px;font-weight:700;padding:3px 20px 3px 8px;border-radius:20px;border:1px solid var(--border);background-color:var(--surface2);color:var(--text);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6f62' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:9px; }
@@ -213,7 +217,13 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
    A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
    fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
-#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards { display:none; }
+#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards { display:none; }
+/* Produção no celular: as colunas lado a lado ficavam espremidas; mostra uma etapa por vez, escolhida nas abas */
+.pcp-abas { display:none; }
+.kanban-col-vazia { display:none; }
+.pcp-btn-txt { display:none; }
+.pc-links { display:flex;gap:16px;flex-wrap:wrap; }
+.pc-link { font-size:13px;font-weight:600;color:var(--text);text-decoration:none;padding:4px 0; }
 .prod-card .pc-topo { align-items:center; }
 .prod-card .pc-num { color:var(--text-muted);font-weight:600; }
 .pd-meta { font-size:12px;color:var(--text-muted); }
@@ -285,7 +295,27 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 body.sem-valores .pc-valor, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
   #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
-  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards { display:block; }
+  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards { display:block; }
+  #entregas-tabela { display:none; }
+  .pcp-abas { display:flex;gap:6px;overflow-x:auto;margin:0 -2px 12px;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none; }
+  .pcp-abas::-webkit-scrollbar { display:none; }
+  .pcp-aba { flex:none;display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer; }
+  .pcp-aba.ativa { background:var(--text);color:var(--surface);border-color:var(--text); }
+  .pcp-aba-n { font-size:11px;font-family:var(--mono);background:var(--surface3);color:var(--text-muted);border-radius:10px;padding:1px 7px; }
+  .pcp-aba.ativa .pcp-aba-n { background:rgba(250,247,242,0.18);color:var(--surface); }
+  .kanban-board { display:block;overflow:visible; }
+  .kanban-col { display:none;min-height:0;background:none;padding:0; }
+  .kanban-col.ativa { display:block; }
+  .kanban-col-header { display:none; }
+  .kanban-col-vazia { display:block;padding:26px 14px;text-align:center;color:var(--text-muted);font-size:13px;background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius); }
+  .kanban-card { padding:14px;margin-bottom:10px; }
+  .kanban-card-title { font-size:15px; }
+  .kanban-card-sub { font-size:12.5px; }
+  .kanban-card-footer { flex-wrap:wrap;gap:10px; }
+  .pcp-etapa-btn { padding:10px 14px;font-size:13px;border-radius:8px; }
+  .pcp-btn-txt { display:inline; }
+  /* botões dos cartões com altura de dedo (~40px): tinham 26px */
+  .pc-acoes .btn { min-height:40px;padding:8px 13px;font-size:13px; }
 }
 /* parcelas da NF: 4 colunas; no celular a situação desce para a linha de baixo */
 .nf-parc { display:grid;grid-template-columns:34px minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center; }
@@ -541,7 +571,8 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 
     <!-- ENTREGAS -->
     <div class="section" id="section-entregas">
-      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">🚚 Entregas & Instalações</div></div>
+      <div id="entregas-cards"></div>
+      <div class="table-wrapper" id="entregas-tabela"><div class="table-toolbar"><div class="table-toolbar-title">🚚 Entregas & Instalações</div></div>
       <table><thead><tr><th>Data</th><th>Cliente</th><th>Peça</th><th>Endereço</th><th>Responsável</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-entregas"></tbody></table></div>
     </div>
 
@@ -745,7 +776,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
     </div>
 
-    <div class="section" id="section-pcp"><div class="period-bar"><select class="form-control" id="pcp-prio-filter" style="width:auto;min-width:150px" onchange="renderPCP()"><option value="">Todas as prioridades</option><option>Alta</option><option>Normal</option><option>Baixa</option></select><label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="pcp-ver-concluidas" onchange="renderPCP()" style="cursor:pointer">Mostrar concluídas</label><span id="pcp-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div class="pcp-stats" id="pcp-stats"></div><div class="kanban-board" id="pcp-kanban"></div></div>
+    <div class="section" id="section-pcp"><div class="period-bar"><select class="form-control" id="pcp-prio-filter" style="width:auto;min-width:150px" onchange="renderPCP()"><option value="">Todas as prioridades</option><option>Alta</option><option>Normal</option><option>Baixa</option></select><label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="pcp-ver-concluidas" onchange="renderPCP()" style="cursor:pointer">Mostrar concluídas</label><span id="pcp-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div class="pcp-stats" id="pcp-stats"></div><div class="pcp-abas" id="pcp-abas"></div><div class="kanban-board" id="pcp-kanban"></div></div>
 
     <div class="section" id="section-usuarios"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Usuários do Sistema</div></div><table><thead><tr><th>Login</th><th>Nome</th><th>Nível de Acesso</th><th title="Registrado por dispositivo: mostra o último acesso feito neste navegador">Último acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-usuarios"></tbody></table></div><div class="table-wrapper" style="margin-top:14px"><div class="table-toolbar"><div class="table-toolbar-title">O que cada nível enxerga</div></div><div class="niveis-legenda" id="usr-legenda"></div></div></div>
     <div class="section" id="section-historico"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Histórico de Edições</div><button class="btn btn-danger btn-sm" onclick="clearHistorico()">🗑️ Limpar</button></div><table><thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Módulo</th><th>Detalhe</th></tr></thead><tbody id="tb-historico"></tbody></table></div></div>
@@ -3421,6 +3452,10 @@ async function carregarProducaoSupabase(){
  DB.producao=(data||[]).map(opDeSupabase);saveDB();
  if(CUR==='pcp')renderPCP();
  if(CUR==='calendario')renderCalendario();}
+let PCP_ETAPA_MOBILE=null;
+function selecionarEtapaPCP(i){PCP_ETAPA_MOBILE=i;renderPCP();
+ const aba=document.querySelector('.pcp-aba.ativa');if(aba)aba.scrollIntoView({block:'nearest',inline:'center'});}
+const ehCelular=()=>window.matchMedia('(max-width:860px)').matches;
 function renderPCP(){const t=today();
  const verConcluidas=$('pcp-ver-concluidas')?$('pcp-ver-concluidas').checked:false;
  const fPrio=$('pcp-prio-filter')?$('pcp-prio-filter').value:'';
@@ -3430,12 +3465,15 @@ function renderPCP(){const t=today();
  const atras=ativas.filter(o=>o.prazo&&o.prazo<t).length;
  const ym=t.slice(0,7);const concMes=DB.producao.filter(o=>o.status==='Concluída'&&String(o.fim||'').slice(0,7)===ym).length;
  $('pcp-stats').innerHTML=[['Planejamento',ativas.filter(o=>o.etapa==0).length,''],['Em produção',ativas.filter(o=>o.etapa>0&&o.etapa<4).length,''],['Retrabalho',ativas.filter(o=>o.etapa==4).length,'color:var(--warning)'],['Prontas',ativas.filter(o=>o.etapa==5).length,''],['Atrasadas',atras,'color:var(--danger)'],['Concluídas (mês)',concMes,'color:var(--success)']].map(s=>'<div class="pcp-stat"><div class="pcp-stat-val" style="'+s[2]+'">'+s[1]+'</div><div class="pcp-stat-label">'+s[0]+'</div></div>').join('');
+ if(PCP_ETAPA_MOBILE===null){const primeira=ETAPAS.findIndex((_,i)=>ativas.some(o=>Number(o.etapa)===i));PCP_ETAPA_MOBILE=primeira<0?0:primeira;}
+ $('pcp-abas').innerHTML=ETAPAS.map((et,i)=>'<button class="pcp-aba'+(i===PCP_ETAPA_MOBILE?' ativa':'')+'" onclick="selecionarEtapaPCP('+i+')">'+esc(et)+'<span class="pcp-aba-n">'+ativas.filter(o=>Number(o.etapa)===i).length+'</span></button>').join('');
  $('pcp-kanban').innerHTML=ETAPAS.map((et,i)=>{const cards=ativas.filter(o=>Number(o.etapa)===i);
-  return '<div class="kanban-col"><div class="kanban-col-header"><span class="kanban-col-title">'+et+'</span><span class="kanban-count">'+cards.length+'</span></div>'
+  return '<div class="kanban-col'+(i===PCP_ETAPA_MOBILE?' ativa':'')+'"><div class="kanban-col-header"><span class="kanban-col-title">'+et+'</span><span class="kanban-count">'+cards.length+'</span></div>'
   +cards.map(o=>{const pcls=!o.prazo?'ok':o.prazo<t?'vencido':o.prazo===t?'hoje':'ok';
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
-   const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶</button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
+   const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶<span class="pcp-btn-txt"> '+esc(ETAPAS[i+1])+'</span></button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
    return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(o.titulo)+'</div><div class="kanban-card-sub">'+esc(cliName(o.cliId))+(o.resp?' · '+esc(o.resp):'')+'</div>'+(o.criadoEm?'<div class="kanban-card-timer" data-criado="'+o.criadoEm+'">⏱ '+elapsedStr(o.criadoEm)+'</div>':'')+'<div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
+  +(cards.length?'':'<div class="kanban-col-vazia">Nenhuma ordem nesta etapa</div>')
   +'</div>';}).join('');}
 function openOP(){$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';$('op-prio').value='Normal';$('op-etapa').value='0';$('op-obs').value='';
  $('op-btn-del').style.display='none';$('mop-title').textContent='Nova Ordem de Produção';openModal('modal-producao');}
@@ -3467,7 +3505,8 @@ async function moveOP(id,dir){if(!guard())return;const o=DB.producao.find(x=>x.i
  o.etapa=Math.max(0,Math.min(ETAPA_FINAL,Number(o.etapa)+dir));
  const {error}=await supa.from('producao').update({etapa:o.etapa}).eq('id',id);
  if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
- commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);}
+ commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);
+ if(ehCelular())toast(o.titulo+' → '+ETAPAS[o.etapa],'success');}
 async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  o.status='Concluída';o.fim=today();
  const {error}=await supa.from('producao').update({status:'Concluída',fim:o.fim}).eq('id',id);
@@ -3547,7 +3586,30 @@ function renderEntregas(){const t=today();
   const late=(e.status==='Agendada'&&e.data<t)?' style="color:var(--danger);font-weight:700"':'';
   const idx=ENT_ST.indexOf(e.status);
   const adv=(canEdit()&&idx<3)?'<button class="btn btn-ghost btn-sm" title="Avançar status" onclick="advEntrega(\''+e.id+'\')">'+ENT_ST[idx+1]+' →</button>':'';
-  return '<tr><td class="mono"'+late+'>'+fmtD(e.data)+'</td><td>'+esc(e.cliId?cliName(e.cliId):e.cliente||'—')+'</td><td><strong>'+esc(e.peca)+'</strong></td><td>'+esc(e.end||'—')+'</td><td>'+esc(e.resp||'—')+'</td><td><span class="badge '+stB+'">'+e.status+'</span></td><td><div class="row-actions">'+adv+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editEntrega(\''+e.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delEntrega(\''+e.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(7,'Nenhuma entrega agendada');}
+  return '<tr><td class="mono"'+late+'>'+fmtD(e.data)+'</td><td>'+esc(e.cliId?cliName(e.cliId):e.cliente||'—')+'</td><td><strong>'+esc(e.peca)+'</strong></td><td>'+esc(e.end||'—')+'</td><td>'+esc(e.resp||'—')+'</td><td><span class="badge '+stB+'">'+e.status+'</span></td><td><div class="row-actions">'+adv+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editEntrega(\''+e.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delEntrega(\''+e.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(7,'Nenhuma entrega agendada');
+ renderEntregasCards();}
+/* mesma informação da tabela, empilhada; no celular o endereço abre no mapa e o cliente pode ser chamado direto */
+function renderEntregasCards(){const alvo=$('entregas-cards');if(!alvo)return;const t=today();
+ if(!DB.entregas.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhuma entrega agendada</div>';return;}
+ alvo.innerHTML=DB.entregas.map(e=>{
+  const stB={'Agendada':'badge-warning','Em rota':'badge-info','Entregue':'badge-success','Instalada':'badge-success'}[e.status]||'badge-muted';
+  const atrasada=e.status==='Agendada'&&e.data<t;
+  const idx=ENT_ST.indexOf(e.status);
+  const cli=e.cliId?DB.clientes.find(c=>c.id===e.cliId):null;
+  const tel=cli&&cli.tel?String(cli.tel).replace(/\D/g,''):'';
+  const links=[e.end?'<a class="pc-link" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(e.end)+'" target="_blank" rel="noopener">📍 Abrir no mapa</a>':'',
+   tel?'<a class="pc-link" href="tel:'+tel+'">📞 Ligar para o cliente</a>':''].filter(Boolean).join('');
+  const acoes=((canEdit()&&idx<3)?'<button class="btn btn-primary btn-sm" onclick="advEntrega(\''+e.id+'\')">'+ENT_ST[idx+1]+' →</button>':'')
+   +(canEdit()?'<button class="btn btn-ghost btn-sm" title="Editar" onclick="editEntrega(\''+e.id+'\')">✏️</button><button class="btn btn-danger btn-sm" title="Excluir" onclick="delEntrega(\''+e.id+'\')">🗑️</button>':'');
+  return '<div class="pedido-card">'
+   +'<div class="pc-topo"><span class="pc-data"'+(atrasada?' style="color:var(--danger);font-weight:700"':'')+'>'+(atrasada?'⚠ atrasada · ':'')+fmtD(e.data)+'</span><span class="badge '+stB+'">'+esc(e.status)+'</span></div>'
+   +'<div class="pc-cliente">'+esc(e.peca||'—')+'</div>'
+   +'<div class="pc-pag">'+esc(e.cliId?cliName(e.cliId):e.cliente||'—')+(e.resp?' · '+esc(e.resp):'')+'</div>'
+   +(e.end?'<div class="pc-pag">'+esc(e.end)+'</div>':'')
+   +(e.obs?'<div class="pc-itens-lista"><div class="pc-item">'+esc(e.obs)+'</div></div>':'')
+   +(links?'<div class="pc-links">'+links+'</div>':'')
+   +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
+   +'</div>';}).join('');}
 async function advEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);const i=ENT_ST.indexOf(e.status);
  if(i<3){e.status=ENT_ST[i+1];
   const {error}=await supa.from('entregas').update({status:e.status}).eq('id',id);
@@ -5277,7 +5339,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.5';
+const APP_VERSAO='2026-09-18.6';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
