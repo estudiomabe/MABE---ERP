@@ -356,6 +356,7 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 /* parcelas da NF: 4 colunas; no celular a situação desce para a linha de baixo */
 .nf-parc { display:grid;grid-template-columns:34px minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center; }
 .rot-cel { display:none; }
+body.sem-origem .campo-origem { display:none; }
 @media (max-width:860px) {
   /* abaixo de 16px o iPhone dá zoom sozinho ao tocar no campo e a tela fica desalinhada */
   input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea, .form-control { font-size:16px !important; }
@@ -437,7 +438,7 @@ body.sem-valores #dash-btn-pdf { display:none !important; }
 body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </style>
 </head>
-<body>
+<body class="sem-origem">
 <nav id="sidebar">
   <div class="sidebar-logo">
     <svg class="brand-svg" style="height:34px;color:#faf7f2" viewBox="0 0 215 62" xmlns="http://www.w3.org/2000/svg" fill="currentColor" role="img" aria-label="estúdio mabe">
@@ -724,6 +725,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
               <div class="form-group"><label class="form-label">Data do Orçamento</label><input type="date" class="form-control" id="orch-data"></div>
               <div class="form-group"><label class="form-label">Data de Entrega</label><input type="date" class="form-control" id="orch-validade"></div>
             </div>
+            <div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="orch-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div>
             <div class="form-group"><label class="form-label">Status</label><select class="form-control" id="orch-status"><option>Rascunho</option><option>Enviado</option><option>Aprovado</option><option>Reprovado</option><option>Concluído</option></select></div>
             <div class="form-group"><label class="form-label">Observações Gerais</label><textarea class="form-control" id="orch-obs" rows="4" style="resize:vertical;font-family:var(--font)" placeholder="Contexto geral do pedido, combinados com o cliente..."></textarea></div>
           </div>
@@ -1036,7 +1038,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this)"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-vendas"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="mv-title">Novo Pedido</div><button class="modal-close" onclick="closeModal('modal-vendas')">✕</button></div><div class="modal-body"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-vendas')">Cancelar</button><button class="btn btn-primary" onclick="saveVenda()">Salvar Pedido</button></div></div></div>
+<div class="modal-overlay" id="modal-vendas"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="mv-title">Novo Pedido</div><button class="modal-close" onclick="closeModal('modal-vendas')">✕</button></div><div class="modal-body"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-vendas')">Cancelar</button><button class="btn btn-primary" onclick="saveVenda()">Salvar Pedido</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
   <div class="modal-header"><div class="modal-title">📋 Nota Fiscal Eletrônica</div><button class="modal-close" onclick="closeModal('modal-nfe-info')">✕</button></div>
   <div class="modal-body" style="font-size:13px;line-height:1.7;color:var(--text)">
@@ -1537,6 +1539,7 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  navigate(secaoInicial());updateBadges();
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
  if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
+ verificarColunaOrigem();
  carregarClientesSupabase();
  carregarFornecedoresSupabase();
  carregarProdutosSupabase();
@@ -2715,8 +2718,8 @@ async function confirmarImportNf(){
  }finally{btn.disabled=false;btn.textContent='Importar';}}
 
 /* ================= VENDAS ================= */
-function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data||null,pag:v.pag||null,status:v.status||null,obs:v.obs||null,itens:v.itens||[],total:v.total||0,baixa:!!v.baixa};if(v.num!==undefined&&v.num!==null)o.num=v.num;return o;}
-function vendaDeSupabase(row){return{id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],total:row.total,baixa:row.baixa};}
+function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data||null,pag:v.pag||null,status:v.status||null,obs:v.obs||null,itens:v.itens||[],total:v.total||0,baixa:!!v.baixa};if(v.num!==undefined&&v.num!==null)o.num=v.num;return comOrigem(o,v);}
+function vendaDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],total:row.total,baixa:row.baixa};}
 async function carregarVendasSupabase(){
  const {data,error}=await supa.from('vendas').select('*').order('num',{ascending:false});
  if(error){erroDeCarga('pedidos',error);return;}
@@ -2816,7 +2819,7 @@ async function duplicarVenda(id){
  const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  if(!confirm('Duplicar o pedido V-'+pad(v.num)+'?\n\nO novo pedido nasce como Pendente, com a data de hoje e sem baixa de estoque.'))return;
  const obsBase=(v.obs||'').replace(/\s*·\s*Entregue em: \d{2}\/\d{2}\/\d{4}/,'');
- const nova={id:uid(),cliId:v.cliId,data:today(),pag:v.pag,status:'Pendente',
+ const nova={id:uid(),cliId:v.cliId,origem:v.origem||'',data:today(),pag:v.pag,status:'Pendente',
   obs:(obsBase?obsBase+' · ':'')+'Cópia de V-'+pad(v.num),
   itens:JSON.parse(JSON.stringify(v.itens||[])),total:v.total,baixa:false};
  const {data,error}=await supa.from('vendas').insert(vendaParaSupabase(nova)).select().single();
@@ -2830,7 +2833,7 @@ async function duplicarOrcamento(id){
  if(!guard())return;
  const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  if(!confirm('Duplicar o orçamento ORC-'+pad(o.num)+'?\n\nA cópia nasce como Rascunho, com data de hoje e validade em 15 dias.'))return;
- const novo={id:uid(),cliId:o.cliId,data:today(),validade:addDays(today(),15),status:'Rascunho',
+ const novo={id:uid(),cliId:o.cliId,origem:o.origem||'',data:today(),validade:addDays(today(),15),status:'Rascunho',
   obs:(o.obs?o.obs+' · ':'')+'Cópia de ORC-'+pad(o.num),
   itens:JSON.parse(JSON.stringify(itensOrc(o))).map(it=>Object.assign({},it,{id:uid()})),
   preco:o.preco,custo:o.custo,lucro:o.lucro,imposto:o.imposto,markup:o.markup,descPct:o.descPct,
@@ -2966,9 +2969,9 @@ function addItemLivreVenda(it){const row=linhaItemVenda();row.dataset.tipo='livr
 function addItemPedido(it){if(it&&it.prodId)addItemVenda(it);else addItemLivreVenda(it);}
 function viProd(sel){const opt=sel.selectedOptions[0];const row=sel.parentElement;row.querySelector('.vi-preco').value=opt?opt.dataset.preco||0:0;calcVenda();}
 function calcVenda(){let t=0;document.querySelectorAll('#vnd-itens > div').forEach(r=>{const s=(parseFloat(r.querySelector('.vi-qty').value)||0)*(parseFloat(r.querySelector('.vi-preco').value)||0);r.querySelector('.vi-sub').textContent=fmt(s);t+=s;});$('vnd-total').textContent=fmt(t);return t;}
-function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-pag').value='PIX';$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);openModal('modal-vendas');}
+function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-pag').value='PIX';$('vnd-origem').value='';$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);openModal('modal-vendas');}
 function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
- $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-pag').value=v.pag;$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';
+ $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-pag').value=v.pag;$('vnd-origem').value=v.origem||'';$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';
  $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);openModal('modal-vendas');}
 let ITEM_PARA_PEDIDO=null;
 function capturarPedido(){const itens=[];
@@ -3039,7 +3042,7 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
  const statusForm=$('vnd-status').value;
  let obsForm=$('vnd-obs').value.trim();
  obsForm=marcasVisaoGeral(obsForm,statusForm,statusAnterior);
- const o={cliId,data:$('vnd-data').value||today(),pag:$('vnd-pag').value,status:statusForm,obs:obsForm,itens,total};
+ const o={cliId,origem:$('vnd-origem').value,data:$('vnd-data').value||today(),pag:$('vnd-pag').value,status:statusForm,obs:obsForm,itens,total};
  if(id){
   const v2=Object.assign(DB.vendas.find(x=>x.id===id),o);
   const {error}=await supa.from('vendas').update(vendaParaSupabase(v2)).eq('id',id);
@@ -3074,8 +3077,16 @@ async function delVenda(id){if(!guard()||!guardValores())return;const v=DB.venda
  DB.vendas=DB.vendas.filter(x=>x.id!==id);commit('excluir','Pedidos','V-'+pad(v.num));syncSheets('vendas','delete',{id});toast('Pedido excluído (estoque devolvido).','info');}
 
 /* ================= ORÇAMENTOS ================= */
-function orcParaSupabase(o){const r={id:o.id,cli_id:o.cliId||null,data:o.data||null,validade:o.validade||null,status:o.status||null,obs:o.obs||null,itens:o.itens||[],anexos:o.anexos||[],custo:o.custo||0,preco:o.preco||0,lucro:o.lucro||0,op_id:o.opId||null,tipo:null,cf:null,mdo:null,materiais:null,imposto:0,markup:0,prod_id:null,qty:null,desc_pct:0};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
-function orcDeSupabase(row){return{id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,desc:row.descricao||''};}
+/* Origem (Indicação, Instagram, Google...) fica numa coluna "origem" em orcamentos e vendas.
+   Enquanto a coluna não existir no banco, o campo fica escondido e nada é enviado — senão toda gravação falharia. */
+let ORIGEM_NO_BANCO=false;
+async function verificarColunaOrigem(){
+ const r=await supa.from('vendas').select('origem').limit(1);
+ ORIGEM_NO_BANCO=!r.error;
+ document.body.classList.toggle('sem-origem',!ORIGEM_NO_BANCO);}
+const comOrigem=(r,x)=>{if(ORIGEM_NO_BANCO)r.origem=x.origem||null;return r;};
+function orcParaSupabase(o){const r={id:o.id,cli_id:o.cliId||null,data:o.data||null,validade:o.validade||null,status:o.status||null,obs:o.obs||null,itens:o.itens||[],anexos:o.anexos||[],custo:o.custo||0,preco:o.preco||0,lucro:o.lucro||0,op_id:o.opId||null,tipo:null,cf:null,mdo:null,materiais:null,imposto:0,markup:0,prod_id:null,qty:null,desc_pct:0};if(o.num!==undefined&&o.num!==null)r.num=o.num;return comOrigem(r,o);}
+function orcDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,desc:row.descricao||''};}
 async function carregarOrcamentosSupabase(){
  const {data,error}=await supa.from('orcamentos').select('*').order('num',{ascending:false});
  if(error){erroDeCarga('orçamentos',error);return;}
@@ -3181,16 +3192,16 @@ function abrirEmailOrc(id){const o=DB.orcamentos.find(x=>x.id===id);if(!o)return
 let ORC_ATUAL_ID=null,ORC_ITEM_EDITANDO=null,ORC_VOLTAR='lista';
 function orcShow(view){['lista','header','detalhe','tipo','form','catalogo'].forEach(v=>{$('orc-'+v+'-view').style.display=v===view?'block':'none';});}
 function novoOrcamento(){ORC_ATUAL_ID=null;$('orch-id').value='';$('orch-cli').innerHTML='';fillSel('orch-cli',DB.clientes,c=>c.nome,'','— Sem cliente —');
- $('orch-data').value=today();$('orch-validade').value=addDays(today(),15);$('orch-status').value='Rascunho';$('orch-obs').value='';
+ $('orch-data').value=today();$('orch-validade').value=addDays(today(),15);$('orch-status').value='Rascunho';$('orch-obs').value='';$('orch-origem').value='';
  $('orch-title').textContent='Novo Orçamento';orcShow('header');}
 function editarCabecalhoOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  ORC_ATUAL_ID=id;$('orch-id').value=o.id;fillSel('orch-cli',DB.clientes,c=>c.nome,o.cliId||'','— Sem cliente —');
- $('orch-data').value=o.data;$('orch-validade').value=o.validade||'';$('orch-status').value=o.status;$('orch-obs').value=o.obs||'';
+ $('orch-data').value=o.data;$('orch-validade').value=o.validade||'';$('orch-status').value=o.status;$('orch-obs').value=o.obs||'';$('orch-origem').value=o.origem||'';
  $('orch-title').textContent='Editar Orçamento ORC-'+pad(o.num);orcShow('header');}
 function cancelarHeaderOrc(){const id=$('orch-id').value;if(id){abrirDetalheOrc(id);}else{orcShow('lista');renderOrcamentos();}}
 async function salvarHeaderOrc(irParaItem){if(!guard())return;
  const id=$('orch-id').value;
- const o={cliId:$('orch-cli').value,data:$('orch-data').value||today(),validade:$('orch-validade').value,status:$('orch-status').value,obs:$('orch-obs').value.trim()};
+ const o={cliId:$('orch-cli').value,data:$('orch-data').value||today(),validade:$('orch-validade').value,status:$('orch-status').value,obs:$('orch-obs').value.trim(),origem:$('orch-origem').value};
  if(id){
   const existente=DB.orcamentos.find(x=>x.id===id);
   const o2=Object.assign(existente,o);
@@ -3217,7 +3228,7 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
  $('orcd-title').textContent='Orçamento ORC-'+pad(o.num);
  const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
  $('orcd-badge').innerHTML='<span class="badge '+stB+'">'+o.status+'</span>';
- $('orcd-info').innerHTML='<strong>Cliente:</strong> '+esc(cliName(o.cliId))+'<br><strong>Data:</strong> '+fmtD(o.data)+' · <strong>Entrega:</strong> '+fmtD(o.validade)+(o.obs?'<br><strong>Observações:</strong> '+esc(o.obs).replace(/\n/g,'<br>'):'');
+ $('orcd-info').innerHTML='<strong>Cliente:</strong> '+esc(cliName(o.cliId))+(o.origem?' · <strong>Origem:</strong> '+esc(o.origem):'')+'<br><strong>Data:</strong> '+fmtD(o.data)+' · <strong>Entrega:</strong> '+fmtD(o.validade)+(o.obs?'<br><strong>Observações:</strong> '+esc(o.obs).replace(/\n/g,'<br>'):'');
  const podeDecidir=canEdit()&&itens.length>0&&o.status!=='Aprovado'&&o.status!=='Reprovado'&&o.status!=='Concluído';
  const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>':'';
  const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" onclick="rejeitarOrcamento(\''+o.id+'\')">✗ Reprovar</button>':'';
@@ -3561,7 +3572,7 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
 
  // 1) Gerar pedido (venda) apenas com os itens aprovados
  const itensVenda=itens.map(it=>({prodId:it.prodId||null,desc:it.desc,qty:it.qty||1,preco:(it.qty||1)?Math.round((it.preco/(it.qty||1))*100)/100:it.preco}));
- const vendaObj={cliId:o.cliId||'',data:today(),pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':''),itens:itensVenda,total:totalAprovado};
+ const vendaObj={cliId:o.cliId||'',origem:o.origem||'',data:today(),pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':''),itens:itensVenda,total:totalAprovado};
  const novaVenda=Object.assign({id:uid(),baixa:false},vendaObj);
  const {data:dv,error:erroVenda}=await supa.from('vendas').insert(vendaParaSupabase(novaVenda)).select().single();
  if(erroVenda){toast('Erro ao gerar pedido no Supabase: '+erroVenda.message,'error');return;}
@@ -5818,7 +5829,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.17';
+const APP_VERSAO='2026-09-18.18';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
