@@ -927,6 +927,10 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="marcarTodosItensPdf(true)">Marcar todos</button><button class="btn btn-ghost btn-sm" onclick="marcarTodosItensPdf(false)">Desmarcar todos</button></div>
 <div id="pdf-itens-lista" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto"></div>
 <div style="text-align:right;margin-top:14px;font-size:13px;font-weight:700">Total selecionado: <span id="pdf-total-sel" class="mono" style="color:var(--accent)">R$ 0,00</span></div>
+<div id="pdf-refs-bloco" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+<p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Imagens de referência que entram no final do PDF:</p>
+<div id="pdf-refs-lista" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+</div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-pdf-orc')">Cancelar</button><button class="btn btn-primary" onclick="gerarPdfOrcamento()">📄 Gerar PDF</button></div></div></div>
 <div class="modal-overlay" id="modal-aprovar-orc"><div class="modal"><div class="modal-header"><div class="modal-title">✔ Aprovar Orçamento</div><button class="modal-close" onclick="closeModal('modal-aprovar-orc')">✕</button></div><div class="modal-body">
 <input type="hidden" id="aprv-orc-id">
@@ -2923,12 +2927,26 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
   return '<tr><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong></td><td class="mono">'+(it.qty||1)+'</td><td class="mono">'+precoCell+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>';}).join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
  atualizarResumoComissaoOrc(o);$('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);
  renderAnexosOrc(o);}
+const anexoEhImagem=a=>/\.(png|jpe?g)$/i.test(a.nome||'');
+/* a marca fica guardada no próprio anexo: vale para o Gerar PDF e para o Imprimir */
+function caixaAnexoNoOrc(a,extra){
+ if(!anexoEhImagem(a))return '<div style="font-size:10px;padding:0 6px 6px;color:var(--text-muted)">PDF não entra no orçamento</div>';
+ return '<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:2px 6px 7px;cursor:pointer'+(extra||'')+'"><input type="checkbox" class="anexo-no-orc" data-path="'+esc(a.path)+'"'+(a.noOrc?' checked':'')+(canEdit()?'':' disabled')+' style="width:16px;height:16px;flex-shrink:0" onchange="marcarAnexoNoOrc(this.dataset.path,this.checked)">Mostrar no orçamento</label>';}
+async function marcarAnexoNoOrc(path,marcado){
+ const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ if(!canEdit()){renderAnexosOrc(o);return;}
+ const anexos=(o.anexos||[]).map(a=>a.path===path?Object.assign({},a,{noOrc:marcado}):a);
+ const {error}=await supa.from('orcamentos').update({anexos}).eq('id',o.id);
+ if(error){toast('Erro ao salvar a marcação: '+error.message,'error');renderAnexosOrc(o);return;}
+ o.anexos=anexos;saveDB();
+ /* a mesma marca aparece no cartão e na janela do PDF: mantém as duas iguais */
+ document.querySelectorAll('.anexo-no-orc').forEach(c=>{if(c.dataset.path===path)c.checked=marcado;});}
 function renderAnexosOrc(o){const anexos=o.anexos||[];
  $('orc-anexos-lista').innerHTML=anexos.map(a=>{
-  const isImg=/\.(png|jpe?g)$/i.test(a.nome||'');
+  const isImg=anexoEhImagem(a);
   const thumb=isImg?'<img src="'+a.url+'" style="width:100%;height:90px;object-fit:cover;border-radius:8px 8px 0 0">':'<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--surface2);border-radius:8px 8px 0 0">📄</div>';
   const del=canEdit()?'<button class="btn btn-danger btn-sm" style="width:100%;border-radius:0 0 8px 8px" onclick="excluirAnexoOrc(\''+a.path.replace(/'/g,"\\'")+'\')">🗑️ Excluir</button>':'';
-  return '<div style="width:130px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)"><a href="'+a.url+'" target="_blank" style="display:block">'+thumb+'</a><div style="font-size:10px;padding:5px 6px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(a.nome)+'">'+esc(a.nome)+'</div>'+del+'</div>';
+  return '<div style="width:130px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)"><a href="'+a.url+'" target="_blank" style="display:block">'+thumb+'</a><div style="font-size:10px;padding:5px 6px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(a.nome)+'">'+esc(a.nome)+'</div>'+caixaAnexoNoOrc(a)+del+'</div>';
  }).join('')||'<div style="font-size:12px;color:var(--text-muted)">Nenhum anexo ainda.</div>';}
 async function uploadAnexoOrc(ev){if(!guard())return;const file=ev.target.files[0];ev.target.value='';if(!file)return;
  const tiposOk=['image/png','image/jpeg','application/pdf'];
@@ -3312,21 +3330,45 @@ function abrirPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);
  if(!itens.length){toast('Este orçamento não tem itens.','error');return;}
  $('pdf-itens-lista').innerHTML=itens.map(it=>'<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer"><input type="checkbox" class="pdf-item-check" value="'+it.id+'" data-preco="'+(it.preco||0)+'" checked style="width:16px;height:16px;flex-shrink:0" onchange="atualizarTotalPdf()"><div style="flex:1;min-width:0"><strong>'+esc(it.desc)+'</strong><div style="font-size:11px;color:var(--text-muted)">Qtd: '+(it.qty||1)+'</div></div><span class="mono" style="font-weight:700;flex-shrink:0">'+fmt(it.preco)+'</span></label>').join('');
  atualizarTotalPdf();
+ const imgs=(o.anexos||[]).filter(anexoEhImagem);
+ $('pdf-refs-bloco').style.display=imgs.length?'block':'none';
+ $('pdf-refs-lista').innerHTML=imgs.map(a=>'<div style="width:104px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)"><img src="'+a.url+'" style="width:100%;height:70px;object-fit:cover;display:block">'+caixaAnexoNoOrc(a,';padding-top:6px;font-size:10.5px')+'</div>').join('');
  openModal('modal-pdf-orc');}
 function marcarTodosItensPdf(v){document.querySelectorAll('.pdf-item-check').forEach(c=>c.checked=v);atualizarTotalPdf();}
 function atualizarTotalPdf(){let t=0;document.querySelectorAll('.pdf-item-check:checked').forEach(c=>t+=Number(c.dataset.preco)||0);$('pdf-total-sel').textContent=fmt(t);}
 /* texto livre com linhas em branco: no PDF cada uma virava um buraco — junta em quebra simples */
+/* jsPDF precisa da imagem já em memória. Reduz para no máx. 1600px: foto de celular inteira deixaria o PDF com dezenas de MB */
+function imagemParaPdf(url){return new Promise(resolve=>{
+ const img=new Image();img.crossOrigin='anonymous';
+ const fim=setTimeout(()=>resolve(null),15000);
+ img.onload=()=>{clearTimeout(fim);try{
+   const esc_=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+   const w=Math.max(1,Math.round(img.naturalWidth*esc_)),h=Math.max(1,Math.round(img.naturalHeight*esc_));
+   const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+   const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,w,h);cx.drawImage(img,0,0,w,h);
+   resolve({data:cv.toDataURL('image/jpeg',0.85),w,h});}catch(e){resolve(null);}};
+ img.onerror=()=>{clearTimeout(fim);resolve(null);};
+ img.src=url+(url.includes('?')?'&':'?')+'pdf=1';});}
+async function referenciasParaPdf(o){
+ const marcadas=(o.anexos||[]).filter(a=>a.noOrc&&anexoEhImagem(a));
+ if(!marcadas.length)return [];
+ toast('Preparando '+marcadas.length+' imagem(ns) de referência...','info');
+ const refs=await Promise.all(marcadas.map(a=>imagemParaPdf(a.url)));
+ const falhas=refs.filter(r=>!r).length;
+ if(falhas)toast(falhas+' imagem(ns) não carregaram e ficaram fora do PDF (verifique a internet).','error',6000);
+ return refs.filter(Boolean);}
 const textoPdf=t=>String(t||'').replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{2,}/g,'\n').trim();
 async function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const idsSelecionados=Array.from(document.querySelectorAll('.pdf-item-check:checked')).map(c=>c.value);
  if(!idsSelecionados.length){toast('Selecione ao menos um item.','error');return;}
  if(!await libPronta('jspdf'))return;
  const itens=itensOrc(o).filter(it=>idsSelecionados.includes(it.id));
- montarPdfOrcamento(o,itens).save(nomePdfOrcamento(o));
+ const refs=await referenciasParaPdf(o);
+ montarPdfOrcamento(o,itens,refs).save(nomePdfOrcamento(o));
  closeModal('modal-pdf-orc');
  toast('PDF gerado! Confira sua pasta de downloads.','success');}
 function nomePdfOrcamento(o){return 'Orcamento-ORC-'+pad(o.num)+'-'+cliName(o.cliId).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'.pdf';}
-function montarPdfOrcamento(o,itens){
+function montarPdfOrcamento(o,itens,refs){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],ZEBRA=[250,247,242],WHITE=[255,255,255];
@@ -3414,6 +3456,22 @@ function montarPdfOrcamento(o,itens){
  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
  doc.text('Assinatura do Estúdio',M,sy+4.5);doc.text('Assinatura do Cliente',R-78,sy+4.5);
 
+ // Referências marcadas no orçamento: duas por página, cada uma inteira (sem cortar) no seu espaço.
+ // Fotos em pé ficariam miúdas empilhadas: essas vão lado a lado, com a altura da página toda.
+ if(refs&&refs.length){
+  const topo=()=>{let ty=novaPagina()+4;
+   doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...DARK);doc.text('REFERÊNCIAS',M,ty);
+   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text('Nº ORC-'+pad(o.num),R,ty,{align:'right'});
+   ty+=4;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,ty,R,ty);return ty+7;};
+  const areaW=R-M,alturaToda=RODAPE_Y-6-37,gap=8;
+  const pos=(r,x,y,bw,bh,topo_)=>{const k=Math.min(bw/r.w,bh/r.h),w=r.w*k,h=r.h*k;
+   doc.addImage(r.data,'JPEG',x+(bw-w)/2,topo_?y:y+(bh-h)/2,w,h,undefined,'FAST');};
+  const emPe=r=>r.h>r.w*1.1;
+  for(let i=0;i<refs.length;){const a=refs[i],b=refs[i+1],ry=topo();
+   if(emPe(a)&&(!b||emPe(b))){const bw=b?(areaW-6)/2:areaW;
+    pos(a,M,ry,bw,alturaToda,true);if(b)pos(b,M+bw+6,ry,bw,alturaToda,true);i+=b?2:1;}
+   else{const bh=(alturaToda-gap)/2;pos(a,M,ry,areaW,bh);if(b)pos(b,M,ry+bh+gap,areaW,bh);i+=b?2:1;}}}
+
  // Rodapé em todas as páginas, com numeração
  const n=doc.internal.getNumberOfPages();
  const rodape=doc.splitTextToSize([enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean).join('   ·   ')||'Marcenaria de Madeira Maciça — feita à mão, com precisão.',148)[0];
@@ -3429,7 +3487,7 @@ async function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUA
  const itens=itensOrc(o);
  if(!itens.length){toast('Este orçamento não tem itens.','error');return;}
  if(!await libPronta('jspdf'))return;
- const doc=montarPdfOrcamento(o,itens);
+ const doc=montarPdfOrcamento(o,itens,await referenciasParaPdf(o));
  /* no celular um PDF aberto em aba não imprime: entrega o arquivo, que abre no leitor com a opção de imprimir */
  if(window.matchMedia('(hover:none)').matches){doc.save(nomePdfOrcamento(o));toast('PDF baixado — abra o arquivo para imprimir.','info',6000);return;}
  doc.autoPrint();
@@ -5339,7 +5397,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.6';
+const APP_VERSAO='2026-09-18.7';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
