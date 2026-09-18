@@ -219,6 +219,12 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
 #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards { display:none; }
 /* Produção no celular: as colunas lado a lado ficavam espremidas; mostra uma etapa por vez, escolhida nas abas */
+.orc-anexos-zona { position:relative;transition:border-color .15s,background .15s; }
+.orc-anexos-zona.arrastando { border:2px dashed var(--accent);background:var(--surface2); }
+.orc-anexos-aviso { display:none;position:absolute;inset:0;z-index:2;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--text);background:rgba(245,240,232,0.88);border-radius:inherit;pointer-events:none; }
+.orc-anexos-zona.arrastando .orc-anexos-aviso { display:flex; }
+.orc-anexos-dica { font-size:11.5px;font-weight:400;color:var(--text-muted); }
+@media (hover:none) { .orc-anexos-dica { display:none; } }
 .pcp-abas { display:none; }
 .kanban-col-vazia { display:none; }
 .pcp-btn-txt { display:none; }
@@ -666,9 +672,10 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <div class="table-toolbar"><div class="table-toolbar-title">Itens do Orçamento</div><button class="btn btn-primary btn-sm" onclick="abrirAdicionarItem()">+ Adicionar Item</button></div>
           <table><thead><tr><th>Tipo</th><th>Descrição</th><th>Qtd</th><th>Preço</th><th>Lucro</th><th>Ações</th></tr></thead><tbody id="tb-orc-itens"></tbody></table>
         </div>
-        <div class="config-card" style="margin-top:14px">
-          <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('orc-anexo-input').click()">+ Anexar Arquivo</button></div>
-          <input type="file" id="orc-anexo-input" accept=".png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" style="display:none" onchange="uploadAnexoOrc(event)">
+        <div class="config-card orc-anexos-zona" id="orc-anexos-zona" style="margin-top:14px" ondragenter="anexoArrastando(event,true)" ondragover="anexoArrastando(event,true)" ondragleave="anexoArrastando(event,false)" ondrop="anexoSolto(event)">
+          <div class="orc-anexos-aviso">Solte os arquivos para anexar</div>
+          <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência<span class="orc-anexos-dica"> — ou arraste os arquivos para cá</span></div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('orc-anexo-input').click()">+ Anexar Arquivo</button></div>
+          <input type="file" id="orc-anexo-input" accept=".png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple style="display:none" onchange="uploadAnexoOrc(event)">
           <div id="orc-anexos-lista" style="display:flex;flex-wrap:wrap;gap:10px"></div>
         </div>
         <div class="config-card" style="margin-top:14px;background:#1a1714;border-color:#1a1714;max-width:360px;margin-left:auto">
@@ -2948,21 +2955,45 @@ function renderAnexosOrc(o){const anexos=o.anexos||[];
   const del=canEdit()?'<button class="btn btn-danger btn-sm" style="width:100%;border-radius:0 0 8px 8px" onclick="excluirAnexoOrc(\''+a.path.replace(/'/g,"\\'")+'\')">🗑️ Excluir</button>':'';
   return '<div style="width:130px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)"><a href="'+a.url+'" target="_blank" style="display:block">'+thumb+'</a><div style="font-size:10px;padding:5px 6px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(a.nome)+'">'+esc(a.nome)+'</div>'+caixaAnexoNoOrc(a)+del+'</div>';
  }).join('')||'<div style="font-size:12px;color:var(--text-muted)">Nenhum anexo ainda.</div>';}
-async function uploadAnexoOrc(ev){if(!guard())return;const file=ev.target.files[0];ev.target.value='';if(!file)return;
- const tiposOk=['image/png','image/jpeg','application/pdf'];
- if(!tiposOk.includes(file.type)){toast('Envie apenas PNG, JPEG ou PDF.','error');return;}
- if(file.size>10*1024*1024){toast('Arquivo muito grande (máx. 10MB).','error');return;}
+function uploadAnexoOrc(ev){const files=Array.from(ev.target.files||[]);ev.target.value='';enviarAnexosOrc(files);}
+/* dragleave dispara ao passar por cima de cada elemento de dentro: só apaga o destaque quando sai da área de verdade */
+function anexoArrastando(ev,entrando){
+ if(!ev.dataTransfer||!Array.from(ev.dataTransfer.types||[]).includes('Files'))return;
+ ev.preventDefault();const z=$('orc-anexos-zona');
+ if(entrando){ev.dataTransfer.dropEffect=canEdit()?'copy':'none';z.classList.add('arrastando');}
+ else if(!z.contains(ev.relatedTarget))z.classList.remove('arrastando');}
+function anexoSolto(ev){ev.preventDefault();$('orc-anexos-zona').classList.remove('arrastando');
+ enviarAnexosOrc(Array.from((ev.dataTransfer&&ev.dataTransfer.files)||[]));}
+/* arquivo solto fora da área abriria no lugar do ERP, perdendo o que estava na tela */
+['dragover','drop'].forEach(t=>window.addEventListener(t,e=>{
+ if(e.dataTransfer&&Array.from(e.dataTransfer.types||[]).includes('Files')&&!e.target.closest?.('#orc-anexos-zona')){e.preventDefault();e.dataTransfer.dropEffect='none';}}));
+let ENVIANDO_ANEXOS=false;
+async function enviarAnexosOrc(files){if(!files.length||!guard())return;
+ if(ENVIANDO_ANEXOS){toast('Aguarde terminar o envio anterior.','info');return;}
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
- const path=o.id+'/'+uid()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
- toast('Enviando arquivo...','info');
- const {error:upErr}=await supa.storage.from('orcamentos-anexos').upload(path,file);
- if(upErr){toast('Erro ao enviar arquivo: '+upErr.message,'error');return;}
- const {data:pub}=supa.storage.from('orcamentos-anexos').getPublicUrl(path);
- const anexo={path,nome:file.name,url:pub.publicUrl};
- const anexos=(o.anexos||[]).concat([anexo]);
- const {error}=await supa.from('orcamentos').update({anexos}).eq('id',o.id);
- if(error){toast('Erro ao salvar anexo no orçamento: '+error.message,'error');return;}
- o.anexos=anexos;saveDB();renderAnexosOrc(o);toast('Anexo adicionado!','success');}
+ const tiposOk=['image/png','image/jpeg','application/pdf'];
+ const recusados=files.filter(f=>!tiposOk.includes(f.type)||f.size>10*1024*1024);
+ const validos=files.filter(f=>!recusados.includes(f));
+ if(recusados.length)toast('Ficaram de fora (só PNG, JPEG ou PDF até 10MB): '+recusados.map(f=>f.name).join(', '),'error',7000);
+ if(!validos.length)return;
+ ENVIANDO_ANEXOS=true;
+ try{
+  toast(validos.length>1?'Enviando '+validos.length+' arquivos...':'Enviando arquivo...','info');
+  const novos=[];
+  for(const file of validos){
+   const path=o.id+'/'+uid()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+   const {error:upErr}=await supa.storage.from('orcamentos-anexos').upload(path,file);
+   if(upErr){toast('Erro ao enviar '+file.name+': '+upErr.message,'error');continue;}
+   const {data:pub}=supa.storage.from('orcamentos-anexos').getPublicUrl(path);
+   novos.push({path,nome:file.name,url:pub.publicUrl});}
+  if(!novos.length)return;
+  /* grava todos de uma vez no orçamento: um registro só, sem risco de um envio sobrescrever o outro */
+  const anexos=(o.anexos||[]).concat(novos);
+  const {error}=await supa.from('orcamentos').update({anexos}).eq('id',o.id);
+  if(error){toast('Erro ao salvar anexo no orçamento: '+error.message,'error');return;}
+  o.anexos=anexos;saveDB();renderAnexosOrc(o);
+  toast(novos.length>1?novos.length+' anexos adicionados!':'Anexo adicionado!','success');
+ }finally{ENVIANDO_ANEXOS=false;}}
 async function excluirAnexoOrc(path){if(!guard())return;if(!confirm('Excluir este anexo?'))return;
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const {error:delErr}=await supa.storage.from('orcamentos-anexos').remove([path]);
@@ -5397,7 +5428,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.7';
+const APP_VERSAO='2026-09-18.8';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
