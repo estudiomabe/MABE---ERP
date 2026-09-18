@@ -225,6 +225,19 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 .cli-busca-barra input { flex:1;max-width:360px; }
 .cli-busca-n { font-size:12px;color:var(--text-muted);white-space:nowrap; }
 .compras-topo { display:none; }
+#cal-agenda { display:none; }
+.cal-dia { margin-bottom:14px; }
+.cal-dia-tit { display:flex;align-items:baseline;gap:8px;font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-muted);margin:0 2px 6px; }
+.cal-dia-tit b { font-size:20px;letter-spacing:0;color:var(--text);font-family:var(--mono); }
+.cal-dia.hoje .cal-dia-tit, .cal-dia.hoje .cal-dia-tit b { color:var(--accent); }
+.cal-dia.passado { opacity:.55; }
+.cal-ev { display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;font:inherit;padding:11px 12px;margin-bottom:6px;border-radius:10px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text); }
+.cal-ev-barra { width:4px;align-self:stretch;border-radius:3px;flex:none; }
+.cal-ev-txt { flex:1;min-width:0; }
+.cal-ev-cli { font-size:14px;font-weight:700;line-height:1.3;word-break:break-word; }
+.cal-ev-item { font-size:12.5px;color:var(--text-muted);margin-top:2px;word-break:break-word; }
+.cal-ev-tag { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;padding:2px 7px;border-radius:10px;flex:none; }
+.cal-vazio { padding:26px 14px;text-align:center;color:var(--text-muted);font-size:13px;background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius); }
 /* Produção no celular: as colunas lado a lado ficavam espremidas; mostra uma etapa por vez, escolhida nas abas */
 .orc-anexos-zona { position:relative;transition:border-color .15s,background .15s; }
 .orc-anexos-zona.arrastando { border:2px dashed var(--accent);background:var(--surface2); }
@@ -309,6 +322,12 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 @media (max-width:860px) {
   #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
   #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards { display:block; }
+  /* calendário: a grade de 7 colunas não cabe; vira agenda com só os dias que têm algo */
+  #cal-agenda { display:block;margin-top:4px; }
+  #cal-grid, .cal-semana, .cal-legenda { display:none !important; }
+  #section-calendario .period-bar { gap:6px; }
+  #section-calendario .period-bar .btn { min-height:38px;min-width:40px; }
+  #cal-label { min-width:0 !important;flex:1; }
   #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
   .cli-busca-barra input { max-width:none;font-size:16px; }
   .compras-topo { display:flex;justify-content:flex-end;margin-bottom:12px; }
@@ -572,7 +591,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <span id="cal-label" style="font-weight:700;font-size:15px;min-width:170px;text-align:center"></span>
         <button class="btn btn-ghost btn-sm" onclick="calMudarMes(1)">›</button>
         <button class="btn btn-ghost btn-sm" onclick="calHoje()">Hoje</button>
-        <span style="margin-left:auto;display:flex;gap:14px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
+        <span class="cal-legenda" style="margin-left:auto;display:flex;gap:14px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warning);margin-right:4px"></span>Agendada</span>
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text);margin-right:4px"></span>Em rota</span>
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:4px"></span>Entregue/Instalada</span>
@@ -580,7 +599,8 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-muted);margin-right:4px"></span>🔧 Manutenção de máquina</span>
         </span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:center">
+      <div id="cal-agenda"></div>
+      <div class="cal-semana" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:center">
         <div>DOM</div><div>SEG</div><div>TER</div><div>QUA</div><div>QUI</div><div>SEX</div><div>SÁB</div>
       </div>
       <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px"></div>
@@ -1575,6 +1595,7 @@ function navigate(sec){
  closeSidebar();
  if(sec==='orcamentos')orcShow('lista');
  renderSection(sec);
+ if(sec==='calendario')rolarAgendaParaHoje();
  prepararOrdenacao(sec);
  if(sec==='clientes')carregarClientesSupabase();
  if(sec==='fornecedores')carregarFornecedoresSupabase();
@@ -3671,7 +3692,7 @@ async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.i
 /* ================= CALENDÁRIO DE ENTREGAS ================= */
 let CAL={ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function calMudarMes(delta){CAL.mes+=delta;if(CAL.mes<0){CAL.mes=11;CAL.ano--;}else if(CAL.mes>11){CAL.mes=0;CAL.ano++;}renderCalendario();}
-function calHoje(){const d=new Date();CAL.ano=d.getFullYear();CAL.mes=d.getMonth();renderCalendario();}
+function calHoje(){const d=new Date();CAL.ano=d.getFullYear();CAL.mes=d.getMonth();renderCalendario();rolarAgendaParaHoje();}
 function renderCalendario(){
  $('cal-label').textContent=MESES[CAL.mes]+' de '+CAL.ano;
  const t=today();
@@ -3684,7 +3705,7 @@ function renderCalendario(){
   const cliente=e.cliId?cliName(e.cliId):'—';
   const vPedido=e.opId?opPorId[e.opId]:null;
   const codigo=vPedido?'V-'+pad(vPedido.num)+' · ':'';
-  addAoDia(e.data,{cliente:codigo+cliente,itemTxt:e.peca||'—',cor,dashed:false,atrasa:e.status==='Agendada'&&e.data<t,
+  addAoDia(e.data,{cliente:codigo+cliente,itemTxt:e.peca||'—',cor,dashed:false,atrasa:e.status==='Agendada'&&e.data<t,tag:e.status==='Agendada'&&e.data<t?'Atrasada':e.status,
    title:(vPedido?'Pedido V-'+pad(vPedido.num)+' — ':'')+(e.peca||'—')+' — '+cliente+' ('+e.status+')',onclick:"editEntrega('"+e.id+"')"});});
  const opsComEntrega=new Set(DB.entregas.map(e=>e.opId).filter(Boolean));
  DB.vendas.forEach(v=>{if(v.status==='Cancelado')return;
@@ -3692,13 +3713,13 @@ function renderCalendario(){
   if(!op||op.status==='Concluída'||!op.prazo||opsComEntrega.has(op.id))return;
   const cliente=cliName(v.cliId);
   const itensTxt=(v.itens||[]).map(it=>it.desc).filter(Boolean).join(', ')||'—';
-  addAoDia(op.prazo,{cliente:'🔮 V-'+pad(v.num)+' · '+cliente,itemTxt:itensTxt,cor:['var(--accent)','rgba(200,169,110,0.14)'],dashed:true,atrasa:op.prazo<t,
+  addAoDia(op.prazo,{cliente:'🔮 V-'+pad(v.num)+' · '+cliente,itemTxt:itensTxt+' · '+(ETAPAS[op.etapa]||''),cor:['var(--accent)','rgba(200,169,110,0.14)'],dashed:true,atrasa:op.prazo<t,tag:op.prazo<t?'Atrasada':'Previsão',
    title:'Previsão de entrega — Pedido V-'+pad(v.num)+' ('+cliente+') — Itens: '+itensTxt+' — OP-'+pad(op.num)+' em '+(ETAPAS[op.etapa]||'—'),
    onclick:"editVenda('"+v.id+"')"});});
  DB.ferramentas.forEach(f=>{const prox=ferProx(f);if(!prox)return;
   const atrasada=prox<t,proxima=!atrasada&&prox<=addDays(t,7);
   const cor=atrasada?['var(--danger)','rgba(181,64,64,0.1)']:proxima?['var(--warning)','rgba(160,120,48,0.12)']:['var(--text-muted)','var(--surface2)'];
-  addAoDia(prox,{cliente:'🔧 '+f.nome,itemTxt:'Manutenção'+(f.tipo?' — '+f.tipo:''),cor,dashed:false,atrasa:atrasada,
+  addAoDia(prox,{cliente:'🔧 '+f.nome,itemTxt:'Manutenção'+(f.tipo?' — '+f.tipo:''),cor,dashed:false,atrasa:atrasada,tag:atrasada?'Vencida':'Manutenção',
    title:'Manutenção preventiva — '+f.nome+(f.tipo?' ('+f.tipo+')':'')+' — prevista para '+fmtD(prox),
    onclick:"editFerramenta('"+f.id+"')"});});
  const primeiroDia=new Date(CAL.ano,CAL.mes,1).getDay();
@@ -3718,7 +3739,30 @@ function renderCalendario(){
   html+='<div style="min-height:96px;border:1px solid '+(temAtrasada?'var(--danger)':'var(--border)')+';border-radius:8px;padding:6px;background:'+(isHoje?'var(--surface2)':'var(--surface)')+'">'
    +'<div style="font-size:11px;font-weight:700;color:'+(isHoje?'var(--accent)':'var(--text-muted)')+';margin-bottom:4px">'+d+'</div>'+itens+mais+'</div>';
  }
- $('cal-grid').innerHTML=html;}
+ $('cal-grid').innerHTML=html;
+ renderAgendaCalendario(porDia,t);}
+/* mesma informação da grade, em lista por dia: no celular cada compromisso vira uma linha que dá para tocar */
+const DIAS_SEMANA=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+function renderAgendaCalendario(porDia,t){const alvo=$('cal-agenda');if(!alvo)return;
+ const dias=Object.keys(porDia).map(Number).sort((a,b)=>a-b);
+ if(!dias.length){alvo.innerHTML='<div class="cal-vazio">Nada marcado em '+MESES[CAL.mes].toLowerCase()+'.</div>';return;}
+ alvo.innerHTML=dias.map(d=>{
+  const iso=CAL.ano+'-'+String(CAL.mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  const lista=porDia[d].slice().sort((a,b)=>(b.atrasa-a.atrasa)||a.cliente.localeCompare(b.cliente));
+  /* dia que já passou fica apagado, exceto se ainda tem algo atrasado */
+  const cls=iso===t?' hoje':iso<t&&!lista.some(x=>x.atrasa)?' passado':'';
+  const semana=DIAS_SEMANA[new Date(CAL.ano,CAL.mes,d).getDay()];
+  return '<div class="cal-dia'+cls+'" data-iso="'+iso+'"><div class="cal-dia-tit"><b>'+String(d).padStart(2,'0')+'</b>'+semana+(iso===t?' · Hoje':'')+'</div>'
+   +lista.map(x=>'<button class="cal-ev" onclick="'+x.onclick+'"'+(x.dashed?' style="border-style:dashed;border-color:'+x.cor[0]+'"':'')+'>'
+    +'<span class="cal-ev-barra" style="background:'+x.cor[0]+'"></span>'
+    +'<span class="cal-ev-txt"><div class="cal-ev-cli">'+esc(x.cliente)+'</div><div class="cal-ev-item">'+esc(x.itemTxt)+'</div></span>'
+    +(x.tag?'<span class="cal-ev-tag" style="color:'+(x.atrasa?'var(--danger)':x.cor[0])+';background:'+(x.atrasa?'rgba(181,64,64,0.1)':x.cor[1])+'">'+esc(x.tag)+'</span>':'')
+    +'</button>').join('')
+   +'</div>';}).join('');}
+/* no celular, abrir o mês atual leva direto ao dia de hoje (ou ao próximo com algo marcado) */
+function rolarAgendaParaHoje(){if(!ehCelular())return;const t=today();
+ const alvo=[...document.querySelectorAll('#cal-agenda .cal-dia')].find(el=>el.dataset.iso>=t);
+ if(alvo)alvo.scrollIntoView({block:'start'});}
 /* ================= ENTREGAS ================= */
 const ENT_ST=['Agendada','Em rota','Entregue','Instalada'];
 function entregaParaSupabase(e){return{id:e.id,op_id:e.opId||null,data:e.data||null,cli_id:e.cliId||null,peca:e.peca||null,endereco:e.end||null,resp:e.resp||null,status:e.status||null,obs:e.obs||null};}
@@ -5546,7 +5590,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.10';
+const APP_VERSAO='2026-09-18.11';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
