@@ -697,7 +697,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Materiais</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-mat">R$ 0,00</span></div>
             </div>
             <div class="config-card" style="margin:0">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button><button class="btn btn-primary btn-sm" onclick="abrirNovoPrestadorRapido()">+ Cadastrar Prestador</button></div></div>
               <div id="orc-servicos" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Serviços</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-serv">R$ 0,00</span></div>
             </div>
@@ -1520,6 +1520,7 @@ function navigate(sec){
  $('btn-new-label').textContent=BTN_NEW_LABELS[sec]||'Novo';
  $('global-search').value='';fecharBusca();
  closeSidebar();
+ if(sec==='orcamentos')orcShow('lista');
  renderSection(sec);
  prepararOrdenacao(sec);
  if(sec==='clientes')carregarClientesSupabase();
@@ -2750,7 +2751,8 @@ function recomputeHeaderTotais(o){o.preco=(o.itens||[]).reduce((s,i)=>s+Number(i
 function statusPillHtml(status){const map={'Rascunho':['var(--text-muted)','var(--surface3)'],'Enviado':['var(--primary)','rgba(26,23,20,0.06)'],'Aprovado':['var(--success)','rgba(61,107,79,0.1)'],'Reprovado':['var(--danger)','rgba(181,64,64,0.1)'],'Concluído':['var(--success)','rgba(61,107,79,0.1)']};
  const [color,bg]=map[status]||map['Rascunho'];
  return '<span class="status-pill" style="color:'+color+';background:'+bg+';border-color:'+color+'40"><span class="dot" style="background:'+color+'"></span>'+status+'</span>';}
-function renderOrcamentos(){if(!ITEM_PARA_PEDIDO)orcShow('lista');syncPerBar('orc-per',PER_ORC);
+const orcEditandoItem=()=>['tipo','form','catalogo'].some(v=>$('orc-'+v+'-view').style.display==='block');
+function renderOrcamentos(){if(!orcEditandoItem())orcShow('lista');syncPerBar('orc-per',PER_ORC);
  const filtroStatus=$('orc-status-filter')?$('orc-status-filter').value:'';
  const lista=DB.orcamentos.filter(o=>matchPer(o.data,PER_ORC)&&(!filtroStatus||o.status===filtroStatus));
  $('tb-orcamentos').innerHTML=lista.map(o=>{const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
@@ -2972,6 +2974,8 @@ function omBusca(input){const nome=input.value.trim();const found=buscarMaterial
  calcOrc();}
 let LINHA_MATERIAL_PENDENTE=null,PRODUTO_RAPIDO_ORC=false;
 function abrirNovoProdutoRapido(){openProduto('Insumo');PRODUTO_RAPIDO_ORC=true;}
+let FORNECEDOR_RAPIDO_ORC=false;
+function abrirNovoPrestadorRapido(){openFornecedor();FORNECEDOR_RAPIDO_ORC=true;}
 function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.createElement('div');row.dataset.mode=mode;if(it&&it.ref)row.dataset.ref=it.ref;
  row.style.cssText='display:grid;grid-template-columns:2fr 65px 85px 85px 28px;gap:6px;align-items:center';
  const desc=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
@@ -3803,8 +3807,8 @@ async function carregarFornecedoresSupabase(){
  DB.fornecedores=data||[];saveDB();
  if(CUR==='fornecedores')renderFornecedores();}
 function renderFornecedores(){$('tb-fornecedores').innerHTML=DB.fornecedores.map((f,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(f.nome)+'</strong></td><td class="mono">'+esc(f.cnpj||'—')+'</td><td>'+esc(f.email||'—')+'</td><td>'+esc(f.tel||'—')+'</td><td>'+esc(f.cidade||'—')+'</td><td><span class="badge '+(f.status==='Ativo'?'badge-success':'badge-muted')+'">'+f.status+'</span></td><td>'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum fornecedor cadastrado');}
-function openFornecedor(){['for-id','for-nome','for-cnpj','for-tel','for-email','for-cidade'].forEach(i=>$(i).value='');$('for-status').value='Ativo';$('mfor-title').textContent='Novo Fornecedor';openModal('modal-fornecedores');}
-function editFornecedor(id){if(!guard())return;const f=DB.fornecedores.find(x=>x.id===id);if(!f)return;
+function openFornecedor(){FORNECEDOR_RAPIDO_ORC=false;['for-id','for-nome','for-cnpj','for-tel','for-email','for-cidade'].forEach(i=>$(i).value='');$('for-status').value='Ativo';$('mfor-title').textContent='Novo Fornecedor';openModal('modal-fornecedores');}
+function editFornecedor(id){if(!guard())return;FORNECEDOR_RAPIDO_ORC=false;const f=DB.fornecedores.find(x=>x.id===id);if(!f)return;
  $('for-id').value=f.id;$('for-nome').value=f.nome;$('for-cnpj').value=f.cnpj||'';$('for-tel').value=f.tel||'';$('for-email').value=f.email||'';$('for-cidade').value=f.cidade||'';$('for-status').value=f.status;$('mfor-title').textContent='Editar Fornecedor';openModal('modal-fornecedores');}
 async function saveFornecedor(){if(!guard())return;const nome=$('for-nome').value.trim();if(!nome){toast('Informe a razão social.','error');return;}
  const id=$('for-id').value;const o={nome,cnpj:$('for-cnpj').value.trim(),tel:$('for-tel').value.trim(),email:$('for-email').value.trim(),cidade:$('for-cidade').value.trim(),status:$('for-status').value};
@@ -3814,6 +3818,10 @@ async function saveFornecedor(){if(!guard())return;const nome=$('for-nome').valu
  if(id){Object.assign(DB.fornecedores.find(x=>x.id===id),o);commit('editar','Fornecedores',nome);}
  else{DB.fornecedores.push(registro);commit('criar','Fornecedores',nome);}
  syncSheets('fornecedores','upsert',registro);
+ if(FORNECEDOR_RAPIDO_ORC&&!id){FORNECEDOR_RAPIDO_ORC=false;
+  /* o prestador novo passa a aparecer também nas linhas de serviço que já estavam no item */
+  document.querySelectorAll('#orc-servicos .sv-forn').forEach(sel=>{const v=sel.value;sel.innerHTML=fornOptions(v);});
+  addServico({fornId:registro.id,desc:'',valor:0});}
  closeModal('modal-fornecedores');toast('Fornecedor salvo!','success');}
 async function delFornecedor(id){if(!guard())return;const f=DB.fornecedores.find(x=>x.id===id);if(!confirm('Excluir fornecedor "'+f.nome+'"?'))return;
  const {error}=await supa.from('fornecedores').delete().eq('id',id);
@@ -5269,7 +5277,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.4';
+const APP_VERSAO='2026-09-18.5';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
