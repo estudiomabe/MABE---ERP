@@ -9,7 +9,7 @@
 
    VERSAO precisa mudar a cada publicação — é o que faz o navegador instalar o worker novo
    e mostrar o aviso "Nova versão disponível" dentro do app. */
-const VERSAO = '2026-09-18.2';
+const VERSAO = '2026-09-18.3';
 const CACHE = 'mabe-erp-' + VERSAO;
 const ESSENCIAIS = [
   './',
@@ -44,6 +44,27 @@ self.addEventListener('message', e => {
 
 const ehDocumento = req => req.mode === 'navigate' || req.destination === 'document';
 
+/* Rede com prazo: sinal ruim costuma deixar a conexão pendurada em vez de falhar.
+   Sem esse limite a tela fica esperando de branco, mesmo havendo versão guardada. */
+const TEMPO_LIMITE = 4000;
+function daRede(req, ms) {
+  return new Promise(resolve => {
+    let respondido = false;
+    const responder = v => { if (!respondido) { respondido = true; resolve(v); } };
+    setTimeout(() => responder(null), ms);
+    fetch(req).then(responder).catch(() => responder(null));
+  });
+}
+
+const PAGINA_SEM_CONEXAO = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estúdio MABE — sem conexão</title>
+<style>body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#f5f0e8;color:#1a1714;font-family:system-ui,sans-serif;text-align:center;padding:24px}
+.cx{max-width:340px}h1{font-size:19px;margin:0 0 10px}p{font-size:14px;line-height:1.5;color:#7a6f62;margin:0 0 18px}
+button{background:#1a1714;color:#faf7f2;border:0;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:600}</style></head>
+<body><div class="cx"><h1>Sem conexão</h1><p>Não consegui abrir o ERP e ainda não há uma versão guardada neste aparelho. Verifique a internet e tente de novo.</p>
+<button onclick="location.reload()">Tentar de novo</button></div></body></html>`;
+
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
@@ -52,15 +73,19 @@ self.addEventListener('fetch', e => {
 
   if (ehDocumento(req)) {
     e.respondWith((async () => {
-      try {
-        const resp = await fetch(req);
-        const c = await caches.open(CACHE);
-        c.put('./index.html', resp.clone());
+      const c = await caches.open(CACHE);
+      const resp = await daRede(req, TEMPO_LIMITE);
+      if (resp && resp.ok) {
+        try { await c.put('./index.html', resp.clone()); } catch (err) {}
         return resp;
-      } catch (err) {
-        const c = await caches.open(CACHE);
-        return (await c.match('./index.html')) || (await c.match('./')) || Response.error();
       }
+      const guardado = (await c.match('./index.html')) || (await c.match('./'));
+      /* demorou demais: entrega o que está guardado e atualiza o cache sem pressa, para a próxima abertura */
+      if (guardado) {
+        if (!resp) e.waitUntil(fetch(req).then(r => r.ok && c.put('./index.html', r.clone())).catch(() => {}));
+        return guardado;
+      }
+      return resp || new Response(PAGINA_SEM_CONEXAO, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     })());
     return;
   }
@@ -68,10 +93,12 @@ self.addEventListener('fetch', e => {
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
     const emCache = await c.match(req);
-    const naRede = fetch(req).then(resp => {
-      if (resp && resp.ok) c.put(req, resp.clone());
-      return resp;
-    }).catch(() => null);
-    return emCache || (await naRede) || Response.error();
+    if (emCache) {
+      e.waitUntil(fetch(req).then(r => { if (r && r.ok) return c.put(req, r.clone()); }).catch(() => {}));
+      return emCache;
+    }
+    const resp = await daRede(req, TEMPO_LIMITE * 3);
+    if (resp && resp.ok) { try { await c.put(req, resp.clone()); } catch (err) {} }
+    return resp || Response.error();
   })());
 });
