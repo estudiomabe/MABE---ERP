@@ -15,12 +15,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Mabe ERP">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<!-- Só o Supabase é necessário para abrir o ERP. Gráficos, PDF e Excel entram sob demanda (ver carregarLib),
+     e todos moram aqui no projeto: no celular a página ficava em branco esperando 1,2 MB de CDN externo. -->
+<script src="vendor/supabase.min.js"></script>
 <style>
 :root {
   --bg: #f5f0e8; --surface: #faf7f2; --surface2: #ede8df; --surface3: #e0d9ce;
@@ -852,12 +851,29 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <button class="btn btn-primary" onclick="saveEmpresaInfo()">💾 Salvar Dados do Estúdio</button>
         </div>
       </div>
+      <div class="config-card"><div class="config-title">📱 Versão do App</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">O ERP funciona instalado no celular e guarda a última versão aberta, para funcionar mesmo sem sinal. Quando sai uma versão nova, aparece um aviso no rodapé.</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px"><span style="color:var(--text-muted)">Versão em uso</span><span class="mono" id="cfg-versao">—</span></div>
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px"><span style="color:var(--text-muted)">Modo offline</span><span class="mono" id="cfg-sw-estado">—</span></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="procurarAtualizacao()">🔄 Procurar atualização</button>
+          <button class="btn btn-ghost btn-sm" onclick="limparCacheERecarregar()">🧹 Limpar cache e recarregar</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px">"Limpar cache" apaga só os arquivos guardados do app — seus dados, senhas e login não são afetados.</div>
+      </div>
       <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio; use o <strong>Backup de Arquitetura</strong> se precisar recriar este sistema do zero um dia (não contém dados, só a descrição técnica de como o ERP foi construído — dá pra colar direto num Claude Code novo).</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="exportData()">📥 Baixar Backup Completo (JSON)</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Baixar backup em planilhas (Excel)</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 Baixar Backup Completo (PDF)</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupArquitetura()">🏛️ Backup de Arquitetura deste ERP</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
   </div>
 </div>
 
+<div id="aviso-atualizacao" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9500;background:var(--text);color:var(--surface);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,0.25);align-items:center;gap:12px;flex-wrap:wrap">
+ <div style="flex:1;min-width:170px;font-size:13px;line-height:1.4"><strong>Nova versão disponível</strong><div style="opacity:.7;font-size:12px">Atualize para usar a versão mais recente do ERP.</div></div>
+ <button class="btn btn-primary btn-sm" style="background:var(--accent);color:var(--text);border-color:var(--accent)" onclick="aplicarAtualizacao()">Atualizar</button>
+ <button class="btn btn-ghost btn-sm" style="background:transparent;color:var(--surface);border-color:rgba(250,247,242,0.35)" onclick="$('aviso-atualizacao').style.display='none'">Depois</button>
+</div>
 <div id="toast-container"></div>
 
 <!-- MODALS -->
@@ -1027,6 +1043,23 @@ function mostrarErroGlobal(msg){try{
 }catch(e){}}
 window.addEventListener('error',e=>{mostrarErroGlobal((e.message||'erro')+(e.lineno?' (linha '+e.lineno+')':''));});
 window.addEventListener('unhandledrejection',e=>{const r=e.reason;mostrarErroGlobal('(promessa) '+(r&&r.message?r.message:String(r))+(r&&r.stack?' — '+String(r.stack).split('\n').slice(1,2).join('').trim():''));});
+/* ================= BIBLIOTECAS SOB DEMANDA =================
+   Gráficos, PDF e Excel são pesados e quase nunca usados de cara: entram no primeiro uso. */
+const LIB_ARQS={chart:['vendor/chart.umd.min.js'],jspdf:['vendor/jspdf.umd.min.js','vendor/jspdf.plugin.autotable.min.js'],xlsx:['vendor/xlsx.bundle.js']};
+const LIB_PRONTA={chart:()=>!!window.Chart,jspdf:()=>!!window.jspdf,xlsx:()=>!!window.XLSX};
+const LIB_CARGA={};
+function carregarLib(nome){
+ if(LIB_PRONTA[nome]())return Promise.resolve(true);
+ if(LIB_CARGA[nome])return LIB_CARGA[nome];
+ LIB_CARGA[nome]=LIB_ARQS[nome].reduce((fila,src)=>fila.then(()=>new Promise((ok,falhou)=>{
+   const el=document.createElement('script');el.src=src;el.onload=ok;el.onerror=()=>falhou(new Error(src));document.head.appendChild(el);})),
+  Promise.resolve()).then(()=>true).catch(()=>{delete LIB_CARGA[nome];return false;});
+ return LIB_CARGA[nome];}
+const LIB_NOMES={chart:'de gráficos',jspdf:'de PDF',xlsx:'de planilha'};
+async function libPronta(nome){const ok=await carregarLib(nome);
+ if(!ok)toast('Não consegui carregar a biblioteca '+LIB_NOMES[nome]+'. Verifique sua conexão e tente de novo.','error',7000);
+ return ok;}
+
 /* ================= HELPERS ================= */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1628,6 +1661,7 @@ function onCCChange(){CC.mes=+$('cc-per-mes-sel').value;CC.ano=+$('cc-per-ano-se
 let chCC=null;
 const SETORES_FIXOS=['Marketing','Vendas','Pedidos','Folha de Pagamento','Administrativo','Manutenção'];
 function renderCentroCustos(){syncPerBar('cc-per',CC);
+ if(!window.Chart){carregarLib('chart').then(ok=>{if(ok&&CUR==='centrocustos')renderCentroCustos();});}
  const lancs=DB.financeiro.filter(f=>f.status!=='Cancelado'&&matchPer(f.data,CC));
  const porCat={};
  SETORES_FIXOS.forEach(cc=>{porCat[cc]={saidas:0,entradas:0};});
@@ -1645,9 +1679,9 @@ function renderCentroCustos(){syncPerBar('cc-per',CC);
  $('cc-maior-cat').textContent=catsAtivas.length?catsAtivas[0][0]:'—';
  $('tb-centrocustos').innerHTML=cats.filter(c=>c[0]!=='Não classificado'||c[1].saidas>0||c[1].entradas>0).map(([cat,v])=>{const pct=totalSaidas>0?v.saidas/totalSaidas*100:0;
   return '<tr><td><strong>'+(cat==='Não classificado'?'<span style="color:var(--danger)">⚠ '+esc(cat)+'</span>':esc(cat))+'</strong></td><td class="mono" style="color:var(--danger)">'+fmt(v.saidas)+'</td><td class="mono" style="color:var(--success)">'+fmt(v.entradas)+'</td><td class="mono">'+fmtN(pct,1)+'%</td></tr>';}).join('')||emptyRow(4,'Nenhum lançamento no período');
- if(!window.Chart)return;
  if(chCC)chCC.destroy();
  const catsComSaida=cats.filter(c=>c[1].saidas>0);
+ if(!window.Chart)return;
  const cores=['#c8a96e','#1a1714','#7a6f62','#3d6b4f','#a07830','#b54040','#8a9bb5','#9c7fb5'];
  chCC=new Chart($('chart-cc'),{type:'doughnut',data:{labels:catsComSaida.length?catsComSaida.map(c=>c[0]):['Sem custos'],
   datasets:[{data:catsComSaida.length?catsComSaida.map(c=>c[1].saidas):[1],backgroundColor:catsComSaida.length?catsComSaida.map((c,i)=>cores[i%cores.length]):['#e0d9ce']}]},
@@ -1659,6 +1693,7 @@ let PER_ORC={modo:'tudo',ano:new Date().getFullYear(),mes:new Date().getMonth()}
 function setOrcModo(m){PER_ORC.modo=m;renderOrcamentos();}
 function onOrcChange(){PER_ORC.mes=+$('orc-per-mes-sel').value;PER_ORC.ano=+$('orc-per-ano-sel').value;renderOrcamentos();}
 function renderDashboard(){
+ if(!window.Chart){carregarLib('chart').then(ok=>{if(ok&&CUR==='dashboard')renderDashboard();});}
  $('per-mes-sel').innerHTML=MESES.map((m,i)=>'<option value="'+i+'"'+(i===PER.mes?' selected':'')+'>'+m+'</option>').join('');
  $('per-ano-sel').innerHTML=perYears().map(y=>'<option value="'+y+'"'+(y===PER.ano?' selected':'')+'>'+y+'</option>').join('');
  ['mes','ano','tudo'].forEach(m=>$('per-'+m).classList.toggle('active',PER.modo===m));
@@ -1708,7 +1743,6 @@ function renderDashboard(){
  const finList=DB.financeiro.filter(f=>inPer(f.data)).slice(0,7);
  $('dash-fin').innerHTML=finList.map(f=>'<tr><td>'+esc(f.desc)+'</td><td><span class="badge '+(f.tipo==='Entrada'?'badge-success':'badge-danger')+'">'+f.tipo+'</span></td><td class="mono">'+fmt(f.val)+'</td></tr>').join('')||'<tr><td colspan="3" style="color:var(--text-muted)">Sem lançamentos no período</td></tr>';
 
- if(!window.Chart)return;
  let labels=[],vals=[];
  if(PER.modo==='tudo'){const anos=perYears().slice().sort((a,b)=>a-b);
   anos.forEach(y=>{labels.push(String(y));vals.push(DB.vendas.filter(v=>String(v.data).slice(0,4)===String(y)&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));});
@@ -1720,6 +1754,7 @@ function renderDashboard(){
   labels.push(d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','')+'/'+String(d.getFullYear()).slice(2));
   vals.push(DB.vendas.filter(v=>String(v.data).slice(0,7)===k&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));}
   $('chart-vendas-sub').textContent='6 meses até '+MESES[PER.mes].slice(0,3)+'/'+String(PER.ano).slice(2);}
+ if(!window.Chart)return;
  if(chVendas)chVendas.destroy();
  const ticksVendas=ticksRegua(Math.max(...vals,1));
  chVendas=new Chart($('chart-vendas'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:'#c8a96e',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{type:'logarithmic',min:1000,max:ticksVendas[ticksVendas.length-1],afterBuildTicks:axis=>{axis.ticks=ticksVendas.map(v=>({value:v}));},ticks:{autoSkip:false,font:{size:9},callback:v=>v>=1000?(v/1000)+'k':v}}},responsive:true}});
@@ -1732,8 +1767,8 @@ function saldoFin(){const inicial=Number(DB.config.cf.saldoInicial)||0;
  return inicial+DB.financeiro.filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
 
 /* ================= RELATÓRIO DASHBOARD EM PDF ================= */
-function gerarPdfDashboard(){if(!guardValores())return;
- if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+async function gerarPdfDashboard(){if(!guardValores())return;
+ if(!await libPronta('jspdf'))return;
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],CREAM=[245,240,232];
@@ -2494,8 +2529,8 @@ async function duplicarOrcamento(id){
  toast('Orçamento ORC-'+pad(novo.num)+' criado a partir de ORC-'+pad(o.num)+'.','success',6000);}
 
 function abrirInfoNotaFiscal(id){openModal('modal-nfe-info');}
-function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
- if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+async function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
+ if(!await libPronta('jspdf'))return;
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],CREAM=[245,240,232];
@@ -3233,10 +3268,10 @@ function marcarTodosItensPdf(v){document.querySelectorAll('.pdf-item-check').for
 function atualizarTotalPdf(){let t=0;document.querySelectorAll('.pdf-item-check:checked').forEach(c=>t+=Number(c.dataset.preco)||0);$('pdf-total-sel').textContent=fmt(t);}
 /* texto livre com linhas em branco: no PDF cada uma virava um buraco — junta em quebra simples */
 const textoPdf=t=>String(t||'').replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{2,}/g,'\n').trim();
-function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+async function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const idsSelecionados=Array.from(document.querySelectorAll('.pdf-item-check:checked')).map(c=>c.value);
  if(!idsSelecionados.length){toast('Selecione ao menos um item.','error');return;}
- if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+ if(!await libPronta('jspdf'))return;
  const itens=itensOrc(o).filter(it=>idsSelecionados.includes(it.id));
  montarPdfOrcamento(o,itens).save(nomePdfOrcamento(o));
  closeModal('modal-pdf-orc');
@@ -3341,10 +3376,10 @@ function montarPdfOrcamento(o,itens){
 
  return doc;}
 /* imprime o mesmo PDF do "Gerar PDF" (todos os itens) — antes era uma página HTML à parte, que ficava desatualizada */
-function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+async function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const itens=itensOrc(o);
  if(!itens.length){toast('Este orçamento não tem itens.','error');return;}
- if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+ if(!await libPronta('jspdf'))return;
  const doc=montarPdfOrcamento(o,itens);
  /* no celular um PDF aberto em aba não imprime: entrega o arquivo, que abre no leitor com a opção de imprimir */
  if(window.matchMedia('(hover:none)').matches){doc.save(nomePdfOrcamento(o));toast('PDF baixado — abra o arquivo para imprimir.','info',6000);return;}
@@ -3847,8 +3882,8 @@ function renderRelatorios(){syncPerBar('rel-per',REL);
  const porEsp={};DB.madeiras.forEach(m=>{const k=m.especie;if(!porEsp[k])porEsp[k]={pcs:0,m3:0,val:0,low:false};porEsp[k].pcs+=Number(m.qtd||0);porEsp[k].m3+=madM3(m);porEsp[k].val+=madM3(m)*Number(m.custo||0);if(madM3(m)<Number(m.min||0))porEsp[k].low=true;});
  $('tb-rel-madeiras').innerHTML=Object.entries(porEsp).map(e=>'<tr><td><strong>'+esc(e[0])+'</strong></td><td class="mono">'+e[1].pcs+'</td><td class="mono">'+fmtN(e[1].m3,3)+'</td><td class="mono">'+fmt(e[1].val)+'</td><td><span class="badge '+(e[1].low?'badge-danger':'badge-success')+'">'+(e[1].low?'Repor':'OK')+'</span></td></tr>').join('')||emptyRow(5,'Sem madeiras cadastradas');}
 
-function gerarPdfRelatorio(){
- if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+async function gerarPdfRelatorio(){
+ if(!await libPronta('jspdf'))return;
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],CREAM=[245,240,232];
@@ -4121,6 +4156,8 @@ function renderConfig(){CFG_EDITANDO=false;$('sheets-url').value=DB.config.sheet
  renderCustosFixosExtrasConfig();
  renderFolhaConfig();
  renderMdoTiposConfig();
+ $('cfg-versao').textContent=APP_VERSAO;
+ $('cfg-sw-estado').textContent=('serviceWorker' in navigator)?(navigator.serviceWorker.controller?'ativo':'ativa no próximo acesso'):'não suportado';
  const emp=DB.config.empresa||{};$('cfg-emp-cnpj').value=emp.cnpj||'';$('cfg-emp-endereco').value=emp.endereco||'';$('cfg-emp-bairro').value=emp.bairro||'';
  $('cfg-emp-cep').value=emp.cep||'';$('cfg-emp-cidade').value=emp.cidade||'';$('cfg-emp-estado').value=emp.estado||'';
  $('cfg-emp-telefone').value=emp.telefone||'';$('cfg-emp-email').value=emp.email||'';$('cfg-emp-site').value=emp.site||'';}
@@ -4264,8 +4301,8 @@ function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');re
  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Backup-ERP-Mabe-'+today()+'.json';a.click();
  toast('Backup completo baixado! Guarde este arquivo em local seguro.','success');}
-function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
- if(!window.XLSX){toast('Biblioteca de planilha não carregou. Verifique sua conexão e tente novamente.','error');return;}
+async function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ if(!await libPronta('xlsx'))return;
  /* ---- Identidade visual Estúdio Mabe ---- */
  const XL_DARK='FF1A1714',XL_ACCENT='FFC8A96E',XL_CREAM='FFF5F0E8',XL_SURF='FFFAF7F2',XL_MUTED='FF7A6F62',XL_BORDA='FFDDD5C8';
  const bordaFina={style:'thin',color:{rgb:XL_BORDA}};
@@ -4502,8 +4539,8 @@ function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error
 
  XLSX.writeFile(wb,'Backup-ERP-Mabe-'+today()+'.xlsx');
  toast('Planilha de backup baixada! Guarde este arquivo em local seguro.','success');}
-function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
- if(!window.jspdf){toast('Biblioteca de PDF não carregou. Verifique sua conexão e tente novamente.','error');return;}
+async function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ if(!await libPronta('jspdf'))return;
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  /* ---- Identidade visual Estúdio Mabe ---- */
@@ -5217,6 +5254,37 @@ function loadDemoData(){if(!guard())return;
 /* qualquer digitacao em Configuracoes trava o auto-refresh ate salvar ou sair */
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
+/* ================= APP INSTALADO (service worker) ================= */
+const APP_VERSAO='2026-09-18.2';
+let SW_REG=null;
+function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
+function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
+ if(esperando){esperando.postMessage({tipo:'ATUALIZAR'});$('aviso-atualizacao').style.display='none';}
+ else location.reload();}
+async function procurarAtualizacao(){
+ if(!SW_REG){toast('Este navegador não guarda o app para uso offline.','info');return;}
+ toast('Procurando atualização…','info');
+ try{await SW_REG.update();}catch(e){}
+ setTimeout(()=>{if(SW_REG.waiting)mostrarAvisoAtualizacao();else toast('Você já está na versão mais recente.','success');},1200);}
+/* limpa só os arquivos do app: dados, login e configurações ficam no localStorage e não são tocados */
+async function limparCacheERecarregar(){
+ try{if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()));}
+  if(window.caches){const nomes=await caches.keys();await Promise.all(nomes.map(n=>caches.delete(n)));}
+ }catch(e){}
+ location.replace(location.pathname+'?atualizado='+Date.now());}
+function registrarServiceWorker(){
+ if(!('serviceWorker' in navigator)||location.protocol==='file:')return;
+ navigator.serviceWorker.register('sw.js').then(reg=>{SW_REG=reg;
+  if(reg.waiting&&navigator.serviceWorker.controller)mostrarAvisoAtualizacao();
+  reg.addEventListener('updatefound',()=>{const novo=reg.installing;if(!novo)return;
+   novo.addEventListener('statechange',()=>{if(novo.state==='installed'&&navigator.serviceWorker.controller)mostrarAvisoAtualizacao();});});
+  /* o app instalado pode ficar dias aberto: procura versão nova de hora em hora e ao voltar para a tela */
+  setInterval(()=>reg.update().catch(()=>{}),60*60*1000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{});});
+ }).catch(()=>{});
+ let recarregando=false;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregando)return;recarregando=true;location.reload();});}
+registrarServiceWorker();
 loadDB();
 (async function(){
  await carregarUsuariosSupabase(true);
