@@ -869,6 +869,18 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
   </div>
 </div>
 
+<div id="tela-diagnostico" style="display:none;position:fixed;inset:0;z-index:9800;background:var(--bg);color:var(--text);padding:28px 22px;overflow-y:auto">
+ <div style="max-width:420px;margin:40px auto;text-align:center">
+  <div style="font-size:34px;margin-bottom:10px">🪵</div>
+  <h2 style="font-size:19px;margin:0 0 10px">O ERP não terminou de abrir</h2>
+  <p id="diag-texto" style="font-size:13.5px;line-height:1.6;color:var(--text-muted);margin:0 0 18px"></p>
+  <div style="display:flex;flex-direction:column;gap:9px">
+   <button class="btn btn-primary" onclick="location.reload()">Tentar de novo</button>
+   <button class="btn btn-ghost" onclick="limparCacheERecarregar()">Limpar cache e recarregar</button>
+  </div>
+  <div id="diag-detalhe" style="font-size:11px;color:var(--text-muted);margin-top:16px;font-family:var(--mono);word-break:break-word"></div>
+ </div>
+</div>
 <div id="aviso-atualizacao" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9500;background:var(--text);color:var(--surface);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,0.25);align-items:center;gap:12px;flex-wrap:wrap">
  <div style="flex:1;min-width:170px;font-size:13px;line-height:1.4"><strong>Nova versão disponível</strong><div style="opacity:.7;font-size:12px">Atualize para usar a versão mais recente do ERP.</div></div>
  <button class="btn btn-primary btn-sm" style="background:var(--accent);color:var(--text);border-color:var(--accent)" onclick="aplicarAtualizacao()">Atualizar</button>
@@ -1029,6 +1041,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
    Sem console no celular, um erro no JavaScript deixava a tela vazia sem
    explicação. Aqui qualquer erro não tratado vira uma faixa no topo, com a
    mensagem e a linha, para dar pra reportar. */
+let ULTIMO_ERRO='';
 function mostrarErroGlobal(msg){try{
  let f=document.getElementById('faixa-erro');
  if(!f){f=document.createElement('div');f.id='faixa-erro';
@@ -1040,6 +1053,7 @@ function mostrarErroGlobal(msg){try{
   (document.body||document.documentElement).appendChild(f);}
  const t=document.getElementById('faixa-erro-texto');
  t.textContent=(t.textContent?t.textContent+'\n':'')+'⚠ Erro interno: '+msg;
+ ULTIMO_ERRO=msg;
 }catch(e){}}
 window.addEventListener('error',e=>{mostrarErroGlobal((e.message||'erro')+(e.lineno?' (linha '+e.lineno+')':''));});
 window.addEventListener('unhandledrejection',e=>{const r=e.reason;mostrarErroGlobal('(promessa) '+(r&&r.message?r.message:String(r))+(r&&r.stack?' — '+String(r.stack).split('\n').slice(1,2).join('').trim():''));});
@@ -5255,7 +5269,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.3';
+const APP_VERSAO='2026-09-18.4';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
@@ -5285,19 +5299,43 @@ function registrarServiceWorker(){
  let recarregando=false;
  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregando)return;recarregando=true;location.reload();});}
 registrarServiceWorker();
+
+/* ================= ABERTURA VIGIADA =================
+   No app instalado não há barra de endereço: se a abertura travar, a pessoa só vê tela branca
+   e não tem como recarregar. O vigia transforma isso numa tela que diz onde parou e oferece saída. */
+let BOOT_ETAPA='iniciando',BOOT_CONCLUIDO=false;
+const etapaBoot=t=>{BOOT_ETAPA=t;};
+function mostrarDiagnostico(){
+ if(BOOT_CONCLUIDO)return;
+ const el=$('tela-diagnostico');if(!el)return;
+ $('diag-texto').textContent=ULTIMO_ERRO
+  ?'Um erro interrompeu a abertura. Toque em "Tentar de novo"; se repetir, use "Limpar cache e recarregar".'
+  :'A conexão não respondeu a tempo. Toque em "Tentar de novo" — seus dados continuam guardados neste aparelho.';
+ $('diag-detalhe').textContent='versão '+APP_VERSAO+' · parou em: '+BOOT_ETAPA+(ULTIMO_ERRO?' · '+ULTIMO_ERRO:'');
+ el.style.display='block';}
+setTimeout(mostrarDiagnostico,9000);
+/* nenhuma etapa da abertura pode ficar pendurada esperando a rede */
+function comPrazo(promessa,ms,valorPadrao){
+ return Promise.race([Promise.resolve(promessa).catch(()=>valorPadrao),new Promise(r=>setTimeout(()=>r(valorPadrao),ms))]);}
+
+etapaBoot('lendo os dados guardados no aparelho');
 loadDB();
 (async function(){
- await carregarUsuariosSupabase(true);
+ etapaBoot('consultando usuários no servidor');
+ await comPrazo(carregarUsuariosSupabase(true),8000,false);
+ etapaBoot('verificando sua sessão');
  /* 1) sessão do Supabase Auth */
- try{const {data}=await supa.auth.getSession();
+ try{const {data}=await comPrazo(supa.auth.getSession(),8000,{data:null});
   if(data&&data.session&&data.session.user){
-   if(linkDeRecuperacao()){history.replaceState(null,'',location.pathname);abrirDefinirNovaSenha();$('login-user').focus();return;}
-   if(await entrarComAuth(data.session.user))return;}
+   if(linkDeRecuperacao()){history.replaceState(null,'',location.pathname);abrirDefinirNovaSenha();$('login-user').focus();BOOT_CONCLUIDO=true;return;}
+   etapaBoot('entrando com sua conta');
+   if(await entrarComAuth(data.session.user)){BOOT_CONCLUIDO=true;return;}}
  }catch(e){}
  /* 2) sessão antiga, guardada no localStorage */
  const sid=localStorage.getItem(SKEY);
  if(sid){const u=DB.usuarios.find(x=>x.id===sid&&x.status==='Ativo');
-  if(u){USER=u;$('login-screen').classList.add('hidden');afterLogin();return;}}
+  if(u){etapaBoot('montando as telas');USER=u;$('login-screen').classList.add('hidden');afterLogin();BOOT_CONCLUIDO=true;return;}}
+ BOOT_CONCLUIDO=true;
  $('login-user').focus();})();
 </script>
 </body>
