@@ -217,7 +217,10 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
    A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
    fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
-#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards { display:none; }
+#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards { display:none; }
+.pc-ficha { display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;padding:9px 11px;background:var(--surface2);border-radius:8px; }
+.pc-ficha div { display:flex;flex-direction:column;gap:1px;font-size:13px;font-family:var(--mono);color:var(--text);min-width:0; }
+.pc-ficha span { font-family:var(--font, inherit);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
 .cli-busca-barra { display:flex;gap:10px;align-items:center;margin-bottom:12px; }
 .cli-busca-barra input { flex:1;max-width:360px; }
 .cli-busca-n { font-size:12px;color:var(--text-muted);white-space:nowrap; }
@@ -302,11 +305,11 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 .pc-acoes .row-actions { display:flex;gap:6px;opacity:1; }
 .pc-vazio { padding:26px 14px;text-align:center;color:var(--text-muted);font-size:13px; }
 /* niveis sem acesso a valores nao veem dinheiro tambem nos cartoes */
-body.sem-valores .pc-valor, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
+body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
   #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
-  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards { display:block; }
-  #entregas-tabela, #clientes-tabela, #compras-tabela { display:none; }
+  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards { display:block; }
+  #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
   .cli-busca-barra input { max-width:none;font-size:16px; }
   .compras-topo { display:flex;justify-content:flex-end;margin-bottom:12px; }
   .pcp-abas { display:flex;gap:6px;overflow-x:auto;margin:0 -2px 12px;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none; }
@@ -538,7 +541,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-ofx')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImportacaoOfx()">✔ Lançar Selecionados</button></div>
     </div></div>
 
-    <div class="section" id="section-fornecedores"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Fornecedores</div></div><table><thead><tr><th>#</th><th>Nome</th><th>CNPJ</th><th>Email</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-fornecedores"></tbody></table></div></div>
+    <div class="section" id="section-fornecedores"><div id="fornecedores-cards"></div><div class="table-wrapper" id="fornecedores-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Fornecedores</div></div><table><thead><tr><th>#</th><th>Nome</th><th>CNPJ</th><th>Email</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-fornecedores"></tbody></table></div></div>
     <div class="section" id="section-compras"><div class="compras-topo"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button></div><div id="compras-cards"></div><div class="table-wrapper" id="compras-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button><input type="file" id="nf-xml-input" accept=".xml,text/xml,application/xml" style="display:none" onchange="importarNfXml(this)"></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
 
     <!-- MADEIRAS -->
@@ -549,13 +552,15 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div class="stat-box"><div class="stat-value" id="madst-especies">0</div><div class="stat-label">Espécies cadastradas</div></div>
         <div class="stat-box"><div class="stat-value" id="madst-baixo" style="color:var(--danger)">0</div><div class="stat-label">Abaixo do mínimo</div></div>
       </div>
-      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">🪵 Estoque de Madeira Maciça</div></div>
+      <div id="madeiras-cards"></div>
+      <div class="table-wrapper" id="madeiras-tabela"><div class="table-toolbar"><div class="table-toolbar-title">🪵 Estoque de Madeira Maciça</div></div>
       <table><thead><tr><th>Espécie</th><th>Tipo</th><th>Dimensões (cm)</th><th>Peças</th><th>Volume</th><th>R$/m³</th><th>Valor Total</th><th>Umidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-madeiras"></tbody></table></div>
     </div>
 
     <!-- MÁQUINAS & FERRAMENTAS -->
     <div class="section" id="section-ferramentas">
-      <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">🛠️ Máquinas & Ferramentas — Plano de Manutenção</div></div>
+      <div id="ferramentas-cards"></div>
+      <div class="table-wrapper" id="ferramentas-tabela"><div class="table-toolbar"><div class="table-toolbar-title">🛠️ Máquinas & Ferramentas — Plano de Manutenção</div></div>
       <table><thead><tr><th>Equipamento</th><th>Tipo</th><th>Última Manutenção</th><th>Intervalo</th><th>Próxima</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-ferramentas"></tbody></table></div>
     </div>
 
@@ -2149,7 +2154,29 @@ async function carregarMadeirasSupabase(){
  if(error){erroDeCarga('madeiras',error);return;}
  DB.madeiras=data||[];saveDB();
  if(CUR==='madeiras')renderMadeiras();}
-function renderMadeiras(){const tb=$('tb-madeiras');
+function renderMadeirasCards(){const alvo=$('madeiras-cards');if(!alvo)return;
+ if(!DB.madeiras.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhuma madeira cadastrada</div>';return;}
+ /* o que precisa repor aparece primeiro */
+ const lista=DB.madeiras.map(m=>({m,v:madM3(m)})).map(x=>Object.assign(x,{low:x.v<Number(x.m.min||0)}))
+  .sort((a,b)=>(b.low-a.low)||String(a.m.especie||'').localeCompare(String(b.m.especie||''),'pt-BR'));
+ alvo.innerHTML=lista.map(({m,v,low})=>{
+  const um=Number(m.umidade||0),umB=um<=12?'badge-success':um<=18?'badge-warning':'badge-danger';
+  const acoes=canEdit()?'<button class="btn btn-primary btn-sm" onclick="baixaMadeira(\''+m.id+'\')">− Dar baixa</button><button class="btn btn-ghost btn-sm" title="Editar" onclick="editMadeira(\''+m.id+'\')">✏️</button><button class="btn btn-danger btn-sm" title="Excluir" onclick="delMadeira(\''+m.id+'\')">🗑️</button>':'';
+  return '<div class="pedido-card">'
+   +'<div class="pc-topo"><div class="pc-cliente">'+esc(m.especie)+'</div><span class="badge '+(low?'badge-danger':'badge-success')+'">'+(low?'Repor':'OK')+'</span></div>'
+   +'<div class="pc-pag">'+esc(m.tipo||'—')+(m.forn?' · '+esc(fornName(m.forn)):'')+'</div>'
+   +'<div class="pc-ficha">'
+    +'<div><span>Peças</span>'+(m.qtd||0)+'</div>'
+    +'<div><span>Volume</span>'+fmtN(v,3)+' m³</div>'
+    +'<div><span>Medidas (cm)</span>'+fmtN(m.esp,1)+' × '+fmtN(m.larg,1)+' × '+fmtN(m.comp,0)+'</div>'
+    +'<div><span>Umidade</span><em class="badge '+umB+'" style="align-self:flex-start;font-style:normal">'+fmtN(um,1)+'%</em></div>'
+    +'<div class="pc-valor-ficha"><span>R$/m³</span>'+fmt(m.custo)+'</div>'
+    +'<div class="pc-valor-ficha"><span>Valor total</span>'+fmt(v*Number(m.custo||0))+'</div>'
+   +'</div>'
+   +(low?'<div class="pc-pag" style="color:var(--danger)">Abaixo do mínimo de '+fmtN(m.min,3)+' m³</div>':'')
+   +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
+   +'</div>';}).join('');}
+function renderMadeiras(){const tb=$('tb-madeiras');renderMadeirasCards();
  let totM3=0,totVal=0;const esp=new Set();let baixo=0;
  tb.innerHTML=DB.madeiras.map(m=>{const v=madM3(m),val=v*Number(m.custo||0);totM3+=v;totVal+=val;esp.add(m.especie.toLowerCase());
   const low=v<Number(m.min||0);if(low)baixo++;
@@ -3768,7 +3795,27 @@ async function carregarFerramentasSupabase(){
  DB.ferramentas=(data||[]).map(ferramentaDeSupabase);saveDB();
  if(CUR==='ferramentas')renderFerramentas();
  if(CUR==='calendario')renderCalendario();}
-function renderFerramentas(){const t=today();
+function statusManut(f,t){const prox=ferProx(f);
+ return !prox?['—','badge-muted']:prox<t?['Vencida','badge-danger']:prox<=addDays(t,7)?['Próxima','badge-warning']:['Em dia','badge-success'];}
+/* no celular a pergunta é "o que preciso fazer?": vencidas e próximas no topo, e um toque registra a manutenção */
+function confirmarManutFeita(id){const f=DB.ferramentas.find(x=>x.id===id);if(f&&confirm('Registrar manutenção de '+f.nome+' feita hoje?'))manutFeita(id);}
+function renderFerramentasCards(){const alvo=$('ferramentas-cards');if(!alvo)return;const t=today();
+ if(!DB.ferramentas.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum equipamento cadastrado</div>';return;}
+ const lista=DB.ferramentas.slice().sort((a,b)=>(ferProx(a)||'9999')<(ferProx(b)||'9999')?-1:1);
+ alvo.innerHTML=lista.map(f=>{const prox=ferProx(f),st=statusManut(f,t);
+  const acoes=canEdit()?'<button class="btn btn-primary btn-sm" onclick="confirmarManutFeita(\''+f.id+'\')">✔ Manutenção feita hoje</button><button class="btn btn-ghost btn-sm" title="Editar" onclick="editFerramenta(\''+f.id+'\')">✏️</button><button class="btn btn-danger btn-sm" title="Excluir" onclick="delFerramenta(\''+f.id+'\')">🗑️</button>':'';
+  return '<div class="pedido-card">'
+   +'<div class="pc-topo"><div class="pc-cliente">'+esc(f.nome)+'</div><span class="badge '+st[1]+'">'+st[0]+'</span></div>'
+   +'<div class="pc-pag">'+esc(f.tipo||'—')+'</div>'
+   +'<div class="pc-ficha">'
+    +'<div><span>Próxima</span><b'+(st[0]==='Vencida'?' style="color:var(--danger)"':'')+'>'+fmtD(prox)+'</b></div>'
+    +'<div><span>Última</span>'+fmtD(f.ult)+'</div>'
+    +'<div><span>Intervalo</span>'+(f.int?f.int+' dias':'—')+'</div>'
+   +'</div>'
+   +(f.obs?'<div class="pc-itens-lista"><div class="pc-item">'+esc(f.obs)+'</div></div>':'')
+   +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
+   +'</div>';}).join('');}
+function renderFerramentas(){const t=today();renderFerramentasCards();
  $('tb-ferramentas').innerHTML=DB.ferramentas.map(f=>{const prox=ferProx(f);
   const st=!prox?['—','badge-muted']:prox<t?['Vencida','badge-danger']:prox<=addDays(t,7)?['Próxima','badge-warning']:['Em dia','badge-success'];
   return '<tr><td><strong>'+esc(f.nome)+'</strong></td><td>'+esc(f.tipo)+'</td><td class="mono">'+fmtD(f.ult)+'</td><td class="mono">'+(f.int||'—')+' dias</td><td class="mono"'+(st[0]==='Vencida'?' style="color:var(--danger);font-weight:700"':'')+'>'+fmtD(prox)+'</td><td><span class="badge '+st[1]+'">'+st[0]+'</span></td><td style="font-size:12px;color:var(--text-muted)">'+esc(f.obs||'—')+'</td><td><div class="row-actions">'+(canEdit()?'<button class="btn btn-ghost btn-sm" title="Registrar manutenção feita hoje" onclick="manutFeita(\''+f.id+'\')">✔ Feita</button><button class="btn btn-ghost btn-sm" onclick="editFerramenta(\''+f.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delFerramenta(\''+f.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(8,'Nenhum equipamento cadastrado');}
@@ -3989,7 +4036,24 @@ async function carregarFornecedoresSupabase(){
  if(error){erroDeCarga('fornecedores',error);return;}
  DB.fornecedores=data||[];saveDB();
  if(CUR==='fornecedores')renderFornecedores();}
-function renderFornecedores(){$('tb-fornecedores').innerHTML=DB.fornecedores.map((f,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(f.nome)+'</strong></td><td class="mono">'+esc(f.cnpj||'—')+'</td><td>'+esc(f.email||'—')+'</td><td>'+esc(f.tel||'—')+'</td><td>'+esc(f.cidade||'—')+'</td><td><span class="badge '+(f.status==='Ativo'?'badge-success':'badge-muted')+'">'+f.status+'</span></td><td>'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum fornecedor cadastrado');}
+/* ligar e chamar no WhatsApp direto do cartão: no celular é o uso mais comum de um fornecedor */
+function renderFornecedoresCards(){const alvo=$('fornecedores-cards');if(!alvo)return;
+ if(!DB.fornecedores.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum fornecedor cadastrado</div>';return;}
+ const comprasDe={};DB.compras.forEach(c=>{if(c.status!=='Cancelado'&&c.forId)comprasDe[c.forId]=(comprasDe[c.forId]||0)+1;});
+ alvo.innerHTML=DB.fornecedores.slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR')).map(f=>{
+  const tel=String(f.tel||'').replace(/\D/g,''),wa=linkWhatsapp(f.tel),nc=comprasDe[f.id];
+  const links=[tel?'<a class="pc-link" href="tel:'+tel+'">📞 Ligar</a>':'',wa?'<a class="pc-link" href="'+wa+'" target="_blank" rel="noopener">💬 WhatsApp</a>':'',
+   f.email?'<a class="pc-link" href="mailto:'+esc(f.email)+'">✉️ E-mail</a>':''].filter(Boolean).join('');
+  const detalhe=[f.tel,f.cidade].filter(Boolean).map(esc).join(' · ');
+  return '<div class="pedido-card">'
+   +'<div class="pc-topo"><div class="pc-cliente">'+esc(f.nome)+'</div><span class="badge '+(f.status==='Ativo'?'badge-success':'badge-muted')+'">'+esc(f.status||'—')+'</span></div>'
+   +(detalhe?'<div class="pc-pag">'+detalhe+'</div>':'')
+   +(f.email||f.cnpj?'<div class="pc-pag">'+[f.email,f.cnpj].filter(Boolean).map(esc).join(' · ')+'</div>':'')
+   +(nc?'<div class="pc-pag">📦 '+nc+' ordem'+(nc>1?'s':'')+' de compra</div>':'')
+   +(links?'<div class="pc-links">'+links+'</div>':'')
+   +(canEdit()?'<div class="pc-acoes">'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</div>':'')
+   +'</div>';}).join('');}
+function renderFornecedores(){renderFornecedoresCards();$('tb-fornecedores').innerHTML=DB.fornecedores.map((f,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(f.nome)+'</strong></td><td class="mono">'+esc(f.cnpj||'—')+'</td><td>'+esc(f.email||'—')+'</td><td>'+esc(f.tel||'—')+'</td><td>'+esc(f.cidade||'—')+'</td><td><span class="badge '+(f.status==='Ativo'?'badge-success':'badge-muted')+'">'+f.status+'</span></td><td>'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum fornecedor cadastrado');}
 function openFornecedor(){FORNECEDOR_RAPIDO_ORC=false;['for-id','for-nome','for-cnpj','for-tel','for-email','for-cidade'].forEach(i=>$(i).value='');$('for-status').value='Ativo';$('mfor-title').textContent='Novo Fornecedor';openModal('modal-fornecedores');}
 function editFornecedor(id){if(!guard())return;FORNECEDOR_RAPIDO_ORC=false;const f=DB.fornecedores.find(x=>x.id===id);if(!f)return;
  $('for-id').value=f.id;$('for-nome').value=f.nome;$('for-cnpj').value=f.cnpj||'';$('for-tel').value=f.tel||'';$('for-email').value=f.email||'';$('for-cidade').value=f.cidade||'';$('for-status').value=f.status;$('mfor-title').textContent='Editar Fornecedor';openModal('modal-fornecedores');}
@@ -5482,7 +5546,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.9';
+const APP_VERSAO='2026-09-18.10';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
