@@ -4100,7 +4100,7 @@ function nomePdfOrcamento(o){return 'Orcamento-ORC-'+pad(o.num)+'-'+cliName(o.cl
 /* Capa do orçamento: só a marca do estúdio no centro, sobre o creme de sempre.
    Nada de tabela nem valores aqui — o documento começa na página seguinte. */
 function capaOrcamento(doc,o,cores){
- const {DARK,ACCENT,MUTED}=cores;const emp=DB.config.empresa||{};
+ const {DARK,ACCENT,MUTED}=cores;
  const CX=105;
  /* a marca montada como na assinatura do estúdio (quadrado + "estúdio" em cima, "mabe." embaixo),
     só que maior e centralizada: a largura é medida antes para o conjunto ficar no meio da página */
@@ -4129,11 +4129,8 @@ function capaOrcamento(doc,o,cores){
  doc.splitTextToSize(cliName(o.cliId),150).forEach(l=>{doc.text(l,CX,y,{align:'center'});y+=7;});
  const datas=[o.data?'Data '+fmtD(o.data):'',o.validade?'Entrega '+fmtD(o.validade):''].filter(Boolean).join('     ·     ');
  if(datas){y+=5;doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text(datas,CX,y,{align:'center'});}
- /* contato, no pé da capa */
- doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(CX-26,260,CX+26,260);
- let cy=268;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
- [enderecoEstudio(emp),emp.telefone,emp.email,emp.site].filter(Boolean)
-  .forEach(t=>{doc.text(String(t),CX,cy,{align:'center'});cy+=4.4;});}
+ /* o pé da capa fica limpo de propósito: endereço, telefone, e-mail e site
+    continuam no cabeçalho e no rodapé das páginas seguintes */}
 function montarPdfOrcamento(o,itens,refs){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
@@ -6518,7 +6515,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.23';
+const APP_VERSAO='2026-09-20.24';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
