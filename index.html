@@ -662,7 +662,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     </div>
 
     <div class="section" id="section-fornecedores"><div id="fornecedores-cards"></div><div class="table-wrapper" id="fornecedores-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Fornecedores</div></div><table><thead><tr><th>#</th><th>Nome</th><th>CNPJ</th><th>Email</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-fornecedores"></tbody></table></div></div>
-    <div class="section" id="section-compras"><div class="compras-topo"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button></div><div id="compras-cards"></div><div class="table-wrapper" id="compras-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button><input type="file" id="nf-xml-input" accept=".xml,text/xml,application/xml" style="display:none" onchange="importarNfXml(this)"></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
+    <div class="section" id="section-compras"><div class="info-box">📥 Faça o upload da nota fiscal de compra para obter os valores atualizados no cadastro de material/insumo.</div><div class="compras-topo"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button></div><div id="compras-cards"></div><div class="table-wrapper" id="compras-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button><input type="file" id="nf-xml-input" accept=".xml,text/xml,application/xml" style="display:none" onchange="importarNfXml(this)"></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
 
     <!-- MADEIRAS -->
     <div class="section" id="section-madeiras">
@@ -6506,7 +6506,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.30';
+const APP_VERSAO='2026-09-20.31';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
