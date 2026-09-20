@@ -485,6 +485,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <span class="nav-label">Documentos (modelos)</span>
     <div class="nav-item" onclick="abrirDocumento('orcamento')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Orçamento</div>
     <div class="nav-item" onclick="abrirDocumento('recibo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 3 2V2l-3 2-3-2-3 2-3-2-3 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>Recibo do Pedido</div>
+    <div class="nav-item" onclick="abrirDocumento('contrato')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 17c1.5-2 3-2 4 0s2.5 2 4 0"/><line x1="8" y1="12" x2="14" y2="12"/></svg>Contrato</div>
     <span class="nav-label">Sistema</span>
     <div class="nav-item" id="nav-usuarios" onclick="navigate('usuarios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Usuários</div>
     <div class="nav-item" onclick="navigate('historico')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/><polyline points="3 3 3 7 7 7"/></svg>Histórico</div>
@@ -1744,7 +1745,7 @@ function navigate(sec){
  if(sec==='clientes')carregarClientesSupabase();
  if(sec==='fornecedores')carregarFornecedoresSupabase();
  if(sec==='servicos'||sec==='comissoes')carregarConfigSupabase();
- if(sec==='documentos'){document.querySelector('#page-title .titulo-longo').textContent='Documentos — '+(DOC_MODO==='recibo'?'Modelo do Recibo':'Modelo do Orçamento');verModeloDocumento();}
+ if(sec==='documentos'){document.querySelector('#page-title .titulo-longo').textContent='Documentos — '+(DOC_MODO==='contrato'?'Modelo de Contrato':DOC_MODO==='recibo'?'Modelo do Recibo':'Modelo do Orçamento');verModeloDocumento();}
  if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas'||sec==='calendario')carregarFerramentasSupabase();
@@ -4269,6 +4270,173 @@ async function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUA
  const w=window.open(doc.output('bloburl'),'_blank');
  if(!w){doc.save(nomePdfOrcamento(o));toast('O navegador bloqueou a janela de impressão — o PDF foi baixado para você imprimir.','info',7000);}}
 
+/* ================= CONTRATO DE MARCENARIA =================
+   Modelo de contrato de prestação de serviços de marcenaria sob medida, na mesma
+   identidade dos outros documentos do ERP. A estrutura segue o que se repete nos
+   modelos usados pelo mercado (objeto, projeto e medição, materiais, preço, prazo,
+   local de instalação, entrega e recebimento, garantia, manutenção, aditivos,
+   atraso, rescisão, propriedade intelectual, LGPD e foro).
+   Os campos que mudam a cada obra saem como "____" para preencher à mão ou em aditivo.
+   É um modelo: vale passar pelo seu advogado antes de usar com cliente. */
+function montarPdfContrato(o){
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF();
+ const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232];
+ const emp=DB.config.empresa||{};
+ const M=20,R=190,RODAPE_Y=280;
+ const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
+ fundo();
+ let y=0;
+ const vazio='____________';
+ /* cabeçalho: a marca em imagem, como na capa do orçamento */
+ const larguraMarca=46,alturaMarca=larguraMarca/MARCA_PROP;
+ doc.addImage(MARCA_PNG,'PNG',M,16,larguraMarca,alturaMarca,'marca','SLOW');
+ doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ let cy=18.5;
+ [enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean).forEach(t=>{
+  doc.text(String(t),R,cy,{align:'right'});cy+=4.1;});
+ y=Math.max(16+alturaMarca,cy)+14;
+ doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(...DARK);
+ doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS',M,y);
+ y+=6.5;doc.setFontSize(10);doc.setTextColor(...MUTED);doc.text('MARCENARIA SOB MEDIDA',M,y);
+ if(o&&o.num)doc.text('Ref. ORC-'+pad(o.num),R,y,{align:'right'});
+ y+=4;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,y,R,y);
+ y+=11;
+ /* escrita corrida, com quebra de página automática */
+ const novaPag=()=>{doc.addPage();fundo();y=24;};
+ const bloco=(texto,op)=>{op=op||{};
+  const tam=op.tam||9,estilo=op.estilo||'normal',cor=op.cor||DARK,recuo=op.recuo||0,antes=op.antes||0,depois=op.depois===undefined?3:op.depois;
+  doc.setFont('helvetica',estilo);doc.setFontSize(tam);doc.setTextColor(...cor);
+  const linhas=doc.splitTextToSize(String(texto),R-M-recuo);
+  const alturaLinha=tam*0.352778*1.45;
+  y+=antes;
+  if(y+linhas.length*alturaLinha>RODAPE_Y-8)novaPag();
+  linhas.forEach(l=>{
+   if(y>RODAPE_Y-8)novaPag();
+   doc.text(l,M+recuo,y);y+=alturaLinha;});
+  y+=depois;};
+ /* título de cláusula não fica sozinho no fim da página: sem espaço para ele e as duas
+    primeiras linhas do texto, a cláusula já começa na página seguinte */
+ const titulo=t=>{if(y+20>RODAPE_Y-8)novaPag();bloco(t,{tam:9.5,estilo:'bold',antes:4,depois:2});};
+ /* ---- partes ---- */
+ const cli=o&&o.cliId?DB.clientes.find(c=>c.id===o.cliId):null;
+ const enderecoCli=cli?[cli.end,cli.cidade].filter(Boolean).join(' — '):'';
+ bloco('CONTRATADA',{tam:7.5,estilo:'bold',cor:MUTED,depois:1.5});
+ bloco('ESTÚDIO MABE'+(emp.cnpj?', inscrita no CNPJ sob o nº '+emp.cnpj:'')+
+  (enderecoEstudio(emp)?', com sede em '+enderecoEstudio(emp):'')+
+  (emp.telefone?', telefone '+emp.telefone:'')+(emp.email?', e-mail '+emp.email:'')+'.',{depois:5});
+ bloco('CONTRATANTE',{tam:7.5,estilo:'bold',cor:MUTED,depois:1.5});
+ bloco((cli?cli.nome:vazio)+', inscrito(a) no CPF/CNPJ sob o nº '+((cli&&cli.doc)||vazio)+
+  ', residente/estabelecido(a) em '+(enderecoCli||vazio)+
+  ', telefone '+((cli&&cli.tel)||vazio)+', e-mail '+((cli&&cli.email)||vazio)+'.',{depois:5});
+ bloco('As partes acima qualificadas têm entre si justo e contratado o presente instrumento, que se regerá pelas cláusulas seguintes.',{cor:MUTED,tam:8.5,depois:2});
+
+ const valorTotal=o&&Number(o.preco)>0?fmt(o.preco):'R$ '+vazio;
+ const pctEntrada=Number(DB.config.cf.pixAntecipado)||50;
+ const prazoEntrega=o&&o.validade?fmtD(o.validade):null;
+
+ titulo('CLÁUSULA 1 — DO OBJETO');
+ bloco('1.1. A CONTRATADA obriga-se a projetar, fabricar, entregar e instalar mobiliário sob medida em madeira maciça e demais materiais descritos no orçamento nº '+(o&&o.num?'ORC-'+pad(o.num):vazio)+', que integra este contrato como Anexo I, com suas quantidades, descrições, acabamentos e valores.');
+ bloco('1.2. Integram igualmente este contrato os desenhos, memoriais, amostras e imagens de referência aprovados pelo CONTRATANTE.');
+
+ titulo('CLÁUSULA 2 — DO PROJETO, DA MEDIÇÃO E DA APROVAÇÃO');
+ bloco('2.1. A fabricação terá início somente após, cumulativamente: (i) a medição final no local pela CONTRATADA; (ii) a aprovação por escrito do projeto executivo pelo CONTRATANTE; e (iii) a confirmação do pagamento inicial previsto na Cláusula 4.');
+ bloco('2.2. Medidas informadas pelo CONTRATANTE e não conferidas no local pela CONTRATADA são de responsabilidade exclusiva do CONTRATANTE.');
+ bloco('2.3. Alterações solicitadas após a aprovação do projeto serão formalizadas por aditivo escrito, com revisão de prazo e de preço.');
+
+ titulo('CLÁUSULA 3 — DOS MATERIAIS, ACABAMENTOS E CARACTERÍSTICAS DA MADEIRA');
+ bloco('3.1. Serão empregados os materiais, ferragens e acabamentos especificados no Anexo I. A substituição de qualquer item depende de concordância prévia e por escrito das partes.');
+ bloco('3.2. A madeira é material natural: variações de cor, veio, textura, nós e pequenas movimentações decorrentes de umidade e temperatura são características próprias do material e não constituem defeito.');
+ bloco('3.3. Amostras, fotografias e imagens de referência têm caráter ilustrativo; pequenas diferenças de tonalidade entre a amostra e a peça final são esperadas.');
+
+ titulo('CLÁUSULA 4 — DO PREÇO E DA FORMA DE PAGAMENTO');
+ bloco('4.1. O valor total dos serviços é de '+valorTotal+', conforme o Anexo I.');
+ bloco('4.2. O pagamento será feito em '+fmtN(pctEntrada,pctEntrada%1?1:0)+'% no ato da assinatura deste contrato e '+fmtN(100-pctEntrada,pctEntrada%1?1:0)+'% na entrega e instalação do mobiliário, por PIX, transferência bancária ou cartão de crédito, nas condições indicadas no orçamento.');
+ bloco('4.3. O atraso de qualquer parcela implica multa de 2% sobre o valor em atraso e juros de 1% ao mês, calculados pro rata die, e autoriza a CONTRATADA a suspender a produção e a entrega até a regularização, prorrogando-se o prazo pelo mesmo número de dias do atraso.');
+
+ titulo('CLÁUSULA 5 — DO PRAZO DE EXECUÇÃO');
+ bloco('5.1. O prazo de fabricação é de '+vazio+' dias úteis, contados do cumprimento integral dos requisitos da Cláusula 2.1'+(prazoEntrega?', com entrega prevista para '+prazoEntrega:'')+'.');
+ bloco('5.2. O prazo será prorrogado, sem ônus para a CONTRATADA, nos casos de caso fortuito ou força maior, falta comprovada de insumos no mercado, alterações solicitadas pelo CONTRATANTE, atraso de pagamento ou indisponibilidade do local de instalação.');
+
+ titulo('CLÁUSULA 6 — DO LOCAL DE INSTALAÇÃO');
+ bloco('6.1. O CONTRATANTE entregará o local limpo, seco, desimpedido e com alvenaria, revestimentos, pisos, forros, pontos elétricos e hidráulicos já concluídos, além de energia elétrica disponível.');
+ bloco('6.2. Cabe ao CONTRATANTE providenciar autorização do condomínio, acesso ao imóvel, uso de elevador e espaço para carga e descarga.');
+ bloco('6.3. Se, na data agendada, o local não estiver em condições de receber a instalação, esta será remarcada conforme a agenda da CONTRATADA, podendo ser cobrada a armazenagem do mobiliário e o custo do deslocamento perdido.');
+
+ titulo('CLÁUSULA 7 — DA ENTREGA, DA MONTAGEM E DO RECEBIMENTO');
+ bloco('7.1. A montagem será executada por equipe da CONTRATADA, em dias úteis e em horário comercial.');
+ bloco('7.2. Concluída a instalação, as partes farão vistoria conjunta e assinarão o termo de recebimento; eventuais apontamentos serão registrados por escrito e sanados pela CONTRATADA em até 15 dias úteis.');
+ bloco('7.3. A ausência de manifestação escrita do CONTRATANTE em até 5 dias úteis contados da instalação implica aceitação do mobiliário entregue.');
+
+ titulo('CLÁUSULA 8 — DA GARANTIA');
+ bloco('8.1. Além da garantia legal de 90 dias prevista no art. 26 do Código de Defesa do Consumidor, a CONTRATADA concede garantia contratual de 12 meses, contados da data de entrega, contra defeitos de fabricação, falhas de montagem e defeitos de ferragens.');
+ bloco('8.2. A garantia não cobre: danos causados por umidade excessiva, infiltração, vazamento ou exposição direta ao sol e à chuva; riscos, manchas, impactos e mau uso; limpeza com produtos abrasivos, solventes ou álcool; sobrecarga das peças; alterações, reparos, desmontagem ou transporte feitos por terceiros; desgaste natural pelo uso; e as variações próprias da madeira descritas na Cláusula 3.2.');
+ bloco('8.3. O atendimento em garantia será agendado em até 5 dias úteis do aviso do CONTRATANTE e executado no local ou na oficina da CONTRATADA, conforme a natureza do reparo.');
+
+ titulo('CLÁUSULA 9 — DOS CUIDADOS E DA MANUTENÇÃO');
+ bloco('9.1. A limpeza deve ser feita com pano macio levemente úmido, secando-se em seguida. Devem ser evitados produtos abrasivos, solventes, álcool e esponjas ásperas.');
+ bloco('9.2. Não apoiar objetos quentes ou molhados diretamente sobre as superfícies, manter o ambiente ventilado e reaplicar óleo ou cera conforme a orientação entregue com o mobiliário, em geral a cada 12 meses.');
+
+ titulo('CLÁUSULA 10 — DAS ALTERAÇÕES DO ESCOPO');
+ bloco('10.1. Qualquer acréscimo, supressão ou alteração de escopo será formalizado por aditivo escrito, assinado pelas partes, com o respectivo impacto de prazo e de preço.');
+
+ titulo('CLÁUSULA 11 — DO ATRASO NA ENTREGA');
+ bloco('11.1. Em caso de atraso injustificado na entrega, imputável à CONTRATADA, incidirá multa de '+vazio+'% do valor total por semana de atraso, limitada a '+vazio+'% do valor do contrato, ressalvadas as hipóteses da Cláusula 5.2.');
+
+ titulo('CLÁUSULA 12 — DA RESCISÃO');
+ bloco('12.1. Antes do início da fabricação, o CONTRATANTE poderá rescindir este contrato mediante aviso escrito, com devolução dos valores pagos, retidos os custos comprovadamente incorridos com projeto, medição e materiais já adquiridos.');
+ bloco('12.2. Após o início da fabricação, a rescisão obriga o CONTRATANTE ao pagamento dos materiais adquiridos e da mão de obra executada até a data da comunicação.');
+ bloco('12.3. O descumprimento de qualquer cláusula autoriza a parte prejudicada a rescindir o contrato, mediante notificação com prazo de 10 dias para saneamento.');
+
+ titulo('CLÁUSULA 13 — DA PROPRIEDADE INTELECTUAL E DO USO DE IMAGEM');
+ bloco('13.1. Os projetos, desenhos, memoriais e detalhamentos elaborados pela CONTRATADA são de sua propriedade intelectual, nos termos da Lei nº 9.610/1998, sendo vedada a reprodução ou execução por terceiros sem autorização escrita.');
+ bloco('13.2. O CONTRATANTE autoriza a CONTRATADA a registrar e divulgar imagens do mobiliário entregue em seu portfólio e redes sociais, sem identificação do endereço, salvo manifestação em contrário por escrito.');
+
+ titulo('CLÁUSULA 14 — DA PROTEÇÃO DE DADOS');
+ bloco('14.1. As partes tratarão os dados pessoais envolvidos neste contrato conforme a Lei nº 13.709/2018 (LGPD), limitando o uso às finalidades da contratação e ao prazo legal de guarda.');
+
+ titulo('CLÁUSULA 15 — DAS DISPOSIÇÕES GERAIS');
+ bloco('15.1. Nenhuma das partes responde por descumprimento decorrente de caso fortuito ou força maior, nos termos do art. 393 do Código Civil.');
+ bloco('15.2. A tolerância quanto ao descumprimento de qualquer obrigação não implica novação nem renúncia de direitos.');
+ bloco('15.3. As comunicações entre as partes serão válidas quando feitas para os e-mails e telefones indicados na qualificação acima, inclusive por aplicativo de mensagens.');
+ bloco('15.4. Este contrato, com seus anexos, representa o acordo integral entre as partes sobre o objeto, substituindo entendimentos anteriores.');
+
+ titulo('CLÁUSULA 16 — DO FORO');
+ bloco('16.1. Fica eleito o foro da comarca de '+([emp.cidade,emp.estado].filter(Boolean).join(' - ')||vazio)+' para dirimir as questões oriundas deste contrato, com renúncia a qualquer outro, por mais privilegiado que seja.');
+
+ bloco('E por estarem justas e contratadas, as partes assinam este instrumento em duas vias de igual teor, na presença das testemunhas abaixo.',{antes:5,depois:8});
+
+ /* assinaturas: sempre inteiras na mesma página */
+ if(y>RODAPE_Y-58){doc.addPage();fundo();y=28;}
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
+ doc.text(([emp.cidade,emp.estado].filter(Boolean).join(' - ')||vazio)+', '+vazio+' de '+vazio+' de '+vazio+'.',M,y);
+ y+=18;
+ const meia=(R-M-14)/2;
+ doc.setDrawColor(...MUTED);doc.setLineWidth(0.2);
+ doc.line(M,y,M+meia,y);doc.line(R-meia,y,R,y);
+ doc.setFontSize(8);doc.setTextColor(...DARK);
+ doc.text('ESTÚDIO MABE',M,y+5);doc.text(cli?cli.nome:'CONTRATANTE',R-meia,y+5);
+ doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ doc.text('CONTRATADA',M,y+9.5);doc.text('CONTRATANTE',R-meia,y+9.5);
+ y+=30;
+ doc.setDrawColor(...MUTED);doc.line(M,y,M+meia,y);doc.line(R-meia,y,R,y);
+ doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ doc.text('TESTEMUNHA 1 — CPF '+vazio,M,y+5);doc.text('TESTEMUNHA 2 — CPF '+vazio,R-meia,y+5);
+
+ /* rodapé com numeração */
+ const n=doc.internal.getNumberOfPages();
+ let rodape='';
+ doc.setFont('helvetica','normal');doc.setFontSize(7);
+ for(const parte of [enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean)){
+  const tent=rodape?rodape+'   ·   '+parte:String(parte);
+  if(doc.getTextWidth(tent)<=(R-M)-30)rodape=tent;else break;}
+ for(let pg=1;pg<=n;pg++){doc.setPage(pg);
+  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(M,RODAPE_Y,R,RODAPE_Y);
+  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+  doc.text(rodape||'Contrato de prestação de serviços de marcenaria',M,RODAPE_Y+5.5);
+  doc.text('Página '+pg+' de '+n,R,RODAPE_Y+5.5,{align:'right'});}
+ return doc;}
+
 /* ================= PRODUÇÃO (PCP) ================= */
 const ETAPAS=['📋 Planejamento','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','🔁 Retrabalho','📦 Pronto','🚚 Entregue'];
 const ETAPA_FINAL=ETAPAS.length-1;
@@ -4875,6 +5043,8 @@ function orcamentoModelo(){return{id:'__modelo',num:0,cliId:'',data:'',validade:
   {id:'m2',tipo:'sob_medida',desc:'Descrição do item',obs:'',qty:1,preco:0,lucro:0},
   {id:'m3',tipo:'sob_medida',desc:'Descrição do item',obs:'',qty:1,preco:0,lucro:0}],
  custo:0,preco:0,lucro:0,anexos:[]};}
+/* o contrato em branco: sem cliente e sem valores, só para conferir o texto e o layout */
+function contratoModelo(){return{id:'__modelo',num:0,cliId:'',data:'',validade:'',preco:0,itens:[]};}
 function pedidoModelo(){return{id:'__modelo',num:0,cliId:'',data:'',pag:'—',status:'Pendente',
  obs:'Observações do pedido',
  itens:[
@@ -4888,20 +5058,22 @@ function abrirDocumento(modo){DOC_MODO=modo;navigate('documentos');
   if(o.indexOf('abrirDocumento')>-1)n.classList.toggle('active',o.indexOf("'"+modo+"'")>-1);});}
 async function verModeloDocumento(){
  const aviso=$('doc-modelo-aviso'),frame=$('doc-modelo-frame');if(!aviso)return;
- const recibo=DOC_MODO==='recibo';
- $('doc-modelo-titulo').textContent=recibo?'🧾 Modelo do Recibo do Pedido':'📄 Modelo do Orçamento';
- $('doc-modelo-sub').textContent=(recibo
-  ?'Layout do recibo que sai no botão 🧾 da lista de pedidos'
-  :'Layout do orçamento que sai no botão "Gerar PDF" e na impressão')
-  +', em branco, só para conferir o visual. Nenhum dado de cliente ou pedido aparece aqui.';
+ const recibo=DOC_MODO==='recibo',contrato=DOC_MODO==='contrato';
+ $('doc-modelo-titulo').textContent=contrato?'📝 Modelo de Contrato':recibo?'🧾 Modelo do Recibo do Pedido':'📄 Modelo do Orçamento';
+ $('doc-modelo-sub').textContent=contrato
+  ?'Contrato de prestação de serviços de marcenaria sob medida, em branco. Os campos que mudam a cada obra (prazo, multa, data) saem como linha para preencher. É um modelo: vale passar pelo seu advogado antes de usar com cliente.'
+  :(recibo
+   ?'Layout do recibo que sai no botão 🧾 da lista de pedidos'
+   :'Layout do orçamento que sai no botão "Gerar PDF" e na impressão')
+   +', em branco, só para conferir o visual. Nenhum dado de cliente ou pedido aparece aqui.';
  aviso.textContent='Montando o modelo...';
  if(!await libPronta('jspdf')){aviso.textContent='Não consegui carregar o gerador de PDF.';return;}
- const x=recibo?pedidoModelo():orcamentoModelo();
- const doc=recibo?montarPdfRecibo(x):montarPdfOrcamento(x,x.itens,[]);
+ const x=contrato?contratoModelo():recibo?pedidoModelo():orcamentoModelo();
+ const doc=contrato?montarPdfContrato(x):recibo?montarPdfRecibo(x):montarPdfOrcamento(x,x.itens,[]);
  if(MODELO_URL)URL.revokeObjectURL(MODELO_URL);
  MODELO_URL=doc.output('bloburl').toString();
  frame.src=MODELO_URL;frame.style.display='block';
- aviso.textContent=(recibo?'Recibo':'Orçamento')+' · modelo em branco · '+doc.internal.getNumberOfPages()+' página(s)';}
+ aviso.textContent=(contrato?'Contrato':recibo?'Recibo':'Orçamento')+' · modelo em branco · '+doc.internal.getNumberOfPages()+' página(s)';}
 function abrirModeloEmNovaAba(){if(!MODELO_URL){toast('Gere a pré-visualização primeiro.','info');return;}
  const w=window.open(MODELO_URL,'_blank');if(!w)toast('O navegador bloqueou a nova aba.','error');}
 function renderDocumentos(){verModeloDocumento();}
@@ -6506,7 +6678,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.31';
+const APP_VERSAO='2026-09-20.32';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
