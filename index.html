@@ -219,7 +219,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
    A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
    fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
-#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards { display:none; }
+#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards { display:none; }
 .pc-ficha { display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;padding:9px 11px;background:var(--surface2);border-radius:8px; }
 .pc-ficha div { display:flex;flex-direction:column;gap:1px;font-size:13px;font-family:var(--mono);color:var(--text);min-width:0; }
 .pc-ficha span { font-family:var(--font, inherit);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
@@ -323,14 +323,14 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
   #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
-  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards { display:block; }
+  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards { display:block; }
   /* calendário: a grade de 7 colunas não cabe; vira agenda com só os dias que têm algo */
   #cal-agenda { display:block;margin-top:4px; }
   #cal-grid, .cal-semana, .cal-legenda { display:none !important; }
   #section-calendario .period-bar { gap:6px; }
   #section-calendario .period-bar .btn { min-height:38px;min-width:40px; }
   #cal-label { min-width:0 !important;flex:1; }
-  #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #servicos-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
+  #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #servicos-tabela, #comissoes-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
   .cli-busca-barra input { max-width:none;font-size:16px; }
   .compras-topo { display:flex;justify-content:flex-end;margin-bottom:12px; }
   .pcp-abas { display:flex;gap:6px;overflow-x:auto;margin:0 -2px 12px;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none; }
@@ -477,6 +477,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <span class="nav-label">Compras</span>
     <div class="nav-item" onclick="navigate('compras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Compras</div>
     <span class="nav-label">Cadastros</span>
+    <div class="nav-item" onclick="navigate('comissoes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Comissões</div>
     <div class="nav-item" onclick="navigate('servicos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Serviços Terceirizados</div>
     <div class="nav-item" onclick="navigate('fornecedores')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Fornecedores</div>
     <div class="nav-item" onclick="navigate('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
@@ -617,6 +618,13 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
       <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-ofx')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImportacaoOfx()">✔ Lançar Selecionados</button></div>
     </div></div>
+
+    <!-- COMISSÕES -->
+    <div class="section" id="section-comissoes">
+      <div id="comissoes-cards"></div>
+      <div class="table-wrapper" id="comissoes-tabela"><div class="table-toolbar"><div class="table-toolbar-title">🤝 Quem recebe comissão</div></div>
+      <table><thead><tr><th>Nome</th><th>Relação</th><th>Comissão padrão</th><th>Contato</th><th>Observações</th><th>Ações</th></tr></thead><tbody id="tb-comissoes"></tbody></table></div>
+    </div>
 
     <!-- SERVIÇOS TERCEIRIZADOS -->
     <div class="section" id="section-servicos">
@@ -822,7 +830,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
               <div class="form-group"><label class="form-label">Fundo de Reserva (%)</label><input type="number" class="form-control" id="orc-reserva" step="0.5" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Reserva sobre o custo, separada do lucro</div></div>
               <div class="form-group"><label class="form-label">Imposto (%)</label><input type="number" class="form-control" id="orc-imposto" step="0.1" oninput="calcOrc()"></div>
               <div class="form-group"><label class="form-label">Taxa da máquina (%)</label><input type="number" class="form-control" id="orc-maquina" step="0.5" min="0" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Percentual do valor total do item para o uso das máquinas — entra no preço, como o imposto</div></div>
-              <div class="form-group"><label class="form-label">Comissão (%)</label><input type="number" class="form-control" id="orc-comissao" step="0.5" min="0" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Entra no preço, como o imposto — não sai do seu lucro</div></div><div class="form-group"><label class="form-label">Quem recebe a comissão</label><input type="text" class="form-control" id="orc-comissao-nome" placeholder="Arquiteto, indicação, parceiro..." list="comissao-sugestoes"><datalist id="comissao-sugestoes"></datalist></div><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="orc-markup" step="any" oninput="onMargemEditada()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">% do preço final que vira lucro</div></div>
+              <div class="form-group"><label class="form-label">Comissão (%)</label><input type="number" class="form-control" id="orc-comissao" step="0.5" min="0" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Entra no preço, como o imposto — não sai do seu lucro</div></div><div class="form-group"><label class="form-label">Quem recebe a comissão</label><select class="form-control" id="orc-comissao-pessoa" onchange="comissaoPessoaEscolhida()"></select><input type="text" class="form-control" id="orc-comissao-nome" placeholder="Nome de quem recebe" list="comissao-sugestoes" style="display:none;margin-top:6px" oninput="calcOrc()"><datalist id="comissao-sugestoes"></datalist></div><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="orc-markup" step="any" oninput="onMargemEditada()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">% do preço final que vira lucro</div></div>
             </div></div>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
@@ -1081,6 +1089,18 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </div></div>
 <div class="modal-overlay" id="modal-conciliacao"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🧾 Conferência com o extrato</div><button class="modal-close" onclick="closeModal('modal-conciliacao')">✕</button></div><div class="modal-body" id="conc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="conc-desfazer" onclick="desfazerAjusteSaldo()">↩ Desfazer ajuste do saldo</button><button class="btn btn-primary" onclick="closeModal('modal-conciliacao')">Entendi</button></div></div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option><option>Marketing</option><option>Vendas</option><option>Pedidos</option><option>Folha de Pagamento</option><option>Administrativo</option><option>Manutenção</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-comissoes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mcom-title">Nova Pessoa com Comissão</div><button class="modal-close" onclick="closeModal('modal-comissoes')">✕</button></div><div class="modal-body">
+<input type="hidden" id="com-id">
+<div class="form-grid">
+<div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="com-nome" placeholder="Nome de quem recebe a comissão"></div>
+<div class="form-grid form-2">
+<div class="form-group"><label class="form-label">Relação</label><select class="form-control" id="com-papel"><option>Arquiteto</option><option>Designer de interiores</option><option>Indicação</option><option>Parceiro</option><option>Vendedor</option><option>Outro</option></select></div>
+<div class="form-group"><label class="form-label">Comissão padrão (%)</label><input type="number" class="form-control" id="com-pct" step="0.5" min="0" value="0"></div>
+</div>
+<div class="form-group"><label class="form-label">Contato</label><input type="text" class="form-control" id="com-contato" placeholder="Telefone ou e-mail"></div>
+<div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="com-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Combinado de pagamento, projetos em que atua..."></textarea></div>
+</div>
+</div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-comissoes')">Cancelar</button><button class="btn btn-primary" onclick="saveComissionado()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-servicos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mserv-title">Novo Serviço Terceirizado</div><button class="modal-close" onclick="closeModal('modal-servicos')">✕</button></div><div class="modal-body">
 <input type="hidden" id="serv-id">
 <div class="form-grid">
@@ -1285,6 +1305,7 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  if(!DB.config.cf)DB.config.cf=d.config.cf; if(!DB.seq)DB.seq=d.seq;
  for(const k in d.config.cf)if(DB.config.cf[k]===undefined)DB.config.cf[k]=d.config.cf[k];
  if(!Array.isArray(DB.config.servicos))DB.config.servicos=[];
+ if(!Array.isArray(DB.config.comissionados))DB.config.comissionados=[];
  if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];
  if(!DB.config.custosFixosExtras)DB.config.custosFixosExtras=[];
  if(!DB.config.temposProducao)DB.config.temposProducao={};
@@ -1354,7 +1375,7 @@ function buscarAtualizacoesManual(){if(!DB.config.sheetsUrl){toast('Configure a 
    Usuários e Configurações são exclusivos do Administrador. */
 const NIVEIS={
  'Administrador':{desc:'Acesso total, incluindo Usuários, Configurações e Folha de Pagamento.',edita:true,valores:true,secoes:null},
- 'Financeiro':{desc:'Tudo, exceto Usuários e Configurações — não altera custos padrão nem a folha.',edita:true,valores:true,secoes:['dashboard','calendario','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','centrocustos','relatorios','compras','fornecedores','servicos','clientes','historico']},
+ 'Financeiro':{desc:'Tudo, exceto Usuários e Configurações — não altera custos padrão nem a folha.',edita:true,valores:true,secoes:['dashboard','calendario','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','centrocustos','relatorios','compras','fornecedores','servicos','comissoes','clientes','historico']},
  'Produção':{desc:'Calendário, PCP, Máquinas, Estoque, Pedidos e Clientes. Não vê Financeiro, Orçamentos, custos nem valores em R$.',edita:true,valores:false,secoes:['dashboard','calendario','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']},
  'Consulta':{desc:'Mesmas telas do nível Produção, somente leitura.',edita:false,valores:false,secoes:['dashboard','calendario','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']}
 };
@@ -1658,14 +1679,14 @@ function prepararOrdenacao(sec){
   th.addEventListener('click',()=>ordenarTabela(th));});}
 
 /* ================= NAVEGAÇÃO ================= */
-const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',servicos:'Serviços Terceirizados',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
+const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',servicos:'Serviços Terceirizados',comissoes:'Comissões',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
 /* No celular o titulo longo empurrava o botao '+ Novo' para a linha de baixo.
    So os nomes que sobram estao aqui; o resto usa o titulo normal. */
 const TITULOS_CURTOS={clientes:'Clientes',pcp:'Produção',entregas:'Entregas',ferramentas:'Máquinas',
  calendario:'Calendário',insumos:'Material/Insumo',portfolio:'Portfólio',madeiras:'Madeiras',
  compras:'Compras',historico:'Histórico',servicos:'Serviços'};
-const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','servicos','compras','usuarios'];
-const BTN_NEW_LABELS={orcamentos:'Novo Orçamento',financeiro:'Adicionar Lançamento',servicos:'Novo Serviço'};
+const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','servicos','comissoes','compras','usuarios'];
+const BTN_NEW_LABELS={orcamentos:'Novo Orçamento',financeiro:'Adicionar Lançamento',servicos:'Novo Serviço',comissoes:'Nova Pessoa'};
 let CUR='dashboard';
 function toggleSidebar(){$('sidebar').classList.toggle('open');}
 function closeSidebar(){$('sidebar').classList.remove('open');}
@@ -1688,7 +1709,7 @@ function navigate(sec){
  prepararOrdenacao(sec);
  if(sec==='clientes')carregarClientesSupabase();
  if(sec==='fornecedores')carregarFornecedoresSupabase();
- if(sec==='servicos')carregarConfigSupabase();
+ if(sec==='servicos'||sec==='comissoes')carregarConfigSupabase();
  if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas'||sec==='calendario')carregarFerramentasSupabase();
@@ -1701,12 +1722,13 @@ function navigate(sec){
  if(sec==='configuracoes')carregarConfigSupabase();
  if(sec==='historico')carregarHistoricoSupabase();
  if(sec==='usuarios')carregarUsuariosSupabase();}
-function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,servicos:renderServicos,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
+function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,servicos:renderServicos,comissoes:renderComissoes,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 /* ================= BUSCA GLOBAL =================
    Filtra a seção aberta, como antes, e ao mesmo tempo procura em todos os
    cadastros. Clicar num resultado leva para a seção certa já filtrada. */
 const norm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 function fontesBusca(){return [
+ {sec:'comissoes',grupo:'Comissões',itens:listaComissionados(),cod:c=>'',txt:c=>c.nome,sub:c=>c.papel||'',extra:c=>[c.contato,c.obs]},
  {sec:'servicos',grupo:'Serviços',itens:listaServicos(),cod:sv=>'',txt:sv=>sv.nome,sub:sv=>sv.fornId?fornName(sv.fornId):'',extra:sv=>[sv.unidade,sv.obs]},
  {sec:'clientes',grupo:'Clientes',itens:DB.clientes,cod:c=>'',txt:c=>c.nome,sub:c=>c.tel||'',extra:c=>[c.email,c.doc,c.cidade]},
  {sec:'orcamentos',grupo:'Orçamentos',itens:DB.orcamentos,cod:o=>'ORC-'+pad(o.num),txt:o=>cliName(o.cliId),sub:o=>o.status,extra:o=>[(o.itens||[]).map(i=>i.desc).join(' '),o.obs]},
@@ -1788,6 +1810,7 @@ function openNew(){if(!guard())return;
   case 'financeiro':openFin();break;
   case 'fornecedores':openFornecedor();break;
   case 'servicos':openServico();break;
+  case 'comissoes':openComissionado();break;
   case 'compras':openCompra();break;
   case 'usuarios':openUsuario();break;}}
 function updateBadges(){
@@ -3365,7 +3388,7 @@ function resetOrcForm(tipo){const cf=DB.config.cf;
  $('orc-id').value='';$('orc-tipo').value=tipo;$('orc-desc').value='';$('orc-qty').value=1;$('orc-obs').value='';
  $('orc-mdo').innerHTML='';
  $('orc-imposto').value=cf.imposto;$('orc-markup').value=cf.markup;$('orc-reserva').value=cf.reserva!==undefined?cf.reserva:10;$('orc-maquina').value=cf.taxaMaquina||0;
- $('orc-comissao').value=0;$('orc-comissao-nome').value='';atualizarSugestoesComissao();
+ $('orc-comissao').value=0;$('orc-comissao-nome').value='';selecionarComissaoDoItem('');
  $('orc-materiais').innerHTML='';
  $('card-novo-produto').style.display=tipo==='novo_produto'?'block':'none';
  $('res-novo-produto').style.display=tipo==='novo_produto'?'block':'none';
@@ -3485,10 +3508,32 @@ function atualizarResumoComissaoOrc(o){const linha=$('orcd-comissao-linha');if(!
  $('orcd-comissao').textContent=fmt(total);
  const por=comissaoPorPessoa(o),nomes=Object.keys(por);
  $('orcd-comissao-lbl').textContent='Comissão'+(nomes.length===1?' — '+nomes[0]:(nomes.length>1?' ('+nomes.length+' beneficiários)':''));}
-function atualizarSugestoesComissao(){const dl=$('comissao-sugestoes');if(!dl)return;
+function atualizarSugestoesComissao(){const dl=$('comissao-sugestoes');
  const nomes=new Set();
  (DB.orcamentos||[]).forEach(o=>(o.itens||[]).forEach(i=>{if(i.comissaoNome)nomes.add(i.comissaoNome);}));
- dl.innerHTML=[...nomes].sort().map(n=>'<option value="'+esc(n)+'">').join('');}
+ if(dl)dl.innerHTML=[...nomes].sort().map(n=>'<option value="'+esc(n)+'">').join('');
+ const sel=$('orc-comissao-pessoa');if(!sel)return;
+ const atual=sel.value;
+ sel.innerHTML='<option value="">— Sem comissão —</option>'
+  +listaComissionados().slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'))
+   .map(c=>'<option value="'+c.id+'">'+esc(c.nome)+(c.papel?' ('+esc(c.papel)+')':'')+(Number(c.pct)?' — '+fmtN(c.pct,c.pct%1?1:0)+'%':'')+'</option>').join('')
+  +'<option value="__outro">✏️ Outro (digitar)</option>';
+ if(atual)sel.value=atual;}
+/* escolher a pessoa traz o percentual combinado dela; "Outro" libera o campo de texto */
+function comissaoPessoaEscolhida(){const sel=$('orc-comissao-pessoa'),nome=$('orc-comissao-nome');
+ if(sel.value==='__outro'){nome.style.display='';nome.focus();calcOrc();return;}
+ nome.style.display='none';
+ const c=listaComissionados().find(x=>x.id===sel.value);
+ if(!c){nome.value='';$('orc-comissao').value=0;calcOrc();return;}
+ nome.value=c.nome;
+ if(Number(c.pct))$('orc-comissao').value=c.pct;
+ calcOrc();}
+/* deixa a lista mostrando a pessoa do item (ou "Outro", quando o nome não está cadastrado) */
+function selecionarComissaoDoItem(nome){const sel=$('orc-comissao-pessoa');if(!sel)return;
+ atualizarSugestoesComissao();
+ const c=listaComissionados().find(x=>String(x.nome).toLowerCase()===String(nome||'').toLowerCase());
+ sel.value=c?c.id:(nome?'__outro':'');
+ $('orc-comissao-nome').style.display=(!c&&nome)?'':'none';}
 /* soma da comissão de um orçamento inteiro */
 function comissaoOrc(o){return itensOrc(o).reduce((s,i)=>s+(Number(i.comissaoVal)||0),0);}
 function comissaoPorPessoa(o){const m={};
@@ -3562,7 +3607,7 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
  }
  $('orc-imposto').value=it.imposto;$('orc-markup').value=it.markup;$('orc-reserva').value=it.reserva!==undefined?it.reserva:0;
  $('orc-maquina').value=it.maquina||0;
- $('orc-comissao').value=it.comissao||0;$('orc-comissao-nome').value=it.comissaoNome||'';atualizarSugestoesComissao();
+ $('orc-comissao').value=it.comissao||0;$('orc-comissao-nome').value=it.comissaoNome||'';selecionarComissaoDoItem(it.comissaoNome||'');
  $('orc-materiais').innerHTML='';(it.materiais||[]).forEach(m=>addMaterial(m.mode||'livre',m));
  $('orc-servicos').innerHTML='';(it.servicos||[]).forEach(sv=>addServico(sv));
  $('orc-form-title').textContent='Editar Item';
@@ -4540,6 +4585,51 @@ function renderFornecedoresCards(){const alvo=$('fornecedores-cards');if(!alvo)r
    +(links?'<div class="pc-links">'+links+'</div>':'')
    +(canEdit()?'<div class="pc-acoes">'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</div>':'')
    +'</div>';}).join('');}
+/* ================= COMISSÕES =================
+   Quem recebe comissão (arquiteto, indicação, parceiro...) com o percentual combinado.
+   Fica em config (campo "comissionados"), como os serviços terceirizados — sem tabela nova no banco. */
+const listaComissionados=()=>DB.config.comissionados||(DB.config.comissionados=[]);
+function renderComissoesCards(lista){const alvo=$('comissoes-cards');if(!alvo)return;
+ if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Ninguém cadastrado para receber comissão</div>';return;}
+ alvo.innerHTML=lista.map(c=>'<div class="pedido-card">'
+  +'<div class="pc-topo"><div class="pc-cliente">'+esc(c.nome)+'</div><span class="badge badge-muted">'+esc(c.papel||'—')+'</span></div>'
+  +'<div class="pc-valor"><span class="pc-total">'+fmtN(Number(c.pct)||0,(Number(c.pct)||0)%1?1:0)+'%</span></div>'
+  +(c.contato?'<div class="pc-pag">'+esc(c.contato)+'</div>':'')
+  +(c.obs?'<div class="pc-itens-lista"><div class="pc-item">'+esc(c.obs)+'</div></div>':'')
+  +(canEdit()?'<div class="pc-acoes">'+actionBtns("editComissionado('"+c.id+"')","delComissionado('"+c.id+"')")+'</div>':'')
+  +'</div>').join('');}
+function renderComissoes(){
+ const lista=listaComissionados().slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+ renderComissoesCards(lista);
+ $('tb-comissoes').innerHTML=lista.map(c=>'<tr><td><strong>'+esc(c.nome)+'</strong></td><td>'+esc(c.papel||'—')+'</td><td class="mono" style="font-weight:700">'+fmtN(Number(c.pct)||0,(Number(c.pct)||0)%1?1:0)+'%</td><td>'+esc(c.contato||'—')+'</td><td style="font-size:12px;color:var(--text-muted)">'+esc(c.obs||'—')+'</td><td>'+actionBtns("editComissionado('"+c.id+"')","delComissionado('"+c.id+"')")+'</td></tr>').join('')||emptyRow(6,'Ninguém cadastrado para receber comissão');
+ atualizarSugestoesComissao();}
+function openComissionado(){if(!guard())return;
+ $('com-id').value='';$('com-nome').value='';$('com-papel').value='Arquiteto';$('com-pct').value=0;$('com-contato').value='';$('com-obs').value='';
+ $('mcom-title').textContent='Nova Pessoa com Comissão';openModal('modal-comissoes');}
+function editComissionado(id){if(!guard())return;const c=listaComissionados().find(x=>x.id===id);if(!c)return;
+ $('com-id').value=c.id;$('com-nome').value=c.nome||'';$('com-papel').value=c.papel||'Outro';$('com-pct').value=c.pct||0;$('com-contato').value=c.contato||'';$('com-obs').value=c.obs||'';
+ $('mcom-title').textContent='Editar';openModal('modal-comissoes');}
+async function gravarComissionados(acao,detalhe){
+ const lista=listaComissionados();
+ const {error}=await supa.from('config').upsert({campo:'comissionados',valor:JSON.stringify(lista)});
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return false;}
+ commit(acao,'Comissões',detalhe);syncSheets('config','upsert',{campo:'comissionados',valor:JSON.stringify(lista)});
+ atualizarSugestoesComissao();return true;}
+async function saveComissionado(){if(!guard())return;
+ const nome=$('com-nome').value.trim();if(!nome){toast('Informe o nome.','error');return;}
+ const id=$('com-id').value;
+ const dados={nome,papel:$('com-papel').value,pct:num('com-pct'),contato:$('com-contato').value.trim(),obs:$('com-obs').value.trim()};
+ const lista=listaComissionados();
+ const antes=id?Object.assign({},lista.find(x=>x.id===id)):null;
+ if(id){const c=lista.find(x=>x.id===id);if(!c)return;Object.assign(c,dados);}
+ else lista.push(Object.assign({id:uid()},dados));
+ if(!await gravarComissionados(id?'editar':'criar',nome)){if(id&&antes)Object.assign(lista.find(x=>x.id===id),antes);else lista.pop();return;}
+ closeModal('modal-comissoes');toast('Cadastro salvo!','success');}
+async function delComissionado(id){if(!guard())return;const lista=listaComissionados();const c=lista.find(x=>x.id===id);if(!c)return;
+ if(!confirm('Excluir "'+c.nome+'" do cadastro de comissões?\n\nOs orçamentos já feitos não mudam.'))return;
+ const idx=lista.indexOf(c);lista.splice(idx,1);
+ if(!await gravarComissionados('excluir',c.nome)){lista.splice(idx,0,c);return;}
+ toast('Cadastro excluído.','info');}
 /* ================= SERVIÇOS TERCEIRIZADOS =================
    Catálogo do que é feito fora (estofamento, pintura, corte a laser...) com prestador e valor de referência.
    Fica em config (campo "servicos"), como os tipos de mão de obra — não precisa de tabela própria no banco. */
@@ -5125,7 +5215,9 @@ async function carregarConfigSupabase(){
  const {data,error}=await supa.from('config').select('*');
  if(error){erroDeCarga('configurações',error);return;}
  (data||[]).forEach(({campo,valor})=>{
-  if(campo==='servicos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.servicos=arr;}catch(e){}
+  if(campo==='comissionados'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.comissionados=arr;}catch(e){}
+   if(CUR==='comissoes')renderComissoes();}
+  else if(campo==='servicos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.servicos=arr;}catch(e){}
    if(CUR==='servicos')renderServicos();}
   else if(campo==='mdoTipos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr)&&arr.length)DB.config.mdoTipos=arr;}catch(e){}}
   else if(campo==='custosFixosExtras'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.custosFixosExtras=arr;}catch(e){}}
@@ -6098,7 +6190,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.8';
+const APP_VERSAO='2026-09-20.9';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
