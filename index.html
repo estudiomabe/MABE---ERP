@@ -359,6 +359,13 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 body.sem-origem .campo-origem { display:none; }
 body.sem-fin-obs .fin-obs { display:none; }
 .fin-obs-campo { font-size:11.5px;padding:3px 6px;min-width:140px; }
+.conc-resumo { background:var(--surface2);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;margin-bottom:14px; }
+.conc-ok { background:rgba(61,107,79,0.12);border-left:3px solid var(--success);border-radius:8px;padding:11px 13px;font-size:13px;margin-bottom:14px; }
+.conc-bloco { border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--surface); }
+.conc-tit { font-size:13px;font-weight:700;display:flex;justify-content:space-between;gap:10px;align-items:baseline; }
+.conc-sub { font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:4px 0 8px; }
+.conc-item { display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:5px 0;border-top:1px solid var(--border);color:var(--text-muted); }
+.conc-link { background:none;border:0;padding:0;font:inherit;color:var(--text);text-align:left;cursor:pointer;text-decoration:underline; }
 @media (max-width:860px) {
   /* abaixo de 16px o iPhone dá zoom sozinho ao tocar no campo e a tela fica desalinhada */
   input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea, .form-control { font-size:16px !important; }
@@ -1064,6 +1071,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
   </div>
   <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-nfe-info')">Entendi</button></div>
 </div></div>
+<div class="modal-overlay" id="modal-conciliacao"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🧾 Conferência com o extrato</div><button class="modal-close" onclick="closeModal('modal-conciliacao')">✕</button></div><div class="modal-body" id="conc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="conc-desfazer" onclick="desfazerAjusteSaldo()">↩ Desfazer ajuste do saldo</button><button class="btn btn-primary" onclick="closeModal('modal-conciliacao')">Entendi</button></div></div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option><option>Marketing</option><option>Vendas</option><option>Pedidos</option><option>Folha de Pagamento</option><option>Administrativo</option><option>Manutenção</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-servicos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mserv-title">Novo Serviço Terceirizado</div><button class="modal-close" onclick="closeModal('modal-servicos')">✕</button></div><div class="modal-body">
 <input type="hidden" id="serv-id">
@@ -4206,7 +4214,15 @@ function parseOfx(texto){
   if(dm)dataSaldoBanco=parseOfxDate(dm[1].trim());
   if(saldoBanco!==null&&isNaN(saldoBanco))saldoBanco=null;
  }
- return{itens,saldoBanco,dataSaldoBanco};}
+ /* o período do extrato delimita o que dá para conferir: fora dele, diferença é de outro mês */
+ let inicio='',fim='';
+ const lista=texto.match(/<BANKTRANLIST>[\s\S]*?<\/BANKTRANLIST>/i);
+ if(lista){const a=lista[0].match(/<DTSTART>([^\r\n<]*)/i),b=lista[0].match(/<DTEND>([^\r\n<]*)/i);
+  if(a)inicio=parseOfxDate(a[1].trim());if(b)fim=parseOfxDate(b[1].trim());}
+ const datas=itens.map(t=>t.data).sort();
+ if(!inicio&&datas.length)inicio=datas[0];
+ if(!fim&&datas.length)fim=datas[datas.length-1];
+ return{itens,saldoBanco,dataSaldoBanco,periodo:{inicio,fim}};}
 function jaExisteFinanceiro(t){return DB.financeiro.some(f=>f.data===t.data&&Math.abs(Number(f.val)-t.val)<0.005&&(f.desc||'').trim()===t.desc.trim());}
 /* mesmo tipo e valor, até 3 dias de diferença, descrição diferente: costuma ser o mesmo pagamento já lançado à mão
    (ex.: "Salário - Jonathas" x "Transf Pix enviada - Jonathas…") */
@@ -4218,9 +4234,9 @@ function importarExtratoOfx(ev){const file=ev.target.files[0];ev.target.value=''
  reader.onload=()=>{
   let resultado;
   try{resultado=parseOfx(reader.result);}catch(e){toast('Erro ao ler o arquivo OFX: '+e.message,'error');return;}
-  const{itens,saldoBanco,dataSaldoBanco}=resultado;
+  const{itens,saldoBanco,dataSaldoBanco,periodo}=resultado;
   if(!itens.length){toast('Nenhum lançamento encontrado neste arquivo OFX.','error');return;}
-  OFX_ITENS=itens;OFX_SALDO_BANCO=saldoBanco;OFX_DATA_SALDO_BANCO=dataSaldoBanco;
+  OFX_ITENS=itens;OFX_SALDO_BANCO=saldoBanco;OFX_DATA_SALDO_BANCO=dataSaldoBanco;OFX_PERIODO=periodo||{inicio:'',fim:''};
   $('ofx-itens-lista').innerHTML=itens.map((t,i)=>{const dup=jaExisteFinanceiro(t);const parecido=dup?null:possivelDuplicadoFinanceiro(t);
    const aviso=dup?' · <span style="color:var(--warning)">já existe no financeiro</span>'
     :parecido?' · <span style="color:var(--warning)">possível duplicado de "'+esc(parecido.desc)+'" ('+fmtD(parecido.data)+')</span>':'';
@@ -4231,7 +4247,7 @@ function importarExtratoOfx(ev){const file=ev.target.files[0];ev.target.value=''
  };
  reader.onerror=()=>toast('Não foi possível ler o arquivo.','error');
  reader.readAsText(file);}
-let OFX_SALDO_BANCO=null,OFX_DATA_SALDO_BANCO='';
+let OFX_SALDO_BANCO=null,OFX_DATA_SALDO_BANCO='',OFX_PERIODO={inicio:'',fim:''};
 function marcarTodosOfx(v){document.querySelectorAll('.ofx-item-check').forEach(c=>c.checked=v);atualizarComparacaoSaldoOfx();}
 /* Recalcula a cada marca/desmarca: mostra o saldo atual do ERP, o que ele
    ficaria depois de lancar os itens marcados, e o que o banco diz que a
@@ -4256,23 +4272,91 @@ function atualizarComparacaoSaldoOfx(){
   :'<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--danger);margin-top:4px">⚠ Diverge '+(dif>0?'R$ '+fmtN(Math.abs(dif),2)+' a mais':'R$ '+fmtN(Math.abs(dif),2)+' a menos')+' do que o banco diz — confira os itens marcados antes de lançar.</div>';
  alvo.innerHTML='<div style="background:var(--surface2);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-left:3px solid '+(bate?'var(--success)':'var(--danger)')+'">'
   +linhaAtual+linhaProjetado+linhaBanco+aviso+'</div>';}
+/* ================= CONFERÊNCIA COM O EXTRATO =================
+   Depois de importar, o saldo do ERP passa a ser o saldo que o banco declara no arquivo (LEDGERBAL).
+   A diferença é ajustada no Saldo Inicial — o único lugar que representa o que aconteceu fora do que o ERP
+   conhece — e o relatório mostra onde estão as inconsistências que explicam essa diferença. */
+const sinalFin=f=>(f.tipo==='Entrada'?1:-1)*Number(f.val||0);
+function analisarConciliacaoOfx(naoImportados){
+ const saldoErp=saldoFin();
+ const dif=Math.round((saldoErp-OFX_SALDO_BANCO)*100)/100;
+ const {inicio,fim}=OFX_PERIODO;
+ /* pagos no ERP dentro do período do extrato que o extrato não traz: costuma ser duplicado ou lançamento manual */
+ const extras=DB.financeiro.filter(f=>{
+  if(f.status!=='Pago')return false;
+  const d=String(f.data||'').slice(0,10);
+  if(inicio&&d<inicio)return false;
+  if(fim&&d>fim)return false;
+  return !OFX_ITENS.some(t=>t.tipo===f.tipo&&Math.abs(t.val-Number(f.val))<0.005
+   &&Math.abs((new Date(t.data+'T12:00:00')-new Date(d+'T12:00:00'))/864e5)<=3);});
+ const somaNaoImp=naoImportados.reduce((s,t)=>s+(t.tipo==='Entrada'?1:-1)*t.val,0);
+ const somaExtras=extras.reduce((s,f)=>s+sinalFin(f),0);
+ const pendentes=DB.financeiro.filter(f=>f.status==='Pendente');
+ const residuo=Math.round((dif+somaNaoImp-somaExtras)*100)/100;
+ return {saldoErp,dif,extras,somaExtras,naoImportados,somaNaoImp,pendentes,residuo,inicio,fim};}
+let AJUSTE_SALDO_ANTERIOR=null;
+async function gravarSaldoInicial(valor){
+ const antes=Number(DB.config.cf.saldoInicial)||0;
+ DB.config.cf.saldoInicial=valor;
+ const {error}=await supa.from('config').upsert({campo:'saldoInicial',valor:String(valor)});
+ if(error){DB.config.cf.saldoInicial=antes;toast('Erro ao salvar o saldo inicial: '+error.message,'error');return false;}
+ saveDB();syncSheets('config','upsert',{campo:'saldoInicial',valor:String(valor)});
+ if($('cfg-saldo-inicial'))$('cfg-saldo-inicial').value=valor;
+ return true;}
+async function desfazerAjusteSaldo(){
+ if(AJUSTE_SALDO_ANTERIOR===null)return;
+ const alvo=AJUSTE_SALDO_ANTERIOR;AJUSTE_SALDO_ANTERIOR=null;
+ if(!await gravarSaldoInicial(alvo))return;
+ log('editar','Financeiro','Ajuste de saldo do extrato desfeito');
+ renderFinanceiro();closeModal('modal-conciliacao');
+ toast('Ajuste desfeito. Saldo do ERP: '+fmt(saldoFin()),'info',6000);}
+function linhaConc(rot,valor,cor){return '<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px'+(cor?';color:'+cor:'')+'"><span>'+rot+'</span><span class="mono" style="font-weight:700;white-space:nowrap">'+valor+'</span></div>';}
+function mostrarConciliacaoOfx(an,ajustou){
+ const LIM=12;
+ const maisLinha=n=>n>LIM?'<div class="conc-item" style="justify-content:center">+ '+(n-LIM)+' não listado(s) — veja no Financeiro</div>':'';
+ const itensFora=an.naoImportados.slice(0,LIM).map(t=>'<div class="conc-item"><span>'+fmtD(t.data)+' · '+esc(t.desc)+'</span><span class="mono">'+(t.tipo==='Entrada'?'+':'−')+fmt(t.val)+'</span></div>').join('');
+ const itensExtras=an.extras.slice(0,LIM).map(f=>'<div class="conc-item"><button class="conc-link" onclick="closeModal(\'modal-conciliacao\');navigate(\'financeiro\');editFin(\''+f.id+'\')">'+fmtD(f.data)+' · '+esc(f.desc)+'</button><span class="mono">'+(f.tipo==='Entrada'?'+':'−')+fmt(f.val)+'</span></div>').join('');
+ const blocos=[];
+ if(an.extras.length)blocos.push('<div class="conc-bloco"><div class="conc-tit">⚠ '+an.extras.length+' lançamento(s) no ERP que o extrato não traz <span class="mono">'+(an.somaExtras>=0?'+':'−')+fmt(Math.abs(an.somaExtras))+'</span></div><div class="conc-sub">Pagos no período do extrato e sem correspondente no banco: costumam ser duplicados ou lançamentos feitos à mão. Toque para abrir.</div>'+itensExtras+maisLinha(an.extras.length)+'</div>');
+ if(an.naoImportados.length)blocos.push('<div class="conc-bloco"><div class="conc-tit">↪ '+an.naoImportados.length+' item(ns) do extrato que você não importou <span class="mono">'+(an.somaNaoImp>=0?'+':'−')+fmt(Math.abs(an.somaNaoImp))+'</span></div><div class="conc-sub">Ficaram desmarcados nesta importação. Se algum deveria entrar, importe o arquivo de novo e marque-o.</div>'+itensFora+maisLinha(an.naoImportados.length)+'</div>');
+ if(Math.abs(an.residuo)>=0.01)blocos.push('<div class="conc-bloco"><div class="conc-tit">🕓 Diferença de antes deste extrato <span class="mono">'+(an.residuo>=0?'+':'−')+fmt(Math.abs(an.residuo))+'</span></div><div class="conc-sub">O que sobra depois das duas listas acima. Vem de movimentações anteriores ao período do extrato ou de um saldo inicial defasado — foi isso que o ajuste corrigiu.</div></div>');
+ if(an.pendentes.length)blocos.push('<div class="conc-bloco"><div class="conc-tit">ℹ '+an.pendentes.length+' lançamento(s) pendente(s)</div><div class="conc-sub">Não entram no saldo enquanto não forem marcados como Pago. Não explicam a diferença, mas vale conferir se algum já caiu na conta.</div></div>');
+ $('conc-corpo').innerHTML=
+  '<div class="conc-resumo">'
+  +linhaConc('Saldo segundo o banco'+(OFX_DATA_SALDO_BANCO?' (em '+fmtD(OFX_DATA_SALDO_BANCO)+')':''),fmt(OFX_SALDO_BANCO))
+  +linhaConc('Saldo do ERP antes do ajuste',fmt(an.saldoErp))
+  +linhaConc('Diferença',(an.dif>=0?'+':'−')+fmt(Math.abs(an.dif)),an.dif>=0?'var(--success)':'var(--danger)')
+  +'</div>'
+  +(ajustou?'<div class="conc-ok">✔ Saldo do ERP igualado ao extrato: <strong>'+fmt(saldoFin())+'</strong><div class="conc-sub">O ajuste foi feito no Saldo Inicial (de '+fmt(AJUSTE_SALDO_ANTERIOR)+' para '+fmt(DB.config.cf.saldoInicial)+'). Nenhum lançamento foi criado ou apagado.</div></div>':'')
+  +(blocos.length?blocos.join(''):'<div class="conc-bloco"><div class="conc-tit">Nada a apontar</div><div class="conc-sub">Não encontrei lançamentos sem correspondência no período do extrato.</div></div>');
+ $('conc-desfazer').style.display=ajustou?'inline-flex':'none';
+ openModal('modal-conciliacao');}
 async function confirmarImportacaoOfx(){if(!guard())return;
  const idxs=Array.from(document.querySelectorAll('.ofx-item-check:checked')).map(c=>Number(c.value));
- if(!idxs.length){toast('Selecione ao menos um lançamento.','error');return;}
+ /* nada marcado (extrato já todo lançado) ainda vale a pena: confere o saldo e aponta as diferenças */
+ if(!idxs.length&&OFX_SALDO_BANCO===null){toast('Selecione ao menos um lançamento.','error');return;}
  const novos=idxs.map(i=>Object.assign({id:uid()},{tipo:OFX_ITENS[i].tipo,data:OFX_ITENS[i].data,desc:OFX_ITENS[i].desc,cat:'Extrato bancário',val:OFX_ITENS[i].val,status:'Pago'}));
- const {error}=await supa.from('financeiro').insert(novos.map(financeiroParaSupabase));
- if(error){toast('Erro ao importar no Supabase: '+error.message,'error');return;}
- DB.financeiro=novos.concat(DB.financeiro);
+ if(novos.length){
+  const {error}=await supa.from('financeiro').insert(novos.map(financeiroParaSupabase));
+  if(error){toast('Erro ao importar no Supabase: '+error.message,'error');return;}
+  DB.financeiro=novos.concat(DB.financeiro);}
  DB.config.ultimaImportacaoOfx=new Date().toLocaleString('pt-BR');
- commit('criar','Financeiro',novos.length+' lançamento(s) importado(s) do extrato OFX');
+ commit(novos.length?'criar':'editar','Financeiro',novos.length?(novos.length+' lançamento(s) importado(s) do extrato OFX'):'Extrato conferido, sem lançamentos novos');
  novos.forEach(n=>syncSheets('financeiro','upsert',n));
  supa.from('config').upsert({campo:'ultimaImportacaoOfx',valor:DB.config.ultimaImportacaoOfx}).then(({error})=>{if(error)toast('Não consegui salvar a data da última importação: '+error.message,'error');});
  closeModal('modal-ofx');
- if(OFX_SALDO_BANCO!==null){
-  const dif=Math.round((saldoFin()-OFX_SALDO_BANCO)*100)/100;
-  if(Math.abs(dif)<0.01)toast(novos.length+' lançamento(s) importado(s)! Saldo bate com o extrato: '+fmt(saldoFin())+'.','success',6000);
-  else toast(novos.length+' lançamento(s) importado(s), mas o saldo ainda diverge '+fmt(Math.abs(dif))+' do extrato. Confira os lançamentos não marcados.','error',9000);
- }else toast(novos.length+' lançamento(s) importado(s)!','success');}
+ if(OFX_SALDO_BANCO===null){toast(novos.length+' lançamento(s) importado(s)! Este arquivo não trouxe o saldo do banco, então não deu para conferir.','info',7000);return;}
+ const naoImportados=OFX_ITENS.filter((_,i)=>!idxs.includes(i));
+ const an=analisarConciliacaoOfx(naoImportados);
+ let ajustou=false;
+ if(Math.abs(an.dif)>=0.01){
+  AJUSTE_SALDO_ANTERIOR=Number(DB.config.cf.saldoInicial)||0;
+  ajustou=await gravarSaldoInicial(Math.round((AJUSTE_SALDO_ANTERIOR-an.dif)*100)/100);
+  if(ajustou)log('editar','Financeiro','Saldo igualado ao extrato ('+fmt(OFX_SALDO_BANCO)+'): saldo inicial de '+fmt(AJUSTE_SALDO_ANTERIOR)+' para '+fmt(DB.config.cf.saldoInicial));
+ }
+ renderFinanceiro();
+ toast((novos.length?novos.length+' lançamento(s) importado(s). ':'Extrato conferido. ')+'Saldo do ERP: '+fmt(saldoFin())+'.','success',6000);
+ mostrarConciliacaoOfx(an,ajustou);}
 async function carregarFinanceiroSupabase(){
  const {data,error}=await supa.from('financeiro').select('*').order('data',{ascending:false});
  if(error){erroDeCarga('financeiro',error);return;}
@@ -5961,7 +6045,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.3';
+const APP_VERSAO='2026-09-20.4';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
