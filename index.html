@@ -4368,7 +4368,10 @@ function montarPdfContrato(o){
  bloco('4.3. O atraso de qualquer parcela implica multa de 2% sobre o valor em atraso e juros de 1% ao mês, calculados pro rata die, e autoriza a CONTRATADA a suspender a produção e a entrega até a regularização, prorrogando-se o prazo pelo mesmo número de dias do atraso.');
 
  titulo('CLÁUSULA 5 — DO PRAZO DE EXECUÇÃO');
- bloco('5.1. O prazo de fabricação é de '+vazio+' dias úteis, contados do cumprimento integral dos requisitos da Cláusula 2.1'+(prazoEntrega?', com entrega prevista para '+prazoEntrega:'')+'.');
+ /* com data de entrega no orçamento, ela basta: repetir "___ dias úteis" ao lado dela só confunde */
+ bloco(prazoEntrega
+  ?'5.1. A entrega e a instalação do mobiliário estão previstas para '+prazoEntrega+', desde que cumpridos integralmente os requisitos da Cláusula 2.1.'
+  :'5.1. O prazo de fabricação é de '+vazio+' dias úteis, contados do cumprimento integral dos requisitos da Cláusula 2.1.');
  bloco('5.2. O prazo será prorrogado, sem ônus para a CONTRATADA, nos casos de caso fortuito ou força maior, falta comprovada de insumos no mercado, alterações solicitadas pelo CONTRATANTE, atraso de pagamento ou indisponibilidade do local de instalação.');
 
  titulo('CLÁUSULA 6 — DO LOCAL DE INSTALAÇÃO');
@@ -6691,7 +6694,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.33';
+const APP_VERSAO='2026-09-20.34';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
