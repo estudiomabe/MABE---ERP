@@ -357,6 +357,8 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 .nf-parc { display:grid;grid-template-columns:34px minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center; }
 .rot-cel { display:none; }
 body.sem-origem .campo-origem { display:none; }
+body.sem-fin-obs .fin-obs { display:none; }
+.fin-obs-campo { font-size:11.5px;padding:3px 6px;min-width:140px; }
 @media (max-width:860px) {
   /* abaixo de 16px o iPhone dá zoom sozinho ao tocar no campo e a tela fica desalinhada */
   input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea, .form-control { font-size:16px !important; }
@@ -438,7 +440,7 @@ body.sem-valores #dash-btn-pdf { display:none !important; }
 body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </style>
 </head>
-<body class="sem-origem">
+<body class="sem-origem sem-fin-obs">
 <nav id="sidebar">
   <div class="sidebar-logo">
     <svg class="brand-svg" style="height:34px;color:#faf7f2" viewBox="0 0 215 62" xmlns="http://www.w3.org/2000/svg" fill="currentColor" role="img" aria-label="estúdio mabe">
@@ -571,7 +573,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div class="stat-box"><div class="stat-value" id="fin-sai" style="color:var(--danger)">R$0</div><div class="stat-label">Saídas (mês)</div></div>
         <div class="stat-box"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
       </div>
-      <div class="period-bar"><select class="form-control" id="fin-tipo-filter" style="width:auto;min-width:140px" onchange="renderFinanceiro()"><option value="">Entradas e saídas</option><option>Entrada</option><option>Saída</option></select><select class="form-control" id="fin-status-filter" style="width:auto;min-width:150px" onchange="renderFinanceiro()"><option value="">Todos os status</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><span id="ofx-ultima-atualizacao" style="font-size:10.5px;color:var(--text-muted)"></span></div><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"><span id="fin-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div id="financeiro-cards"></div><div class="table-wrapper" id="financeiro-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Pedido</th><th>Centro de Custo</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody></table></div>
+      <div class="period-bar"><select class="form-control" id="fin-tipo-filter" style="width:auto;min-width:140px" onchange="renderFinanceiro()"><option value="">Entradas e saídas</option><option>Entrada</option><option>Saída</option></select><select class="form-control" id="fin-status-filter" style="width:auto;min-width:150px" onchange="renderFinanceiro()"><option value="">Todos os status</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><span id="ofx-ultima-atualizacao" style="font-size:10.5px;color:var(--text-muted)"></span></div><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"><span id="fin-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div id="financeiro-cards"></div><div class="table-wrapper" id="financeiro-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Pedido</th><th>Centro de Custo</th><th class="fin-obs">Observações</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody></table></div>
     </div>
 
     <div class="section" id="section-centrocustos">
@@ -1062,7 +1064,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
   </div>
   <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-nfe-info')">Entendi</button></div>
 </div></div>
-<div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option><option>Marketing</option><option>Vendas</option><option>Pedidos</option><option>Folha de Pagamento</option><option>Administrativo</option><option>Manutenção</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option><option>Marketing</option><option>Vendas</option><option>Pedidos</option><option>Folha de Pagamento</option><option>Administrativo</option><option>Manutenção</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-servicos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mserv-title">Novo Serviço Terceirizado</div><button class="modal-close" onclick="closeModal('modal-servicos')">✕</button></div><div class="modal-body">
 <input type="hidden" id="serv-id">
 <div class="form-grid">
@@ -1560,7 +1562,7 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  navigate(secaoInicial());updateBadges();
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
  if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
- verificarColunaOrigem();
+ verificarColunaOrigem();verificarColunaObsFin();
  carregarClientesSupabase();
  carregarFornecedoresSupabase();
  carregarProdutosSupabase();
@@ -4167,8 +4169,17 @@ async function delFerramenta(id){if(!guard())return;const f=DB.ferramentas.find(
  DB.ferramentas=DB.ferramentas.filter(x=>x.id!==id);commit('excluir','Máquinas',f.nome);syncSheets('ferramentas','delete',{id});toast('Equipamento excluído.','info');}
 
 /* ================= FINANCEIRO ================= */
-function financeiroParaSupabase(f){return{id:f.id,tipo:f.tipo||null,data:f.data||null,descricao:f.desc||null,cat:f.cat||null,centro_custo:f.centroCusto||null,val:f.val||0,status:f.status||null};}
-function financeiroDeSupabase(row){return{id:row.id,tipo:row.tipo,data:row.data,desc:row.descricao||'',cat:row.cat||'',centroCusto:row.centro_custo||'',val:row.val,status:row.status};}
+/* A observação de cada lançamento fica na coluna "obs" da tabela financeiro.
+   Enquanto a coluna não existir no banco, o campo fica escondido e nada é enviado — senão toda gravação falharia. */
+let FIN_OBS_NO_BANCO=false;
+async function verificarColunaObsFin(){
+ const r=await supa.from('financeiro').select('obs').limit(1);
+ FIN_OBS_NO_BANCO=!r.error;
+ document.body.classList.toggle('sem-fin-obs',!FIN_OBS_NO_BANCO);}
+function financeiroParaSupabase(f){const r={id:f.id,tipo:f.tipo||null,data:f.data||null,descricao:f.desc||null,cat:f.cat||null,centro_custo:f.centroCusto||null,val:f.val||0,status:f.status||null};
+ if(FIN_OBS_NO_BANCO)r.obs=f.obs||null;
+ return r;}
+function financeiroDeSupabase(row){return{id:row.id,tipo:row.tipo,data:row.data,desc:row.descricao||'',cat:row.cat||'',centroCusto:row.centro_custo||'',val:row.val,status:row.status,obs:row.obs||''};}
 
 /* ================= IMPORTAÇÃO DE EXTRATO (OFX) ================= */
 let OFX_ITENS=[];
@@ -4288,10 +4299,22 @@ function renderFinanceiro(){const ym=today().slice(0,7);
   const pedLabels=pedidos.map(pedidoLabel);
   const legado=f.cat&&!pedLabels.includes(f.cat)?'<option value="'+esc(f.cat)+'" selected>'+esc(f.cat)+'</option>':'';
   const catCell=canEdit()?('<select class="form-control" style="font-size:11px;padding:3px 5px;min-width:170px" onchange="setPedidoInline(\''+f.id+'\',this.value)"><option value=""'+(!f.cat?' selected':'')+'>— Nenhum —</option>'+legado+pedidos.map(v=>'<option value="'+esc(pedidoLabel(v))+'"'+(f.cat===pedidoLabel(v)?' selected':'')+'>'+esc(pedidoLabel(v))+'</option>').join('')+'</select>'):esc(f.cat||'—');
-  return '<tr><td class="mono">'+fmtD(f.data)+'</td><td>'+esc(f.desc)+'</td><td>'+catCell+'</td><td>'+ccCell+'</td><td><span class="badge '+(f.tipo==='Entrada'?'badge-success':'badge-danger')+'">'+(f.tipo==='Entrada'?'↑':'↓')+' '+f.tipo+'</span></td><td class="mono" style="font-weight:700;color:'+(f.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+fmt(f.val)+'</td><td><span class="badge '+stB+'">'+f.status+'</span></td><td>'+actionBtns("editFin('"+f.id+"')","delFin('"+f.id+"')")+'</td></tr>';}).join('')||emptyRow(8,'Nenhum lançamento');
+  return '<tr><td class="mono">'+fmtD(f.data)+'</td><td>'+esc(f.desc)+'</td><td>'+catCell+'</td><td>'+ccCell+'</td><td class="fin-obs">'+campoObsFin(f)+'</td><td><span class="badge '+(f.tipo==='Entrada'?'badge-success':'badge-danger')+'">'+(f.tipo==='Entrada'?'↑':'↓')+' '+f.tipo+'</span></td><td class="mono" style="font-weight:700;color:'+(f.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+fmt(f.val)+'</td><td><span class="badge '+stB+'">'+f.status+'</span></td><td>'+actionBtns("editFin('"+f.id+"')","delFin('"+f.id+"')")+'</td></tr>';}).join('')||emptyRow(9,'Nenhum lançamento');
  renderFinanceiroCards(listaFin,pedidos);}
 /* mesma informacao da tabela, empilhada. Os dois seletores continuam
    editaveis no cartao: classificar lancamento e o trabalho desta tela. */
+/* a observação é escrita na própria linha (ou no cartão), sem abrir o lançamento */
+function campoObsFin(f){
+ if(!canEdit())return f.obs?'<span style="font-size:12px;color:var(--text-muted)">'+esc(f.obs)+'</span>':'<span style="color:var(--text-muted)">—</span>';
+ return '<input type="text" class="form-control fin-obs-campo" value="'+esc(f.obs||'')+'" placeholder="Anotar..." title="'+esc(f.obs||'')+'" onchange="setObsFin(\''+f.id+'\',this.value)">';}
+async function setObsFin(id,valor){if(!guard())return;
+ const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
+ const antes=f.obs||'';const novo=String(valor||'').trim();
+ if(novo===antes)return;
+ f.obs=novo;
+ const {error}=await supa.from('financeiro').update({obs:novo||null}).eq('id',id);
+ if(error){f.obs=antes;toast('Erro ao salvar a observação: '+error.message,'error');renderFinanceiro();return;}
+ saveDB();log('editar','Financeiro','Observação em "'+f.desc+'"');syncSheets('financeiro','upsert',f);}
 function renderFinanceiroCards(lista,pedidos){
  const alvo=$('financeiro-cards');if(!alvo)return;
  if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum lançamento</div>';return;}
@@ -4318,6 +4341,7 @@ function renderFinanceiroCards(lista,pedidos){
    +'<div class="fc-campos">'
     +'<div class="fc-campo"><label>Pedido</label>'+selPed+'</div>'
     +'<div class="fc-campo"><label>Centro</label>'+selCC+'</div>'
+    +'<div class="fc-campo fin-obs" style="grid-column:1 / -1"><label>Observações</label>'+campoObsFin(f)+'</div>'
    +'</div>'
    +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
    +'</div>';}).join('');}
@@ -4334,11 +4358,11 @@ async function setPedidoInline(id,valor){if(!guard())return;const f=DB.financeir
 function fillFinPedidoSelect(sel){const pedidos=pedidosOrdenados();const labels=pedidos.map(pedidoLabel);
  const legado=sel&&!labels.includes(sel)?'<option value="'+esc(sel)+'" selected>'+esc(sel)+'</option>':'';
  $('fin-cat').innerHTML='<option value="">— Nenhum —</option>'+legado+pedidos.map(v=>'<option value="'+esc(pedidoLabel(v))+'"'+(sel===pedidoLabel(v)?' selected':'')+'>'+esc(pedidoLabel(v))+'</option>').join('');}
-function openFin(){$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';fillFinPedidoSelect('');$('fin-cc').value='';$('fin-val').value='';$('fin-st').value='Pago';$('mf-title').textContent='Novo Lançamento';openModal('modal-financeiro');}
+function openFin(){$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';fillFinPedidoSelect('');$('fin-cc').value='';$('fin-val').value='';$('fin-st').value='Pago';$('fin-obs').value='';$('mf-title').textContent='Novo Lançamento';openModal('modal-financeiro');}
 function editFin(id){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
- $('fin-id').value=f.id;$('fin-tipo').value=f.tipo;$('fin-data').value=f.data;$('fin-desc').value=f.desc;fillFinPedidoSelect(f.cat||'');$('fin-cc').value=f.centroCusto||'';$('fin-val').value=f.val;$('fin-st').value=f.status;$('mf-title').textContent='Editar Lançamento';openModal('modal-financeiro');}
+ $('fin-id').value=f.id;$('fin-tipo').value=f.tipo;$('fin-data').value=f.data;$('fin-desc').value=f.desc;fillFinPedidoSelect(f.cat||'');$('fin-cc').value=f.centroCusto||'';$('fin-val').value=f.val;$('fin-st').value=f.status;$('fin-obs').value=f.obs||'';$('mf-title').textContent='Editar Lançamento';openModal('modal-financeiro');}
 async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').value.trim();if(!desc||num('fin-val')<=0){toast('Informe descrição e valor.','error');return;}
- const id=$('fin-id').value;const o={tipo:$('fin-tipo').value,data:$('fin-data').value||today(),desc,cat:$('fin-cat').value.trim(),centroCusto:$('fin-cc').value,val:num('fin-val'),status:$('fin-st').value};
+ const id=$('fin-id').value;const o={tipo:$('fin-tipo').value,data:$('fin-data').value||today(),desc,cat:$('fin-cat').value.trim(),centroCusto:$('fin-cc').value,val:num('fin-val'),status:$('fin-st').value,obs:$('fin-obs').value.trim()};
  if(id){
   const f2=Object.assign(DB.financeiro.find(x=>x.id===id),o);
   const {error}=await supa.from('financeiro').update(financeiroParaSupabase(f2)).eq('id',id);
@@ -5937,7 +5961,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.2';
+const APP_VERSAO='2026-09-20.3';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
