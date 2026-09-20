@@ -337,6 +337,9 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
      a fila não cabe ao lado do título no telefone — passa a ocupar a linha de baixo */
   #orc-detalhe-view > div:first-child { flex-wrap:wrap; }
   #orcd-acoes { margin-left:0 !important;width:100%;flex-wrap:wrap; }
+  /* mesma coisa na ficha do item/produto: título em cima, ações na linha de baixo */
+  #orc-form-view > div:first-child { flex-wrap:wrap; }
+  #orc-form-view > div:first-child > div:last-child { margin-left:0 !important;width:100%;flex-wrap:wrap; }
   .compras-topo { display:flex;justify-content:flex-end;margin-bottom:12px; }
   .pcp-abas { display:flex;gap:6px;overflow-x:auto;margin:0 -2px 12px;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none; }
   .pcp-abas::-webkit-scrollbar { display:none; }
@@ -836,7 +839,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
           <button class="btn btn-ghost btn-sm" onclick="voltarDeItem()">← Voltar</button>
           <div><h2 style="font-size:16px;font-weight:700" id="orc-form-title">Novo Item</h2><div id="orc-tipo-badge" style="font-size:11px;color:var(--text-muted);margin-top:2px"></div></div>
-          <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" id="btn-cadastro-prod" style="display:none" onclick="editarCadastroDaFicha()">✏️ Dados do cadastro</button><button class="btn btn-primary btn-sm" id="btn-salvar-orc" onclick="salvarItemOrc()">💾 Salvar Item</button></div>
+          <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" id="btn-ficha-tecnica" style="display:none" onclick="gerarFichaTecnicaProduto()">📐 Ficha técnica</button><button class="btn btn-ghost btn-sm" id="btn-cadastro-prod" style="display:none" onclick="editarCadastroDaFicha()">✏️ Dados do cadastro</button><button class="btn btn-primary btn-sm" id="btn-salvar-orc" onclick="salvarItemOrc()">💾 Salvar Item</button></div>
         </div>
         <div id="orc-tipo-inline" style="display:none;gap:8px;margin-bottom:14px;flex-wrap:wrap">
           <span style="font-size:12px;color:var(--text-muted);align-self:center">Tipo do item:</span>
@@ -3507,6 +3510,7 @@ function resetOrcForm(tipo){const cf=DB.config.cf;
  FICHA_PROD_ID='';ORC_ITEM_PROD_ID='';
  $('orc-desc').readOnly=false;const grupoQty=$('orc-qty').closest('.form-group');if(grupoQty)grupoQty.style.display='';
  const btnCadastro=$('btn-cadastro-prod');if(btnCadastro)btnCadastro.style.display='none';
+ const btnTecnica=$('btn-ficha-tecnica');if(btnTecnica)btnTecnica.style.display='none';
  $('btn-salvar-orc').textContent='💾 Salvar Item';
  calcOrc();}
 function insumoOptions(sel){let h='<option value="">— Selecionar —</option>';
@@ -3793,7 +3797,16 @@ function prepararTelaFicha(titulo,legenda,rotuloBotao){
  $('btn-salvar-orc').textContent=rotuloBotao;
  const q=$('orc-qty').closest('.form-group');if(q)q.style.display=FICHA_PROD_ID?'none':'';
  $('orc-desc').readOnly=!!FICHA_PROD_ID;
- const btnCad=$('btn-cadastro-prod');if(btnCad)btnCad.style.display=FICHA_PROD_ID?'inline-flex':'none';}
+ const btnCad=$('btn-cadastro-prod');if(btnCad)btnCad.style.display=FICHA_PROD_ID?'inline-flex':'none';
+ /* a ficha técnica é do produto do portfólio: não aparece em item de orçamento */
+ const btnTec=$('btn-ficha-tecnica');if(btnTec)btnTec.style.display=FICHA_PROD_ID?'inline-flex':'none';}
+/* folha de execução do produto aberto: vai para a oficina em branco, só com a peça identificada */
+async function gerarFichaTecnicaProduto(){if(!FICHA_PROD_ID)return;
+ const prod=DB.produtos.find(x=>x.id===FICHA_PROD_ID);if(!prod)return;
+ if(!await libPronta('jspdf'))return;
+ const nome='Ficha-Tecnica-'+prod.nome.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'.pdf';
+ montarPdfFichaTecnica(null,prod).save(nome);
+ toast('Ficha técnica gerada! Confira sua pasta de downloads — as medidas e os encaixes ficam em branco para preencher na bancada.','success',7000);}
 /* nome, categoria, unidade, estoque e tempo de produção continuam no cadastro */
 function editarCadastroDaFicha(){if(FICHA_PROD_ID)editProduto(FICHA_PROD_ID);}
 /* abrir um item do portfólio: a ficha de preço dele, para consultar e ajustar */
@@ -4280,7 +4293,7 @@ async function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUA
    lista de peças (plano de corte), ferragens, encaixes e uniões, colagem, tolerâncias,
    sequência de montagem, espaço para croqui e o visto de quem executou e conferiu.
    Sai em branco de propósito — é para ser preenchida à mão na oficina. */
-function montarPdfFichaTecnica(o){
+function montarPdfFichaTecnica(o,prod){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],BORDA=[206,197,183],WHITE=[255,255,255];
@@ -4289,6 +4302,7 @@ function montarPdfFichaTecnica(o){
  const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
  const ref=o&&o.num?'ORC-'+pad(o.num):'';
  const cliente=o&&o.cliId?cliName(o.cliId):'';
+ const peca=prod?prod.nome:'';
  /* ---- peças de desenho ---- */
  const rotulo=(t,x,y)=>{doc.setFont('helvetica','bold');doc.setFontSize(6.3);doc.setTextColor(...MUTED);doc.text(t,x,y,{charSpace:0.3});};
  const caixa=(x,y,w,h)=>{doc.setDrawColor(...BORDA);doc.setLineWidth(0.25);doc.setFillColor(...WHITE);doc.roundedRect(x,y,w,h,1.2,1.2,'FD');};
@@ -4312,7 +4326,7 @@ function montarPdfFichaTecnica(o){
   doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...DARK);
   doc.text(titulo,R,16.5,{align:'right'});
   doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
-  doc.text([ref,cliente].filter(Boolean).join('  ·  ')||'Ficha de execução',R,21.5,{align:'right'});
+  doc.text([peca,ref,cliente].filter(Boolean).join('  ·  ')||'Ficha de execução',R,21.5,{align:'right'});
   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.7);doc.line(M,26,R,26);
   return 34;};
 
@@ -4329,9 +4343,9 @@ function montarPdfFichaTecnica(o){
  centralizar('DESENHO DE EXECUÇÃO PARA A OFICINA',y,0.5);
  /* identificação na capa */
  y+=18;
- y=linhaCampos(y,[['PEÇA / MÓVEL',''],['AMBIENTE','']],14);
+ y=linhaCampos(y,[['PEÇA / MÓVEL',peca],['AMBIENTE','']],14);
  y=linhaCampos(y,[['CLIENTE',cliente],['ORÇAMENTO / OP',ref]],14);
- y=linhaCampos(y,[['RESPONSÁVEL',''],['DATA',o&&o.data?fmtD(o.data):''],['REVISÃO','']],14);
+ y=linhaCampos(y,[['RESPONSÁVEL',''],['DATA',o&&o.data?fmtD(o.data):(prod?fmtD(today()):'')],['REVISÃO','']],14);
 
  /* ================= PÁGINA 2 — DIMENSÕES, MADEIRA E ACABAMENTO ================= */
  doc.addPage();y=cabecalho('FICHA TÉCNICA');
@@ -4424,7 +4438,7 @@ function montarPdfFichaTecnica(o){
  for(let pg=2;pg<=n;pg++){doc.setPage(pg);
   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(M,RODAPE_Y,R,RODAPE_Y);
   doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
-  doc.text('Ficha técnica de execução'+(ref?'  ·  '+ref:'')+(cliente?'  ·  '+cliente:''),M,RODAPE_Y+5.5);
+  doc.text('Ficha técnica de execução'+(peca?'  ·  '+peca:'')+(ref?'  ·  '+ref:'')+(cliente?'  ·  '+cliente:''),M,RODAPE_Y+5.5);
   doc.text('Página '+pg+' de '+n,R,RODAPE_Y+5.5,{align:'right'});}
  return doc;}
 
@@ -5243,7 +5257,7 @@ async function verModeloDocumento(){
  aviso.textContent='Montando o modelo...';
  if(!await libPronta('jspdf')){aviso.textContent='Não consegui carregar o gerador de PDF.';return;}
  const x=ficha?fichaModelo():contrato?contratoModelo():recibo?pedidoModelo():orcamentoModelo();
- const doc=ficha?montarPdfFichaTecnica(x):contrato?montarPdfContrato(x):recibo?montarPdfRecibo(x):montarPdfOrcamento(x,x.itens,[]);
+ const doc=ficha?montarPdfFichaTecnica(x,null):contrato?montarPdfContrato(x):recibo?montarPdfRecibo(x):montarPdfOrcamento(x,x.itens,[]);
  if(MODELO_URL)URL.revokeObjectURL(MODELO_URL);
  MODELO_URL=doc.output('bloburl').toString();
  frame.src=MODELO_URL;frame.style.display='block';
@@ -6852,7 +6866,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.35';
+const APP_VERSAO='2026-09-20.36';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
