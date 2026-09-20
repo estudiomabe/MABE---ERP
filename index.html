@@ -333,6 +333,10 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
   #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #servicos-tabela, #comissoes-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
   .cli-busca-barra input { max-width:none;font-size:16px; }
   #doc-modelo-frame { height:420px !important; }
+  /* ficha do orçamento: com cinco ações (aprovar, reprovar, PDF, contrato, imprimir)
+     a fila não cabe ao lado do título no telefone — passa a ocupar a linha de baixo */
+  #orc-detalhe-view > div:first-child { flex-wrap:wrap; }
+  #orcd-acoes { margin-left:0 !important;width:100%;flex-wrap:wrap; }
   .compras-topo { display:flex;justify-content:flex-end;margin-bottom:12px; }
   .pcp-abas { display:flex;gap:6px;overflow-x:auto;margin:0 -2px 12px;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none; }
   .pcp-abas::-webkit-scrollbar { display:none; }
@@ -3401,7 +3405,7 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
  const podeDecidir=canEdit()&&itens.length>0&&o.status!=='Aprovado'&&o.status!=='Reprovado'&&o.status!=='Concluído';
  const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>':'';
  const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" onclick="rejeitarOrcamento(\''+o.id+'\')">✗ Reprovar</button>':'';
- $('orcd-acoes').innerHTML=aprovarBtn+reprovarBtn+'<button class="btn btn-ghost btn-sm" onclick="abrirPdfOrcamento()">📄 Gerar PDF</button><button class="btn btn-ghost btn-sm" onclick="imprimirOrcamento()">🖨️ Imprimir</button>';
+ $('orcd-acoes').innerHTML=aprovarBtn+reprovarBtn+'<button class="btn btn-ghost btn-sm" onclick="abrirPdfOrcamento()">📄 Gerar PDF</button><button class="btn btn-ghost btn-sm" onclick="gerarContratoOrcamento()">📝 Gerar contrato</button><button class="btn btn-ghost btn-sm" onclick="imprimirOrcamento()">🖨️ Imprimir</button>';
  const tipoL={'sob_medida':'🔨 Sob medida','catalogo':'📦 Catálogo','novo_produto':'🆕 Novo produto'};
  $('tb-orc-itens').innerHTML=itens.map(it=>{
   let precoCell='<span style="font-weight:700">'+fmt(it.preco)+'</span>';
@@ -4278,6 +4282,15 @@ async function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUA
    atraso, rescisão, propriedade intelectual, LGPD e foro).
    Os campos que mudam a cada obra saem como "____" para preencher à mão ou em aditivo.
    É um modelo: vale passar pelo seu advogado antes de usar com cliente. */
+function nomePdfContrato(o){return 'Contrato-ORC-'+pad(o.num)+'-'+cliName(o.cliId).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'.pdf';}
+/* o contrato sai do orçamento aberto: cliente, valor, percentual de entrada e a referência do ORC
+   vêm preenchidos; prazo, multas e data continuam em branco, para combinar com o cliente */
+async function gerarContratoOrcamento(){if(!guard()||!guardValores())return;
+ const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ if(!cliName(o.cliId)||cliName(o.cliId)==='—'){toast('Escolha o cliente do orçamento antes de gerar o contrato.','error');return;}
+ if(!await libPronta('jspdf'))return;
+ montarPdfContrato(o).save(nomePdfContrato(o));
+ toast('Contrato em PDF gerado! Confira sua pasta de downloads — prazo, multas e data ficam em branco para preencher.','success',7000);}
 function montarPdfContrato(o){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
@@ -6678,7 +6691,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.32';
+const APP_VERSAO='2026-09-20.33';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
