@@ -2772,9 +2772,12 @@ function opDoPedido(v){
 /* pedido → orçamento de origem, mesmo indício de texto já usado em opDoPedido (nao ha coluna de vinculo) */
 function orcDoPedido(v){const m=(v.obs||'').match(/ORC-(\d+)/);if(!m)return null;return DB.orcamentos.find(o=>Number(o.num)===Number(m[1]))||null;}
 /* contas a receber deste pedido: mesmo padrao de texto usado ao gerar o lancamento (ver aprovarOrcamento/saveVenda) */
-function finsDoPedido(v){const prefixo='Pedido V-'+pad(v.num);return DB.financeiro.filter(f=>(f.desc||'').indexOf(prefixo)===0);}
+/* lançamentos do pedido: os criados por ele (descrição 'Pedido V-00XX') e os do extrato que você
+   classificou naquele pedido na coluna 'Pedido' do Financeiro */
+function finsDoPedido(v){const prefixo='Pedido V-'+pad(v.num),rotulo=pedidoLabel(v);
+ return DB.financeiro.filter(f=>(f.desc||'').indexOf(prefixo)===0||(f.cat||'')===rotulo);}
 /* último lançamento pago do pedido (é o que a data de Pagamento move no Financeiro) e se ainda há parcela pendente */
-function pagamentoDoPedido(v){const fins=finsDoPedido(v);
+function pagamentoDoPedido(v){const fins=finsDoPedido(v).filter(f=>f.tipo==='Entrada');
  const ultimoPago=fins.filter(f=>f.status==='Pago').reduce((m,f)=>(!m||f.data>m.data)?f:m,null);
  return {temLancamento:fins.length>0,ultimoPago,pendente:fins.some(f=>f.status==='Pendente')};}
 /* datas guardadas no texto de observações do pedido ("Rótulo: dd/mm/aaaa"), sem coluna nova no Supabase */
@@ -6045,7 +6048,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.4';
+const APP_VERSAO='2026-09-20.5';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
