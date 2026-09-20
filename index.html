@@ -637,7 +637,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <div class="section" id="section-documentos">
       <div class="config-card">
         <div class="config-title" id="doc-modelo-titulo">📄 Modelo do Orçamento</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="doc-modelo-sub">Layout usado pelo ERP, preenchido com dados de exemplo. Nada aqui é de cliente real e nada é baixado ou guardado.</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="doc-modelo-sub">Layout usado pelo ERP, em branco, só para conferir o visual. Nenhum dado de cliente ou pedido aparece aqui.</div>
         <div class="period-bar" style="margin-bottom:12px">
           <button class="btn btn-ghost btn-sm" onclick="verModeloDocumento()">🔄 Atualizar</button>
           <button class="btn btn-ghost btn-sm" onclick="abrirModeloEmNovaAba()">↗ Abrir em nova aba</button>
@@ -4700,27 +4700,22 @@ async function arquivarPdf(doc,nomeArquivo,meta){
 /* A seção Documentos mostra só os MODELOS dos documentos do ERP, com dados de exemplo:
    serve para conferir o layout, sem misturar com pedidos e clientes de verdade. */
 let MODELO_URL='',DOC_MODO='orcamento';
-const CLIENTE_EXEMPLO={id:'__exemplo',nome:'Cliente Exemplo',email:'cliente@exemplo.com.br',tel:'(21) 90000-0000',doc:'000.000.000-00',cidade:'Rio de Janeiro',end:'Rua Exemplo, 100',status:'Ativo'};
-/* o montador do PDF busca o nome pelo cadastro: o cliente de exemplo entra na lista só enquanto o modelo é montado */
-function comClienteExemplo(fn){
- const tinha=DB.clientes.some(c=>c.id===CLIENTE_EXEMPLO.id);
- if(!tinha)DB.clientes.push(CLIENTE_EXEMPLO);
- try{return fn();}finally{if(!tinha)DB.clientes=DB.clientes.filter(c=>c.id!==CLIENTE_EXEMPLO.id);}}
-function orcamentoExemplo(){return{id:'__exemplo',num:0,cliId:CLIENTE_EXEMPLO.id,data:today(),validade:addDays(today(),15),
- status:'Enviado',origem:'Indicação',
- obs:'Prazo de produção de 30 dias úteis após a aprovação.\nMedidas conferidas na visita técnica.\nValores válidos por 15 dias.',
+/* Os modelos saem em branco de propósito: a ideia é conferir o layout (cabeçalho, colunas,
+   caixa do total, assinaturas, rodapé), não ver dados. Onde entraria informação fica "—" ou o nome do campo. */
+function orcamentoModelo(){return{id:'__modelo',num:0,cliId:'',data:'',validade:'',status:'Rascunho',origem:'',
+ obs:'Observações do orçamento',
  itens:[
-  {id:'e1',tipo:'sob_medida',desc:'Mesa de jantar em Tauari 2,20 m',obs:'Tampo 220 × 100 cm, 4 cm de espessura\nPés em madeira maciça, acabamento óleo fosco',qty:1,preco:12500,lucro:4200},
-  {id:'e2',tipo:'sob_medida',desc:'Banco corrido 2,00 m',obs:'Assento estofado em linho natural',qty:2,preco:3200,lucro:1100},
-  {id:'e3',tipo:'catalogo',desc:'Luminária pendente Ripada',obs:'',qty:3,preco:890,lucro:260}],
- custo:9800,preco:19080,lucro:5560,anexos:[]};}
-function pedidoExemplo(){return{id:'__exemplo',num:0,cliId:CLIENTE_EXEMPLO.id,data:today(),pag:'PIX',status:'Confirmado',
- obs:'Entrega combinada: '+fmtD(addDays(today(),30))+'\nMontagem inclusa no local.',
+  {id:'m1',tipo:'sob_medida',desc:'Descrição do item',obs:'Detalhamento do item',qty:1,preco:0,lucro:0},
+  {id:'m2',tipo:'sob_medida',desc:'Descrição do item',obs:'',qty:1,preco:0,lucro:0},
+  {id:'m3',tipo:'sob_medida',desc:'Descrição do item',obs:'',qty:1,preco:0,lucro:0}],
+ custo:0,preco:0,lucro:0,anexos:[]};}
+function pedidoModelo(){return{id:'__modelo',num:0,cliId:'',data:'',pag:'—',status:'Pendente',
+ obs:'Observações do pedido',
  itens:[
-  {prodId:null,desc:'Mesa de jantar em Tauari 2,20 m',qty:1,preco:12500},
-  {prodId:null,desc:'Banco corrido 2,00 m',qty:2,preco:3200},
-  {prodId:null,desc:'Luminária pendente Ripada',qty:3,preco:890}],
- total:21570,baixa:true};}
+  {prodId:null,desc:'Descrição do item',qty:1,preco:0},
+  {prodId:null,desc:'Descrição do item',qty:1,preco:0},
+  {prodId:null,desc:'Descrição do item',qty:1,preco:0}],
+ total:0,baixa:false};}
 /* o menu tem um item por documento; os dois usam a mesma seção, trocando só o modo */
 function abrirDocumento(modo){DOC_MODO=modo;navigate('documentos');
  document.querySelectorAll('.nav-item').forEach(n=>{const o=n.getAttribute('onclick')||'';
@@ -4732,15 +4727,15 @@ async function verModeloDocumento(){
  $('doc-modelo-sub').textContent=(recibo
   ?'Layout do recibo que sai no botão 🧾 da lista de pedidos'
   :'Layout do orçamento que sai no botão "Gerar PDF" e na impressão')
-  +', preenchido com dados de exemplo. Nada aqui é de cliente real e nada é baixado ou guardado.';
+  +', em branco, só para conferir o visual. Nenhum dado de cliente ou pedido aparece aqui.';
  aviso.textContent='Montando o modelo...';
  if(!await libPronta('jspdf')){aviso.textContent='Não consegui carregar o gerador de PDF.';return;}
- const doc=comClienteExemplo(()=>{const x=recibo?pedidoExemplo():orcamentoExemplo();
-  return recibo?montarPdfRecibo(x):montarPdfOrcamento(x,x.itens,[]);});
+ const x=recibo?pedidoModelo():orcamentoModelo();
+ const doc=recibo?montarPdfRecibo(x):montarPdfOrcamento(x,x.itens,[]);
  if(MODELO_URL)URL.revokeObjectURL(MODELO_URL);
  MODELO_URL=doc.output('bloburl').toString();
  frame.src=MODELO_URL;frame.style.display='block';
- aviso.textContent=(recibo?'Recibo':'Orçamento')+' · modelo com dados de exemplo · '+doc.internal.getNumberOfPages()+' página(s)';}
+ aviso.textContent=(recibo?'Recibo':'Orçamento')+' · modelo em branco · '+doc.internal.getNumberOfPages()+' página(s)';}
 function abrirModeloEmNovaAba(){if(!MODELO_URL){toast('Gere a pré-visualização primeiro.','info');return;}
  const w=window.open(MODELO_URL,'_blank');if(!w)toast('O navegador bloqueou a nova aba.','error');}
 function renderDocumentos(){verModeloDocumento();}
@@ -6351,7 +6346,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.17';
+const APP_VERSAO='2026-09-20.18';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
