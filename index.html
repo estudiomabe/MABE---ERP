@@ -4102,20 +4102,24 @@ function nomePdfOrcamento(o){return 'Orcamento-ORC-'+pad(o.num)+'-'+cliName(o.cl
 function capaOrcamento(doc,o,cores){
  const {DARK,ACCENT,MUTED}=cores;
  const CX=105;
- /* a marca montada como na assinatura do estúdio (quadrado + "estúdio" em cima, "mabe." embaixo),
-    só que maior e centralizada: a largura é medida antes para o conjunto ficar no meio da página */
- const ico=22,vao=5;
- doc.setFont('helvetica','bold');doc.setFontSize(38);const larguraMabe=doc.getTextWidth('mabe.');
- doc.setFont('helvetica','normal');doc.setFontSize(17);const larguraEstudio=doc.getTextWidth('estúdio');
- const largura=ico+vao+Math.max(larguraMabe,larguraEstudio);
+ /* A marca nas proporções do arquivo original: o quadrado tem exatamente a altura de "mabe."
+    (do topo do "b" até a linha de base), "estúdio" é bem menor e encosta no alto, e o texto
+    começa logo depois do quadrado. A largura é medida antes para o conjunto ficar centralizado. */
+ const corpo=62,em=corpo/2.83465;            /* "mabe." em mm */
+ const lado=em*0.718;                        /* lado do quadrado = altura do "b" */
+ const menor=corpo*0.25;                     /* "estúdio" */
+ const vao=em*0.07;
+ doc.setFont('helvetica','bold');doc.setFontSize(corpo);const larguraMabe=doc.getTextWidth('mabe.');
+ const largura=lado+vao+larguraMabe;
  const x=CX-largura/2,topo=92;
- doc.setFillColor(...DARK);doc.rect(x,topo,ico,ico,'F');
- doc.setFont('helvetica','normal');doc.setFontSize(17);doc.setTextColor(...DARK);doc.text('estúdio',x+ico+vao,topo+7);
- doc.setFont('helvetica','bold');doc.setFontSize(38);doc.text('mabe.',x+ico+vao-0.8,topo+ico);
- /* sem a linha "marcenaria · madeira maciça": na capa fica só a marca, e o fio dourado sobe junto */
- doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(CX-20,topo+ico+13,CX+20,topo+ico+13);
+ doc.setFillColor(...DARK);doc.rect(x,topo,lado,lado,'F');
+ doc.setTextColor(...DARK);doc.text('mabe.',x+lado+vao,topo+lado);
+ doc.setFont('helvetica','normal');doc.setFontSize(menor);
+ doc.text('estúdio',x+lado+vao+0.6,topo+(menor/2.83465)*0.718);
+ /* sem a linha "marcenaria · madeira maciça": na capa fica só a marca, e o fio dourado logo abaixo */
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(CX-20,topo+lado+13,CX+20,topo+lado+13);
  /* o que é o documento */
- let y=topo+ico+33;
+ let y=topo+lado+33;
  doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
  /* na capa o documento se apresenta como PROPOSTA; da página seguinte em diante segue ORÇAMENTO */
  doc.text('PROPOSTA',CX,y,{align:'center',charSpace:1.2});
@@ -6514,7 +6518,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.25';
+const APP_VERSAO='2026-09-20.26';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
