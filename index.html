@@ -4097,6 +4097,43 @@ async function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUA
  closeModal('modal-pdf-orc');
  toast('PDF gerado! Confira sua pasta de downloads.','success');}
 function nomePdfOrcamento(o){return 'Orcamento-ORC-'+pad(o.num)+'-'+cliName(o.cliId).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'.pdf';}
+/* Capa do orçamento: só a marca do estúdio no centro, sobre o creme de sempre.
+   Nada de tabela nem valores aqui — o documento começa na página seguinte. */
+function capaOrcamento(doc,o,cores){
+ const {DARK,ACCENT,MUTED}=cores;const emp=DB.config.empresa||{};
+ const CX=105;
+ /* a marca montada como na assinatura do estúdio (quadrado + "estúdio" em cima, "mabe." embaixo),
+    só que maior e centralizada: a largura é medida antes para o conjunto ficar no meio da página */
+ const ico=22,vao=5;
+ doc.setFont('helvetica','bold');doc.setFontSize(38);const larguraMabe=doc.getTextWidth('mabe.');
+ doc.setFont('helvetica','normal');doc.setFontSize(17);const larguraEstudio=doc.getTextWidth('estúdio');
+ const largura=ico+vao+Math.max(larguraMabe,larguraEstudio);
+ const x=CX-largura/2,topo=92;
+ doc.setFillColor(...DARK);doc.rect(x,topo,ico,ico,'F');
+ doc.setFont('helvetica','normal');doc.setFontSize(17);doc.setTextColor(...DARK);doc.text('estúdio',x+ico+vao,topo+7);
+ doc.setFont('helvetica','bold');doc.setFontSize(38);doc.text('mabe.',x+ico+vao-0.8,topo+ico);
+ doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+ doc.text('MARCENARIA   ·   MADEIRA MACIÇA',CX,topo+ico+11,{align:'center',charSpace:0.6});
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(CX-20,topo+ico+21,CX+20,topo+ico+21);
+ /* o que é o documento */
+ let y=topo+ico+41;
+ doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
+ /* na capa o documento se apresenta como PROPOSTA; da página seguinte em diante segue ORÇAMENTO */
+ doc.text('PROPOSTA',CX,y,{align:'center',charSpace:1.2});
+ y+=9;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);
+ doc.text('Nº ORC-'+pad(o.num),CX,y,{align:'center'});
+ /* para quem */
+ y+=18;doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ doc.text('PREPARADO PARA',CX,y,{align:'center',charSpace:0.5});
+ y+=9;doc.setFontSize(15);doc.setTextColor(...DARK);
+ doc.splitTextToSize(cliName(o.cliId),150).forEach(l=>{doc.text(l,CX,y,{align:'center'});y+=7;});
+ const datas=[o.data?'Data '+fmtD(o.data):'',o.validade?'Entrega '+fmtD(o.validade):''].filter(Boolean).join('     ·     ');
+ if(datas){y+=5;doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text(datas,CX,y,{align:'center'});}
+ /* contato, no pé da capa */
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(CX-26,260,CX+26,260);
+ let cy=268;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ [enderecoEstudio(emp),emp.telefone,emp.email,emp.site].filter(Boolean)
+  .forEach(t=>{doc.text(String(t),CX,cy,{align:'center'});cy+=4.4;});}
 function montarPdfOrcamento(o,itens,refs){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
@@ -4106,6 +4143,8 @@ function montarPdfOrcamento(o,itens,refs){
  const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
  const novaPagina=()=>{doc.addPage();fundo();return 22;};
  fundo();
+ capaOrcamento(doc,o,{DARK,ACCENT,MUTED});
+ novaPagina();
 
  // Marca: quadrado da altura das duas linhas, "estúdio" no topo e "mabe." rente à base
  const logoY=18,ico=11;
@@ -4143,6 +4182,7 @@ function montarPdfOrcamento(o,itens,refs){
   info.push({idx,det:false,temDet:!!det});
   if(det){linhas.push(['',{content:det,colSpan:4}]);info.push({idx,det:true});}});
  const cab=(t,a)=>({content:t,styles:{halign:a}});
+ let tabelaJaPassouPorUmaPagina=false;
  const entrelinhaAntes=doc.getLineHeightFactor();doc.setLineHeightFactor(1.35);
  doc.autoTable({startY:y,margin:{left:M,right:210-R,top:20,bottom:297-RODAPE_Y+4},
   head:[[cab('#','center'),'Item',cab('Qtd','center'),cab('Unitário','right'),cab('Subtotal','right')]],
@@ -4150,7 +4190,8 @@ function montarPdfOrcamento(o,itens,refs){
   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3.8,bottom:3.8,left:3.5,right:3.5}},
   bodyStyles:{fontSize:9,textColor:DARK,valign:'top',cellPadding:{top:4.2,bottom:4.2,left:3.5,right:3.5}},
   columnStyles:{0:{cellWidth:12,halign:'center',textColor:MUTED,cellPadding:{top:4.2,bottom:4.2,left:1,right:1}},2:{cellWidth:14,halign:'center'},3:{cellWidth:30,halign:'right'},4:{cellWidth:32,halign:'right',fontStyle:'bold'}},
-  willDrawPage:d=>{if(d.pageNumber>1)fundo();},
+  /* a página onde a tabela começa já veio pintada e com o cabeçalho: repintar apagaria o título */
+  willDrawPage:()=>{if(tabelaJaPassouPorUmaPagina)fundo();tabelaJaPassouPorUmaPagina=true;},
   /* pinta a linha inteira antes das células: sem isso o leitor de PDF mostra frestas finas entre as colunas */
   willDrawCell:d=>{if(d.column.index!==0)return;const cor=d.cell.styles.fillColor;if(!cor)return;
    doc.setFillColor(...cor);doc.rect(M,d.cell.y,R-M,d.row.height,'F');},
@@ -4214,7 +4255,8 @@ function montarPdfOrcamento(o,itens,refs){
   const tent=rodape?rodape+'   ·   '+parte:String(parte);
   if(doc.getTextWidth(tent)<=(R-M)-24)rodape=tent;else break;}
  rodape=rodape||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
- for(let pg=1;pg<=n;pg++){doc.setPage(pg);
+ /* a capa já traz o contato no próprio desenho: a faixa do rodapé começa na página 2 */
+ for(let pg=2;pg<=n;pg++){doc.setPage(pg);
   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(M,RODAPE_Y,R,RODAPE_Y);
   doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
   doc.text(rodape,M,RODAPE_Y+5.5);
@@ -6476,7 +6518,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.22';
+const APP_VERSAO='2026-09-20.23';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
