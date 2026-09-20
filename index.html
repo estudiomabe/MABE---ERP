@@ -4123,10 +4123,9 @@ function capaOrcamento(doc,o,cores){
  doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
  /* na capa o documento se apresenta como PROPOSTA; da página seguinte em diante segue ORÇAMENTO */
  doc.text('PROPOSTA',CX,y,{align:'center',charSpace:1.2});
- y+=9;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);
- doc.text('Nº ORC-'+pad(o.num),CX,y,{align:'center'});
+ /* o número (ORC-) fica só no cabeçalho da página seguinte: na capa não acrescenta nada */
  /* para quem */
- y+=18;doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ y+=22;doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
  doc.text('PREPARADO PARA',CX,y,{align:'center',charSpace:0.5});
  y+=9;doc.setFontSize(15);doc.setTextColor(...DARK);
  doc.splitTextToSize(cliName(o.cliId),150).forEach(l=>{doc.text(l,CX,y,{align:'center'});y+=7;});
@@ -6518,7 +6517,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.26';
+const APP_VERSAO='2026-09-20.27';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
