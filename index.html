@@ -1051,6 +1051,13 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div class="form-group" id="aprv-parc-wrap" style="display:none"><label class="form-label">Número de Parcelas</label><select class="form-control" id="aprv-parcelas" onchange="atualizarPreviewAprov()"></select></div>
 <div class="form-group"><label class="form-label">Data de Entrega combinada com o cliente *</label><input type="date" class="form-control" id="aprv-prazo" onchange="atualizarPreviewAprov()"></div>
 </div>
+<div class="form-group" id="aprv-receb-wrap"><label class="form-label">O pagamento inicial já foi recebido?</label><select class="form-control" id="aprv-recebido" onchange="atualizarPreviewAprov()">
+<option value="nao">Ainda não recebi — deixar como Pendente</option>
+<option value="extrato">Já recebi nesta conta — usar um lançamento do extrato</option>
+<option value="fora">Já recebi por fora (dinheiro ou outra conta) — lançar como Pago</option>
+</select></div>
+<div class="form-group" id="aprv-lanc-wrap" style="display:none"><label class="form-label">Qual lançamento do extrato é este pagamento?</label><select class="form-control" id="aprv-lanc" onchange="atualizarPreviewAprov()"></select>
+<div style="font-size:11px;color:var(--text-muted);margin-top:4px">Entradas já pagas e ainda não ligadas a nenhum pedido. O escolhido passa a contar como o pagamento deste pedido, sem criar lançamento novo.</div></div>
 <div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.7"></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this)"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
@@ -3586,15 +3593,31 @@ function abrirAprovarOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.
  if(!itensOrc(o).length){toast('Adicione ao menos um item antes de aprovar.','error');return;}
  $('aprv-orc-id').value=id;$('aprv-orc-desc').textContent=resumoOrc(o)+' — '+cliName(o.cliId)+' — '+fmt(o.preco);
  $('aprv-itens-lista').innerHTML=aprvItensChecklistHtml(itensOrc(o));
- $('aprv-pag').value='pix';$('aprv-prazo').value=o.validade||addDays(today(),30);
+ $('aprv-pag').value='pix';$('aprv-prazo').value=o.validade||addDays(today(),30);$('aprv-recebido').value='nao';$('aprv-lanc').innerHTML='';
  popularParcelasSelect(o.preco);
  atualizarPreviewAprov();
  openModal('modal-aprovar-orc');}
 function aprvItensChecklistHtml(itens){return itens.map((it,i)=>'<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" class="aprv-item-chk" data-idx="'+i+'" checked onchange="atualizarPreviewAprov()"><span style="flex:1">'+esc(it.desc)+'</span><span class="mono" style="font-weight:700">'+fmt(it.preco)+'</span></label>').join('');}
 function itensSelecionadosAprov(o){const itens=itensOrc(o);const sel=[];document.querySelectorAll('.aprv-item-chk').forEach(c=>{if(c.checked)sel.push(itens[Number(c.dataset.idx)]);});return sel;}
+/* entradas já pagas que ninguém classificou em pedido: candidatas a ser o pagamento antecipado
+   que caiu na conta antes de o pedido existir (foi o que gerou lançamento em dobro em setembro) */
+function lancamentosSemPedido(){
+ const limite=addDays(today(),-180);
+ return DB.financeiro.filter(f=>f.tipo==='Entrada'&&f.status==='Pago'&&String(f.data).slice(0,10)>=limite
+  &&(!f.cat||f.cat==='Extrato bancário'||f.cat==='Pedidos'))
+  .sort((a,b)=>String(b.data).localeCompare(String(a.data))).slice(0,40);}
+function popularLancamentosAprov(){
+ const sel=$('aprv-lanc');if(!sel)return;const atual=sel.value;
+ sel.innerHTML='<option value="">— Escolher depois —</option>'+lancamentosSemPedido()
+  .map(f=>'<option value="'+f.id+'">'+fmtD(f.data)+' · '+fmt(f.val)+' · '+esc(String(f.desc||'').slice(0,50))+'</option>').join('');
+ if(atual)sel.value=atual;}
 function atualizarPreviewAprov(){const o=DB.orcamentos.find(x=>x.id===$('aprv-orc-id').value);if(!o)return;
  const pag=$('aprv-pag').value,cf=DB.config.cf,prazo=$('aprv-prazo').value;
  $('aprv-parc-wrap').style.display=pag==='cartao'?'block':'none';
+ const recebido=$('aprv-recebido').value;
+ $('aprv-receb-wrap').style.display=pag==='boleto'?'none':'block';
+ $('aprv-lanc-wrap').style.display=(pag!=='boleto'&&recebido==='extrato')?'block':'none';
+ if(pag!=='boleto'&&recebido==='extrato')popularLancamentosAprov();
  const itensSel=itensSelecionadosAprov(o);const totalSel=itensSel.reduce((s,it)=>s+Number(it.preco||0),0);
  if(!itensSel.length){$('aprv-preview').innerHTML='<span style="color:var(--danger)">Selecione ao menos um item aprovado para gerar o pedido.</span>';return;}
  if(pag==='cartao'){const selAtual=$('aprv-parcelas').value;popularParcelasSelect(totalSel);if(selAtual)$('aprv-parcelas').value=selAtual;}
@@ -3605,6 +3628,12 @@ function atualizarPreviewAprov(){const o=DB.orcamentos.find(x=>x.id===$('aprv-or
   html='💳 Cartão de Crédito em <strong>'+n+'x de '+fmt(total/n)+'</strong>'+(taxa?' (+'+fmtN(taxa,1)+'% de juros — total '+fmt(total)+')':'')+'.<br>→ Gera '+n+' conta(s) a receber'+(n>1?', mensalmente a partir de hoje':' (à vista)')+'.';}
  else if(pag==='boleto'){html='📄 100% na entrega ('+fmtD(prazo)+'): <strong>'+fmt(totalSel)+'</strong><br>→ Gera 1 conta a receber.';}
  else{html='💵 100% antecipado (hoje): <strong>'+fmt(totalSel)+'</strong><br>→ Gera 1 conta a receber (já paga).';}
+ if(pag!=='boleto'){
+  if(recebido==='nao')html+='<br>⏳ Pagamento inicial fica <strong>Pendente</strong> — marque como Pago quando o dinheiro entrar.';
+  else if(recebido==='extrato'){const f=DB.financeiro.find(x=>x.id===$('aprv-lanc').value);
+   html+=f?'<br>🔗 Pagamento inicial já recebido: usa o lançamento de '+fmtD(f.data)+' ('+fmt(f.val)+'), sem criar outro.'
+        :'<br>🔗 Escolha o lançamento do extrato que corresponde ao pagamento inicial.';}
+  else html+='<br>✔ Pagamento inicial entra como <strong>Pago</strong> (recebido fora desta conta).';}
  if(itensSel.length<itensOrc(o).length)html+='<br>⚠️ '+(itensOrc(o).length-itensSel.length)+' item(ns) não aprovado(s) — ficarão fora do pedido.';
  $('aprv-preview').innerHTML=html;}
 async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
@@ -3657,6 +3686,19 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
  } else {
   finEntries.push({tipo:'Entrada',data:today(),desc:baseDesc+' — '+pagLabel+' (antecipado)',cat:'Pedidos',val:totalAprovado,status:'Pago'});
  }
+ /* pagamento inicial: Pendente, Pago, ou já existente no extrato (aí não cria nada e só classifica) */
+ const recebido=(pagKey==='boleto')?'nao':$('aprv-recebido').value;
+ const idLanc=recebido==='extrato'?$('aprv-lanc').value:'';
+ if(finEntries.length){
+  if(recebido==='nao')finEntries[0].status='Pendente';
+  else if(recebido==='extrato'&&idLanc){
+   const f=DB.financeiro.find(x=>x.id===idLanc);
+   if(f){const rotulo=pedidoLabel(novaVenda);
+    const obsNova='Pagamento inicial do pedido '+rotulo+', recebido antes de o pedido ser lançado.';
+    const {error:erroVinc}=await supa.from('financeiro').update({cat:rotulo,obs:FIN_OBS_NO_BANCO?obsNova:undefined}).eq('id',idLanc);
+    if(erroVinc)toast('Não consegui ligar o lançamento ao pedido: '+erroVinc.message,'error',7000);
+    else{f.cat=rotulo;if(FIN_OBS_NO_BANCO)f.obs=obsNova;finEntries.shift();
+     toast('Pagamento inicial ligado ao lançamento de '+fmtD(f.data)+'.','info',5000);}}}}
  for(const fe of finEntries){const reg=Object.assign({id:uid()},fe);
   const {error:erroFin}=await supa.from('financeiro').insert(financeiroParaSupabase(reg));
   if(erroFin){toast('Erro ao lançar financeiro no Supabase: '+erroFin.message,'error');continue;}
@@ -6048,7 +6090,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.5';
+const APP_VERSAO='2026-09-20.6';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
