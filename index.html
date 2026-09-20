@@ -1341,7 +1341,6 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  for(const k in d.config.cf)if(DB.config.cf[k]===undefined)DB.config.cf[k]=d.config.cf[k];
  if(!Array.isArray(DB.config.servicos))DB.config.servicos=[];
  if(!Array.isArray(DB.config.comissionados))DB.config.comissionados=[];
- if(!Array.isArray(DB.config.documentos))DB.config.documentos=[];
  if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];
  if(!DB.config.custosFixosExtras)DB.config.custosFixosExtras=[];
  if(!DB.config.temposProducao)DB.config.temposProducao={};
@@ -2098,7 +2097,7 @@ async function gerarPdfDashboard(){if(!guardValores())return;
   doc.text('Estúdio Mabe — Relatório gerado em '+fmtD(today()),marginX,290);
   doc.text('Página '+p+' de '+totalPaginas,196,290,{align:'right'});}
 
- await arquivarPdf(doc,'Relatorio-Dashboard-Mabe-'+today()+'.pdf',{tipo:'Relatório',titulo:'Relatório do Dashboard'});
+ doc.save('Relatorio-Dashboard-Mabe-'+today()+'.pdf');
  toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
 
 /* ================= SUPABASE ================= */
@@ -2958,7 +2957,7 @@ async function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.
  if(!await libPronta('jspdf'))return;
  const doc=montarPdfRecibo(v);
  const nomeArquivoCli=cliName(v.cliId).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'');
- await arquivarPdf(doc,'Recibo-V-'+pad(v.num)+'-'+nomeArquivoCli+'.pdf',{tipo:'Recibo',titulo:'Recibo do pedido V-'+pad(v.num),ref:'V-'+pad(v.num),cliente:cliName(v.cliId)});
+ doc.save('Recibo-V-'+pad(v.num)+'-'+nomeArquivoCli+'.pdf');
  toast('Recibo em PDF gerado! Confira sua pasta de downloads.','success');}
 /* mesma montagem usada pela pré-visualização em Documentos */
 function montarPdfRecibo(v){
@@ -3944,7 +3943,7 @@ async function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUA
  if(!await libPronta('jspdf'))return;
  const itens=itensOrc(o).filter(it=>idsSelecionados.includes(it.id));
  const refs=await referenciasParaPdf(o);
- await arquivarPdf(montarPdfOrcamento(o,itens,refs),nomePdfOrcamento(o),{tipo:'Orçamento',titulo:'Orçamento ORC-'+pad(o.num),ref:'ORC-'+pad(o.num),cliente:cliName(o.cliId)});
+ montarPdfOrcamento(o,itens,refs).save(nomePdfOrcamento(o));
  closeModal('modal-pdf-orc');
  toast('PDF gerado! Confira sua pasta de downloads.','success');}
 function nomePdfOrcamento(o){return 'Orcamento-ORC-'+pad(o.num)+'-'+cliName(o.cliId).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'.pdf';}
@@ -4675,28 +4674,9 @@ function renderFornecedoresCards(){const alvo=$('fornecedores-cards');if(!alvo)r
    +(canEdit()?'<div class="pc-acoes">'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</div>':'')
    +'</div>';}).join('');}
 /* ================= DOCUMENTOS =================
-   Todo PDF gerado pelo ERP é guardado no Supabase (mesma área dos anexos, pasta "documentos/")
-   e registrado em config (campo "documentos"), para ficar tudo numa lista só.
-   O download continua acontecendo como antes: se o envio falhar, o arquivo não se perde. */
-const listaDocumentos=()=>DB.config.documentos||(DB.config.documentos=[]);
-let DOC_FILTRO_MANUAL=false;
-const LIMITE_DOCUMENTOS=400;
-async function arquivarPdf(doc,nomeArquivo,meta){
- doc.save(nomeArquivo);
- try{
-  const blob=doc.output('blob');
-  const caminho='documentos/'+uid()+'-'+nomeArquivo.replace(/[^a-zA-Z0-9._-]/g,'_');
-  const {error:erroUp}=await supa.storage.from('orcamentos-anexos').upload(caminho,blob,{contentType:'application/pdf'});
-  if(erroUp)throw erroUp;
-  const {data:pub}=supa.storage.from('orcamentos-anexos').getPublicUrl(caminho);
-  const registro=Object.assign({id:uid(),nome:nomeArquivo,caminho,url:pub.publicUrl,
-   quando:new Date().toISOString(),quem:USER?USER.nome:'',tamanho:blob.size},meta||{});
-  const lista=listaDocumentos();lista.unshift(registro);
-  if(lista.length>LIMITE_DOCUMENTOS)lista.length=LIMITE_DOCUMENTOS;
-  const {error}=await supa.from('config').upsert({campo:'documentos',valor:JSON.stringify(lista)});
-  if(error)throw error;
-  saveDB();if(CUR==='documentos')renderDocumentos();
- }catch(e){toast('PDF baixado, mas não consegui guardá-lo em Documentos: '+(e.message||e),'info',7000);}}
+   A seção mostra só os MODELOS dos documentos do ERP, em branco: serve para conferir o layout.
+   Os PDFs gerados vão direto para a pasta de downloads e não são guardados no Supabase —
+   guardar todo PDF gerado enchia o armazenamento sem que nenhuma tela mostrasse a lista. */
 /* A seção Documentos mostra só os MODELOS dos documentos do ERP, com dados de exemplo:
    serve para conferir o layout, sem misturar com pedidos e clientes de verdade. */
 let MODELO_URL='',DOC_MODO='orcamento';
@@ -5082,7 +5062,7 @@ async function gerarPdfRelatorio(){
   doc.text('Estúdio Mabe — Relatório gerado em '+fmtD(today()),marginX,290);
   doc.text('Página '+p+' de '+totalPaginas,196,290,{align:'right'});}
 
- await arquivarPdf(doc,'Relatorio-Mabe-'+today()+'.pdf',{tipo:'Relatório',titulo:'Relatório do período'});
+ doc.save('Relatorio-Mabe-'+today()+'.pdf');
  toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
 
 /* ================= USUÁRIOS ================= */
@@ -5369,9 +5349,7 @@ async function carregarConfigSupabase(){
  const {data,error}=await supa.from('config').select('*');
  if(error){erroDeCarga('configurações',error);return;}
  (data||[]).forEach(({campo,valor})=>{
-  if(campo==='documentos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.documentos=arr;}catch(e){}
-   if(CUR==='documentos')renderDocumentos();}
-  else if(campo==='comissionados'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.comissionados=arr;}catch(e){}
+  if(campo==='comissionados'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.comissionados=arr;}catch(e){}
    if(CUR==='comissoes')renderComissoes();}
   else if(campo==='servicos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.servicos=arr;}catch(e){}
    if(CUR==='servicos')renderServicos();}
@@ -5919,7 +5897,7 @@ async function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administrad
   doc.text('Estúdio Mabe — Marcenaria de madeira maciça',MX,RODAPE+6.5);
   doc.text('Página '+p+' de '+total,MX+LARG,RODAPE+6.5,{align:'right'});}
 
- await arquivarPdf(doc,'Backup-ERP-Mabe-'+today()+'.pdf',{tipo:'Backup',titulo:'Backup do ERP em PDF'});
+ doc.save('Backup-ERP-Mabe-'+today()+'.pdf');
  toast('Backup completo em PDF gerado! Confira sua pasta de downloads.','success');}
 function gerarBackupArquitetura(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  const txt=`# Arquitetura do ERP — Estúdio Mabe
@@ -6346,7 +6324,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.18';
+const APP_VERSAO='2026-09-20.19';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
