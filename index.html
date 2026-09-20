@@ -742,7 +742,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
       <div id="orc-header-view" style="display:none">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><button class="btn btn-ghost btn-sm" onclick="cancelarHeaderOrc()">← Voltar</button><h2 style="font-size:16px;font-weight:700" id="orch-title">Novo Orçamento</h2></div>
-        <div class="config-card" style="max-width:640px">
+        <div class="config-card" id="orc-header-card" style="max-width:640px">
           <input type="hidden" id="orch-id">
           <div class="form-grid">
             <div class="form-group"><label class="form-label">Cliente</label><div style="display:flex;gap:6px"><select class="form-control" id="orch-cli" style="flex:1"><option value="">— Sem cliente —</option></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapido()">+ Novo Cliente</button></div></div>
@@ -754,7 +754,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             <div class="form-group"><label class="form-label">Status</label><select class="form-control" id="orch-status"><option>Rascunho</option><option>Enviado</option><option>Aprovado</option><option>Reprovado</option><option>Concluído</option></select></div>
             <div class="form-group"><label class="form-label">Observações Gerais</label><textarea class="form-control" id="orch-obs" rows="4" style="resize:vertical;font-family:var(--font)" placeholder="Contexto geral do pedido, combinados com o cliente..."></textarea></div>
           </div>
-          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px" id="orc-header-acoes">
             <button class="btn btn-ghost" onclick="cancelarHeaderOrc()">Cancelar</button>
             <button class="btn btn-ghost" onclick="salvarHeaderOrc(false)">💾 Salvar</button>
             <button class="btn btn-primary" onclick="salvarHeaderOrc(true)">💾 Salvar e Adicionar Item</button>
@@ -805,6 +805,13 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <div><h2 style="font-size:16px;font-weight:700" id="orc-form-title">Novo Item</h2><div id="orc-tipo-badge" style="font-size:11px;color:var(--text-muted);margin-top:2px"></div></div>
           <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-primary btn-sm" id="btn-salvar-orc" onclick="salvarItemOrc()">💾 Salvar Item</button></div>
         </div>
+        <div id="orc-tipo-inline" style="display:none;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--text-muted);align-self:center">Tipo do item:</span>
+          <button class="btn btn-ghost btn-sm" onclick="trocarTipoItemInline('sob_medida')">🔨 Sob medida</button>
+          <button class="btn btn-ghost btn-sm" onclick="trocarTipoItemInline('catalogo')">📦 Do catálogo</button>
+          <button class="btn btn-ghost btn-sm" onclick="trocarTipoItemInline('novo_produto')">🆕 Novo produto</button>
+        </div>
+        <div id="orc-form-cabecalho" style="display:none;margin-bottom:16px"></div>
         <div class="orc-cols-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <div style="display:flex;flex-direction:column;gap:14px">
             <div class="config-card" style="margin:0"><div class="config-title">📋 Dados</div><div class="form-grid">
@@ -870,6 +877,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
       <div id="orc-catalogo-view" style="display:none">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><button class="btn btn-ghost btn-sm" onclick="voltarDeItem()">← Voltar</button><div><h2 style="font-size:16px;font-weight:700">📦 Item de Catálogo</h2></div><div style="margin-left:auto"><button class="btn btn-primary btn-sm" onclick="salvarItemCatalogo()">💾 Salvar Item</button></div></div>
+        <div id="orc-cat-cabecalho" style="display:none;margin-bottom:16px;max-width:600px"></div>
         <div style="max-width:600px;display:flex;flex-direction:column;gap:14px">
           <div class="config-card" style="margin:0"><div class="config-title">📋 Dados</div><div class="form-grid">
             <input type="hidden" id="orc-cat-id">
@@ -3259,10 +3267,50 @@ function abrirEmailOrc(id){const o=DB.orcamentos.find(x=>x.id===id);if(!o)return
 /* ---- Cabeçalho do orçamento ---- */
 let ORC_ATUAL_ID=null,ORC_ITEM_EDITANDO=null,ORC_VOLTAR='lista';
 function orcShow(view){['lista','header','detalhe','tipo','form','catalogo'].forEach(v=>{$('orc-'+v+'-view').style.display=v===view?'block':'none';});}
-function novoOrcamento(){ORC_ATUAL_ID=null;$('orch-id').value='';$('orch-cli').innerHTML='';fillSel('orch-cli',DB.clientes,c=>c.nome,'','— Sem cliente —');
- $('orch-data').value=today();$('orch-validade').value=addDays(today(),15);$('orch-status').value='Rascunho';$('orch-obs').value='';$('orch-origem').value='';
- $('orch-title').textContent='Novo Orçamento';orcShow('header');}
+/* Orçamento novo abre numa página só: os dados do orçamento (cliente, datas, status) ficam no topo
+   da própria ficha do item, e o Salvar cria o orçamento e o primeiro item de uma vez. */
+let ORC_NOVO_INLINE=false;
+function embutirCabecalhoOrc(destino){
+ const card=$('orc-header-card');if(!card)return;
+ ['orc-form-cabecalho','orc-cat-cabecalho'].forEach(id=>{const e=$(id);if(e&&id!==destino){e.style.display='none';}});
+ if(!destino){$('orc-header-acoes').style.display='flex';card.style.maxWidth='640px';$('btn-salvar-orc').textContent='💾 Salvar Item';
+  if(card.parentElement!==$('orc-header-view'))$('orc-header-view').appendChild(card);
+  $('orc-tipo-inline').style.display='none';return;}
+ const alvo=$(destino);if(!alvo)return;
+ $('orc-header-acoes').style.display='none';card.style.maxWidth='none';
+ if(card.parentElement!==alvo)alvo.appendChild(card);
+ alvo.style.display='block';}
+function prepararCabecalhoNovo(){ORC_ATUAL_ID=null;$('orch-id').value='';$('orch-cli').innerHTML='';fillSel('orch-cli',DB.clientes,c=>c.nome,'','— Sem cliente —');
+ $('orch-data').value=today();$('orch-validade').value=addDays(today(),15);$('orch-status').value='Rascunho';$('orch-obs').value='';$('orch-origem').value='';}
+function novoOrcamento(){if(!guard())return;
+ prepararCabecalhoNovo();
+ ORC_NOVO_INLINE=true;ORC_ITEM_EDITANDO=null;ORC_VOLTAR='lista';
+ resetOrcForm('sob_medida');
+ $('orc-form-title').textContent='Novo Orçamento';
+ $('orc-tipo-inline').style.display='flex';
+ $('btn-salvar-orc').textContent='💾 Salvar Orçamento';
+ embutirCabecalhoOrc('orc-form-cabecalho');
+ orcShow('form');}
+/* troca o tipo do item sem sair da página (no orçamento novo) */
+function trocarTipoItemInline(tipo){
+ if(tipo==='catalogo'){resetOrcCatalogo();embutirCabecalhoOrc('orc-cat-cabecalho');orcShow('catalogo');return;}
+ resetOrcForm(tipo);$('orc-form-title').textContent=ORC_NOVO_INLINE?'Novo Orçamento':'Novo Item';
+ $('orc-tipo-inline').style.display=ORC_NOVO_INLINE?'flex':'none';
+ embutirCabecalhoOrc(ORC_NOVO_INLINE?'orc-form-cabecalho':null);
+ orcShow('form');}
+/* cria o orçamento a partir do cabeçalho que está na própria ficha, antes de salvar o item */
+async function garantirOrcamentoDoCabecalho(){
+ if(ORC_ATUAL_ID||!ORC_NOVO_INLINE)return true;
+ if(!await exigeConexao('criar o orçamento'))return false;
+ const novo={id:uid(),cliId:$('orch-cli').value,data:$('orch-data').value||today(),validade:$('orch-validade').value,
+  status:$('orch-status').value,obs:$('orch-obs').value.trim(),origem:$('orch-origem').value,itens:[],preco:0,custo:0,lucro:0,anexos:[]};
+ const {data,error}=await supa.from('orcamentos').insert(orcParaSupabase(novo)).select().single();
+ if(error){toast('Erro ao criar o orçamento: '+error.message,'error');return false;}
+ novo.num=data.num;DB.orcamentos.unshift(novo);ORC_ATUAL_ID=novo.id;$('orch-id').value=novo.id;
+ commit('criar','Orçamentos','ORC-'+pad(novo.num));syncSheets('orcamentos','upsert',novo);
+ return true;}
 function editarCabecalhoOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+ ORC_NOVO_INLINE=false;embutirCabecalhoOrc(null);
  ORC_ATUAL_ID=id;$('orch-id').value=o.id;fillSel('orch-cli',DB.clientes,c=>c.nome,o.cliId||'','— Sem cliente —');
  $('orch-data').value=o.data;$('orch-validade').value=o.validade||'';$('orch-status').value=o.status;$('orch-obs').value=o.obs||'';$('orch-origem').value=o.origem||'';
  $('orch-title').textContent='Editar Orçamento ORC-'+pad(o.num);orcShow('header');}
@@ -3377,8 +3425,9 @@ async function excluirAnexoOrc(path){if(!guard())return;if(!confirm('Excluir est
  const {error}=await supa.from('orcamentos').update({anexos}).eq('id',o.id);
  if(error){toast('Erro ao atualizar orçamento: '+error.message,'error');return;}
  o.anexos=anexos;saveDB();renderAnexosOrc(o);toast('Anexo excluído.','info');}
-function abrirAdicionarItem(){if(!guard())return;ORC_ITEM_EDITANDO=null;ORC_VOLTAR='detalhe';orcShow('tipo');}
+function abrirAdicionarItem(){if(!guard())return;ORC_ITEM_EDITANDO=null;ORC_VOLTAR='detalhe';ORC_NOVO_INLINE=false;embutirCabecalhoOrc(null);orcShow('tipo');}
 function voltarDeItem(){if(ITEM_PARA_PEDIDO)return voltarAoPedido(null);
+ ORC_NOVO_INLINE=false;embutirCabecalhoOrc(null);
  if(ORC_VOLTAR==='detalhe'&&ORC_ATUAL_ID){orcShow('detalhe');renderOrcDetalhe();}else{orcShow('lista');renderOrcamentos();}}
 function selecionarTipoOrc(tipo){if(tipo==='catalogo'){resetOrcCatalogo();orcShow('catalogo');return;}
  resetOrcForm(tipo);orcShow('form');}
@@ -3576,6 +3625,7 @@ async function salvarItemCalculadoNoPedido(desc){const tipo=$('orc-tipo').value,
  voltarAoPedido({tipo:prod?'catalogo':'livre',prodId:prod?prod.id:'',desc:prod?prod.nome:desc,qty:qtdItemOrc(),preco:Math.round(t.preco*100)/100});
  toast('Item adicionado ao pedido.','success');}
 async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value.trim();if(!desc){toast('Informe a descrição.','error');return;}
+ if(!await garantirOrcamentoDoCabecalho())return;
  if(ITEM_PARA_PEDIDO)return salvarItemCalculadoNoPedido(desc);
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o){toast('Orçamento não encontrado.','error');return;}
  const tipo=$('orc-tipo').value;const t=computeOrc();
@@ -3590,6 +3640,7 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
  if(error){toast('Erro ao salvar item no Supabase: '+error.message,'error');return;}
  commit('editar','Orçamentos','Item "'+desc+'" salvo em ORC-'+pad(o.num));syncSheets('orcamentos','upsert',o);
  toast('Item salvo!','success');
+ ORC_NOVO_INLINE=false;embutirCabecalhoOrc(null);
  ORC_VOLTAR='detalhe';orcShow('detalhe');renderOrcDetalhe();}
 function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const it=(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
@@ -3801,6 +3852,7 @@ function calcCatalogo(){const p=DB.produtos.find(x=>x.id===$('orc-cat-prod').val
  const bruto=p?p.preco*qty:0;const desc=bruto*pct/100;
  $('cat-val-desc').textContent='- '+fmt(desc);$('cat-total').textContent=fmt(bruto-desc);return{bruto,desc,total:bruto-desc,p,qty,pct};}
 async function salvarItemCatalogo(){if(!guard())return;const c=calcCatalogo();if(!c.p){toast('Selecione um produto.','error');return;}
+ if(!ITEM_PARA_PEDIDO&&!await garantirOrcamentoDoCabecalho())return;
  if(ITEM_PARA_PEDIDO){voltarAoPedido({tipo:'catalogo',prodId:c.p.id,desc:c.p.nome,qty:c.qty,preco:Math.round((c.total/c.qty)*100)/100});
   toast('Item adicionado ao pedido.','success');return;}
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o){toast('Orçamento não encontrado.','error');return;}
@@ -6190,7 +6242,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.9';
+const APP_VERSAO='2026-09-20.10';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
