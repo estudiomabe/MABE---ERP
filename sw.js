@@ -9,7 +9,7 @@
 
    VERSAO precisa mudar a cada publicação — é o que faz o navegador instalar o worker novo
    e mostrar o aviso "Nova versão disponível" dentro do app. */
-const VERSAO = '2026-09-20.11';
+const VERSAO = '2026-09-20.12';
 const CACHE = 'mabe-erp-' + VERSAO;
 const ESSENCIAIS = [
   './',

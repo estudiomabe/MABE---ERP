@@ -219,7 +219,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
    A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
    fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
-#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards { display:none; }
+#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards, #documentos-cards { display:none; }
 .pc-ficha { display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;padding:9px 11px;background:var(--surface2);border-radius:8px; }
 .pc-ficha div { display:flex;flex-direction:column;gap:1px;font-size:13px;font-family:var(--mono);color:var(--text);min-width:0; }
 .pc-ficha span { font-family:var(--font, inherit);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
@@ -323,14 +323,14 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
   #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
-  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards { display:block; }
+  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards, #documentos-cards { display:block; }
   /* calendário: a grade de 7 colunas não cabe; vira agenda com só os dias que têm algo */
   #cal-agenda { display:block;margin-top:4px; }
   #cal-grid, .cal-semana, .cal-legenda { display:none !important; }
   #section-calendario .period-bar { gap:6px; }
   #section-calendario .period-bar .btn { min-height:38px;min-width:40px; }
   #cal-label { min-width:0 !important;flex:1; }
-  #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #servicos-tabela, #comissoes-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
+  #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #servicos-tabela, #comissoes-tabela, #documentos-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
   .cli-busca-barra input { max-width:none;font-size:16px; }
   .compras-topo { display:flex;justify-content:flex-end;margin-bottom:12px; }
   .pcp-abas { display:flex;gap:6px;overflow-x:auto;margin:0 -2px 12px;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none; }
@@ -481,6 +481,8 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <div class="nav-item" onclick="navigate('servicos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Serviços Terceirizados</div>
     <div class="nav-item" onclick="navigate('fornecedores')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Fornecedores</div>
     <div class="nav-item" onclick="navigate('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
+    <span class="nav-label">Documentos</span>
+    <div class="nav-item" onclick="navigate('documentos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>PDFs Gerados</div>
     <span class="nav-label">Sistema</span>
     <div class="nav-item" id="nav-usuarios" onclick="navigate('usuarios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Usuários</div>
     <div class="nav-item" onclick="navigate('historico')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/><polyline points="3 3 3 7 7 7"/></svg>Histórico</div>
@@ -628,6 +630,19 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
       <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-ofx')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImportacaoOfx()">✔ Lançar Selecionados</button></div>
     </div></div>
+
+    <!-- DOCUMENTOS -->
+    <div class="section" id="section-documentos">
+      <div class="period-bar">
+        <select class="form-control" id="doc-tipo-filtro" style="width:auto;min-width:180px" onchange="renderDocumentos()">
+          <option value="">Todos os tipos</option><option>Orçamento</option><option>Recibo</option><option>Relatório</option><option>Backup</option>
+        </select>
+        <span id="doc-contagem" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
+      </div>
+      <div id="documentos-cards"></div>
+      <div class="table-wrapper" id="documentos-tabela"><div class="table-toolbar"><div class="table-toolbar-title">📄 PDFs gerados pelo ERP</div></div>
+      <table><thead><tr><th>Data</th><th>Tipo</th><th>Documento</th><th>Referência</th><th>Gerado por</th><th>Ações</th></tr></thead><tbody id="tb-documentos"></tbody></table></div>
+    </div>
 
     <!-- COMISSÕES -->
     <div class="section" id="section-comissoes">
@@ -1323,6 +1338,7 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  for(const k in d.config.cf)if(DB.config.cf[k]===undefined)DB.config.cf[k]=d.config.cf[k];
  if(!Array.isArray(DB.config.servicos))DB.config.servicos=[];
  if(!Array.isArray(DB.config.comissionados))DB.config.comissionados=[];
+ if(!Array.isArray(DB.config.documentos))DB.config.documentos=[];
  if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];
  if(!DB.config.custosFixosExtras)DB.config.custosFixosExtras=[];
  if(!DB.config.temposProducao)DB.config.temposProducao={};
@@ -1392,7 +1408,7 @@ function buscarAtualizacoesManual(){if(!DB.config.sheetsUrl){toast('Configure a 
    Usuários e Configurações são exclusivos do Administrador. */
 const NIVEIS={
  'Administrador':{desc:'Acesso total, incluindo Usuários, Configurações e Folha de Pagamento.',edita:true,valores:true,secoes:null},
- 'Financeiro':{desc:'Tudo, exceto Usuários e Configurações — não altera custos padrão nem a folha.',edita:true,valores:true,secoes:['dashboard','calendario','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','centrocustos','relatorios','compras','fornecedores','servicos','comissoes','clientes','historico']},
+ 'Financeiro':{desc:'Tudo, exceto Usuários e Configurações — não altera custos padrão nem a folha.',edita:true,valores:true,secoes:['dashboard','calendario','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','centrocustos','relatorios','compras','fornecedores','servicos','comissoes','documentos','clientes','historico']},
  'Produção':{desc:'Calendário, PCP, Máquinas, Estoque, Pedidos e Clientes. Não vê Financeiro, Orçamentos, custos nem valores em R$.',edita:true,valores:false,secoes:['dashboard','calendario','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']},
  'Consulta':{desc:'Mesmas telas do nível Produção, somente leitura.',edita:false,valores:false,secoes:['dashboard','calendario','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']}
 };
@@ -1696,12 +1712,12 @@ function prepararOrdenacao(sec){
   th.addEventListener('click',()=>ordenarTabela(th));});}
 
 /* ================= NAVEGAÇÃO ================= */
-const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',servicos:'Serviços Terceirizados',comissoes:'Comissões',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
+const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',servicos:'Serviços Terceirizados',comissoes:'Comissões',documentos:'Documentos — PDFs gerados',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
 /* No celular o titulo longo empurrava o botao '+ Novo' para a linha de baixo.
    So os nomes que sobram estao aqui; o resto usa o titulo normal. */
 const TITULOS_CURTOS={clientes:'Clientes',pcp:'Produção',entregas:'Entregas',ferramentas:'Máquinas',
  calendario:'Calendário',insumos:'Material/Insumo',portfolio:'Portfólio',madeiras:'Madeiras',
- compras:'Compras',historico:'Histórico',servicos:'Serviços'};
+ compras:'Compras',historico:'Histórico',servicos:'Serviços',documentos:'Documentos'};
 const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','servicos','comissoes','compras','usuarios'];
 const BTN_NEW_LABELS={orcamentos:'Novo Orçamento',financeiro:'Adicionar Lançamento',servicos:'Novo Serviço',comissoes:'Nova Pessoa'};
 let CUR='dashboard';
@@ -1727,7 +1743,7 @@ function navigate(sec){
  prepararOrdenacao(sec);
  if(sec==='clientes')carregarClientesSupabase();
  if(sec==='fornecedores')carregarFornecedoresSupabase();
- if(sec==='servicos'||sec==='comissoes')carregarConfigSupabase();
+ if(sec==='servicos'||sec==='comissoes'||sec==='documentos')carregarConfigSupabase();
  if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas'||sec==='calendario')carregarFerramentasSupabase();
@@ -1740,7 +1756,7 @@ function navigate(sec){
  if(sec==='configuracoes')carregarConfigSupabase();
  if(sec==='historico')carregarHistoricoSupabase();
  if(sec==='usuarios')carregarUsuariosSupabase();}
-function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,servicos:renderServicos,comissoes:renderComissoes,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
+function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,servicos:renderServicos,comissoes:renderComissoes,documentos:renderDocumentos,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 /* ================= BUSCA GLOBAL =================
    Filtra a seção aberta, como antes, e ao mesmo tempo procura em todos os
    cadastros. Clicar num resultado leva para a seção certa já filtrada. */
@@ -2078,7 +2094,7 @@ async function gerarPdfDashboard(){if(!guardValores())return;
   doc.text('Estúdio Mabe — Relatório gerado em '+fmtD(today()),marginX,290);
   doc.text('Página '+p+' de '+totalPaginas,196,290,{align:'right'});}
 
- doc.save('Relatorio-Dashboard-Mabe-'+today()+'.pdf');
+ await arquivarPdf(doc,'Relatorio-Dashboard-Mabe-'+today()+'.pdf',{tipo:'Relatório',titulo:'Relatório do Dashboard'});
  toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
 
 /* ================= SUPABASE ================= */
@@ -3037,7 +3053,7 @@ async function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.
   doc.text('Página '+pg+' de '+n,R,RODAPE_Y+5.5,{align:'right'});}
 
  const nomeArquivoCli=cliName(v.cliId).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'');
- doc.save('Recibo-V-'+pad(v.num)+'-'+nomeArquivoCli+'.pdf');
+ await arquivarPdf(doc,'Recibo-V-'+pad(v.num)+'-'+nomeArquivoCli+'.pdf',{tipo:'Recibo',titulo:'Recibo do pedido V-'+pad(v.num),ref:'V-'+pad(v.num),cliente:cliName(v.cliId)});
  toast('Recibo em PDF gerado! Confira sua pasta de downloads.','success');}
 function prodOptions(sel){return '<option value="">— Produto —</option>'+DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').map(p=>'<option value="'+p.id+'" data-preco="'+(p.preco||p.custo||0)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.nome)+' ('+p.est+' '+esc(p.un||'un')+')</option>').join('');}
 /* qtd, preço, subtotal e ✕ — iguais nos dois tipos de linha do pedido */
@@ -3920,7 +3936,7 @@ async function gerarPdfOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUA
  if(!await libPronta('jspdf'))return;
  const itens=itensOrc(o).filter(it=>idsSelecionados.includes(it.id));
  const refs=await referenciasParaPdf(o);
- montarPdfOrcamento(o,itens,refs).save(nomePdfOrcamento(o));
+ await arquivarPdf(montarPdfOrcamento(o,itens,refs),nomePdfOrcamento(o),{tipo:'Orçamento',titulo:'Orçamento ORC-'+pad(o.num),ref:'ORC-'+pad(o.num),cliente:cliName(o.cliId)});
  closeModal('modal-pdf-orc');
  toast('PDF gerado! Confira sua pasta de downloads.','success');}
 function nomePdfOrcamento(o){return 'Orcamento-ORC-'+pad(o.num)+'-'+cliName(o.cliId).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'.pdf';}
@@ -4650,6 +4666,61 @@ function renderFornecedoresCards(){const alvo=$('fornecedores-cards');if(!alvo)r
    +(links?'<div class="pc-links">'+links+'</div>':'')
    +(canEdit()?'<div class="pc-acoes">'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</div>':'')
    +'</div>';}).join('');}
+/* ================= DOCUMENTOS =================
+   Todo PDF gerado pelo ERP é guardado no Supabase (mesma área dos anexos, pasta "documentos/")
+   e registrado em config (campo "documentos"), para ficar tudo numa lista só.
+   O download continua acontecendo como antes: se o envio falhar, o arquivo não se perde. */
+const listaDocumentos=()=>DB.config.documentos||(DB.config.documentos=[]);
+const LIMITE_DOCUMENTOS=400;
+async function arquivarPdf(doc,nomeArquivo,meta){
+ doc.save(nomeArquivo);
+ try{
+  const blob=doc.output('blob');
+  const caminho='documentos/'+uid()+'-'+nomeArquivo.replace(/[^a-zA-Z0-9._-]/g,'_');
+  const {error:erroUp}=await supa.storage.from('orcamentos-anexos').upload(caminho,blob,{contentType:'application/pdf'});
+  if(erroUp)throw erroUp;
+  const {data:pub}=supa.storage.from('orcamentos-anexos').getPublicUrl(caminho);
+  const registro=Object.assign({id:uid(),nome:nomeArquivo,caminho,url:pub.publicUrl,
+   quando:new Date().toISOString(),quem:USER?USER.nome:'',tamanho:blob.size},meta||{});
+  const lista=listaDocumentos();lista.unshift(registro);
+  if(lista.length>LIMITE_DOCUMENTOS)lista.length=LIMITE_DOCUMENTOS;
+  const {error}=await supa.from('config').upsert({campo:'documentos',valor:JSON.stringify(lista)});
+  if(error)throw error;
+  saveDB();if(CUR==='documentos')renderDocumentos();
+ }catch(e){toast('PDF baixado, mas não consegui guardá-lo em Documentos: '+(e.message||e),'info',7000);}}
+function renderDocumentosCards(lista){const alvo=$('documentos-cards');if(!alvo)return;
+ if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum PDF gerado ainda</div>';return;}
+ alvo.innerHTML=lista.map(d=>'<div class="pedido-card">'
+  +'<div class="pc-topo"><span class="pc-data">'+new Date(d.quando).toLocaleString('pt-BR')+'</span><span class="badge badge-muted">'+esc(d.tipo||'PDF')+'</span></div>'
+  +'<div class="pc-cliente">'+esc(d.titulo||d.nome)+'</div>'
+  +(d.ref||d.cliente?'<div class="pc-pag">'+[d.ref,d.cliente].filter(Boolean).map(esc).join(' · ')+'</div>':'')
+  +'<div class="pc-pag">'+esc(d.quem||'—')+(d.tamanho?' · '+Math.max(1,Math.round(d.tamanho/1024))+' KB':'')+'</div>'
+  +'<div class="pc-links"><a class="pc-link" href="'+d.url+'" target="_blank" rel="noopener">📄 Abrir</a><a class="pc-link" href="'+d.url+'" download="'+esc(d.nome)+'">⬇ Baixar</a></div>'
+  +(canEdit()?'<div class="pc-acoes"><button class="btn btn-danger btn-sm" onclick="excluirDocumento(\''+d.id+'\')">🗑️ Excluir</button></div>':'')
+  +'</div>').join('');}
+function renderDocumentos(){
+ const filtro=$('doc-tipo-filtro')?$('doc-tipo-filtro').value:'';
+ const todos=listaDocumentos();
+ const lista=filtro?todos.filter(d=>(d.tipo||'')===filtro):todos;
+ if($('doc-contagem'))$('doc-contagem').textContent=lista.length===todos.length?todos.length+' documento(s)':lista.length+' de '+todos.length;
+ renderDocumentosCards(lista);
+ $('tb-documentos').innerHTML=lista.map(d=>'<tr><td class="mono" style="white-space:nowrap">'+new Date(d.quando).toLocaleString('pt-BR')+'</td>'
+  +'<td><span class="badge badge-muted">'+esc(d.tipo||'PDF')+'</span></td>'
+  +'<td><strong>'+esc(d.titulo||d.nome)+'</strong><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">'+esc(d.nome)+(d.tamanho?' · '+Math.max(1,Math.round(d.tamanho/1024))+' KB':'')+'</div></td>'
+  +'<td>'+esc([d.ref,d.cliente].filter(Boolean).join(' · ')||'—')+'</td>'
+  +'<td>'+esc(d.quem||'—')+'</td>'
+  +'<td><div class="row-actions" style="opacity:1"><a class="btn btn-ghost btn-sm" href="'+d.url+'" target="_blank" rel="noopener" title="Abrir">📄</a>'
+   +'<a class="btn btn-ghost btn-sm" href="'+d.url+'" download="'+esc(d.nome)+'" title="Baixar">⬇</a>'
+   +(canEdit()?'<button class="btn btn-danger btn-sm" title="Excluir" onclick="excluirDocumento(\''+d.id+'\')">🗑️</button>':'')+'</div></td></tr>').join('')
+  ||emptyRow(6,'Nenhum PDF gerado ainda');}
+async function excluirDocumento(id){if(!guard())return;
+ const lista=listaDocumentos();const d=lista.find(x=>x.id===id);if(!d)return;
+ if(!confirm('Excluir "'+(d.titulo||d.nome)+'" dos documentos?\n\nO arquivo sai do ERP; o que você já baixou continua no seu computador.'))return;
+ const idx=lista.indexOf(d);lista.splice(idx,1);
+ const {error}=await supa.from('config').upsert({campo:'documentos',valor:JSON.stringify(lista)});
+ if(error){lista.splice(idx,0,d);toast('Erro ao excluir: '+error.message,'error');return;}
+ if(d.caminho)await supa.storage.from('orcamentos-anexos').remove([d.caminho]);
+ commit('excluir','Documentos',d.titulo||d.nome);renderDocumentos();toast('Documento excluído.','info');}
 /* ================= COMISSÕES =================
    Quem recebe comissão (arquiteto, indicação, parceiro...) com o percentual combinado.
    Fica em config (campo "comissionados"), como os serviços terceirizados — sem tabela nova no banco. */
@@ -4993,7 +5064,7 @@ async function gerarPdfRelatorio(){
   doc.text('Estúdio Mabe — Relatório gerado em '+fmtD(today()),marginX,290);
   doc.text('Página '+p+' de '+totalPaginas,196,290,{align:'right'});}
 
- doc.save('Relatorio-Mabe-'+today()+'.pdf');
+ await arquivarPdf(doc,'Relatorio-Mabe-'+today()+'.pdf',{tipo:'Relatório',titulo:'Relatório do período'});
  toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
 
 /* ================= USUÁRIOS ================= */
@@ -5280,7 +5351,9 @@ async function carregarConfigSupabase(){
  const {data,error}=await supa.from('config').select('*');
  if(error){erroDeCarga('configurações',error);return;}
  (data||[]).forEach(({campo,valor})=>{
-  if(campo==='comissionados'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.comissionados=arr;}catch(e){}
+  if(campo==='documentos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.documentos=arr;}catch(e){}
+   if(CUR==='documentos')renderDocumentos();}
+  else if(campo==='comissionados'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.comissionados=arr;}catch(e){}
    if(CUR==='comissoes')renderComissoes();}
   else if(campo==='servicos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.servicos=arr;}catch(e){}
    if(CUR==='servicos')renderServicos();}
@@ -5828,7 +5901,7 @@ async function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administrad
   doc.text('Estúdio Mabe — Marcenaria de madeira maciça',MX,RODAPE+6.5);
   doc.text('Página '+p+' de '+total,MX+LARG,RODAPE+6.5,{align:'right'});}
 
- doc.save('Backup-ERP-Mabe-'+today()+'.pdf');
+ await arquivarPdf(doc,'Backup-ERP-Mabe-'+today()+'.pdf',{tipo:'Backup',titulo:'Backup do ERP em PDF'});
  toast('Backup completo em PDF gerado! Confira sua pasta de downloads.','success');}
 function gerarBackupArquitetura(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  const txt=`# Arquitetura do ERP — Estúdio Mabe
@@ -6255,7 +6328,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.11';
+const APP_VERSAO='2026-09-20.12';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
