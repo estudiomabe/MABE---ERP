@@ -825,7 +825,6 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             <div class="config-card" style="margin:0">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button><button class="btn btn-primary btn-sm" onclick="abrirNovoPrestadorRapido()">+ Cadastrar Prestador</button></div></div>
               <div id="orc-servicos" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
-              <datalist id="dl-servicos"></datalist>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Serviços</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-serv">R$ 0,00</span></div>
             </div>
             <div class="config-card" style="margin:0;background:#1a1714;border-color:#1a1714">
@@ -3365,9 +3364,28 @@ function addMdoItem(m){const wrap=$('orc-mdo');const row=document.createElement(
  row.style.cssText='display:grid;grid-template-columns:2fr 90px 85px 28px;gap:6px;align-items:center';
  row.innerHTML='<select class="form-control md-sel" onchange="calcOrc()">'+mdoTipoOptions(m?m.tipoId:'')+'</select><span class="rot-cel">Horas</span><span class="rot-cel">Subtotal</span><span class="rot-cel"></span><input type="number" class="form-control md-horas" value="'+(m?m.horas:'')+'" step="0.5" min="0" oninput="calcOrc()" placeholder="Horas"><div class="mono md-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
  wrap.appendChild(row);calcOrc();}
+/* Lista os serviços cadastrados em Cadastros → Serviços Terceirizados.
+   "Outro" libera o campo de texto, para um serviço que ainda não está no cadastro. */
+function servicoCatOptions(sel){return '<option value="">— Selecionar serviço —</option>'
+ +listaServicos().slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'))
+  .map(sv=>'<option value="'+sv.id+'"'+(sv.id===sel?' selected':'')+'>'+esc(sv.nome)+'</option>').join('')
+ +'<option value="__outro"'+(sel==='__outro'?' selected':'')+'>✏️ Outro (digitar)</option>';}
+/* o serviço escolhido traz prestador e valor do cadastro; um valor já digitado nesta linha não é sobrescrito */
+function svEscolhido(select){const row=select.closest('div');const desc=row.querySelector('.sv-desc');
+ const valor=row.querySelector('.sv-valor'),forn=row.querySelector('.sv-forn');
+ if(select.value==='__outro'){desc.style.display='';desc.focus();calcOrc();return;}
+ const sv=listaServicos().find(x=>x.id===select.value);
+ desc.style.display='none';
+ if(!sv){desc.value='';calcOrc();return;}
+ desc.value=sv.nome;
+ if(sv.fornId&&forn)forn.value=sv.fornId;
+ if(valor&&Number(sv.valor)&&!Number(valor.value))valor.value=sv.valor;
+ calcOrc();}
 function addServico(sv){const wrap=$('orc-servicos');const row=document.createElement('div');
- row.style.cssText='display:grid;grid-template-columns:150px 2fr 100px 28px;gap:6px;align-items:center';
- row.innerHTML='<select class="form-control sv-forn">'+fornOptions(sv?sv.fornId:'')+'</select><input type="text" class="form-control sv-desc" list="dl-servicos" placeholder="Descrição do serviço (ex: Estofamento terceirizado)" value="'+esc(sv?sv.desc:'')+'" oninput="svBusca(this)"><span class="rot-cel">Valor</span><span class="rot-cel"></span><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control sv-valor" value="'+(sv?sv.valor:0)+'" step="0.01" min="0" oninput="calcOrc()" style="border:none;background:transparent;padding-left:2px"></div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
+ row.style.cssText='display:grid;grid-template-columns:2fr 150px 100px 28px;gap:6px;align-items:center';
+ const doCatalogo=sv&&sv.desc?listaServicos().find(x=>String(x.nome).toLowerCase()===String(sv.desc).toLowerCase()):null;
+ const escolha=doCatalogo?doCatalogo.id:(sv&&sv.desc?'__outro':'');
+ row.innerHTML='<select class="form-control sv-cat" onchange="svEscolhido(this)">'+servicoCatOptions(escolha)+'</select><select class="form-control sv-forn">'+fornOptions(sv?sv.fornId:'')+'</select><input type="text" class="form-control sv-desc" placeholder="Descrição do serviço (ex: Estofamento terceirizado)" value="'+esc(sv?sv.desc:'')+'" oninput="calcOrc()" style="grid-column:1 / -1'+(escolha==='__outro'?'':';display:none')+'"><span class="rot-cel">Valor</span><span class="rot-cel"></span><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control sv-valor" value="'+(sv?sv.valor:0)+'" step="0.01" min="0" oninput="calcOrc()" style="border:none;background:transparent;padding-left:2px"></div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
  wrap.appendChild(row);calcOrc();}
 function materiaisDatalistOptions(){let opts='';
  DB.madeiras.forEach(m=>{opts+='<option value="'+esc(m.especie+' '+m.tipo+' '+m.esp+'×'+m.larg+'cm')+'"></option>';});
@@ -4420,13 +4438,9 @@ async function delServico(id){if(!guard())return;const lista=listaServicos();con
  if(!await gravarServicos('excluir',sv.nome)){lista.splice(idx,0,sv);return;}
  toast('Serviço excluído.','info');}
 /* no item do orçamento: digitar o nome do serviço preenche prestador e valor */
-function atualizarDatalistServicos(){const dl=$('dl-servicos');if(!dl)return;
- dl.innerHTML=listaServicos().map(sv=>'<option value="'+esc(sv.nome)+'"></option>').join('');}
-function svBusca(input){const nome=input.value.trim();const sv=listaServicos().find(x=>String(x.nome).toLowerCase()===nome.toLowerCase());
- if(!sv)return;const row=input.closest('div');
- const selForn=row.querySelector('.sv-forn');if(sv.fornId&&selForn)selForn.value=sv.fornId;
- const valor=row.querySelector('.sv-valor');
- if(valor&&Number(sv.valor)&&!Number(valor.value)){valor.value=sv.valor;calcOrc();}}
+/* cadastro mudou: as linhas de serviço já abertas passam a listar o que existe agora */
+function atualizarDatalistServicos(){
+ document.querySelectorAll('#orc-servicos .sv-cat').forEach(sel=>{const v=sel.value;sel.innerHTML=servicoCatOptions(v);});}
 function renderFornecedores(){renderFornecedoresCards();$('tb-fornecedores').innerHTML=DB.fornecedores.map((f,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(f.nome)+'</strong></td><td class="mono">'+esc(f.cnpj||'—')+'</td><td>'+esc(f.email||'—')+'</td><td>'+esc(f.tel||'—')+'</td><td>'+esc(f.cidade||'—')+'</td><td><span class="badge '+(f.status==='Ativo'?'badge-success':'badge-muted')+'">'+f.status+'</span></td><td>'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum fornecedor cadastrado');}
 function openFornecedor(){FORNECEDOR_RAPIDO_ORC=false;FORNECEDOR_RAPIDO_SERVICO=false;['for-id','for-nome','for-cnpj','for-tel','for-email','for-cidade'].forEach(i=>$(i).value='');$('for-status').value='Ativo';$('mfor-title').textContent='Novo Fornecedor';openModal('modal-fornecedores');}
 function editFornecedor(id){if(!guard())return;FORNECEDOR_RAPIDO_ORC=false;FORNECEDOR_RAPIDO_SERVICO=false;const f=DB.fornecedores.find(x=>x.id===id);if(!f)return;
@@ -5923,7 +5937,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.1';
+const APP_VERSAO='2026-09-20.2';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
