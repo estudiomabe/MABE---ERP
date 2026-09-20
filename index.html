@@ -490,6 +490,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <div class="nav-item" onclick="abrirDocumento('orcamento')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Orçamento</div>
     <div class="nav-item" onclick="abrirDocumento('recibo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 3 2V2l-3 2-3-2-3 2-3-2-3 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>Recibo do Pedido</div>
     <div class="nav-item" onclick="abrirDocumento('contrato')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 17c1.5-2 3-2 4 0s2.5 2 4 0"/><line x1="8" y1="12" x2="14" y2="12"/></svg>Contrato</div>
+    <div class="nav-item" onclick="abrirDocumento('ficha')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l4-4 14 14-4 4z"/><line x1="8" y1="6" x2="10" y2="8"/><line x1="11" y1="9" x2="13" y2="11"/><line x1="14" y1="12" x2="16" y2="14"/></svg>Ficha Técnica</div>
     <span class="nav-label">Sistema</span>
     <div class="nav-item" id="nav-usuarios" onclick="navigate('usuarios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Usuários</div>
     <div class="nav-item" onclick="navigate('historico')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/><polyline points="3 3 3 7 7 7"/></svg>Histórico</div>
@@ -1749,7 +1750,7 @@ function navigate(sec){
  if(sec==='clientes')carregarClientesSupabase();
  if(sec==='fornecedores')carregarFornecedoresSupabase();
  if(sec==='servicos'||sec==='comissoes')carregarConfigSupabase();
- if(sec==='documentos'){document.querySelector('#page-title .titulo-longo').textContent='Documentos — '+(DOC_MODO==='contrato'?'Modelo de Contrato':DOC_MODO==='recibo'?'Modelo do Recibo':'Modelo do Orçamento');verModeloDocumento();}
+ if(sec==='documentos'){document.querySelector('#page-title .titulo-longo').textContent='Documentos — '+(DOC_MODO==='ficha'?'Modelo de Ficha Técnica':DOC_MODO==='contrato'?'Modelo de Contrato':DOC_MODO==='recibo'?'Modelo do Recibo':'Modelo do Orçamento');verModeloDocumento();}
  if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas'||sec==='calendario')carregarFerramentasSupabase();
@@ -4274,6 +4275,159 @@ async function imprimirOrcamento(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUA
  const w=window.open(doc.output('bloburl'),'_blank');
  if(!w){doc.save(nomePdfOrcamento(o));toast('O navegador bloqueou a janela de impressão — o PDF foi baixado para você imprimir.','info',7000);}}
 
+/* ================= FICHA TÉCNICA DE EXECUÇÃO =================
+   A folha que vai para a bancada: identificação, dimensões, madeira e acabamento,
+   lista de peças (plano de corte), ferragens, encaixes e uniões, colagem, tolerâncias,
+   sequência de montagem, espaço para croqui e o visto de quem executou e conferiu.
+   Sai em branco de propósito — é para ser preenchida à mão na oficina. */
+function montarPdfFichaTecnica(o){
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF();
+ const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],BORDA=[206,197,183],WHITE=[255,255,255];
+ const emp=DB.config.empresa||{};
+ const M=16,R=194,RODAPE_Y=280,CX=105;
+ const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
+ const ref=o&&o.num?'ORC-'+pad(o.num):'';
+ const cliente=o&&o.cliId?cliName(o.cliId):'';
+ /* ---- peças de desenho ---- */
+ const rotulo=(t,x,y)=>{doc.setFont('helvetica','bold');doc.setFontSize(6.3);doc.setTextColor(...MUTED);doc.text(t,x,y,{charSpace:0.3});};
+ const caixa=(x,y,w,h)=>{doc.setDrawColor(...BORDA);doc.setLineWidth(0.25);doc.setFillColor(...WHITE);doc.roundedRect(x,y,w,h,1.2,1.2,'FD');};
+ const campo=(x,y,w,rot,val,h)=>{h=h||12;caixa(x,y,w,h);rotulo(rot,x+2.6,y+4.2);
+  if(val){doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...DARK);
+   doc.text(doc.splitTextToSize(String(val),w-5)[0],x+2.6,y+9.6);}};
+ /* distribui n campos na largura útil */
+ const linhaCampos=(y,lista,h)=>{const vao=4,largura=(R-M-vao*(lista.length-1))/lista.length;
+  lista.forEach((c,i)=>campo(M+i*(largura+vao),y,largura,c[0],c[1],h));
+  return y+(h||12)+5;};
+ const secao=(t,y)=>{y+=3;doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...DARK);
+  doc.text(t,M,y,{charSpace:0.4});
+  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.6);doc.line(M,y+2.2,M+doc.getTextWidth(t)+2,y+2.2);
+  return y+8;};
+ const linhasPara=(y,n,esp)=>{esp=esp||8;doc.setDrawColor(...BORDA);doc.setLineWidth(0.25);
+  for(let i=0;i<n;i++){doc.line(M,y+i*esp,R,y+i*esp);}return y+(n-1)*esp+6;};
+ /* cabeçalho das páginas internas */
+ const cabecalho=(titulo)=>{fundo();
+  const lm=34,am=lm/MARCA_PROP;
+  doc.addImage(MARCA_PNG,'PNG',M,12,lm,am,'marca','SLOW');
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...DARK);
+  doc.text(titulo,R,16.5,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+  doc.text([ref,cliente].filter(Boolean).join('  ·  ')||'Ficha de execução',R,21.5,{align:'right'});
+  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.7);doc.line(M,26,R,26);
+  return 34;};
+
+ /* ================= PÁGINA 1 — CAPA ================= */
+ fundo();
+ const largura=86,lado=largura/MARCA_PROP,topo=70;
+ doc.addImage(MARCA_PNG,'PNG',CX-largura/2,topo,largura,lado,'marca','SLOW');
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(CX-20,topo+lado+13,CX+20,topo+lado+13);
+ const centralizar=(txt,yy,esp)=>doc.text(txt,CX-esp*(txt.length-1)/2,yy,{align:'center',charSpace:esp});
+ let y=topo+lado+33;
+ doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
+ centralizar('FICHA TÉCNICA',y,1.2);
+ y+=8;doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+ centralizar('DESENHO DE EXECUÇÃO PARA A OFICINA',y,0.5);
+ /* identificação na capa */
+ y+=18;
+ y=linhaCampos(y,[['PEÇA / MÓVEL',''],['AMBIENTE','']],14);
+ y=linhaCampos(y,[['CLIENTE',cliente],['ORÇAMENTO / OP',ref]],14);
+ y=linhaCampos(y,[['RESPONSÁVEL',''],['DATA',o&&o.data?fmtD(o.data):''],['REVISÃO','']],14);
+
+ /* ================= PÁGINA 2 — DIMENSÕES, MADEIRA E ACABAMENTO ================= */
+ doc.addPage();y=cabecalho('FICHA TÉCNICA');
+ y=secao('1. DIMENSÕES GERAIS (mm)',y);
+ y=linhaCampos(y,[['LARGURA',''],['PROFUNDIDADE',''],['ALTURA',''],['ALTURA DA BASE','']]);
+ y=linhaCampos(y,[['VÃO DISPONÍVEL (L × P × A)',''],['FOLGA DE INSTALAÇÃO',''],['PESO ESTIMADO','']]);
+ y=linhaCampos(y,[['MEDIDAS CONFERIDAS NO LOCAL EM',''],['PRUMO / NÍVEL DA PAREDE',''],['TOMADAS E PONTOS A DESVIAR','']]);
+
+ y=secao('2. MADEIRA E MATERIAIS',y);
+ y=linhaCampos(y,[['ESPÉCIE DA MADEIRA',''],['CORTE / SELEÇÃO',''],['UMIDADE (10–12%)','']]);
+ y=linhaCampos(y,[['ESPESSURA DO TAMPO',''],['ESPESSURA DAS LATERAIS',''],['FUNDO',''],['PRATELEIRAS','']]);
+ y=linhaCampos(y,[['LÂMINA / PAINEL',''],['FITA DE BORDA',''],['COLA (PVA / PU)','']]);
+
+ y=secao('3. ACABAMENTO',y);
+ y=linhaCampos(y,[['LIXAMENTO (GRÃOS)',''],['PRODUTO (ÓLEO / VERNIZ / LACA)',''],['COR / TOM','']]);
+ y=linhaCampos(y,[['BRILHO',''],['Nº DE DEMÃOS',''],['SECAGEM ENTRE DEMÃOS',''],['PARTES INTERNAS','']]);
+ y=secao('4. OBSERVAÇÕES DE PROJETO',y);
+ linhasPara(y,6);
+
+ /* ================= PÁGINA 3 — LISTA DE PEÇAS E FERRAGENS ================= */
+ doc.addPage();y=cabecalho('LISTA DE PEÇAS');
+ const cabTab=(t,a)=>({content:t,styles:{halign:a||'left'}});
+ const vazias=(n,cols)=>Array.from({length:n},()=>Array.from({length:cols},()=>''));
+ doc.autoTable({startY:y,margin:{left:M,right:210-R},
+  head:[[cabTab('#','center'),'Peça / componente',cabTab('Qtd','center'),'Material',cabTab('Esp.','center'),cabTab('Comp.','center'),cabTab('Larg.','center'),'Fita de borda','Obs.']],
+  body:vazias(16,9).map((l,i)=>{l[0]=String(i+1);return l;}),
+  theme:'grid',styles:{lineColor:BORDA,lineWidth:0.2,minCellHeight:7.6,fillColor:WHITE},
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold',minCellHeight:8},
+  bodyStyles:{fontSize:8,textColor:MUTED},
+  columnStyles:{0:{cellWidth:8,halign:'center'},2:{cellWidth:12,halign:'center'},4:{cellWidth:14,halign:'center'},5:{cellWidth:18,halign:'center'},6:{cellWidth:18,halign:'center'},7:{cellWidth:26}}});
+ y=doc.lastAutoTable.finalY+4;
+ doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+ doc.text('Medidas em milímetros. Comp. = comprimento no sentido do veio.',M,y);
+ y+=8;
+ y=secao('FERRAGENS E ACESSÓRIOS',y);
+ doc.autoTable({startY:y,margin:{left:M,right:210-R},
+  head:[[cabTab('#','center'),'Ferragem / acessório','Marca e modelo',cabTab('Qtd','center'),'Aplicação']],
+  body:vazias(8,5).map((l,i)=>{l[0]=String(i+1);return l;}),
+  theme:'grid',styles:{lineColor:BORDA,lineWidth:0.2,minCellHeight:7.6,fillColor:WHITE},
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold',minCellHeight:8},
+  bodyStyles:{fontSize:8,textColor:MUTED},
+  columnStyles:{0:{cellWidth:8,halign:'center'},3:{cellWidth:14,halign:'center'}}});
+
+ /* ================= PÁGINA 4 — ENCAIXES, MONTAGEM E CROQUI ================= */
+ doc.addPage();y=cabecalho('ENCAIXES E MONTAGEM');
+ y=secao('5. ENCAIXES E UNIÕES',y);
+ /* marque o que a peça usa e anote a medida do encaixe ao lado */
+ const encaixes=[['Malhete (rabo de andorinha)','passante / meio-cego'],['Respiga e mecha (macho e fêmea)','largura × profundidade'],
+  ['Cavilha','diâmetro e quantidade'],['Lamelo / Domino','tamanho'],['Sambladura (meia-madeira)',''],
+  ['Meia-esquadria com lingueta',''],['Encaixe macho-fêmea',''],['Corrediça de madeira (gaveta)',''],
+  ['Parafuso + tarugo / tampão',''],['Colagem de topo com reforço','']];
+ doc.setFont('helvetica','normal');doc.setFontSize(8.5);
+ const colL=(R-M-6)/2;
+ encaixes.forEach((e,i)=>{
+  const col=i%2,linha=Math.floor(i/2);
+  const x=M+col*(colL+6),yy=y+linha*9;
+  doc.setDrawColor(...BORDA);doc.setLineWidth(0.3);doc.setFillColor(...WHITE);doc.rect(x,yy-3.2,3.6,3.6,'FD');
+  doc.setTextColor(...DARK);doc.setFontSize(8.5);doc.text(e[0],x+5.6,yy);
+  if(e[1]){doc.setTextColor(...MUTED);doc.setFontSize(7);doc.text(e[1],x+5.6,yy+3.4);}
+  /* linha à direita para anotar a medida do encaixe, longe do texto do item */
+  doc.setDrawColor(...BORDA);doc.setLineWidth(0.2);doc.line(x+colL*0.74,yy+1,x+colL,yy+1);});
+ y+=Math.ceil(encaixes.length/2)*9+4;
+ y=linhaCampos(y,[['COLA E TEMPO DE PRENSA',''],['GRAMPOS / SARGENTOS',''],['SENTIDO DO VEIO','']]);
+
+ y=secao('6. TOLERÂNCIAS E CONFERÊNCIA',y);
+ doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
+ ['Esquadro: ±1 mm na diagonal   ·   Folga de portas e gavetas: 2 a 3 mm   ·   Planicidade do tampo: ±1 mm/m',
+  'Umidade da madeira entre 10% e 12% antes do corte   ·   Medidas conferidas no local antes de cortar',
+  'Peças identificadas com o código da lista   ·   Arestas quebradas antes do acabamento'].forEach(t=>{doc.text(t,M,y);y+=5;});
+ y+=3;
+ y=secao('7. SEQUÊNCIA DE MONTAGEM E INSTALAÇÃO',y);
+ y=linhasPara(y,5);
+
+ y=secao('8. CROQUI E DETALHES',y);
+ const altCroqui=Math.max(28,RODAPE_Y-30-y);
+ const lc=(R-M-8)/3;
+ [['VISTA FRONTAL',0],['VISTA LATERAL',1],['DETALHE DO ENCAIXE',2]].forEach(([t,i])=>{
+  const x=M+i*(lc+4);
+  caixa(x,y,lc,altCroqui);rotulo(t,x+2.6,y+4.2);});
+ y+=altCroqui+8;
+ /* vistos */
+ const meia=(R-M-10)/3;
+ doc.setDrawColor(...MUTED);doc.setLineWidth(0.2);
+ [['PROJETO',0],['EXECUÇÃO',1],['CONFERÊNCIA',2]].forEach(([t,i])=>{
+  const x=M+i*(meia+5);doc.line(x,y,x+meia,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text(t+' — NOME E DATA',x,y+4,{charSpace:0.3});});
+
+ /* ================= rodapé das páginas internas ================= */
+ const n=doc.internal.getNumberOfPages();
+ for(let pg=2;pg<=n;pg++){doc.setPage(pg);
+  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(M,RODAPE_Y,R,RODAPE_Y);
+  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+  doc.text('Ficha técnica de execução'+(ref?'  ·  '+ref:'')+(cliente?'  ·  '+cliente:''),M,RODAPE_Y+5.5);
+  doc.text('Página '+pg+' de '+n,R,RODAPE_Y+5.5,{align:'right'});}
+ return doc;}
+
 /* ================= CONTRATO DE MARCENARIA =================
    Modelo de contrato de prestação de serviços de marcenaria sob medida, na mesma
    identidade dos outros documentos do ERP. A estrutura segue o que se repete nos
@@ -5061,6 +5215,8 @@ function orcamentoModelo(){return{id:'__modelo',num:0,cliId:'',data:'',validade:
  custo:0,preco:0,lucro:0,anexos:[]};}
 /* o contrato em branco: sem cliente e sem valores, só para conferir o texto e o layout */
 function contratoModelo(){return{id:'__modelo',num:0,cliId:'',data:'',validade:'',preco:0,itens:[]};}
+/* a ficha técnica sai sempre em branco: é para ser preenchida à mão na bancada */
+function fichaModelo(){return{id:'__modelo',num:0,cliId:'',data:'',validade:'',preco:0,itens:[]};}
 function pedidoModelo(){return{id:'__modelo',num:0,cliId:'',data:'',pag:'—',status:'Pendente',
  obs:'Observações do pedido',
  itens:[
@@ -5074,9 +5230,11 @@ function abrirDocumento(modo){DOC_MODO=modo;navigate('documentos');
   if(o.indexOf('abrirDocumento')>-1)n.classList.toggle('active',o.indexOf("'"+modo+"'")>-1);});}
 async function verModeloDocumento(){
  const aviso=$('doc-modelo-aviso'),frame=$('doc-modelo-frame');if(!aviso)return;
- const recibo=DOC_MODO==='recibo',contrato=DOC_MODO==='contrato';
- $('doc-modelo-titulo').textContent=contrato?'📝 Modelo de Contrato':recibo?'🧾 Modelo do Recibo do Pedido':'📄 Modelo do Orçamento';
- $('doc-modelo-sub').textContent=contrato
+ const recibo=DOC_MODO==='recibo',contrato=DOC_MODO==='contrato',ficha=DOC_MODO==='ficha';
+ $('doc-modelo-titulo').textContent=ficha?'📐 Modelo de Ficha Técnica':contrato?'📝 Modelo de Contrato':recibo?'🧾 Modelo do Recibo do Pedido':'📄 Modelo do Orçamento';
+ $('doc-modelo-sub').textContent=ficha
+  ?'Ficha de execução para a oficina: dimensões, madeira e acabamento, lista de peças, ferragens, encaixes, tolerâncias, sequência de montagem e espaço para croqui. Sai em branco, para imprimir e preencher na bancada.'
+  :contrato
   ?'Contrato de prestação de serviços de marcenaria sob medida, em branco. Os campos que mudam a cada obra (prazo, multa, data) saem como linha para preencher. É um modelo: vale passar pelo seu advogado antes de usar com cliente.'
   :(recibo
    ?'Layout do recibo que sai no botão 🧾 da lista de pedidos'
@@ -5084,12 +5242,12 @@ async function verModeloDocumento(){
    +', em branco, só para conferir o visual. Nenhum dado de cliente ou pedido aparece aqui.';
  aviso.textContent='Montando o modelo...';
  if(!await libPronta('jspdf')){aviso.textContent='Não consegui carregar o gerador de PDF.';return;}
- const x=contrato?contratoModelo():recibo?pedidoModelo():orcamentoModelo();
- const doc=contrato?montarPdfContrato(x):recibo?montarPdfRecibo(x):montarPdfOrcamento(x,x.itens,[]);
+ const x=ficha?fichaModelo():contrato?contratoModelo():recibo?pedidoModelo():orcamentoModelo();
+ const doc=ficha?montarPdfFichaTecnica(x):contrato?montarPdfContrato(x):recibo?montarPdfRecibo(x):montarPdfOrcamento(x,x.itens,[]);
  if(MODELO_URL)URL.revokeObjectURL(MODELO_URL);
  MODELO_URL=doc.output('bloburl').toString();
  frame.src=MODELO_URL;frame.style.display='block';
- aviso.textContent=(contrato?'Contrato':recibo?'Recibo':'Orçamento')+' · modelo em branco · '+doc.internal.getNumberOfPages()+' página(s)';}
+ aviso.textContent=(ficha?'Ficha técnica':contrato?'Contrato':recibo?'Recibo':'Orçamento')+' · modelo em branco · '+doc.internal.getNumberOfPages()+' página(s)';}
 function abrirModeloEmNovaAba(){if(!MODELO_URL){toast('Gere a pré-visualização primeiro.','info');return;}
  const w=window.open(MODELO_URL,'_blank');if(!w)toast('O navegador bloqueou a nova aba.','error');}
 function renderDocumentos(){verModeloDocumento();}
@@ -6694,7 +6852,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.34';
+const APP_VERSAO='2026-09-20.35';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
