@@ -1106,7 +1106,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.7"></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this)"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
   <div class="modal-header"><div class="modal-title">📋 Nota Fiscal Eletrônica</div><button class="modal-close" onclick="closeModal('modal-nfe-info')">✕</button></div>
   <div class="modal-body" style="font-size:13px;line-height:1.7;color:var(--text)">
@@ -1341,6 +1341,7 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  for(const k in d.config.cf)if(DB.config.cf[k]===undefined)DB.config.cf[k]=d.config.cf[k];
  if(!Array.isArray(DB.config.servicos))DB.config.servicos=[];
  if(!Array.isArray(DB.config.comissionados))DB.config.comissionados=[];
+ if(!DB.config.fichasProdutos||typeof DB.config.fichasProdutos!=='object')DB.config.fichasProdutos={};
  if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];
  if(!DB.config.custosFixosExtras)DB.config.custosFixosExtras=[];
  if(!DB.config.temposProducao)DB.config.temposProducao={};
@@ -1727,7 +1728,7 @@ function toggleSidebar(){$('sidebar').classList.toggle('open');}
 function closeSidebar(){$('sidebar').classList.remove('open');}
 function navigate(sec){
  if(!podeVer(sec)){toast('Seu nível de acesso ('+nivelDe(USER)+') não inclui esta seção.','error');if(sec!=='dashboard')navigate('dashboard');return;}
- CUR=sec;ITEM_PARA_PEDIDO=null;
+ CUR=sec;ITEM_PARA_PEDIDO=null;FICHA_PROD_ID='';ORC_ITEM_PROD_ID='';
  try{localStorage.setItem(LASTSEC_KEY,sec);}catch(e){}
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
  const el=$('section-'+sec); if(el)el.classList.add('active');
@@ -2330,7 +2331,8 @@ function linhasMateriaisProduto(p){const materiais=p.materiais||[];const qtdProd
   return '<tr style="background:var(--surface2)"><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;color:rgba(122,111,98,0.85)">• '+esc(m.desc||info.nome)+'</td><td class="mono" style="font-size:10.5px;color:rgba(122,111,98,0.85)">'+fmtN(necessario,3)+' '+esc(info.un)+'</td><td class="mono" style="font-size:10.5px;color:rgba(122,111,98,0.85)">'+fmtN(info.estoque,3)+' '+esc(info.un)+'</td><td>'+sit+'</td><td class="mono" style="font-size:11px;color:rgba(122,111,98,0.85)">'+fmt(custoTotal)+'</td><td></td><td></td></tr>';}).join('');
  return qtdRow+rows;}
 function linhaProduto(p,i){const est=Number(p.est||0),min=Number(p.min||0);
- const matHint=(p.materiais&&p.materiais.length)?'<div style="font-size:10px;color:var(--text-muted)">📋 '+p.materiais.length+' material(is)</div>':'';
+ const matHint=((p.materiais&&p.materiais.length)?'<div style="font-size:10px;color:var(--text-muted)">📋 '+p.materiais.length+' material(is)</div>':'')
+  +(temFicha(p.id)?'<div style="font-size:10px;color:var(--text-muted)">🧮 com ficha de preço</div>':'');
  const st=statusEstoque(est,min);
  const pct=min>0?Math.min(100,est/(min*2)*100):0;
  const isPortfolio=(p.tipo||'Portfólio')==='Portfólio';
@@ -2338,7 +2340,7 @@ function linhaProduto(p,i){const est=Number(p.est||0),min=Number(p.min||0);
  const chevron=isPortfolio?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(expandido?'Recolher materiais necessários':'Ver materiais necessários')+'" onclick="event.stopPropagation();toggleMateriaisProduto(\''+p.id+'\')">'+(expandido?'▾':'▸')+'</button>':'';
  const tempoDias=(DB.config.temposProducao||{})[p.id];
  const tempoCel=isPortfolio?'<td class="mono">'+(tempoDias?fmtN(tempoDias,1)+' dia'+(Number(tempoDias)===1?'':'s'):'—')+'</td>':'';
- const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+(i+1)+'</td><td><strong>'+esc(p.nome)+'</strong>'+matHint+'</td><td>'+esc(p.cat||'—')+'</td>'+tempoCel+'<td class="mono">'+(Number(p.preco)>0?fmt(p.preco):'—')+'</td><td class="mono">'+fmt(p.custo)+'</td><td><span class="mono">'+est+' '+esc(p.un||'un')+'</span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+st[2]+'"></div></div></td><td><span class="badge '+st[1]+'" title="'+st[3]+'">'+st[0]+'</span></td><td>'+actionBtns("editProduto('"+p.id+"')","delProduto('"+p.id+"')")+'</td></tr>';
+ const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+(i+1)+'</td><td><strong>'+esc(p.nome)+'</strong>'+matHint+'</td><td>'+esc(p.cat||'—')+'</td>'+tempoCel+'<td class="mono">'+(Number(p.preco)>0?fmt(p.preco):'—')+'</td><td class="mono">'+fmt(p.custo)+'</td><td><span class="mono">'+est+' '+esc(p.un||'un')+'</span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+st[2]+'"></div></div></td><td><span class="badge '+st[1]+'" title="'+st[3]+'">'+st[0]+'</span></td><td>'+botoesProduto(p)+'</td></tr>';
  return linhaHeader+(expandido?linhasMateriaisProduto(p):'');}
 function renderInsumos(){const lista=DB.produtos.filter(p=>p.tipo==='Insumo');
  $('tb-insumos').innerHTML=lista.map(linhaProduto).join('')||emptyRow(8,'Nenhum material/insumo cadastrado');
@@ -2377,13 +2379,13 @@ function renderProdutoCards(lista,alvoId,isPortfolio){
   const pct=min>0?Math.min(100,est/(min*2)*100):0;
   const aberto=isPortfolio&&PORT_MAT_EXPANDIDOS.has(p.id);
   const tempo=isPortfolio?(DB.config.temposProducao||{})[p.id]:0;
-  const meta=[p.cat||'',tempo?fmtN(tempo,1)+' dia'+(Number(tempo)===1?'':'s')+' de produção':''].filter(Boolean).join(' · ');
+  const meta=[p.cat||'',tempo?fmtN(tempo,1)+' dia'+(Number(tempo)===1?'':'s')+' de produção':'',isPortfolio&&temFicha(p.id)?'🧮 com ficha de preço':''].filter(Boolean).join(' · ');
   const nMat=(p.materiais||[]).length;
   const btnMat=!isPortfolio?''
    :(nMat
     ?'<button class="pc-itens-btn" onclick="toggleMateriaisProduto(\''+p.id+'\')">'+(aberto?'▾':'▸')+' '+nMat+(nMat>1?' materiais':' material')+'</button>'
     :'<button class="pc-itens-btn" onclick="toggleMateriaisProduto(\''+p.id+'\')">'+(aberto?'▾':'▸')+' sem materiais</button>');
-  const acoes=actionBtns("editProduto('"+p.id+"')","delProduto('"+p.id+"')");
+  const acoes=isPortfolio?botoesProduto(p):actionBtns("editProduto('"+p.id+"')","delProduto('"+p.id+"')");
   return '<div class="pedido-card prod-card">'
    +'<div class="pc-topo"><span class="pc-num">'+(i+1)+'</span><span class="badge '+st[1]+'" title="'+st[3]+'">'+st[0]+'</span></div>'
    +'<div class="pc-cliente">'+esc(p.nome)+'</div>'
@@ -2404,7 +2406,9 @@ function toggleProdMateriaisVisibility(){const ehPortfolio=$('prod-tipo').value=
  $('prod-tempo-wrap').style.display=ehPortfolio?'block':'none';
  /* insumo não é vendido: o preço de venda só duplicava o custo */
  $('prod-preco-wrap').style.display=ehPortfolio?'':'none';
- $('prod-custo-label').textContent=ehPortfolio?'Custo (R$)':'Preço de compra (R$)';}
+ $('prod-custo-label').textContent=ehPortfolio?'Custo (R$)':'Preço de compra (R$)';
+ /* a ficha só existe para produto do portfólio já cadastrado */
+ const btnFicha=$('prod-btn-ficha');if(btnFicha)btnFicha.style.display=(ehPortfolio&&$('prod-id').value)?'inline-flex':'none';}
 function renderProdMateriais(){$('prod-materiais-lista').innerHTML=PROD_MATERIAIS.map((m,i)=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:var(--surface2);border-radius:6px"><span style="font-size:13px">'+esc(m.desc)+' <strong class="mono">× '+m.qty+'</strong></span><button class="btn btn-ghost btn-sm" onclick="removeMaterialProduto('+i+')">🗑️</button></div>').join('')||'<div style="font-size:12px;color:var(--text-muted)">Nenhum material adicionado ainda.</div>';}
 function addMaterialProduto(){const nome=$('prod-mat-busca').value.trim();const qty=num('prod-mat-qty')||1;
  if(!nome){toast('Digite o nome do material.','error');return;}
@@ -3302,6 +3306,9 @@ function abrirEmailOrc(id){const o=DB.orcamentos.find(x=>x.id===id);if(!o)return
 
 /* ---- Cabeçalho do orçamento ---- */
 let ORC_ATUAL_ID=null,ORC_ITEM_EDITANDO=null,ORC_VOLTAR='lista';
+/* FICHA_PROD_ID: a ficha aberta é a de um produto do portfólio (salva no produto).
+   ORC_ITEM_PROD_ID: o item do orçamento veio do portfólio (guarda o vínculo com o produto). */
+let FICHA_PROD_ID='',ORC_ITEM_PROD_ID='';
 function orcShow(view){['lista','header','detalhe','tipo','form','catalogo'].forEach(v=>{$('orc-'+v+'-view').style.display=v===view?'block':'none';});}
 /* Orçamento novo abre numa página só: os dados do orçamento (cliente, datas, status) ficam no topo
    da própria ficha do item, e o Salvar cria o orçamento e o primeiro item de uma vez. */
@@ -3463,6 +3470,7 @@ async function excluirAnexoOrc(path){if(!guard())return;if(!confirm('Excluir est
  o.anexos=anexos;saveDB();renderAnexosOrc(o);toast('Anexo excluído.','info');}
 function abrirAdicionarItem(){if(!guard())return;ORC_ITEM_EDITANDO=null;ORC_VOLTAR='detalhe';ORC_NOVO_INLINE=false;embutirCabecalhoOrc(null);orcShow('tipo');}
 function voltarDeItem(){if(ITEM_PARA_PEDIDO)return voltarAoPedido(null);
+ if(FICHA_PROD_ID){FICHA_PROD_ID='';navigate('portfolio');return;}
  ORC_NOVO_INLINE=false;embutirCabecalhoOrc(null);
  if(ORC_VOLTAR==='detalhe'&&ORC_ATUAL_ID){orcShow('detalhe');renderOrcDetalhe();}else{orcShow('lista');renderOrcamentos();}}
 function selecionarTipoOrc(tipo){if(tipo==='catalogo'){resetOrcCatalogo();orcShow('catalogo');return;}
@@ -3481,6 +3489,9 @@ function resetOrcForm(tipo){const cf=DB.config.cf;
  $('orc-servicos').innerHTML='';
  $('orc-form-title').textContent=ITEM_PARA_PEDIDO?'Novo Item do Pedido':'Novo Item';
  $('orc-tipo-badge').textContent=tipo==='sob_medida'?'Projeto sob medida — rateio de CF, MDO e materiais':'Novo produto — será cadastrado no catálogo ao salvar';
+ FICHA_PROD_ID='';ORC_ITEM_PROD_ID='';
+ $('orc-desc').readOnly=false;const grupoQty=$('orc-qty').closest('.form-group');if(grupoQty)grupoQty.style.display='';
+ $('btn-salvar-orc').textContent='💾 Salvar Item';
  calcOrc();}
 function insumoOptions(sel){let h='<option value="">— Selecionar —</option>';
  if(DB.madeiras.length)h+='<optgroup label="🪵 Madeiras (custo R$/m³ — qtd em m³)">'+DB.madeiras.map(m=>'<option value="m:'+m.id+'" data-custo="'+(m.custo||0)+'"'+('m:'+m.id===sel?' selected':'')+'>'+esc(m.especie+' '+m.tipo+' '+m.esp+'×'+m.larg+'cm')+'</option>').join('')+'</optgroup>';
@@ -3653,21 +3664,26 @@ async function cadastrarProdutoDoItem(desc,t){const nome=$('np-nome').value.trim
  const {error}=await supa.from('produtos').upsert(novoProd);
  if(error){toast('Erro ao cadastrar produto no Supabase: '+error.message,'error');return null;}
  DB.produtos.push(novoProd);syncSheets('produtos','upsert',novoProd);
+ /* a ficha que acabou de ser preenchida vira a ficha de preço do produto novo */
+ const erroFicha=await gravarFichaProduto(novoProd,fichaDoFormulario(t));
+ if(erroFicha)toast('Produto cadastrado, mas não consegui guardar a ficha de preço dele: '+erroFicha.message,'info',6000);
  toast('Produto "'+nome+'" cadastrado no catálogo!','success');return novoProd;}
 /* mesmo formulário de precificação, dois destinos: o orçamento aberto ou o pedido que emprestou a tela */
 async function salvarItemCalculadoNoPedido(desc){const tipo=$('orc-tipo').value,t=computeOrc();
  let prod=null;
  if(tipo==='novo_produto'){prod=await cadastrarProdutoDoItem(desc,t);if(!prod)return;}
- voltarAoPedido({tipo:prod?'catalogo':'livre',prodId:prod?prod.id:'',desc:prod?prod.nome:desc,qty:qtdItemOrc(),preco:Math.round(t.preco*100)/100});
+ const doPortfolio=prod||(ORC_ITEM_PROD_ID?DB.produtos.find(x=>x.id===ORC_ITEM_PROD_ID):null);
+ voltarAoPedido({tipo:doPortfolio?'catalogo':'livre',prodId:doPortfolio?doPortfolio.id:'',desc:doPortfolio&&prod?prod.nome:desc,qty:qtdItemOrc(),preco:Math.round(t.preco*100)/100});
  toast('Item adicionado ao pedido.','success');}
 async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value.trim();if(!desc){toast('Informe a descrição.','error');return;}
+ if(FICHA_PROD_ID)return salvarFichaDoProduto();
  if(!await garantirOrcamentoDoCabecalho())return;
  if(ITEM_PARA_PEDIDO)return salvarItemCalculadoNoPedido(desc);
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o){toast('Orçamento não encontrado.','error');return;}
  const tipo=$('orc-tipo').value;const t=computeOrc();
  if(tipo==='novo_produto'&&!await cadastrarProdutoDoItem(desc,t))return;
  const cfgAtual=DB.config.cf;const qty=qtdItemOrc();
- const item={id:ORC_ITEM_EDITANDO||uid(),tipo,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal*qty,imposto:num('orc-imposto'),maquina:t.maquinaPct,maquinaVal:t.maquinaVal*qty,comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal*qty,markup:num('orc-markup'),margemSugerida:PRECO_MANUAL?MARGEM_SUGERIDA:null,precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto*qty,qty,custo:t.custo*qty,preco:Math.round(Math.round(t.preco*100)*qty)/100,lucro:t.lucro*qty};
+ const item={id:ORC_ITEM_EDITANDO||uid(),tipo:ORC_ITEM_PROD_ID?'catalogo':tipo,prodId:ORC_ITEM_PROD_ID||null,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,reserva:num('orc-reserva'),reservaVal:t.reservaVal*qty,imposto:num('orc-imposto'),maquina:t.maquinaPct,maquinaVal:t.maquinaVal*qty,comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal*qty,markup:num('orc-markup'),margemSugerida:PRECO_MANUAL?MARGEM_SUGERIDA:null,precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto*qty,qty,custo:t.custo*qty,preco:Math.round(Math.round(t.preco*100)*qty)/100,lucro:t.lucro*qty};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
@@ -3680,6 +3696,14 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
  ORC_VOLTAR='detalhe';orcShow('detalhe');renderOrcDetalhe();}
 function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const it=(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
+ /* item do portfólio que já tem composição: volta para a ficha, não para a tela de preço de tabela */
+ if(it.tipo==='catalogo'&&(Array.isArray(it.materiais)||Array.isArray(it.mdo))){
+  resetOrcForm('sob_medida');ORC_ITEM_PROD_ID=it.prodId||'';
+  preencherFormComFicha(it);
+  $('orc-desc').value=it.desc;$('orc-qty').value=it.qty||1;$('orc-obs').value=it.obs||'';
+  prepararTelaFicha('Editar Item — '+it.desc,'Item do portfólio com ficha de preço. O que você mudar aqui vale só para este orçamento.','💾 Salvar Item');
+  aplicarPrecoManualDaFicha(it,it.qty||1);
+  calcOrc();ORC_ITEM_EDITANDO=itemId;ORC_VOLTAR='detalhe';orcShow('form');return;}
  if(it.tipo==='catalogo'){resetOrcCatalogo();
   $('orc-cat-id').value=it.id;fillSel('orc-cat-prod',DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio'&&Number(p.preco)>0),p=>p.nome,it.prodId,'— Selecionar produto final —');
   $('orc-cat-qty').value=it.qty||1;$('orc-cat-desc-pct').value=it.descPct||0;$('orc-cat-obs').value=it.obs||'';
@@ -3702,6 +3726,110 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
   $('res-preco-input').value=(Number(it.preco)/(it.qty||1)).toFixed(2);$('preco-manual-hint').style.display='block';}
  calcOrc();
  ORC_ITEM_EDITANDO=itemId;ORC_VOLTAR='detalhe';orcShow('form');}
+/* ---- FICHA DE PREÇO DO PORTFÓLIO ----
+   O produto do portfólio guardava só preço e custo: não dava para saber como aquele preço
+   foi montado. Agora guarda a ficha inteira (mão de obra, materiais, serviços, reserva,
+   imposto, comissão, taxa da máquina e margem) em config, campo "fichasProdutos" — como já
+   acontece com o tempo de produção, sem precisar de coluna nova no banco.
+   A tela é a mesma do item do orçamento: muda só o dono do que é salvo. */
+const fichasProdutos=()=>DB.config.fichasProdutos||(DB.config.fichasProdutos={});
+const fichaDoProduto=id=>fichasProdutos()[id]||null;
+const temFicha=id=>!!fichaDoProduto(id);
+/* produto antigo, sem ficha: começa com os materiais que já estão cadastrados nele e os percentuais padrão */
+function fichaInicialDoProduto(prod){const cf=DB.config.cf;
+ return{mdo:[],servicos:[],
+  materiais:(prod.materiais||[]).map(m=>({mode:m.ref?'catalogo':'livre',ref:m.ref||'',desc:m.desc||'',qty:Number(m.qty)||0,custo:Number(m.custo)||0})),
+  reserva:cf.reserva!==undefined?cf.reserva:10,imposto:cf.imposto||0,maquina:cf.taxaMaquina||0,
+  comissao:0,comissaoNome:'',markup:cf.markup||0,precoManual:false};}
+/* material do cadastro tem o custo de hoje; material digitado à mão mantém o custo que está na ficha */
+function custoAtualDoRef(ref,padrao){if(!ref)return padrao;
+ const tipo=ref.slice(0,1),id=ref.slice(2);
+ if(tipo==='m'){const m=DB.madeiras.find(x=>x.id===id);return m?Number(m.custo)||0:padrao;}
+ if(tipo==='p'){const pr=DB.produtos.find(x=>x.id===id);return pr?Number(pr.custo)||0:padrao;}
+ return padrao;}
+function fichaComCustosDeHoje(f){const c=Object.assign({},f);
+ c.materiais=(f.materiais||[]).map(m=>Object.assign({},m,{custo:custoAtualDoRef(m.ref,Number(m.custo)||0)}));
+ return c;}
+function fichaDoFormulario(t){return{
+ mdo:t.mdoLinhas,materiais:t.materiais,servicos:t.servicos,
+ reserva:num('orc-reserva'),imposto:num('orc-imposto'),maquina:t.maquinaPct,
+ comissao:t.comissaoPct,comissaoNome:t.comissaoNome,markup:num('orc-markup'),
+ precoManual:PRECO_MANUAL,margemSugerida:PRECO_MANUAL?MARGEM_SUGERIDA:null,
+ custo:Math.round(t.custo*100)/100,preco:Math.round(t.preco*100)/100,atualizada:today()};}
+/* preenche o formulário: serve para a ficha do produto e para o item do orçamento */
+function preencherFormComFicha(f){
+ $('orc-mdo').innerHTML='';
+ if(Array.isArray(f.mdo)){f.mdo.forEach(m=>addMdoItem(m));}
+ else if(f.mdo&&(f.mdo.qhsocio||f.mdo.qhaux)){ /* itens antigos, com Sócio/Auxiliar fixos */
+  if(f.mdo.qhsocio)addMdoItem({tipoId:'socio',horas:f.mdo.qhsocio});
+  if(f.mdo.qhaux)addMdoItem({tipoId:'auxiliar',horas:f.mdo.qhaux});}
+ $('orc-imposto').value=f.imposto||0;$('orc-markup').value=f.markup||0;
+ $('orc-reserva').value=f.reserva!==undefined?f.reserva:0;$('orc-maquina').value=f.maquina||0;
+ $('orc-comissao').value=f.comissao||0;$('orc-comissao-nome').value=f.comissaoNome||'';selecionarComissaoDoItem(f.comissaoNome||'');
+ $('orc-materiais').innerHTML='';(f.materiais||[]).forEach(m=>addMaterial(m.mode||'livre',m));
+ $('orc-servicos').innerHTML='';(f.servicos||[]).forEach(sv=>addServico(sv));}
+function aplicarPrecoManualDaFicha(f,qty){if(!f.precoManual)return;
+ PRECO_MANUAL=true;MARGEM_SUGERIDA=f.margemSugerida!=null?Number(f.margemSugerida):Number(f.markup)||0;
+ $('res-preco-input').value=(Number(f.preco||0)/(qty||1)).toFixed(2);$('preco-manual-hint').style.display='block';}
+/* a tela é emprestada: estes dois dizem para quem vai o que for salvo */
+function prepararTelaFicha(titulo,legenda,rotuloBotao){
+ $('orc-form-title').textContent=titulo;$('orc-tipo-badge').textContent=legenda;
+ $('btn-salvar-orc').textContent=rotuloBotao;
+ const q=$('orc-qty').closest('.form-group');if(q)q.style.display=FICHA_PROD_ID?'none':'';
+ $('orc-desc').readOnly=!!FICHA_PROD_ID;}
+/* abrir um item do portfólio: a ficha de preço dele, para consultar e ajustar */
+function abrirFichaProduto(id){if(!guard()||!guardValores())return;
+ const prod=DB.produtos.find(x=>x.id===id);if(!prod)return;
+ ORC_ATUAL_ID=null;ORC_ITEM_EDITANDO=null;ORC_NOVO_INLINE=false;
+ navigate('orcamentos');embutirCabecalhoOrc(null);
+ resetOrcForm('sob_medida');
+ FICHA_PROD_ID=id;
+ const gravada=fichaDoProduto(id);
+ const f=fichaComCustosDeHoje(gravada||fichaInicialDoProduto(prod));
+ preencherFormComFicha(f);
+ $('orc-desc').value=prod.nome;$('orc-qty').value=1;$('orc-obs').value='';
+ prepararTelaFicha('Ficha de preço — '+prod.nome,
+  gravada?'Composição do preço deste item do portfólio. Salvar atualiza o preço e o custo cadastrados.'
+   :'Este produto ainda não tinha ficha: os materiais já cadastrados entraram, falta a mão de obra. Salvar atualiza o preço e o custo.',
+  '💾 Salvar ficha');
+ if(gravada)aplicarPrecoManualDaFicha(gravada,1);
+ ORC_VOLTAR='portfolio';calcOrc();orcShow('form');}
+async function gravarFichaProduto(prod,ficha){
+ const mapa=Object.assign({},fichasProdutos());mapa[prod.id]=ficha;
+ const valor=JSON.stringify(mapa);
+ const {error}=await supa.from('config').upsert({campo:'fichasProdutos',valor});
+ if(error)return error;
+ DB.config.fichasProdutos=mapa;saveDB();syncSheets('config','upsert',{campo:'fichasProdutos',valor});
+ return null;}
+async function salvarFichaDoProduto(){
+ const prod=DB.produtos.find(x=>x.id===FICHA_PROD_ID);
+ if(!prod){FICHA_PROD_ID='';toast('Produto não encontrado.','error');return;}
+ const t=computeOrc(),ficha=fichaDoFormulario(t);
+ const erroFicha=await gravarFichaProduto(prod,ficha);
+ if(erroFicha){toast('Erro ao salvar a ficha: '+erroFicha.message,'error');return;}
+ const {error}=await supa.from('produtos').update({preco:ficha.preco,custo:ficha.custo}).eq('id',prod.id);
+ if(error)toast('Ficha salva, mas não consegui atualizar o preço do produto: '+error.message,'error');
+ else{prod.preco=ficha.preco;prod.custo=ficha.custo;syncSheets('produtos','upsert',prod);}
+ FICHA_PROD_ID='';
+ commit('editar','Portfólio','Ficha de "'+prod.nome+'" — preço '+fmt(ficha.preco)+', custo '+fmt(ficha.custo));
+ toast('Ficha salva. Preço '+fmt(ficha.preco)+' · custo '+fmt(ficha.custo),'success');
+ navigate('portfolio');}
+/* produto do portfólio escolhido dentro de um orçamento: entra com a ficha preenchida */
+function abrirFichaDoPortfolioNoItem(prod,qty,f,obs){
+ resetOrcForm('sob_medida');
+ ORC_ITEM_PROD_ID=prod.id;
+ preencherFormComFicha(fichaComCustosDeHoje(f));
+ $('orc-desc').value=prod.nome;$('orc-qty').value=qty||1;$('orc-obs').value=obs||'';
+ prepararTelaFicha('Item do portfólio — '+prod.nome,
+  'Ficha do portfólio, recalculada com os custos de hoje. Preço cadastrado: '+fmt(prod.preco)+'. Ajuste o que mudar neste orçamento e salve.',
+  '💾 Salvar Item');
+ aplicarPrecoManualDaFicha(f,1);
+ calcOrc();orcShow('form');}
+/* no portfólio, a ficha fica ao lado de editar e excluir */
+function botoesProduto(prod){const acoes=actionBtns("editProduto('"+prod.id+"')","delProduto('"+prod.id+"')");
+ if(!acoes||(prod.tipo||'Portfólio')!=='Portfólio')return acoes;
+ return acoes.replace('<div class="row-actions">','<div class="row-actions"><button class="btn btn-ghost btn-sm" title="Ficha de preço — como este valor é formado" onclick="abrirFichaProduto(\''+prod.id+'\')">🧮</button>');}
+function fichaDoProdutoAberto(){const id=$('prod-id').value;if(!id)return;closeModal('modal-produtos');abrirFichaProduto(id);}
 async function excluirItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const it=(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
  if(!confirm('Excluir item "'+it.desc+'"?'))return;
@@ -3882,13 +4010,16 @@ async function orcParaProducao(id){if(!guard())return;const o=DB.orcamentos.find
 function resetOrcCatalogo(){$('orc-cat-id').value='';fillSel('orc-cat-prod',DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio'&&Number(p.preco)>0),p=>p.nome,'','— Selecionar produto final —');
  $('orc-cat-qty').value=1;$('orc-cat-desc-pct').value=0;$('orc-cat-obs').value='';$('cat-info-prod').style.display='none';calcCatalogo();}
 function selecionarProdCatalogo(){const p=DB.produtos.find(x=>x.id===$('orc-cat-prod').value);
- if(p){$('cat-info-prod').style.display='block';$('cat-preco-tab').textContent=fmt(p.preco);$('cat-estoque').textContent=p.est+' '+(p.un||'un');}else $('cat-info-prod').style.display='none';
+ if(p){$('cat-info-prod').style.display='block';$('cat-preco-tab').textContent=fmt(p.preco)+(temFicha(p.id)?' · tem ficha de preço':'');$('cat-estoque').textContent=p.est+' '+(p.un||'un');}else $('cat-info-prod').style.display='none';
  calcCatalogo();}
 function calcCatalogo(){const p=DB.produtos.find(x=>x.id===$('orc-cat-prod').value);const qty=num('orc-cat-qty')||1,pct=num('orc-cat-desc-pct');
  const bruto=p?p.preco*qty:0;const desc=bruto*pct/100;
  $('cat-val-desc').textContent='- '+fmt(desc);$('cat-total').textContent=fmt(bruto-desc);return{bruto,desc,total:bruto-desc,p,qty,pct};}
 async function salvarItemCatalogo(){if(!guard())return;const c=calcCatalogo();if(!c.p){toast('Selecione um produto.','error');return;}
  if(!ITEM_PARA_PEDIDO&&!await garantirOrcamentoDoCabecalho())return;
+ /* produto com ficha: em vez de entrar só com o preço de tabela, abre a composição preenchida */
+ const fichaProd=fichaDoProduto(c.p.id);
+ if(fichaProd&&!ORC_ITEM_EDITANDO)return abrirFichaDoPortfolioNoItem(c.p,c.qty,fichaProd,$('orc-cat-obs').value.trim());
  if(ITEM_PARA_PEDIDO){voltarAoPedido({tipo:'catalogo',prodId:c.p.id,desc:c.p.nome,qty:c.qty,preco:Math.round((c.total/c.qty)*100)/100});
   toast('Item adicionado ao pedido.','success');return;}
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o){toast('Orçamento não encontrado.','error');return;}
@@ -5349,7 +5480,9 @@ async function carregarConfigSupabase(){
  const {data,error}=await supa.from('config').select('*');
  if(error){erroDeCarga('configurações',error);return;}
  (data||[]).forEach(({campo,valor})=>{
-  if(campo==='comissionados'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.comissionados=arr;}catch(e){}
+  if(campo==='fichasProdutos'){try{const m=JSON.parse(valor);if(m&&typeof m==='object'&&!Array.isArray(m))DB.config.fichasProdutos=m;}catch(e){}
+   if(CUR==='portfolio')renderPortfolio();}
+  else if(campo==='comissionados'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.comissionados=arr;}catch(e){}
    if(CUR==='comissoes')renderComissoes();}
   else if(campo==='servicos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.servicos=arr;}catch(e){}
    if(CUR==='servicos')renderServicos();}
@@ -6324,7 +6457,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.20';
+const APP_VERSAO='2026-09-20.21';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
