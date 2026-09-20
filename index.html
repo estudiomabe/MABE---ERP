@@ -219,7 +219,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
    A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
    fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
-#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards { display:none; }
+#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards { display:none; }
 .pc-ficha { display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;padding:9px 11px;background:var(--surface2);border-radius:8px; }
 .pc-ficha div { display:flex;flex-direction:column;gap:1px;font-size:13px;font-family:var(--mono);color:var(--text);min-width:0; }
 .pc-ficha span { font-family:var(--font, inherit);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
@@ -323,14 +323,14 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
   #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
-  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards { display:block; }
+  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards { display:block; }
   /* calendário: a grade de 7 colunas não cabe; vira agenda com só os dias que têm algo */
   #cal-agenda { display:block;margin-top:4px; }
   #cal-grid, .cal-semana, .cal-legenda { display:none !important; }
   #section-calendario .period-bar { gap:6px; }
   #section-calendario .period-bar .btn { min-height:38px;min-width:40px; }
   #cal-label { min-width:0 !important;flex:1; }
-  #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
+  #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #servicos-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
   .cli-busca-barra input { max-width:none;font-size:16px; }
   .compras-topo { display:flex;justify-content:flex-end;margin-bottom:12px; }
   .pcp-abas { display:flex;gap:6px;overflow-x:auto;margin:0 -2px 12px;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none; }
@@ -468,6 +468,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <span class="nav-label">Compras</span>
     <div class="nav-item" onclick="navigate('compras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Compras</div>
     <span class="nav-label">Cadastros</span>
+    <div class="nav-item" onclick="navigate('servicos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Serviços Terceirizados</div>
     <div class="nav-item" onclick="navigate('fornecedores')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Fornecedores</div>
     <div class="nav-item" onclick="navigate('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
     <span class="nav-label">Sistema</span>
@@ -607,6 +608,13 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
       <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-ofx')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImportacaoOfx()">✔ Lançar Selecionados</button></div>
     </div></div>
+
+    <!-- SERVIÇOS TERCEIRIZADOS -->
+    <div class="section" id="section-servicos">
+      <div id="servicos-cards"></div>
+      <div class="table-wrapper" id="servicos-tabela"><div class="table-toolbar"><div class="table-toolbar-title">🔧 Serviços Terceirizados</div></div>
+      <table><thead><tr><th>Serviço</th><th>Prestador</th><th>Cobrança</th><th>Valor padrão</th><th>Observações</th><th>Ações</th></tr></thead><tbody id="tb-servicos"></tbody></table></div>
+    </div>
 
     <div class="section" id="section-fornecedores"><div id="fornecedores-cards"></div><div class="table-wrapper" id="fornecedores-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Fornecedores</div></div><table><thead><tr><th>#</th><th>Nome</th><th>CNPJ</th><th>Email</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-fornecedores"></tbody></table></div></div>
     <div class="section" id="section-compras"><div class="compras-topo"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button></div><div id="compras-cards"></div><div class="table-wrapper" id="compras-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button><input type="file" id="nf-xml-input" accept=".xml,text/xml,application/xml" style="display:none" onchange="importarNfXml(this)"></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
@@ -817,6 +825,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             <div class="config-card" style="margin:0">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button><button class="btn btn-primary btn-sm" onclick="abrirNovoPrestadorRapido()">+ Cadastrar Prestador</button></div></div>
               <div id="orc-servicos" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+              <datalist id="dl-servicos"></datalist>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Serviços</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-serv">R$ 0,00</span></div>
             </div>
             <div class="config-card" style="margin:0;background:#1a1714;border-color:#1a1714">
@@ -1055,6 +1064,18 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
   <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-nfe-info')">Entendi</button></div>
 </div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option><option>Marketing</option><option>Vendas</option><option>Pedidos</option><option>Folha de Pagamento</option><option>Administrativo</option><option>Manutenção</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-servicos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mserv-title">Novo Serviço Terceirizado</div><button class="modal-close" onclick="closeModal('modal-servicos')">✕</button></div><div class="modal-body">
+<input type="hidden" id="serv-id">
+<div class="form-grid">
+<div class="form-group"><label class="form-label">Serviço *</label><input type="text" class="form-control" id="serv-nome" placeholder="Ex: Estofamento, Pintura eletrostática, Corte a laser"></div>
+<div class="form-group"><label class="form-label">Prestador</label><div style="display:flex;gap:6px"><select class="form-control" id="serv-forn" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar fornecedor" onclick="abrirNovoPrestadorDoServico()">+ Novo</button></div></div>
+<div class="form-grid form-2">
+<div class="form-group"><label class="form-label">Cobrança</label><select class="form-control" id="serv-unidade"><option>Por peça</option><option>Por hora</option><option>Por m²</option><option>Por metro linear</option><option>Por projeto</option></select></div>
+<div class="form-group"><label class="form-label">Valor padrão (R$)</label><input type="number" class="form-control" id="serv-valor" step="0.01" min="0" value="0"></div>
+</div>
+<div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="serv-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Prazo médio, condição de pagamento, detalhes combinados..."></textarea></div>
+</div>
+</div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-servicos')">Cancelar</button><button class="btn btn-primary" onclick="saveServico()">Salvar Serviço</button></div></div></div>
 <div class="modal-overlay" id="modal-fornecedores"><div class="modal"><div class="modal-header"><div class="modal-title" id="mfor-title">Novo Fornecedor</div><button class="modal-close" onclick="closeModal('modal-fornecedores')">✕</button></div><div class="modal-body"><input type="hidden" id="for-id"><div class="form-grid"><div class="form-group"><label class="form-label">Razão Social *</label><input type="text" class="form-control" id="for-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CNPJ</label><input type="text" class="form-control" id="for-cnpj" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" oninput="mascararCnpj(this)"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="for-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="for-email"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="for-cidade"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="for-status"><option>Ativo</option><option>Inativo</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-fornecedores')">Cancelar</button><button class="btn btn-primary" onclick="saveFornecedor()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-usuarios"><div class="modal"><div class="modal-header"><div class="modal-title" id="mu-title">Novo Usuário</div><button class="modal-close" onclick="closeModal('modal-usuarios')">✕</button></div><div class="modal-body"><input type="hidden" id="usr-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="usr-nome"></div><div class="form-group"><label class="form-label">E-mail *</label><input type="email" class="form-control" id="usr-login" placeholder="pessoa@estudiomabe.com.br" autocomplete="off"></div></div><div class="form-group" id="usr-senha-box"><label class="form-label">Senha *</label><input type="password" class="form-control" id="usr-senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password"><div style="font-size:11px;color:var(--text-muted);margin-top:4px">A conta de acesso é criada no Supabase Auth com este e-mail e esta senha.</div></div><div class="form-group" id="usr-reset-box" style="display:none"><label class="form-label">Senha</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" onclick="enviarResetDoModal()">✉️ Enviar link de redefinição</button><span style="font-size:11px;color:var(--text-muted)">Por segurança, ninguém — nem o administrador — troca a senha de outra pessoa: o link vai para o e-mail dela.</span></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Nível de Acesso</label><select class="form-control" id="usr-nivel" onchange="atualizarHintNivel()"></select><div id="usr-nivel-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.45"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="usr-status"><option>Ativo</option><option>Inativo</option></select></div></div>
 <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:2px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">🔐 Recuperação de senha (opcional, mas recomendado)</div><div class="form-grid">
@@ -1246,6 +1267,7 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  for(const k in d)if(DB[k]===undefined)DB[k]=d[k];
  if(!DB.config.cf)DB.config.cf=d.config.cf; if(!DB.seq)DB.seq=d.seq;
  for(const k in d.config.cf)if(DB.config.cf[k]===undefined)DB.config.cf[k]=d.config.cf[k];
+ if(!Array.isArray(DB.config.servicos))DB.config.servicos=[];
  if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];
  if(!DB.config.custosFixosExtras)DB.config.custosFixosExtras=[];
  if(!DB.config.temposProducao)DB.config.temposProducao={};
@@ -1315,7 +1337,7 @@ function buscarAtualizacoesManual(){if(!DB.config.sheetsUrl){toast('Configure a 
    Usuários e Configurações são exclusivos do Administrador. */
 const NIVEIS={
  'Administrador':{desc:'Acesso total, incluindo Usuários, Configurações e Folha de Pagamento.',edita:true,valores:true,secoes:null},
- 'Financeiro':{desc:'Tudo, exceto Usuários e Configurações — não altera custos padrão nem a folha.',edita:true,valores:true,secoes:['dashboard','calendario','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','centrocustos','relatorios','compras','fornecedores','clientes','historico']},
+ 'Financeiro':{desc:'Tudo, exceto Usuários e Configurações — não altera custos padrão nem a folha.',edita:true,valores:true,secoes:['dashboard','calendario','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','centrocustos','relatorios','compras','fornecedores','servicos','clientes','historico']},
  'Produção':{desc:'Calendário, PCP, Máquinas, Estoque, Pedidos e Clientes. Não vê Financeiro, Orçamentos, custos nem valores em R$.',edita:true,valores:false,secoes:['dashboard','calendario','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']},
  'Consulta':{desc:'Mesmas telas do nível Produção, somente leitura.',edita:false,valores:false,secoes:['dashboard','calendario','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']}
 };
@@ -1619,14 +1641,14 @@ function prepararOrdenacao(sec){
   th.addEventListener('click',()=>ordenarTabela(th));});}
 
 /* ================= NAVEGAÇÃO ================= */
-const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
+const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',servicos:'Serviços Terceirizados',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
 /* No celular o titulo longo empurrava o botao '+ Novo' para a linha de baixo.
    So os nomes que sobram estao aqui; o resto usa o titulo normal. */
 const TITULOS_CURTOS={clientes:'Clientes',pcp:'Produção',entregas:'Entregas',ferramentas:'Máquinas',
  calendario:'Calendário',insumos:'Material/Insumo',portfolio:'Portfólio',madeiras:'Madeiras',
- compras:'Compras',historico:'Histórico'};
-const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','compras','usuarios'];
-const BTN_NEW_LABELS={orcamentos:'Novo Orçamento',financeiro:'Adicionar Lançamento'};
+ compras:'Compras',historico:'Histórico',servicos:'Serviços'};
+const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','servicos','compras','usuarios'];
+const BTN_NEW_LABELS={orcamentos:'Novo Orçamento',financeiro:'Adicionar Lançamento',servicos:'Novo Serviço'};
 let CUR='dashboard';
 function toggleSidebar(){$('sidebar').classList.toggle('open');}
 function closeSidebar(){$('sidebar').classList.remove('open');}
@@ -1649,6 +1671,7 @@ function navigate(sec){
  prepararOrdenacao(sec);
  if(sec==='clientes')carregarClientesSupabase();
  if(sec==='fornecedores')carregarFornecedoresSupabase();
+ if(sec==='servicos')carregarConfigSupabase();
  if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas'||sec==='calendario')carregarFerramentasSupabase();
@@ -1661,12 +1684,13 @@ function navigate(sec){
  if(sec==='configuracoes')carregarConfigSupabase();
  if(sec==='historico')carregarHistoricoSupabase();
  if(sec==='usuarios')carregarUsuariosSupabase();}
-function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
+function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,servicos:renderServicos,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 /* ================= BUSCA GLOBAL =================
    Filtra a seção aberta, como antes, e ao mesmo tempo procura em todos os
    cadastros. Clicar num resultado leva para a seção certa já filtrada. */
 const norm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 function fontesBusca(){return [
+ {sec:'servicos',grupo:'Serviços',itens:listaServicos(),cod:sv=>'',txt:sv=>sv.nome,sub:sv=>sv.fornId?fornName(sv.fornId):'',extra:sv=>[sv.unidade,sv.obs]},
  {sec:'clientes',grupo:'Clientes',itens:DB.clientes,cod:c=>'',txt:c=>c.nome,sub:c=>c.tel||'',extra:c=>[c.email,c.doc,c.cidade]},
  {sec:'orcamentos',grupo:'Orçamentos',itens:DB.orcamentos,cod:o=>'ORC-'+pad(o.num),txt:o=>cliName(o.cliId),sub:o=>o.status,extra:o=>[(o.itens||[]).map(i=>i.desc).join(' '),o.obs]},
  {sec:'vendas',grupo:'Pedidos',itens:DB.vendas,cod:v=>'V-'+pad(v.num),txt:v=>cliName(v.cliId),sub:v=>v.status,extra:v=>[(v.itens||[]).map(i=>i.desc).join(' '),v.obs]},
@@ -1746,6 +1770,7 @@ function openNew(){if(!guard())return;
   case 'ferramentas':openFerramenta();break;
   case 'financeiro':openFin();break;
   case 'fornecedores':openFornecedor();break;
+  case 'servicos':openServico();break;
   case 'compras':openCompra();break;
   case 'usuarios':openUsuario();break;}}
 function updateBadges(){
@@ -3342,7 +3367,7 @@ function addMdoItem(m){const wrap=$('orc-mdo');const row=document.createElement(
  wrap.appendChild(row);calcOrc();}
 function addServico(sv){const wrap=$('orc-servicos');const row=document.createElement('div');
  row.style.cssText='display:grid;grid-template-columns:150px 2fr 100px 28px;gap:6px;align-items:center';
- row.innerHTML='<select class="form-control sv-forn">'+fornOptions(sv?sv.fornId:'')+'</select><input type="text" class="form-control sv-desc" placeholder="Descrição do serviço (ex: Estofamento terceirizado)" value="'+esc(sv?sv.desc:'')+'"><span class="rot-cel">Valor</span><span class="rot-cel"></span><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control sv-valor" value="'+(sv?sv.valor:0)+'" step="0.01" min="0" oninput="calcOrc()" style="border:none;background:transparent;padding-left:2px"></div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
+ row.innerHTML='<select class="form-control sv-forn">'+fornOptions(sv?sv.fornId:'')+'</select><input type="text" class="form-control sv-desc" list="dl-servicos" placeholder="Descrição do serviço (ex: Estofamento terceirizado)" value="'+esc(sv?sv.desc:'')+'" oninput="svBusca(this)"><span class="rot-cel">Valor</span><span class="rot-cel"></span><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control sv-valor" value="'+(sv?sv.valor:0)+'" step="0.01" min="0" oninput="calcOrc()" style="border:none;background:transparent;padding-left:2px"></div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
  wrap.appendChild(row);calcOrc();}
 function materiaisDatalistOptions(){let opts='';
  DB.madeiras.forEach(m=>{opts+='<option value="'+esc(m.especie+' '+m.tipo+' '+m.esp+'×'+m.larg+'cm')+'"></option>';});
@@ -3361,7 +3386,7 @@ function omBusca(input){const nome=input.value.trim();const found=buscarMaterial
  calcOrc();}
 let LINHA_MATERIAL_PENDENTE=null,PRODUTO_RAPIDO_ORC=false;
 function abrirNovoProdutoRapido(){openProduto('Insumo');PRODUTO_RAPIDO_ORC=true;}
-let FORNECEDOR_RAPIDO_ORC=false;
+let FORNECEDOR_RAPIDO_ORC=false,FORNECEDOR_RAPIDO_SERVICO=false;
 function abrirNovoPrestadorRapido(){openFornecedor();FORNECEDOR_RAPIDO_ORC=true;}
 function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.createElement('div');row.dataset.mode=mode;if(it&&it.ref)row.dataset.ref=it.ref;
  row.style.cssText='display:grid;grid-template-columns:2fr 65px 85px 85px 28px;gap:6px;align-items:center';
@@ -4336,9 +4361,75 @@ function renderFornecedoresCards(){const alvo=$('fornecedores-cards');if(!alvo)r
    +(links?'<div class="pc-links">'+links+'</div>':'')
    +(canEdit()?'<div class="pc-acoes">'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</div>':'')
    +'</div>';}).join('');}
+/* ================= SERVIÇOS TERCEIRIZADOS =================
+   Catálogo do que é feito fora (estofamento, pintura, corte a laser...) com prestador e valor de referência.
+   Fica em config (campo "servicos"), como os tipos de mão de obra — não precisa de tabela própria no banco. */
+const SERV_UNIDADES=['Por peça','Por hora','Por m²','Por metro linear','Por projeto'];
+const listaServicos=()=>DB.config.servicos||(DB.config.servicos=[]);
+function renderServicosCards(lista){const alvo=$('servicos-cards');if(!alvo)return;
+ if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum serviço terceirizado cadastrado</div>';return;}
+ alvo.innerHTML=lista.map(sv=>'<div class="pedido-card">'
+  +'<div class="pc-topo"><div class="pc-cliente">'+esc(sv.nome)+'</div><span class="badge badge-muted">'+esc(sv.unidade||'—')+'</span></div>'
+  +'<div class="pc-pag">'+esc(sv.fornId?fornName(sv.fornId):'Prestador não definido')+'</div>'
+  +'<div class="pc-valor"><span class="pc-total">'+fmt(sv.valor)+'</span></div>'
+  +(sv.obs?'<div class="pc-itens-lista"><div class="pc-item">'+esc(sv.obs)+'</div></div>':'')
+  +(canEdit()?'<div class="pc-acoes">'+actionBtns("editServico('"+sv.id+"')","delServico('"+sv.id+"')")+'</div>':'')
+  +'</div>').join('');}
+function renderServicos(){
+ const lista=listaServicos().slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+ renderServicosCards(lista);
+ $('tb-servicos').innerHTML=lista.map(sv=>'<tr><td><strong>'+esc(sv.nome)+'</strong></td><td>'+esc(sv.fornId?fornName(sv.fornId):'—')+'</td><td>'+esc(sv.unidade||'—')+'</td><td class="mono" style="font-weight:700">'+fmt(sv.valor)+'</td><td style="font-size:12px;color:var(--text-muted)">'+esc(sv.obs||'—')+'</td><td>'+actionBtns("editServico('"+sv.id+"')","delServico('"+sv.id+"')")+'</td></tr>').join('')||emptyRow(6,'Nenhum serviço terceirizado cadastrado');
+ atualizarDatalistServicos();}
+function openServico(){if(!guard())return;
+ $('serv-id').value='';$('serv-nome').value='';$('serv-valor').value=0;$('serv-obs').value='';$('serv-unidade').value='Por peça';
+ fillSel('serv-forn',DB.fornecedores,f=>f.nome,'','— Sem prestador —');
+ $('mserv-title').textContent='Novo Serviço Terceirizado';openModal('modal-servicos');}
+function editServico(id){if(!guard())return;const sv=listaServicos().find(x=>x.id===id);if(!sv)return;
+ $('serv-id').value=sv.id;$('serv-nome').value=sv.nome||'';$('serv-valor').value=sv.valor||0;$('serv-obs').value=sv.obs||'';
+ $('serv-unidade').value=SERV_UNIDADES.includes(sv.unidade)?sv.unidade:'Por peça';
+ fillSel('serv-forn',DB.fornecedores,f=>f.nome,sv.fornId||'','— Sem prestador —');
+ $('mserv-title').textContent='Editar Serviço';openModal('modal-servicos');}
+/* cadastrar o prestador sem perder o que já foi digitado aqui */
+let SERVICO_PENDENTE=null;
+function abrirNovoPrestadorDoServico(){if(!guard())return;
+ SERVICO_PENDENTE={id:$('serv-id').value,nome:$('serv-nome').value,unidade:$('serv-unidade').value,valor:$('serv-valor').value,obs:$('serv-obs').value};
+ closeModal('modal-servicos');openFornecedor();FORNECEDOR_RAPIDO_SERVICO=true;}
+function voltarAoServico(fornId){const d=SERVICO_PENDENTE;SERVICO_PENDENTE=null;if(!d)return;
+ $('serv-id').value=d.id;$('serv-nome').value=d.nome;$('serv-unidade').value=d.unidade;$('serv-valor').value=d.valor;$('serv-obs').value=d.obs;
+ fillSel('serv-forn',DB.fornecedores,f=>f.nome,fornId||'','— Sem prestador —');
+ $('mserv-title').textContent=d.id?'Editar Serviço':'Novo Serviço Terceirizado';openModal('modal-servicos');}
+async function gravarServicos(acao,detalhe){
+ const lista=listaServicos();
+ const {error}=await supa.from('config').upsert({campo:'servicos',valor:JSON.stringify(lista)});
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return false;}
+ commit(acao,'Serviços',detalhe);syncSheets('config','upsert',{campo:'servicos',valor:JSON.stringify(lista)});
+ atualizarDatalistServicos();return true;}
+async function saveServico(){if(!guard())return;
+ const nome=$('serv-nome').value.trim();if(!nome){toast('Informe o nome do serviço.','error');return;}
+ const id=$('serv-id').value;
+ const dados={nome,fornId:$('serv-forn').value||'',unidade:$('serv-unidade').value,valor:num('serv-valor'),obs:$('serv-obs').value.trim()};
+ const lista=listaServicos();
+ const antes=id?Object.assign({},lista.find(x=>x.id===id)):null;
+ if(id){const sv=lista.find(x=>x.id===id);if(!sv)return;Object.assign(sv,dados);}
+ else lista.push(Object.assign({id:uid()},dados));
+ if(!await gravarServicos(id?'editar':'criar',nome)){if(id&&antes)Object.assign(lista.find(x=>x.id===id),antes);else lista.pop();return;}
+ closeModal('modal-servicos');toast('Serviço salvo!','success');}
+async function delServico(id){if(!guard())return;const lista=listaServicos();const sv=lista.find(x=>x.id===id);if(!sv)return;
+ if(!confirm('Excluir o serviço "'+sv.nome+'"?\n\nOs orçamentos já feitos não mudam.'))return;
+ const idx=lista.indexOf(sv);lista.splice(idx,1);
+ if(!await gravarServicos('excluir',sv.nome)){lista.splice(idx,0,sv);return;}
+ toast('Serviço excluído.','info');}
+/* no item do orçamento: digitar o nome do serviço preenche prestador e valor */
+function atualizarDatalistServicos(){const dl=$('dl-servicos');if(!dl)return;
+ dl.innerHTML=listaServicos().map(sv=>'<option value="'+esc(sv.nome)+'"></option>').join('');}
+function svBusca(input){const nome=input.value.trim();const sv=listaServicos().find(x=>String(x.nome).toLowerCase()===nome.toLowerCase());
+ if(!sv)return;const row=input.closest('div');
+ const selForn=row.querySelector('.sv-forn');if(sv.fornId&&selForn)selForn.value=sv.fornId;
+ const valor=row.querySelector('.sv-valor');
+ if(valor&&Number(sv.valor)&&!Number(valor.value)){valor.value=sv.valor;calcOrc();}}
 function renderFornecedores(){renderFornecedoresCards();$('tb-fornecedores').innerHTML=DB.fornecedores.map((f,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(f.nome)+'</strong></td><td class="mono">'+esc(f.cnpj||'—')+'</td><td>'+esc(f.email||'—')+'</td><td>'+esc(f.tel||'—')+'</td><td>'+esc(f.cidade||'—')+'</td><td><span class="badge '+(f.status==='Ativo'?'badge-success':'badge-muted')+'">'+f.status+'</span></td><td>'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum fornecedor cadastrado');}
-function openFornecedor(){FORNECEDOR_RAPIDO_ORC=false;['for-id','for-nome','for-cnpj','for-tel','for-email','for-cidade'].forEach(i=>$(i).value='');$('for-status').value='Ativo';$('mfor-title').textContent='Novo Fornecedor';openModal('modal-fornecedores');}
-function editFornecedor(id){if(!guard())return;FORNECEDOR_RAPIDO_ORC=false;const f=DB.fornecedores.find(x=>x.id===id);if(!f)return;
+function openFornecedor(){FORNECEDOR_RAPIDO_ORC=false;FORNECEDOR_RAPIDO_SERVICO=false;['for-id','for-nome','for-cnpj','for-tel','for-email','for-cidade'].forEach(i=>$(i).value='');$('for-status').value='Ativo';$('mfor-title').textContent='Novo Fornecedor';openModal('modal-fornecedores');}
+function editFornecedor(id){if(!guard())return;FORNECEDOR_RAPIDO_ORC=false;FORNECEDOR_RAPIDO_SERVICO=false;const f=DB.fornecedores.find(x=>x.id===id);if(!f)return;
  $('for-id').value=f.id;$('for-nome').value=f.nome;$('for-cnpj').value=f.cnpj||'';$('for-tel').value=f.tel||'';$('for-email').value=f.email||'';$('for-cidade').value=f.cidade||'';$('for-status').value=f.status;$('mfor-title').textContent='Editar Fornecedor';openModal('modal-fornecedores');}
 async function saveFornecedor(){if(!guard())return;const nome=$('for-nome').value.trim();if(!nome){toast('Informe a razão social.','error');return;}
  const id=$('for-id').value;const o={nome,cnpj:$('for-cnpj').value.trim(),tel:$('for-tel').value.trim(),email:$('for-email').value.trim(),cidade:$('for-cidade').value.trim(),status:$('for-status').value};
@@ -4348,6 +4439,7 @@ async function saveFornecedor(){if(!guard())return;const nome=$('for-nome').valu
  if(id){Object.assign(DB.fornecedores.find(x=>x.id===id),o);commit('editar','Fornecedores',nome);}
  else{DB.fornecedores.push(registro);commit('criar','Fornecedores',nome);}
  syncSheets('fornecedores','upsert',registro);
+ if(FORNECEDOR_RAPIDO_SERVICO&&!id){FORNECEDOR_RAPIDO_SERVICO=false;closeModal('modal-fornecedores');toast('Fornecedor salvo!','success');voltarAoServico(registro.id);return;}
  if(FORNECEDOR_RAPIDO_ORC&&!id){FORNECEDOR_RAPIDO_ORC=false;
   /* o prestador novo passa a aparecer também nas linhas de serviço que já estavam no item */
   document.querySelectorAll('#orc-servicos .sv-forn').forEach(sel=>{const v=sel.value;sel.innerHTML=fornOptions(v);});
@@ -4858,7 +4950,9 @@ async function carregarConfigSupabase(){
  const {data,error}=await supa.from('config').select('*');
  if(error){erroDeCarga('configurações',error);return;}
  (data||[]).forEach(({campo,valor})=>{
-  if(campo==='mdoTipos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr)&&arr.length)DB.config.mdoTipos=arr;}catch(e){}}
+  if(campo==='servicos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.servicos=arr;}catch(e){}
+   if(CUR==='servicos')renderServicos();}
+  else if(campo==='mdoTipos'){try{const arr=JSON.parse(valor);if(Array.isArray(arr)&&arr.length)DB.config.mdoTipos=arr;}catch(e){}}
   else if(campo==='custosFixosExtras'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.custosFixosExtras=arr;}catch(e){}}
   else if(campo==='temposProducao'){try{const obj=JSON.parse(valor);if(obj&&typeof obj==='object')DB.config.temposProducao=obj;}catch(e){}}
   else if(campo==='folhaPagamento'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.folhaPagamento=arr;}catch(e){}}
@@ -5829,7 +5923,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-18.18';
+const APP_VERSAO='2026-09-20.1';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
