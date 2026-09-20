@@ -485,7 +485,6 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <span class="nav-label">Documentos</span>
     <div class="nav-item" onclick="abrirDocumento('orcamento')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Orçamento</div>
     <div class="nav-item" onclick="abrirDocumento('recibo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 3 2V2l-3 2-3-2-3 2-3-2-3 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>Recibo do Pedido</div>
-    <div class="nav-item" onclick="abrirDocumento('relatorio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Relatórios</div>
     <span class="nav-label">Sistema</span>
     <div class="nav-item" id="nav-usuarios" onclick="navigate('usuarios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Usuários</div>
     <div class="nav-item" onclick="navigate('historico')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/><polyline points="3 3 3 7 7 7"/></svg>Histórico</div>
@@ -1758,7 +1757,7 @@ function navigate(sec){
  if(sec==='clientes')carregarClientesSupabase();
  if(sec==='fornecedores')carregarFornecedoresSupabase();
  if(sec==='servicos'||sec==='comissoes'||sec==='documentos')carregarConfigSupabase();
- if(sec==='documentos'){document.querySelector('#page-title .titulo-longo').textContent='Documentos — '+(DOC_MODO==='recibo'?'Recibo do Pedido':DOC_MODO==='relatorio'?'Relatórios':'Orçamento');verModeloOrcamento();}
+ if(sec==='documentos'){document.querySelector('#page-title .titulo-longo').textContent='Documentos — '+(DOC_MODO==='recibo'?'Recibo do Pedido':'Orçamento');verModeloOrcamento();}
  if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas'||sec==='calendario')carregarFerramentasSupabase();
@@ -2022,11 +2021,6 @@ function saldoFin(){const inicial=Number(DB.config.cf.saldoInicial)||0;
 /* ================= RELATÓRIO DASHBOARD EM PDF ================= */
 async function gerarPdfDashboard(){if(!guardValores())return;
  if(!await libPronta('jspdf'))return;
- const doc=montarPdfDashboard();
- await arquivarPdf(doc,'Relatorio-Dashboard-Mabe-'+today()+'.pdf',{tipo:'Relatório',titulo:'Relatório do Dashboard'});
- toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
-/* mesma montagem usada pela pré-visualização em Documentos */
-function montarPdfDashboard(){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],CREAM=[245,240,232];
@@ -2114,7 +2108,8 @@ function montarPdfDashboard(){
   doc.text('Estúdio Mabe — Relatório gerado em '+fmtD(today()),marginX,290);
   doc.text('Página '+p+' de '+totalPaginas,196,290,{align:'right'});}
 
- return doc;}
+ await arquivarPdf(doc,'Relatorio-Dashboard-Mabe-'+today()+'.pdf',{tipo:'Relatório',titulo:'Relatório do Dashboard'});
+ toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
 
 /* ================= SUPABASE ================= */
 const SUPA_URL='https://fzlkuceflazohljpnkgi.supabase.co';
@@ -4723,35 +4718,20 @@ function abrirDocumento(modo){DOC_MODO=modo;navigate('documentos');
   if(o.indexOf('abrirDocumento')>-1)n.classList.toggle('ativo-doc',o.indexOf("'"+modo+"'")>-1);});
  document.querySelectorAll('.nav-item.ativo-doc').forEach(n=>n.classList.add('active'));}
 function preencherSeletorModelo(){const sel=$('doc-modelo-orc');if(!sel)return;
- const recibo=DOC_MODO==='recibo',relatorio=DOC_MODO==='relatorio';
- $('doc-modelo-titulo').textContent=relatorio?'📊 Relatórios':recibo?'🧾 Recibo do Pedido':'📄 Documento do Orçamento';
- $('doc-modelo-sub').textContent=relatorio
-  ?'São estes os PDFs dos botões de relatório do Dashboard e da tela de Relatórios. Usam o período e os filtros que estiverem marcados nessas telas.'
-  :recibo
+ const recibo=DOC_MODO==='recibo';
+ $('doc-modelo-titulo').textContent=recibo?'🧾 Recibo do Pedido':'📄 Documento do Orçamento';
+ $('doc-modelo-sub').textContent=recibo
   ?'É este o PDF que sai no botão 🧾 da lista de pedidos. Escolha um pedido para ver como ele fica.'
   :'É este o PDF que sai no botão "Gerar PDF" e na impressão do orçamento. Escolha um orçamento para ver como ele fica.';
- const atual=sel.value;
- if(relatorio){sel.innerHTML='<option value="dashboard">Relatório do Dashboard</option><option value="periodo">Relatório do período</option>';
-  if(atual==='dashboard'||atual==='periodo')sel.value=atual;return;}
- const lista=recibo?pedidosComItens():orcamentosComItens();
+ const atual=sel.value,lista=recibo?pedidosComItens():orcamentosComItens();
  sel.innerHTML=lista.length
   ?lista.map(x=>'<option value="'+x.id+'">'+(recibo?'V-':'ORC-')+pad(x.num)+' — '+esc(cliName(x.cliId))+'</option>').join('')
   :'<option value="">— Nenhum '+(recibo?'pedido':'orçamento')+' com itens —</option>';
  if(atual&&lista.some(x=>x.id===atual))sel.value=atual;}
 async function verModeloOrcamento(){
  const aviso=$('doc-modelo-aviso'),frame=$('doc-modelo-frame');if(!aviso)return;
- const recibo=DOC_MODO==='recibo',relatorio=DOC_MODO==='relatorio';
+ const recibo=DOC_MODO==='recibo';
  const id=$('doc-modelo-orc').value;
- if(relatorio){
-  if(!verValores()){aviso.textContent='Seu nível de acesso não inclui valores em R$, então o relatório não pode ser exibido.';frame.style.display='none';return;}
-  aviso.textContent='Montando o documento...';
-  if(!await libPronta('jspdf')){aviso.textContent='Não consegui carregar o gerador de PDF.';return;}
-  const docR=id==='periodo'?montarPdfRelatorio():montarPdfDashboard();
-  if(MODELO_URL)URL.revokeObjectURL(MODELO_URL);
-  MODELO_URL=docR.output('bloburl').toString();
-  frame.src=MODELO_URL;frame.style.display='block';
-  aviso.textContent=(id==='periodo'?'Relatório do período':'Relatório do Dashboard')+' · '+docR.internal.getNumberOfPages()+' página(s) · gerado agora com os filtros atuais';
-  return;}
  const o=recibo?DB.vendas.find(x=>x.id===id):DB.orcamentos.find(x=>x.id===id);
  if(!o){aviso.textContent='Crie um '+(recibo?'pedido':'orçamento')+' com pelo menos um item para ver o documento.';frame.style.display='none';return;}
  aviso.textContent='Montando o documento...';
@@ -4777,7 +4757,7 @@ function renderDocumentosCards(lista){const alvo=$('documentos-cards');if(!alvo)
   +'</div>').join('');}
 function renderDocumentos(){
  preencherSeletorModelo();
- const alvo=DOC_MODO==='recibo'?'Recibo':DOC_MODO==='relatorio'?'Relatório':'Orçamento';
+ const alvo=DOC_MODO==='recibo'?'Recibo':'Orçamento';
  if($('doc-tipo-filtro')&&$('doc-tipo-filtro').value!==alvo&&!DOC_FILTRO_MANUAL)$('doc-tipo-filtro').value=alvo;
  const filtro=$('doc-tipo-filtro')?$('doc-tipo-filtro').value:'';
  const todos=listaDocumentos();
@@ -5031,11 +5011,6 @@ function renderRelatorios(){syncPerBar('rel-per',REL);
 
 async function gerarPdfRelatorio(){
  if(!await libPronta('jspdf'))return;
- const doc=montarPdfRelatorio();
- await arquivarPdf(doc,'Relatorio-Mabe-'+today()+'.pdf',{tipo:'Relatório',titulo:'Relatório do período'});
- toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
-/* mesma montagem usada pela pré-visualização em Documentos */
-function montarPdfRelatorio(){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],WHITE=[255,255,255],CREAM=[245,240,232];
@@ -5149,7 +5124,8 @@ function montarPdfRelatorio(){
   doc.text('Estúdio Mabe — Relatório gerado em '+fmtD(today()),marginX,290);
   doc.text('Página '+p+' de '+totalPaginas,196,290,{align:'right'});}
 
- return doc;}
+ await arquivarPdf(doc,'Relatorio-Mabe-'+today()+'.pdf',{tipo:'Relatório',titulo:'Relatório do período'});
+ toast('Relatório em PDF gerado! Confira sua pasta de downloads.','success');}
 
 /* ================= USUÁRIOS ================= */
 function opcoesNivel(sel){return Object.keys(NIVEIS).map(n=>'<option value="'+n+'"'+(n===sel?' selected':'')+'>'+n+'</option>').join('');}
@@ -6412,7 +6388,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.15';
+const APP_VERSAO='2026-09-20.16';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
