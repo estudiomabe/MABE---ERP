@@ -219,7 +219,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
    A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
    fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
-#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards, #documentos-cards { display:none; }
+#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards { display:none; }
 .pc-ficha { display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;padding:9px 11px;background:var(--surface2);border-radius:8px; }
 .pc-ficha div { display:flex;flex-direction:column;gap:1px;font-size:13px;font-family:var(--mono);color:var(--text);min-width:0; }
 .pc-ficha span { font-family:var(--font, inherit);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
@@ -323,14 +323,14 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
   #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
-  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards, #documentos-cards { display:block; }
+  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards { display:block; }
   /* calendário: a grade de 7 colunas não cabe; vira agenda com só os dias que têm algo */
   #cal-agenda { display:block;margin-top:4px; }
   #cal-grid, .cal-semana, .cal-legenda { display:none !important; }
   #section-calendario .period-bar { gap:6px; }
   #section-calendario .period-bar .btn { min-height:38px;min-width:40px; }
   #cal-label { min-width:0 !important;flex:1; }
-  #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #servicos-tabela, #comissoes-tabela, #documentos-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
+  #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #servicos-tabela, #comissoes-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
   .cli-busca-barra input { max-width:none;font-size:16px; }
   #doc-modelo-frame { height:420px !important; }
   .compras-topo { display:flex;justify-content:flex-end;margin-bottom:12px; }
@@ -635,26 +635,16 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 
     <!-- DOCUMENTOS -->
     <div class="section" id="section-documentos">
-      <div class="config-card" style="margin-bottom:16px">
-        <div class="config-title" id="doc-modelo-titulo">📄 Documento do Orçamento</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="doc-modelo-sub">É este o PDF que sai no botão "Gerar PDF" e na impressão do orçamento. Escolha um orçamento para ver como ele fica.</div>
+      <div class="config-card">
+        <div class="config-title" id="doc-modelo-titulo">📄 Modelo do Orçamento</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="doc-modelo-sub">Layout usado pelo ERP, preenchido com dados de exemplo. Nada aqui é de cliente real e nada é baixado ou guardado.</div>
         <div class="period-bar" style="margin-bottom:12px">
-          <select class="form-control" id="doc-modelo-orc" style="width:auto;min-width:240px" onchange="verModeloOrcamento()"></select>
-          <button class="btn btn-ghost btn-sm" onclick="verModeloOrcamento()">🔄 Atualizar</button>
-          <button class="btn btn-ghost btn-sm" id="doc-modelo-abrir" onclick="abrirModeloEmNovaAba()">↗ Abrir em nova aba</button>
+          <button class="btn btn-ghost btn-sm" onclick="verModeloDocumento()">🔄 Atualizar</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirModeloEmNovaAba()">↗ Abrir em nova aba</button>
         </div>
         <div id="doc-modelo-aviso" style="font-size:12.5px;color:var(--text-muted)"></div>
-        <iframe id="doc-modelo-frame" title="Modelo do orçamento" style="display:none;width:100%;height:620px;border:1px solid var(--border);border-radius:10px;background:#fff"></iframe>
+        <iframe id="doc-modelo-frame" title="Modelo do documento" style="display:none;width:100%;height:620px;border:1px solid var(--border);border-radius:10px;background:#fff"></iframe>
       </div>
-      <div class="period-bar">
-        <select class="form-control" id="doc-tipo-filtro" style="width:auto;min-width:180px" onchange="DOC_FILTRO_MANUAL=true;renderDocumentos()">
-          <option>Orçamento</option><option>Recibo</option><option>Relatório</option><option>Backup</option><option value="">Todos os tipos</option>
-        </select>
-        <span id="doc-contagem" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
-      </div>
-      <div id="documentos-cards"></div>
-      <div class="table-wrapper" id="documentos-tabela"><div class="table-toolbar"><div class="table-toolbar-title">📄 PDFs gerados pelo ERP</div></div>
-      <table><thead><tr><th>Data</th><th>Tipo</th><th>Documento</th><th>Referência</th><th>Gerado por</th><th>Ações</th></tr></thead><tbody id="tb-documentos"></tbody></table></div>
     </div>
 
     <!-- COMISSÕES -->
@@ -1725,7 +1715,7 @@ function prepararOrdenacao(sec){
   th.addEventListener('click',()=>ordenarTabela(th));});}
 
 /* ================= NAVEGAÇÃO ================= */
-const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',servicos:'Serviços Terceirizados',comissoes:'Comissões',documentos:'Documentos — Orçamento',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
+const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',servicos:'Serviços Terceirizados',comissoes:'Comissões',documentos:'Documentos — Modelo do Orçamento',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
 /* No celular o titulo longo empurrava o botao '+ Novo' para a linha de baixo.
    So os nomes que sobram estao aqui; o resto usa o titulo normal. */
 const TITULOS_CURTOS={clientes:'Clientes',pcp:'Produção',entregas:'Entregas',ferramentas:'Máquinas',
@@ -1756,8 +1746,8 @@ function navigate(sec){
  prepararOrdenacao(sec);
  if(sec==='clientes')carregarClientesSupabase();
  if(sec==='fornecedores')carregarFornecedoresSupabase();
- if(sec==='servicos'||sec==='comissoes'||sec==='documentos')carregarConfigSupabase();
- if(sec==='documentos'){document.querySelector('#page-title .titulo-longo').textContent='Documentos — '+(DOC_MODO==='recibo'?'Recibo do Pedido':'Orçamento');verModeloOrcamento();}
+ if(sec==='servicos'||sec==='comissoes')carregarConfigSupabase();
+ if(sec==='documentos'){document.querySelector('#page-title .titulo-longo').textContent='Documentos — '+(DOC_MODO==='recibo'?'Modelo do Recibo':'Modelo do Orçamento');verModeloDocumento();}
  if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas'||sec==='calendario')carregarFerramentasSupabase();
@@ -4707,80 +4697,53 @@ async function arquivarPdf(doc,nomeArquivo,meta){
   if(error)throw error;
   saveDB();if(CUR==='documentos')renderDocumentos();
  }catch(e){toast('PDF baixado, mas não consegui guardá-lo em Documentos: '+(e.message||e),'info',7000);}}
-/* Pré-visualização do documento do orçamento: monta o mesmo PDF do botão "Gerar PDF"
-   e mostra na própria tela, sem baixar nada nem registrar em Documentos. */
+/* A seção Documentos mostra só os MODELOS dos documentos do ERP, com dados de exemplo:
+   serve para conferir o layout, sem misturar com pedidos e clientes de verdade. */
 let MODELO_URL='',DOC_MODO='orcamento';
-function orcamentosComItens(){return DB.orcamentos.filter(o=>itensOrc(o).length).sort((a,b)=>b.num-a.num);}
-function pedidosComItens(){return DB.vendas.filter(v=>(v.itens||[]).length).sort((a,b)=>b.num-a.num);}
+const CLIENTE_EXEMPLO={id:'__exemplo',nome:'Cliente Exemplo',email:'cliente@exemplo.com.br',tel:'(21) 90000-0000',doc:'000.000.000-00',cidade:'Rio de Janeiro',end:'Rua Exemplo, 100',status:'Ativo'};
+/* o montador do PDF busca o nome pelo cadastro: o cliente de exemplo entra na lista só enquanto o modelo é montado */
+function comClienteExemplo(fn){
+ const tinha=DB.clientes.some(c=>c.id===CLIENTE_EXEMPLO.id);
+ if(!tinha)DB.clientes.push(CLIENTE_EXEMPLO);
+ try{return fn();}finally{if(!tinha)DB.clientes=DB.clientes.filter(c=>c.id!==CLIENTE_EXEMPLO.id);}}
+function orcamentoExemplo(){return{id:'__exemplo',num:0,cliId:CLIENTE_EXEMPLO.id,data:today(),validade:addDays(today(),15),
+ status:'Enviado',origem:'Indicação',
+ obs:'Prazo de produção de 30 dias úteis após a aprovação.\nMedidas conferidas na visita técnica.\nValores válidos por 15 dias.',
+ itens:[
+  {id:'e1',tipo:'sob_medida',desc:'Mesa de jantar em Tauari 2,20 m',obs:'Tampo 220 × 100 cm, 4 cm de espessura\nPés em madeira maciça, acabamento óleo fosco',qty:1,preco:12500,lucro:4200},
+  {id:'e2',tipo:'sob_medida',desc:'Banco corrido 2,00 m',obs:'Assento estofado em linho natural',qty:2,preco:3200,lucro:1100},
+  {id:'e3',tipo:'catalogo',desc:'Luminária pendente Ripada',obs:'',qty:3,preco:890,lucro:260}],
+ custo:9800,preco:19080,lucro:5560,anexos:[]};}
+function pedidoExemplo(){return{id:'__exemplo',num:0,cliId:CLIENTE_EXEMPLO.id,data:today(),pag:'PIX',status:'Confirmado',
+ obs:'Entrega combinada: '+fmtD(addDays(today(),30))+'\nMontagem inclusa no local.',
+ itens:[
+  {prodId:null,desc:'Mesa de jantar em Tauari 2,20 m',qty:1,preco:12500},
+  {prodId:null,desc:'Banco corrido 2,00 m',qty:2,preco:3200},
+  {prodId:null,desc:'Luminária pendente Ripada',qty:3,preco:890}],
+ total:21570,baixa:true};}
 /* o menu tem um item por documento; os dois usam a mesma seção, trocando só o modo */
 function abrirDocumento(modo){DOC_MODO=modo;navigate('documentos');
  document.querySelectorAll('.nav-item').forEach(n=>{const o=n.getAttribute('onclick')||'';
-  if(o.indexOf('abrirDocumento')>-1)n.classList.toggle('ativo-doc',o.indexOf("'"+modo+"'")>-1);});
- document.querySelectorAll('.nav-item.ativo-doc').forEach(n=>n.classList.add('active'));}
-function preencherSeletorModelo(){const sel=$('doc-modelo-orc');if(!sel)return;
- const recibo=DOC_MODO==='recibo';
- $('doc-modelo-titulo').textContent=recibo?'🧾 Recibo do Pedido':'📄 Documento do Orçamento';
- $('doc-modelo-sub').textContent=recibo
-  ?'É este o PDF que sai no botão 🧾 da lista de pedidos. Escolha um pedido para ver como ele fica.'
-  :'É este o PDF que sai no botão "Gerar PDF" e na impressão do orçamento. Escolha um orçamento para ver como ele fica.';
- const atual=sel.value,lista=recibo?pedidosComItens():orcamentosComItens();
- sel.innerHTML=lista.length
-  ?lista.map(x=>'<option value="'+x.id+'">'+(recibo?'V-':'ORC-')+pad(x.num)+' — '+esc(cliName(x.cliId))+'</option>').join('')
-  :'<option value="">— Nenhum '+(recibo?'pedido':'orçamento')+' com itens —</option>';
- if(atual&&lista.some(x=>x.id===atual))sel.value=atual;}
-async function verModeloOrcamento(){
+  if(o.indexOf('abrirDocumento')>-1)n.classList.toggle('active',o.indexOf("'"+modo+"'")>-1);});}
+async function verModeloDocumento(){
  const aviso=$('doc-modelo-aviso'),frame=$('doc-modelo-frame');if(!aviso)return;
  const recibo=DOC_MODO==='recibo';
- const id=$('doc-modelo-orc').value;
- const o=recibo?DB.vendas.find(x=>x.id===id):DB.orcamentos.find(x=>x.id===id);
- if(!o){aviso.textContent='Crie um '+(recibo?'pedido':'orçamento')+' com pelo menos um item para ver o documento.';frame.style.display='none';return;}
- aviso.textContent='Montando o documento...';
+ $('doc-modelo-titulo').textContent=recibo?'🧾 Modelo do Recibo do Pedido':'📄 Modelo do Orçamento';
+ $('doc-modelo-sub').textContent=(recibo
+  ?'Layout do recibo que sai no botão 🧾 da lista de pedidos'
+  :'Layout do orçamento que sai no botão "Gerar PDF" e na impressão')
+  +', preenchido com dados de exemplo. Nada aqui é de cliente real e nada é baixado ou guardado.';
+ aviso.textContent='Montando o modelo...';
  if(!await libPronta('jspdf')){aviso.textContent='Não consegui carregar o gerador de PDF.';return;}
- const refs=recibo?[]:await referenciasParaPdf(o);
- const doc=recibo?montarPdfRecibo(o):montarPdfOrcamento(o,itensOrc(o),refs);
+ const doc=comClienteExemplo(()=>{const x=recibo?pedidoExemplo():orcamentoExemplo();
+  return recibo?montarPdfRecibo(x):montarPdfOrcamento(x,x.itens,[]);});
  if(MODELO_URL)URL.revokeObjectURL(MODELO_URL);
  MODELO_URL=doc.output('bloburl').toString();
  frame.src=MODELO_URL;frame.style.display='block';
- aviso.textContent=(recibo?'V-':'ORC-')+pad(o.num)+' · '+cliName(o.cliId)+' · '+doc.internal.getNumberOfPages()+' página(s)'
-  +(refs.length?' · '+refs.length+' imagem(ns) de referência':'');}
+ aviso.textContent=(recibo?'Recibo':'Orçamento')+' · modelo com dados de exemplo · '+doc.internal.getNumberOfPages()+' página(s)';}
 function abrirModeloEmNovaAba(){if(!MODELO_URL){toast('Gere a pré-visualização primeiro.','info');return;}
  const w=window.open(MODELO_URL,'_blank');if(!w)toast('O navegador bloqueou a nova aba.','error');}
-function renderDocumentosCards(lista){const alvo=$('documentos-cards');if(!alvo)return;
- if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum PDF gerado ainda</div>';return;}
- alvo.innerHTML=lista.map(d=>'<div class="pedido-card">'
-  +'<div class="pc-topo"><span class="pc-data">'+new Date(d.quando).toLocaleString('pt-BR')+'</span><span class="badge badge-muted">'+esc(d.tipo||'PDF')+'</span></div>'
-  +'<div class="pc-cliente">'+esc(d.titulo||d.nome)+'</div>'
-  +(d.ref||d.cliente?'<div class="pc-pag">'+[d.ref,d.cliente].filter(Boolean).map(esc).join(' · ')+'</div>':'')
-  +'<div class="pc-pag">'+esc(d.quem||'—')+(d.tamanho?' · '+Math.max(1,Math.round(d.tamanho/1024))+' KB':'')+'</div>'
-  +'<div class="pc-links"><a class="pc-link" href="'+d.url+'" target="_blank" rel="noopener">📄 Abrir</a><a class="pc-link" href="'+d.url+'" download="'+esc(d.nome)+'">⬇ Baixar</a></div>'
-  +(canEdit()?'<div class="pc-acoes"><button class="btn btn-danger btn-sm" onclick="excluirDocumento(\''+d.id+'\')">🗑️ Excluir</button></div>':'')
-  +'</div>').join('');}
-function renderDocumentos(){
- preencherSeletorModelo();
- const alvo=DOC_MODO==='recibo'?'Recibo':'Orçamento';
- if($('doc-tipo-filtro')&&$('doc-tipo-filtro').value!==alvo&&!DOC_FILTRO_MANUAL)$('doc-tipo-filtro').value=alvo;
- const filtro=$('doc-tipo-filtro')?$('doc-tipo-filtro').value:'';
- const todos=listaDocumentos();
- const lista=filtro?todos.filter(d=>(d.tipo||'')===filtro):todos;
- if($('doc-contagem'))$('doc-contagem').textContent=lista.length===todos.length?todos.length+' documento(s)':lista.length+' de '+todos.length;
- renderDocumentosCards(lista);
- $('tb-documentos').innerHTML=lista.map(d=>'<tr><td class="mono" style="white-space:nowrap">'+new Date(d.quando).toLocaleString('pt-BR')+'</td>'
-  +'<td><span class="badge badge-muted">'+esc(d.tipo||'PDF')+'</span></td>'
-  +'<td><strong>'+esc(d.titulo||d.nome)+'</strong><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">'+esc(d.nome)+(d.tamanho?' · '+Math.max(1,Math.round(d.tamanho/1024))+' KB':'')+'</div></td>'
-  +'<td>'+esc([d.ref,d.cliente].filter(Boolean).join(' · ')||'—')+'</td>'
-  +'<td>'+esc(d.quem||'—')+'</td>'
-  +'<td><div class="row-actions" style="opacity:1"><a class="btn btn-ghost btn-sm" href="'+d.url+'" target="_blank" rel="noopener" title="Abrir">📄</a>'
-   +'<a class="btn btn-ghost btn-sm" href="'+d.url+'" download="'+esc(d.nome)+'" title="Baixar">⬇</a>'
-   +(canEdit()?'<button class="btn btn-danger btn-sm" title="Excluir" onclick="excluirDocumento(\''+d.id+'\')">🗑️</button>':'')+'</div></td></tr>').join('')
-  ||emptyRow(6,'Nenhum PDF gerado ainda');}
-async function excluirDocumento(id){if(!guard())return;
- const lista=listaDocumentos();const d=lista.find(x=>x.id===id);if(!d)return;
- if(!confirm('Excluir "'+(d.titulo||d.nome)+'" dos documentos?\n\nO arquivo sai do ERP; o que você já baixou continua no seu computador.'))return;
- const idx=lista.indexOf(d);lista.splice(idx,1);
- const {error}=await supa.from('config').upsert({campo:'documentos',valor:JSON.stringify(lista)});
- if(error){lista.splice(idx,0,d);toast('Erro ao excluir: '+error.message,'error');return;}
- if(d.caminho)await supa.storage.from('orcamentos-anexos').remove([d.caminho]);
- commit('excluir','Documentos',d.titulo||d.nome);renderDocumentos();toast('Documento excluído.','info');}
+function renderDocumentos(){verModeloDocumento();}
 /* ================= COMISSÕES =================
    Quem recebe comissão (arquiteto, indicação, parceiro...) com o percentual combinado.
    Fica em config (campo "comissionados"), como os serviços terceirizados — sem tabela nova no banco. */
@@ -6388,7 +6351,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-20.16';
+const APP_VERSAO='2026-09-20.17';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
