@@ -1126,6 +1126,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.7"></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this)"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title">🖨️ Imprimir pedido</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O recibo sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-link-wrap"><label class="form-label">Link do material</label><input type="url" class="form-control" id="prod-link" placeholder="https://site-do-fornecedor.com/produto" inputmode="url" autocomplete="off"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Página do produto no site do fornecedor — abre pelo 🔗 na lista</div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
   <div class="modal-header"><div class="modal-title">📋 Nota Fiscal Eletrônica</div><button class="modal-close" onclick="closeModal('modal-nfe-info')">✕</button></div>
@@ -3007,11 +3008,46 @@ function abrirInfoNotaFiscal(id){openModal('modal-nfe-info');}
    título + número, régua dourada, dados do pedido, tabela, total e assinaturas, rodapé numerado. */
 /* Imprime o recibo do pedido aberto — o mesmo PDF do botão 🧾 da lista.
    Pedido novo ainda não tem número: o botão só aparece depois de salvar. */
-async function imprimirPedido(){if(!guardValores())return;
+/* Com anexos no pedido, pergunta antes o que sai junto: as imagens entram como
+   páginas de referência no próprio recibo; os PDFs abrem em abas separadas, porque
+   não dá para juntá-los na mesma folha. */
+function imprimirPedido(){if(!guardValores())return;
  const v=pedidoDosAnexos();
  if(!v){toast('Salve o pedido antes de imprimir.','info');return;}
+ const anexos=v.anexos||[];
+ if(!anexos.length)return executarImpressaoPedido(v,[],[]);
+ $('imp-anexos-lista').innerHTML=anexos.map((a,i)=>{
+  const img=anexoEhImagem(a);
+  const capa=img?'<img src="'+a.url+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0">'
+   :'<div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:6px;font-size:20px;flex-shrink:0">📄</div>';
+  return '<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface);cursor:pointer">'
+   +'<input type="checkbox" class="imp-anexo" data-i="'+i+'" style="width:17px;height:17px;flex-shrink:0">'
+   +capa
+   +'<span style="flex:1;min-width:0"><span style="display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(a.nome)+'</span>'
+   +'<span style="font-size:11px;color:var(--text-muted)">'+(img?'imagem — sai no fim do recibo':'PDF — abre em outra aba')+'</span></span></label>';}).join('');
+ $('imp-aviso-pdf').style.display=anexos.some(a=>!anexoEhImagem(a))?'block':'none';
+ openModal('modal-imprimir-pedido');}
+async function confirmarImpressaoPedido(){
+ const v=pedidoDosAnexos();if(!v)return;
+ const anexos=v.anexos||[];
+ const escolhidos=[...document.querySelectorAll('.imp-anexo:checked')].map(c=>anexos[Number(c.dataset.i)]).filter(Boolean);
+ closeModal('modal-imprimir-pedido');
+ const imagens=escolhidos.filter(anexoEhImagem);
+ const pdfs=escolhidos.filter(a=>!anexoEhImagem(a));
+ /* as abas dos PDFs são abertas antes de qualquer espera, senão o navegador bloqueia */
+ const bloqueados=[];
+ pdfs.forEach(a=>{const w=window.open(a.url,'_blank');if(!w)bloqueados.push(a.nome);});
+ if(bloqueados.length)toast('O navegador bloqueou a aba de: '+bloqueados.join(', ')+'. Abra pelo quadro de anexos para imprimir.','info',8000);
+ executarImpressaoPedido(v,imagens,pdfs);}
+async function executarImpressaoPedido(v,imagens){
  if(!await libPronta('jspdf'))return;
- const doc=montarPdfRecibo(v);
+ let refs=[];
+ if(imagens&&imagens.length){
+  toast('Preparando '+imagens.length+' imagem(ns)...','info');
+  refs=(await Promise.all(imagens.map(a=>imagemParaPdf(a.url)))).filter(Boolean);
+  const falhas=imagens.length-refs.length;
+  if(falhas)toast(falhas+' imagem(ns) não carregaram e ficaram fora (verifique a internet).','error',6000);}
+ const doc=montarPdfRecibo(v,refs);
  const nome='Recibo-V-'+pad(v.num)+'.pdf';
  /* no celular um PDF aberto em aba não imprime: entrega o arquivo, que abre no leitor com a opção de imprimir */
  if(window.matchMedia('(hover:none)').matches){doc.save(nome);toast('PDF baixado — abra o arquivo para imprimir.','info',6000);return;}
@@ -3027,7 +3063,7 @@ async function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.
  doc.save('Recibo-V-'+pad(v.num)+'-'+nomeArquivoCli+'.pdf');
  toast('Recibo em PDF gerado! Confira sua pasta de downloads.','success');}
 /* mesma montagem usada pela pré-visualização em Documentos */
-function montarPdfRecibo(v){
+function montarPdfRecibo(v,refs){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],ZEBRA=[250,247,242],WHITE=[255,255,255];
@@ -3115,6 +3151,21 @@ function montarPdfRecibo(v){
  doc.text('Assinatura do Estúdio',M,sy+5);doc.text('Assinatura do Cliente',R-72,sy+5);
 
  // Rodapé em todas as páginas, com numeração
+ /* imagens escolhidas na hora de imprimir: entram depois do recibo, duas por página,
+    cada uma inteira no seu espaço — mesma regra usada no orçamento */
+ if(refs&&refs.length){
+  const topo=()=>{let ty=novaPagina()+4;
+   doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...DARK);doc.text('REFERÊNCIAS',M,ty);
+   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text('Pedido V-'+pad(v.num),R,ty,{align:'right'});
+   ty+=4;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,ty,R,ty);return ty+7;};
+  const areaW=R-M,alturaToda=RODAPE_Y-8-37,gap=8;
+  const pos=(r,x,y,bw,bh,alinhaTopo)=>{const k=Math.min(bw/r.w,bh/r.h),w=r.w*k,h=r.h*k;
+   doc.addImage(r.data,'JPEG',x+(bw-w)/2,alinhaTopo?y:y+(bh-h)/2,w,h,undefined,'FAST');};
+  const emPe=r=>r.h>r.w*1.1;
+  for(let i=0;i<refs.length;){const a=refs[i],b=refs[i+1],ry=topo();
+   if(emPe(a)&&(!b||emPe(b))){const bw=b?(areaW-6)/2:areaW;
+    pos(a,M,ry,bw,alturaToda,true);if(b)pos(b,M+bw+6,ry,bw,alturaToda,true);i+=b?2:1;}
+   else{const bh=(alturaToda-gap)/2;pos(a,M,ry,areaW,bh);if(b)pos(b,M,ry+bh+gap,areaW,bh);i+=b?2:1;}}}
  doc.setFont('helvetica','normal');doc.setFontSize(7);
  let rodape='';
  for(const parte of [enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean)){
@@ -7095,7 +7146,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.7';
+const APP_VERSAO='2026-09-24.8';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
