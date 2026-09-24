@@ -5066,7 +5066,7 @@ function montarPdfPcp(){
  const centralizar=(txt,yy,esp)=>doc.text(txt,CX-esp*(txt.length-1)/2,yy,{align:'center',charSpace:esp});
  let y=topo+lado+33;
  doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
- centralizar('PRODUÇÃO',y,1.2);
+ centralizar('PRODUÇÃO (PCP)',y,1.2);
  y+=9;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);
  doc.text('Quadro de ordens \u2014 '+fmtD(t),CX,y,{align:'center'});
  y+=18;doc.setFontSize(7.5);centralizar('SITUAÇÃO DE HOJE',y,0.5);
@@ -7436,7 +7436,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.20';
+const APP_VERSAO='2026-09-24.21';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
