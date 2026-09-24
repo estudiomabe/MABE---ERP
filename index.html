@@ -599,7 +599,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
           <button class="btn btn-ghost btn-sm" onclick="cancelarPedido()">← Voltar</button>
           <h2 style="font-size:16px;font-weight:700" id="mv-title">Novo Pedido</h2>
-          <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" id="vnd-btn-imprimir" style="display:none" onclick="imprimirPedido()">🖨️ Imprimir</button><button class="btn btn-primary btn-sm" onclick="saveVenda()">💾 Salvar Pedido</button></div>
+          <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" id="vnd-btn-imprimir" style="display:none" onclick="imprimirPedido('pedido')">🖨️ Imprimir pedido</button><button class="btn btn-ghost btn-sm" id="vnd-btn-recibo" style="display:none" onclick="imprimirPedido('recibo')">🧾 Imprimir recibo</button><button class="btn btn-primary btn-sm" onclick="saveVenda()">💾 Salvar Pedido</button></div>
         </div>
         <div class="config-card" style="margin:0"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div></div></div>
         <div class="config-card orc-anexos-zona" id="vnd-anexos-zona" style="margin-top:14px" ondragenter="anexoPedidoArrastando(event,true)" ondragover="anexoPedidoArrastando(event,true)" ondragleave="anexoPedidoArrastando(event,false)" ondrop="anexoPedidoSolto(event)">
@@ -1126,7 +1126,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.7"></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this)"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title">🖨️ Imprimir pedido</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O recibo sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
+<div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title" id="imp-titulo">🖨️ Imprimir pedido</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div id="imp-explicacao" style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O pedido sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-link-wrap"><label class="form-label">Link do material</label><input type="url" class="form-control" id="prod-link" placeholder="https://site-do-fornecedor.com/produto" inputmode="url" autocomplete="off"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Página do produto no site do fornecedor — abre pelo 🔗 na lista</div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
   <div class="modal-header"><div class="modal-title">📋 Nota Fiscal Eletrônica</div><button class="modal-close" onclick="closeModal('modal-nfe-info')">✕</button></div>
@@ -3011,11 +3011,16 @@ function abrirInfoNotaFiscal(id){openModal('modal-nfe-info');}
 /* Com anexos no pedido, pergunta antes o que sai junto: as imagens entram como
    páginas de referência no próprio recibo; os PDFs abrem em abas separadas, porque
    não dá para juntá-los na mesma folha. */
-function imprimirPedido(){if(!guardValores())return;
+let MODO_IMPRESSAO='pedido';
+function imprimirPedido(modo){if(!guardValores())return;
+ MODO_IMPRESSAO=modo==='recibo'?'recibo':'pedido';
  const v=pedidoDosAnexos();
  if(!v){toast('Salve o pedido antes de imprimir.','info');return;}
  const anexos=v.anexos||[];
- if(!anexos.length)return executarImpressaoPedido(v,[],[]);
+ if(!anexos.length)return executarImpressaoPedido(v,[]);
+ const nome=MODO_IMPRESSAO==='recibo'?'recibo':'pedido';
+ $('imp-titulo').textContent=MODO_IMPRESSAO==='recibo'?'🧾 Imprimir recibo':'🖨️ Imprimir pedido';
+ $('imp-explicacao').textContent='O '+nome+' sempre é impresso. Marque os anexos que devem sair junto.';
  $('imp-anexos-lista').innerHTML=anexos.map((a,i)=>{
   const img=anexoEhImagem(a);
   const capa=img?'<img src="'+a.url+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0">'
@@ -3024,7 +3029,7 @@ function imprimirPedido(){if(!guardValores())return;
    +'<input type="checkbox" class="imp-anexo" data-i="'+i+'" style="width:17px;height:17px;flex-shrink:0">'
    +capa
    +'<span style="flex:1;min-width:0"><span style="display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(a.nome)+'</span>'
-   +'<span style="font-size:11px;color:var(--text-muted)">'+(img?'imagem — sai no fim do recibo':'PDF — abre em outra aba')+'</span></span></label>';}).join('');
+   +'<span style="font-size:11px;color:var(--text-muted)">'+(img?'imagem — sai no fim do documento':'PDF — abre em outra aba')+'</span></span></label>';}).join('');
  $('imp-aviso-pdf').style.display=anexos.some(a=>!anexoEhImagem(a))?'block':'none';
  openModal('modal-imprimir-pedido');}
 async function confirmarImpressaoPedido(){
@@ -3038,7 +3043,7 @@ async function confirmarImpressaoPedido(){
  const bloqueados=[];
  pdfs.forEach(a=>{const w=window.open(a.url,'_blank');if(!w)bloqueados.push(a.nome);});
  if(bloqueados.length)toast('O navegador bloqueou a aba de: '+bloqueados.join(', ')+'. Abra pelo quadro de anexos para imprimir.','info',8000);
- executarImpressaoPedido(v,imagens,pdfs);}
+ executarImpressaoPedido(v,imagens);}
 async function executarImpressaoPedido(v,imagens){
  if(!await libPronta('jspdf'))return;
  let refs=[];
@@ -3047,15 +3052,16 @@ async function executarImpressaoPedido(v,imagens){
   refs=(await Promise.all(imagens.map(a=>imagemParaPdf(a.url)))).filter(Boolean);
   const falhas=imagens.length-refs.length;
   if(falhas)toast(falhas+' imagem(ns) não carregaram e ficaram fora (verifique a internet).','error',6000);}
- const doc=montarPdfRecibo(v,refs);
- const nome='Recibo-V-'+pad(v.num)+'.pdf';
+ const doc=montarPdfRecibo(v,refs,MODO_IMPRESSAO);
+ const nome=(MODO_IMPRESSAO==='recibo'?'Recibo-V-':'Pedido-V-')+pad(v.num)+'.pdf';
  /* no celular um PDF aberto em aba não imprime: entrega o arquivo, que abre no leitor com a opção de imprimir */
  if(window.matchMedia('(hover:none)').matches){doc.save(nome);toast('PDF baixado — abra o arquivo para imprimir.','info',6000);return;}
  doc.autoPrint();
  const w=window.open(doc.output('bloburl'),'_blank');
  if(!w){doc.save(nome);toast('O navegador bloqueou a janela de impressão — o PDF foi baixado para você imprimir.','info',7000);}}
-function atualizarBotaoImprimirPedido(){const b=$('vnd-btn-imprimir');if(!b)return;
- b.style.display=(pedidoDosAnexos()&&verValores())?'inline-flex':'none';}
+function atualizarBotaoImprimirPedido(){
+ const mostra=(pedidoDosAnexos()&&verValores())?'inline-flex':'none';
+ ['vnd-btn-imprimir','vnd-btn-recibo'].forEach(id=>{const b=$(id);if(b)b.style.display=mostra;});}
 async function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  if(!await libPronta('jspdf'))return;
  const doc=montarPdfRecibo(v);
@@ -3063,7 +3069,10 @@ async function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.
  doc.save('Recibo-V-'+pad(v.num)+'-'+nomeArquivoCli+'.pdf');
  toast('Recibo em PDF gerado! Confira sua pasta de downloads.','success');}
 /* mesma montagem usada pela pré-visualização em Documentos */
-function montarPdfRecibo(v,refs){
+/* modo 'pedido' = a folha do pedido (o que foi combinado); modo 'recibo' = o comprovante.
+   Mesma diagramação: muda o título, o rótulo do número e o bloco de pagamento. */
+function montarPdfRecibo(v,refs,modo){
+ const ehPedido=modo==='pedido';
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],ZEBRA=[250,247,242],WHITE=[255,255,255];
@@ -3088,8 +3097,8 @@ function montarPdfRecibo(v,refs){
 
  // Título, número do pedido e régua dourada
  let y=Math.max(logoY+ico+22,cy+12);
- doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);doc.text('RECIBO',M,y);
- doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...MUTED);doc.text('Pedido Nº V-'+pad(v.num),R,y,{align:'right'});
+ doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);doc.text(ehPedido?'PEDIDO':'RECIBO',M,y);
+ doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...MUTED);doc.text((ehPedido?'Nº V-':'Pedido Nº V-')+pad(v.num),R,y,{align:'right'});
  y+=6;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,y,R,y);
 
  // Cliente / Data / Pagamento
@@ -3125,7 +3134,7 @@ function montarPdfRecibo(v,refs){
  doc.setFont('helvetica','normal');doc.setFontSize(8.5);
  const obsL=obs?doc.splitTextToSize(obs,96):[];
  const boxW=68,boxH=16,boxX=R-boxW,subH=10;
- const pagAlt=subH+boxH+9+5.2+1;
+ const pagAlt=subH+boxH+9+5.2*(ehPedido?2:1)+1;
  const blocoAlt=Math.max(obs?9.5+obsL.length*4.5:0,pagAlt);
  if(fy+blocoAlt>RODAPE_Y-6)fy=novaPagina();
  /* um bloco só: fundo escuro arredondado, faixa branca do subtotal por cima (cantos de cima arredondados) */
@@ -3137,8 +3146,10 @@ function montarPdfRecibo(v,refs){
  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...ACCENT);doc.text('TOTAL',boxX+5,ty+boxH/2+1.4);
  doc.setFontSize(13);doc.setTextColor(...WHITE);doc.text(fmt(v.total),R-5,ty+boxH/2+1.8,{align:'right'});
  let py=ty+boxH+9;
- doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text('VALOR PAGO',boxX+1,py);
- doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);py+=5.2;doc.text('Forma de pagamento: '+(v.pag||'—'),boxX+1,py);
+ doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text(ehPedido?'CONDIÇÕES':'VALOR PAGO',boxX+1,py);
+ doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);py+=5.2;
+ doc.text('Forma de pagamento: '+(v.pag||'—'),boxX+1,py);
+ if(ehPedido){py+=5.2;doc.text('Situação: '+(v.status||'—'),boxX+1,py);}
  if(obs){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...DARK);doc.text('OBSERVAÇÕES',M,fy+3);
   doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);doc.text(obsL,M,fy+9.5,{lineHeightFactor:1.5});}
 
@@ -3159,7 +3170,7 @@ function montarPdfRecibo(v,refs){
    doc.addImage(MARCA_PNG,'PNG',M,13,lm,am,'marca','SLOW');
    let ty=13+am+9;
    doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...DARK);doc.text('REFERÊNCIAS',M,ty);
-   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text('Pedido V-'+pad(v.num),R,ty,{align:'right'});
+   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text((ehPedido?'Pedido V-':'Recibo do pedido V-')+pad(v.num),R,ty,{align:'right'});
    ty+=4;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,ty,R,ty);return ty+7;};
   const areaW=R-M,alturaToda=RODAPE_Y-8-37,gap=8;
   const pos=(r,x,y,bw,bh,alinhaTopo)=>{const k=Math.min(bw/r.w,bh/r.h),w=r.w*k,h=r.h*k;
@@ -7149,7 +7160,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.9';
+const APP_VERSAO='2026-09-24.10';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
