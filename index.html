@@ -207,6 +207,10 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   .pcp-stat-label { font-size:8.5px;letter-spacing:0.3px; }
 }
 /* ===== NÍVEIS DE ACESSO ===== */
+/* Material/insumo com link cadastrado: o nome vira o próprio link, sublinhado,
+   para dar de cara qual item tem página do fornecedor. */
+.nome-link { color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;text-decoration-color:var(--accent);cursor:pointer; }
+.nome-link:hover { color:var(--accent); }
 .nivel-sel { font-family:inherit;font-size:11px;font-weight:700;padding:3px 20px 3px 8px;border-radius:20px;border:1px solid var(--border);background-color:var(--surface2);color:var(--text);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6f62' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:9px; }
 .nivel-sel:hover:not(:disabled) { border-color:var(--accent); }
 .nivel-sel:disabled { cursor:not-allowed;opacity:.65;background-image:none;padding-right:8px; }
@@ -2337,10 +2341,14 @@ function linhasMateriaisProduto(p){const materiais=p.materiais||[];const qtdProd
   const sit=falta>0?'<span class="badge badge-danger">Comprar '+fmtN(falta,3)+' '+esc(info.un)+'</span>':'<span class="badge badge-success">Suficiente</span>';
   return '<tr style="background:var(--surface2)"><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;color:rgba(122,111,98,0.85)">• '+esc(m.desc||info.nome)+'</td><td class="mono" style="font-size:10.5px;color:rgba(122,111,98,0.85)">'+fmtN(necessario,3)+' '+esc(info.un)+'</td><td class="mono" style="font-size:10.5px;color:rgba(122,111,98,0.85)">'+fmtN(info.estoque,3)+' '+esc(info.un)+'</td><td>'+sit+'</td><td class="mono" style="font-size:11px;color:rgba(122,111,98,0.85)">'+fmt(custoTotal)+'</td><td></td><td></td></tr>';}).join('');
  return qtdRow+rows;}
+/* nome do produto: vira link quando existe página do fornecedor cadastrada */
+function nomeProduto(p){const link=linkDoProduto(p.id);
+ if(!link)return esc(p.nome);
+ return '<a class="nome-link" href="'+esc(link)+'" target="_blank" rel="noopener" title="Abrir a página deste material no fornecedor" onclick="event.stopPropagation()">'+esc(p.nome)+'</a>';}
 function linhaProduto(p,i){const est=Number(p.est||0),min=Number(p.min||0);
  const matHint=((p.materiais&&p.materiais.length)?'<div style="font-size:10px;color:var(--text-muted)">📋 '+p.materiais.length+' material(is)</div>':'')
   +(temFicha(p.id)?'<div style="font-size:10px;color:var(--text-muted)">🧮 com ficha de preço</div>':'')
-  +(linkDoProduto(p.id)?'<div style="font-size:10px;color:var(--text-muted)">🔗 link do fornecedor</div>':'');
+;
  const st=statusEstoque(est,min);
  const pct=min>0?Math.min(100,est/(min*2)*100):0;
  const isPortfolio=(p.tipo||'Portfólio')==='Portfólio';
@@ -2348,7 +2356,7 @@ function linhaProduto(p,i){const est=Number(p.est||0),min=Number(p.min||0);
  const chevron=isPortfolio?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(expandido?'Recolher materiais necessários':'Ver materiais necessários')+'" onclick="event.stopPropagation();toggleMateriaisProduto(\''+p.id+'\')">'+(expandido?'▾':'▸')+'</button>':'';
  const tempoDias=(DB.config.temposProducao||{})[p.id];
  const tempoCel=isPortfolio?'<td class="mono">'+(tempoDias?fmtN(tempoDias,1)+' dia'+(Number(tempoDias)===1?'':'s'):'—')+'</td>':'';
- const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+(i+1)+'</td><td><strong>'+esc(p.nome)+'</strong>'+matHint+'</td><td>'+esc(p.cat||'—')+'</td>'+tempoCel+'<td class="mono">'+(Number(p.preco)>0?fmt(p.preco):'—')+'</td><td class="mono">'+fmt(p.custo)+'</td><td><span class="mono">'+est+' '+esc(p.un||'un')+'</span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+st[2]+'"></div></div></td><td><span class="badge '+st[1]+'" title="'+st[3]+'">'+st[0]+'</span></td><td>'+botoesProduto(p)+'</td></tr>';
+ const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+(i+1)+'</td><td><strong>'+nomeProduto(p)+'</strong>'+matHint+'</td><td>'+esc(p.cat||'—')+'</td>'+tempoCel+'<td class="mono">'+(Number(p.preco)>0?fmt(p.preco):'—')+'</td><td class="mono">'+fmt(p.custo)+'</td><td><span class="mono">'+est+' '+esc(p.un||'un')+'</span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+st[2]+'"></div></div></td><td><span class="badge '+st[1]+'" title="'+st[3]+'">'+st[0]+'</span></td><td>'+botoesProduto(p)+'</td></tr>';
  return linhaHeader+(expandido?linhasMateriaisProduto(p):'');}
 function renderInsumos(){const lista=DB.produtos.filter(p=>p.tipo==='Insumo');
  $('tb-insumos').innerHTML=lista.map(linhaProduto).join('')||emptyRow(8,'Nenhum material/insumo cadastrado');
@@ -2396,7 +2404,7 @@ function renderProdutoCards(lista,alvoId,isPortfolio){
   const acoes=botoesProduto(p);
   return '<div class="pedido-card prod-card">'
    +'<div class="pc-topo"><span class="pc-num">'+(i+1)+'</span><span class="badge '+st[1]+'" title="'+st[3]+'">'+st[0]+'</span></div>'
-   +'<div class="pc-cliente">'+esc(p.nome)+'</div>'
+   +'<div class="pc-cliente">'+nomeProduto(p)+'</div>'
    +(meta?'<div class="pd-meta">'+esc(meta)+'</div>':'')
    +'<div class="pc-valor"><span class="pc-total">'+(isPortfolio?(Number(p.preco)>0?fmt(p.preco):'—'):fmt(p.custo))+'</span>'
     +'<span class="pd-custo">'+(isPortfolio?'custo '+fmt(p.custo):'preço de compra')+'</span></div>'
@@ -3884,10 +3892,8 @@ function botoesProduto(prod){
  const acoes=(prod.tipo||'Portfólio')!=='Portfólio'
   ?actionBtns("editProduto('"+prod.id+"')","delProduto('"+prod.id+"')")
   :actionBtns("abrirFichaProduto('"+prod.id+"')","delProduto('"+prod.id+"')");
- const link=linkDoProduto(prod.id);
- if(!acoes||!link)return acoes;
- /* o 🔗 abre a página do material no site do fornecedor */
- return acoes.replace('<div class="row-actions">','<div class="row-actions"><a class="btn btn-ghost btn-sm" href="'+esc(link)+'" target="_blank" rel="noopener" title="Abrir a página do material no fornecedor" onclick="event.stopPropagation()">🔗</a>');}
+ /* quem abre o link é o próprio nome do item, sublinhado na lista */
+ return acoes;}
 function fichaDoProdutoAberto(){const id=$('prod-id').value;if(!id)return;closeModal('modal-produtos');abrirFichaProduto(id);}
 async function excluirItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const it=(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
@@ -6988,7 +6994,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.4';
+const APP_VERSAO='2026-09-24.5';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
