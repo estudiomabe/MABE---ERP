@@ -121,6 +121,8 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .card-resp { display:flex;align-items:center;gap:5px;margin-bottom:8px;font-size:11px;color:var(--text-muted); }
 .card-resp select { flex:1;min-width:0;font-size:11px;font-family:inherit;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 6px;cursor:pointer; }
 .card-resp select.vazio { color:var(--text-muted);font-weight:400; }
+.lista-resp { max-width:150px;font-size:11.5px;font-family:inherit;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 6px;cursor:pointer; }
+.lista-resp.vazio { color:var(--text-muted);font-weight:400; }
 .kanban-card-timer { font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-bottom:8px; }
 .kanban-card-footer { display:flex;align-items:center;justify-content:space-between; }
 .kanban-card-prazo { font-size:10px;font-family:var(--mono); }
@@ -234,7 +236,7 @@ body.sem-anexos-pedido #vnd-anexos-zona { display:none; }
    A tabela tem 9 colunas: no telefone sobra espaco para quatro e o resto
    fica atras de um arrasta-pra-lado que ninguem descobre. Abaixo de 860px
    a tabela some e entra a lista de cartoes, que mostra tudo de uma vez. */
-#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards { display:none; }
+#vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards, #pcp-lista-cards { display:none; }
 .pc-ficha { display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;padding:9px 11px;background:var(--surface2);border-radius:8px; }
 .pc-ficha div { display:flex;flex-direction:column;gap:1px;font-size:13px;font-family:var(--mono);color:var(--text);min-width:0; }
 .pc-ficha span { font-family:var(--font, inherit);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
@@ -337,8 +339,8 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 /* niveis sem acesso a valores nao veem dinheiro tambem nos cartoes */
 body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
-  #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela { display:none; }
-  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards { display:block; }
+  #vendas-tabela, #orcamentos-tabela, #financeiro-tabela, #portfolio-tabela, #insumos-tabela, #pcp-lista-tabela { display:none; }
+  #vendas-cards, #orcamentos-cards, #financeiro-cards, #portfolio-cards, #insumos-cards, #entregas-cards, #clientes-cards, #compras-cards, #fornecedores-cards, #ferramentas-cards, #madeiras-cards, #servicos-cards, #comissoes-cards, #pcp-lista-cards { display:block; }
   /* calendário: a grade de 7 colunas não cabe; vira agenda com só os dias que têm algo */
   #cal-agenda { display:block;margin-top:4px; }
   #cal-grid, .cal-semana, .cal-legenda { display:none !important; }
@@ -955,7 +957,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
     </div>
 
-    <div class="section" id="section-pcp"><div class="period-bar"><select class="form-control" id="pcp-prio-filter" style="width:auto;min-width:150px" onchange="renderPCP()"><option value="">Todas as prioridades</option><option>Alta</option><option>Normal</option><option>Baixa</option></select><label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="pcp-ver-concluidas" onchange="renderPCP()" style="cursor:pointer">Mostrar concluídas</label><span id="pcp-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span><button class="btn btn-ghost btn-sm" onclick="imprimirPcp()">🖨️ Imprimir PCP</button></div><div class="pcp-stats" id="pcp-stats"></div><div class="pcp-abas" id="pcp-abas"></div><div class="kanban-board" id="pcp-kanban"></div></div>
+    <div class="section" id="section-pcp"><div class="period-bar"><select class="form-control" id="pcp-prio-filter" style="width:auto;min-width:150px" onchange="renderPCP()"><option value="">Todas as prioridades</option><option>Alta</option><option>Normal</option><option>Baixa</option></select><label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="pcp-ver-concluidas" onchange="renderPCP()" style="cursor:pointer">Mostrar concluídas</label><div class="per-tabs" id="pcp-modo-tabs"><button class="per-tab" id="pcp-modo-kanban" onclick="definirModoPcp('kanban')">▦ Kanban</button><button class="per-tab" id="pcp-modo-lista" onclick="definirModoPcp('lista')">☰ Lista</button></div><span id="pcp-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span><button class="btn btn-ghost btn-sm" onclick="imprimirPcp()">🖨️ Imprimir PCP</button></div><div class="pcp-stats" id="pcp-stats"></div><div class="pcp-abas" id="pcp-abas"></div><div class="kanban-board" id="pcp-kanban"></div><div id="pcp-lista-view" style="display:none"><div id="pcp-lista-cards"></div><div class="table-wrapper" id="pcp-lista-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Produção</div></div><table><thead><tr><th>Pedido</th><th>Peça / Projeto</th><th>Cliente</th><th>Status</th><th>Responsável</th><th>Prioridade</th><th>Prazo</th><th>Na fila</th><th>Ações</th></tr></thead><tbody id="tb-pcp-lista"></tbody></table></div></div></div>
 
     <div class="section" id="section-usuarios"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Usuários do Sistema</div></div><table><thead><tr><th>Login</th><th>Nome</th><th>Nível de Acesso</th><th title="Registrado por dispositivo: mostra o último acesso feito neste navegador">Último acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-usuarios"></tbody></table></div><div class="table-wrapper" style="margin-top:14px"><div class="table-toolbar"><div class="table-toolbar-title">O que cada nível enxerga</div></div><div class="niveis-legenda" id="usr-legenda"></div></div></div>
     <div class="section" id="section-historico"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Histórico de Edições</div><button class="btn btn-danger btn-sm" onclick="clearHistorico()">🗑️ Limpar</button></div><table><thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Módulo</th><th>Detalhe</th></tr></thead><tbody id="tb-historico"></tbody></table></div></div>
@@ -4935,6 +4937,37 @@ async function carregarProducaoSupabase(){
 /* ordem da fila: prazo mais apertado primeiro, e quem não tem prazo fica no fim.
    Vale para o quadro e para o PDF, para os dois nunca discordarem. */
 const porPrazo=(a,b)=>String(a.prazo||'9999-99-99').localeCompare(String(b.prazo||'9999-99-99'));
+/* nomes de etapa sem emoji, para papel e para colunas estreitas */
+const semEmoji=x=>String(x).replace(/[^\p{L}\p{N}\s&\/.\-]/gu,'').trim();
+/* na bancada, horas e minutos não ajudam: basta há quantos dias a ordem espera */
+const diasNaFila=iso=>{const d=Math.floor((Date.now()-new Date(iso).getTime())/86400000);return d<=0?'hoje':d+(d===1?' dia':' dias');};
+/* ordem criada pela aprovação se chama "Pedido V-0019 — Cliente": com o pedido e o cliente
+   em colunas próprias, isso não diz o que é a peça. Nesse caso, usa os itens do pedido. */
+function pecaDaOp(o,ped){
+ let peca=String(o.titulo||'').replace(/^Pedido\s+V-\d+\s*[—-]\s*/,'').trim();
+ if((!peca||peca===cliName(o.cliId))&&ped){
+  const descs=(ped.itens||[]).map(i=>i.desc).filter(Boolean);
+  peca=descs.slice(0,2).join(', ')+(descs.length>2?' +'+(descs.length-2):'');}
+ return peca||String(o.titulo||'—');}
+/* a observação é onde ficam medidas e material; o que ela repete do pedido e da peça é ruído */
+function obsDaOp(o,peca){
+ let obs=String(o.obs||'').split('\n').map(l=>l.replace(/^[•\-\u2022\s]+/,'').trim()).filter(Boolean).join('   ·   ');
+ obs=obs.replace(/\(?\s*Gerado automaticamente do Pedido V-\d+\s*\)?/ig,'').trim();
+ const alvo=String(peca||'').trim();
+ if(alvo&&obs.toLowerCase().startsWith(alvo.toLowerCase())){
+  const resto=obs.slice(alvo.length).trim();
+  if(/^[—\-:]/.test(resto))obs=resto.replace(/^[—\-:]\s*/,'');}
+ return obs.replace(/^[\s·]+|[\s·]+$/g,'');}
+function badgeEtapa(i){const n=Number(i)||0;
+ const cls=n===4?'badge-warning':n>=5?'badge-success':n===0?'badge-muted':'badge-info';
+ return '<span class="badge '+cls+'">'+esc(semEmoji(ETAPAS[n]||'—'))+'</span>';}
+function badgePrio(prio){const p=prio||'Normal';
+ if(p==='Urgente')return '<span class="badge badge-danger">Urgente</span>';
+ if(p==='Alta')return '<span class="badge badge-warning">Alta</span>';
+ return '<span style="font-size:11px;color:var(--text-muted)">'+esc(p)+'</span>';}
+/* Kanban (o quadro) ou Lista (a mesma folha que sai na impressão) — fica gravado no aparelho */
+let PCP_MODO=(()=>{try{return localStorage.getItem('mabe_pcp_modo')||'kanban';}catch(e){return 'kanban';}})();
+function definirModoPcp(m){PCP_MODO=m;try{localStorage.setItem('mabe_pcp_modo',m);}catch(e){}renderPCP();}
 let PCP_ETAPA_MOBILE=null;
 function selecionarEtapaPCP(i){PCP_ETAPA_MOBILE=i;renderPCP();
  const aba=document.querySelector('.pcp-aba.ativa');if(aba)aba.scrollIntoView({block:'nearest',inline:'center'});}
@@ -4950,6 +4983,13 @@ function renderPCP(){const t=today();
  $('pcp-stats').innerHTML=[['Planejamento',ativas.filter(o=>o.etapa==0).length,''],['Em produção',ativas.filter(o=>o.etapa>0&&o.etapa<4).length,''],['Retrabalho',ativas.filter(o=>o.etapa==4).length,'color:var(--warning)'],['Prontas',ativas.filter(o=>o.etapa==5).length,''],['Atrasadas',atras,'color:var(--danger)'],['Concluídas (mês)',concMes,'color:var(--success)']].map(s=>'<div class="pcp-stat"><div class="pcp-stat-val" style="'+s[2]+'">'+s[1]+'</div><div class="pcp-stat-label">'+s[0]+'</div></div>').join('');
  if(PCP_ETAPA_MOBILE===null){const primeira=ETAPAS.findIndex((_,i)=>ativas.some(o=>Number(o.etapa)===i));PCP_ETAPA_MOBILE=primeira<0?0:primeira;}
  $('pcp-abas').innerHTML=ETAPAS.map((et,i)=>'<button class="pcp-aba'+(i===PCP_ETAPA_MOBILE?' ativa':'')+'" onclick="selecionarEtapaPCP('+i+')">'+esc(et)+'<span class="pcp-aba-n">'+ativas.filter(o=>Number(o.etapa)===i).length+'</span></button>').join('');
+ /* o seletor de modo e o que cada um mostra */
+ const modoLista=PCP_MODO==='lista';
+ if($('pcp-modo-kanban')){$('pcp-modo-kanban').classList.toggle('active',!modoLista);$('pcp-modo-lista').classList.toggle('active',modoLista);}
+ if($('pcp-lista-view'))$('pcp-lista-view').style.display=modoLista?'':'none';
+ $('pcp-kanban').style.display=modoLista?'none':'';
+ if($('pcp-abas'))$('pcp-abas').style.display=modoLista?'none':'';
+ if(modoLista){renderPcpLista(ativas.slice().sort(porPrazo),t);return;}
  $('pcp-kanban').innerHTML=ETAPAS.map((et,i)=>{const cards=ativas.filter(o=>Number(o.etapa)===i).sort(porPrazo);
   return '<div class="kanban-col'+(i===PCP_ETAPA_MOBILE?' ativa':'')+'"><div class="kanban-col-header"><span class="kanban-col-title">'+et+'</span><span class="kanban-count">'+cards.length+'</span></div>'
   +cards.map(o=>{const pcls=!o.prazo?'ok':o.prazo<t?'vencido':o.prazo===t?'hoje':'ok';
@@ -4992,6 +5032,68 @@ async function definirRespOP(id,valor,el){
 /* o campo do formulário também sugere os nomes já usados, sem travar a digitação */
 function preencherDatalistResp(){const dl=$('lista-resp');if(!dl)return;
  dl.innerHTML=responsaveisConhecidos().map(n=>'<option value="'+esc(n)+'"></option>').join('');}
+/* a mesma leitura da folha impressa, agora na tela: tudo numa lista por prazo,
+   com a etapa virando coluna de status */
+function renderPcpLista(ordens,t){
+ const corpo=$('tb-pcp-lista');if(!corpo)return;
+ corpo.innerHTML=ordens.map(o=>{
+  const ped=pedidoDaOp(o);
+  const peca=pecaDaOp(o,ped);
+  const obs=obsDaOp(o,peca);
+  const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
+  const prazo=o.prazo
+   ?'<span class="mono"'+(atrasada?' style="color:var(--danger);font-weight:700"':'')+'>'+(atrasada?'⚠ ':'')+fmtD(o.prazo)+'</span>'
+   :'<span style="font-size:11px;color:var(--text-muted)">sem prazo</span>';
+  const resp=canEdit()
+   ?'<select class="lista-resp'+(o.resp?'':' vazio')+'" onchange="definirRespOP(\''+o.id+'\',this.value,this)">'+opcoesResp(o.resp||'')+'</select>'
+   :esc(o.resp||'—');
+  const i=Number(o.etapa)||0;
+  const acoes=canEdit()
+   ?'<div class="row-actions" style="opacity:1">'
+    +(i>0?'<button class="btn btn-ghost btn-sm" title="Voltar etapa" onclick="moveOP(\''+o.id+'\',-1)">◀</button>':'')
+    +(i<ETAPA_FINAL?'<button class="btn btn-ghost btn-sm" title="Avançar para '+esc(semEmoji(ETAPAS[i+1]))+'" onclick="moveOP(\''+o.id+'\',1)">▶</button>':'<button class="btn btn-ghost btn-sm" title="Concluir" onclick="concluirOP(\''+o.id+'\')">✓</button>')
+    +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
+   :'';
+  const linha='<tr style="cursor:pointer" onclick="if(event.target.closest(\'button\')||event.target.closest(\'select\'))return;editOP(\''+o.id+'\')">'
+   +'<td class="mono" style="white-space:nowrap;font-weight:700;color:var(--text)">'+(ped?'V-'+pad(ped.num):'—')+'</td>'
+   +'<td><strong style="color:var(--text)">'+esc(peca)+'</strong></td>'
+   +'<td>'+esc(cliName(o.cliId))+'</td>'
+   +'<td>'+badgeEtapa(o.etapa)+'</td>'
+   +'<td onclick="event.stopPropagation()">'+resp+'</td>'
+   +'<td>'+badgePrio(o.prio)+'</td>'
+   +'<td>'+prazo+'</td>'
+   +'<td class="mono" style="font-size:11px;color:var(--text-muted)">'+(o.criadoEm?diasNaFila(o.criadoEm):'—')+'</td>'
+   +'<td onclick="event.stopPropagation()">'+acoes+'</td></tr>';
+  const linhaObs=obs?'<tr class="sub-row"><td></td><td colspan="8" style="padding:4px 14px 8px;font-size:11px;color:rgba(122,111,98,0.9)">Obs. '+esc(obs)+'</td></tr>':'';
+  return linha+linhaObs;}).join('')||emptyRow(9,'Nenhuma ordem nesta seleção');
+ renderPcpListaCards(ordens,t);}
+/* no celular a tabela de nove colunas não cabe: vira cartão, como nas outras telas */
+function renderPcpListaCards(ordens,t){
+ const alvo=$('pcp-lista-cards');if(!alvo)return;
+ if(!ordens.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhuma ordem nesta seleção</div>';return;}
+ alvo.innerHTML=ordens.map(o=>{
+  const ped=pedidoDaOp(o);
+  const peca=pecaDaOp(o,ped);
+  const obs=obsDaOp(o,peca);
+  const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
+  const i=Number(o.etapa)||0;
+  const resp=canEdit()
+   ?'<div class="card-resp">👤<select class="'+(o.resp?'':'vazio')+'" onchange="definirRespOP(\''+o.id+'\',this.value,this)">'+opcoesResp(o.resp||'')+'</select></div>'
+   :(o.resp?'<div class="card-resp">👤 '+esc(o.resp)+'</div>':'');
+  const acoes=canEdit()
+   ?'<div class="pc-acoes">'
+    +(i>0?'<button class="btn btn-ghost btn-sm" onclick="moveOP(\''+o.id+'\',-1)">◀</button>':'')
+    +(i<ETAPA_FINAL?'<button class="btn btn-primary btn-sm" onclick="moveOP(\''+o.id+'\',1)">▶ '+esc(semEmoji(ETAPAS[i+1]))+'</button>':'<button class="btn btn-primary btn-sm" onclick="concluirOP(\''+o.id+'\')">✓ Concluir</button>')
+    +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
+   :'';
+  return '<div class="pedido-card">'
+   +'<div class="pc-topo"><span class="pc-num">'+(ped?'V-'+pad(ped.num):'OP-'+pad(o.num||0))+'</span><span class="pc-data"'+(atrasada?' style="color:var(--danger);font-weight:700"':'')+'>'+(o.prazo?(atrasada?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span></div>'
+   +'<div class="pc-cliente" onclick="editOP(\''+o.id+'\')" style="cursor:pointer">'+esc(peca)+'</div>'
+   +'<div class="pc-pag">'+esc(cliName(o.cliId))+'</div>'
+   +'<div class="pc-status">'+badgeEtapa(o.etapa)+badgePrio(o.prio)+'<span style="font-size:11.5px;color:var(--text-muted)">'+(o.criadoEm?'na fila '+diasNaFila(o.criadoEm):'')+'</span></div>'
+   +resp
+   +(obs?'<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Obs. '+esc(obs)+'</div>':'')
+   +acoes+'</div>';}).join('');}
 function openOP(){preencherDatalistResp();$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';$('op-prio').value='Normal';$('op-etapa').value='0';$('op-obs').value='';
  $('op-btn-del').style.display='none';$('mop-title').textContent='Nova Ordem de Produção';openModal('modal-producao');}
 function editOP(id){if(!canEdit())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
@@ -5055,9 +5157,6 @@ function montarPdfPcp(){
  const verConcluidas=$('pcp-ver-concluidas')?$('pcp-ver-concluidas').checked:false;
  const fPrio=$('pcp-prio-filter')?$('pcp-prio-filter').value:'';
  const ativas=DB.producao.filter(o=>(verConcluidas||o.status!=='Concluída')&&(!fPrio||(o.prio||'Normal')===fPrio));
- /* na folha impressa, horas e minutos não ajudam: basta há quantos dias a ordem espera */
- const diasNaFila=iso=>{const d=Math.floor((Date.now()-new Date(iso).getTime())/86400000);return d<=0?'hoje':d+(d===1?' dia':' dias');};
- const semEmoji=x=>String(x).replace(/[^\p{L}\p{N}\s&\/.\-]/gu,'').trim();
 
  /* ---- capa ---- */
  fundo();
@@ -5099,26 +5198,14 @@ function montarPdfPcp(){
  ordens.forEach(o=>{
   const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
   const ped=pedidoDaOp(o);
-  /* ordem criada pelo pedido se chama "Pedido V-0019 — Cliente": com as colunas Pedido e
-     Cliente ao lado, isso não diz o que é a peça. Nesse caso, usa os itens do pedido. */
-  let peca=String(o.titulo||'').replace(/^Pedido\s+V-\d+\s*[—-]\s*/,'').trim();
-  if((!peca||peca===cliName(o.cliId))&&ped){
-   const descs=(ped.itens||[]).map(i=>i.desc).filter(Boolean);
-   peca=descs.slice(0,2).join(', ')+(descs.length>2?' +'+(descs.length-2):'');}
-  linhas.push(['',ped?'V-'+pad(ped.num):'—',peca||String(o.titulo||'—'),cliName(o.cliId),
+  const peca=pecaDaOp(o,ped);
+  linhas.push(['',ped?'V-'+pad(ped.num):'—',peca,cliName(o.cliId),
    semEmoji(ETAPAS[Number(o.etapa)]||'—'),o.resp||'—',
    (o.prio||'Normal'),(o.prazo?(atrasada?'! ':'')+fmtD(o.prazo):'sem prazo'),
    o.criadoEm?diasNaFila(o.criadoEm):'—']);
   /* a observação é onde ficam as medidas e o que precisa ser feito: entra numa faixa
      logo abaixo da ordem, em vez de espremer mais uma coluna */
-  let obs=String(o.obs||'').split('\n').map(l=>l.replace(/^[•\-\u2022\s]+/,'').trim()).filter(Boolean).join('   ·   ');
-  /* o pedido já é a segunda coluna e a peça a terceira: o que a ordem repete delas é ruído */
-  obs=obs.replace(/\(?\s*Gerado automaticamente do Pedido V-\d+\s*\)?/ig,'').trim();
-  const alvo=String(peca||'').trim();
-  if(alvo&&obs.toLowerCase().startsWith(alvo.toLowerCase())){
-   const resto=obs.slice(alvo.length).trim();
-   if(/^[—\-:]/.test(resto))obs=resto.replace(/^[—\-:]\s*/,'');}
-  obs=obs.replace(/^[\s·]+|[\s·]+$/g,'');
+  const obs=obsDaOp(o,peca);
   if(obs){linhasObs.add(linhas.length);
    linhas.push([{content:'',styles:{fillColor:CREAM}},{content:'Obs.  '+(obs.length>420?obs.slice(0,420)+'…':obs),colSpan:8,
     styles:{fontSize:7,textColor:MUTED,fillColor:CREAM,cellPadding:{top:1.8,bottom:2.2,left:2.2,right:2.2}}}]);}});
@@ -7431,7 +7518,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.22';
+const APP_VERSAO='2026-09-24.23';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
