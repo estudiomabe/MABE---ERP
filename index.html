@@ -149,6 +149,12 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .om-nao-encontrado .om-desc-cat { border-color:var(--warning);background:rgba(160,120,48,0.06); }
 .status-pill { display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid;white-space:nowrap; }
 .status-pill .dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
+/* mesma etiqueta, mas com um select por dentro: troca o status sem abrir o cabecalho */
+.status-drop { display:inline-flex;align-items:center;gap:6px;padding:3px 8px 3px 11px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid;white-space:nowrap;cursor:pointer; }
+.status-drop .dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
+.status-drop select { appearance:none;-webkit-appearance:none;border:0;background:transparent;color:inherit;font:inherit;font-weight:700;padding:0;margin:0;cursor:pointer;outline:none; }
+.status-drop select option { color:var(--text);background:var(--surface);font-weight:600; }
+.status-drop .seta { font-size:10px;opacity:.75;pointer-events:none;margin-left:-1px; }
 .form-control::placeholder { color:var(--text-muted); }
 select.form-control { cursor:pointer; } select.form-control option { background:#fff;color:var(--text); }
 .stat-row { display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap; }
@@ -3411,6 +3417,37 @@ function recomputeHeaderTotais(o){o.preco=(o.itens||[]).reduce((s,i)=>s+Number(i
 function statusPillHtml(status){const map={'Rascunho':['var(--text-muted)','var(--surface3)'],'Enviado':['var(--primary)','rgba(26,23,20,0.06)'],'Aprovado':['var(--success)','rgba(61,107,79,0.1)'],'Reprovado':['var(--danger)','rgba(181,64,64,0.1)'],'Concluído':['var(--success)','rgba(61,107,79,0.1)']};
  const [color,bg]=map[status]||map['Rascunho'];
  return '<span class="status-pill" style="color:'+color+';background:'+bg+';border-color:'+color+'40"><span class="dot" style="background:'+color+'"></span>'+status+'</span>';}
+const ORC_STATUS=['Rascunho','Enviado','Aprovado','Reprovado','Concluído'];
+/* a mesma etiqueta, agora clicavel: quem pode editar troca o status ali mesmo */
+function statusOrcHtml(o){
+ if(!canEdit())return statusPillHtml(o.status);
+ const map={'Rascunho':['var(--text-muted)','var(--surface3)'],'Enviado':['var(--primary)','rgba(26,23,20,0.06)'],'Aprovado':['var(--success)','rgba(61,107,79,0.1)'],'Reprovado':['var(--danger)','rgba(181,64,64,0.1)'],'Concluído':['var(--success)','rgba(61,107,79,0.1)']};
+ const [color,bg]=map[o.status]||map['Rascunho'];
+ return '<span class="status-drop" style="color:'+color+';background:'+bg+';border-color:'+color+'40" title="Alterar o status deste orçamento">'
+  +'<span class="dot" style="background:'+color+'"></span>'
+  +'<select onchange="mudarStatusOrc(\''+o.id+'\',this.value,this)" onclick="event.stopPropagation()">'
+  +ORC_STATUS.map(st=>'<option'+(st===o.status?' selected':'')+'>'+st+'</option>').join('')
+  +'</select><span class="seta">▾</span></span>';}
+/* Aprovar e Reprovar nao sao so uma etiqueta: um gera pedido, contas a receber e ordem
+   de producao; o outro pede confirmacao. Por isso a caixa desvia para os fluxos de sempre. */
+async function mudarStatusOrc(id,novo,el){
+ const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+ const anterior=o.status;
+ const volta=()=>{if(el)el.value=anterior;};
+ if(novo===anterior)return;
+ if(!guard()){volta();return;}
+ if(novo==='Aprovado'){volta();
+  if(!itensOrc(o).length){toast('Adicione ao menos um item antes de aprovar.','error');return;}
+  abrirAprovarOrc(id);return;}
+ if(novo==='Reprovado'){volta();rejeitarOrcamento(id);return;}
+ if(anterior==='Aprovado'&&!confirm('ORC-'+pad(o.num)+' já foi aprovado. O pedido, os lançamentos no financeiro e a ordem de produção continuam existindo mesmo trocando o status para "'+novo+'".\n\nTrocar assim mesmo?')){volta();return;}
+ const veioDaDetalhe=$('orc-detalhe-view').style.display!=='none';
+ o.status=novo;
+ const {error}=await supa.from('orcamentos').update({status:novo}).eq('id',id);
+ if(error){o.status=anterior;volta();toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
+ commit('editar','Orçamentos','ORC-'+pad(o.num)+': status '+anterior+' → '+novo);syncSheets('orcamentos','upsert',o);
+ toast('Status de ORC-'+pad(o.num)+' alterado para '+novo+'.','success');
+ if(veioDaDetalhe){orcShow('detalhe');renderOrcDetalhe();}}
 const orcEditandoItem=()=>['tipo','form','catalogo'].some(v=>$('orc-'+v+'-view').style.display==='block');
 function renderOrcamentos(){if(!orcEditandoItem())orcShow('lista');syncPerBar('orc-per',PER_ORC);
  const filtroStatus=$('orc-status-filter')?$('orc-status-filter').value:'';
@@ -3429,7 +3466,7 @@ function renderOrcamentos(){if(!orcEditandoItem())orcShow('lista');syncPerBar('o
   const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(colapsado?'Expandir itens':'Recolher itens')+'" onclick="event.stopPropagation();toggleItensOrc(\''+o.id+'\')">'+(colapsado?'▸':'▾')+'</button>':'<span style="display:inline-block;width:29px"></span>';
   const linhaHeader='<tr style="cursor:pointer;background:var(--surface2);border-left:3px solid '+(stB==='badge-success'?'var(--success)':stB==='badge-danger'?'var(--danger)':stB==='badge-info'?'var(--primary)':'transparent')+'" onclick="if(event.target.closest(\'button\'))return;abrirDetalheOrc(\''+o.id+'\')">'
    +'<td class="mono" style="white-space:nowrap;font-weight:700;color:var(--text)">'+chevron+'ORC-'+pad(o.num)+'</td>'
-   +'<td>'+statusPillHtml(o.status)+'</td>'
+   +'<td onclick="event.stopPropagation()">'+statusOrcHtml(o)+'</td>'
    +'<td class="mono" style="font-weight:600;color:var(--text)">'+fmtD(o.data)+'</td>'
    +'<td><strong style="color:var(--text)">'+esc(cliName(o.cliId))+'</strong></td>'
    +'<td class="mono" style="font-weight:600;color:var(--text)">'+fmtD(o.validade)+'</td>'
@@ -3479,7 +3516,7 @@ function renderOrcamentosCards(lista){
    +'<div class="pc-topo"><span class="pc-num">ORC-'+pad(o.num)+'</span><span class="pc-data">'+fmtD(o.data)+'</span></div>'
    +'<div class="pc-cliente" onclick="abrirDetalheOrc(\''+o.id+'\')" style="cursor:pointer">'+esc(cliName(o.cliId))+'</div>'
    +'<div class="pc-valor"><span class="pc-total">'+fmt(o.preco)+'</span><span class="oc-lucro">lucro '+fmt(o.lucro)+'</span></div>'
-   +'<div class="pc-status">'+statusPillHtml(o.status)+'<span class="oc-validade">entrega <strong>'+fmtD(o.validade)+'</strong></span></div>'
+   +'<div class="pc-status">'+statusOrcHtml(o)+'<span class="oc-validade">entrega <strong>'+fmtD(o.validade)+'</strong></span></div>'
    +btnItens+listaItens+decidir
    +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
    +'</div>';}).join('');}
@@ -3580,8 +3617,7 @@ function abrirDetalheOrc(id){ORC_ATUAL_ID=id;orcShow('detalhe');renderOrcDetalhe
 function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const itens=itensOrc(o);
  $('orcd-title').textContent='Orçamento ORC-'+pad(o.num);
- const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
- $('orcd-badge').innerHTML='<span class="badge '+stB+'">'+o.status+'</span>';
+ $('orcd-badge').innerHTML=statusOrcHtml(o);
  $('orcd-info').innerHTML='<strong>Cliente:</strong> '+esc(cliName(o.cliId))+(o.origem?' · <strong>Origem:</strong> '+esc(o.origem):'')+'<br><strong>Data:</strong> '+fmtD(o.data)+' · <strong>Entrega:</strong> '+fmtD(o.validade)+(o.obs?'<br><strong>Observações:</strong> '+esc(o.obs).replace(/\n/g,'<br>'):'');
  const podeDecidir=canEdit()&&itens.length>0&&o.status!=='Aprovado'&&o.status!=='Reprovado'&&o.status!=='Concluído';
  const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>':'';
@@ -7339,7 +7375,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.16';
+const APP_VERSAO='2026-09-24.17';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
