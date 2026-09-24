@@ -209,6 +209,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 /* ===== NÍVEIS DE ACESSO ===== */
 /* Material/insumo com link cadastrado: o nome vira o próprio link, sublinhado,
    para dar de cara qual item tem página do fornecedor. */
+body.sem-anexos-pedido #vnd-anexos-zona { display:none; }
 .nome-link { color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;text-decoration-color:var(--accent);cursor:pointer; }
 .nome-link:hover { color:var(--accent); }
 .nivel-sel { font-family:inherit;font-size:11px;font-weight:700;padding:3px 20px 3px 8px;border-radius:20px;border:1px solid var(--border);background-color:var(--surface2);color:var(--text);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6f62' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:9px; }
@@ -598,6 +599,12 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="saveVenda()">💾 Salvar Pedido</button></div>
         </div>
         <div class="config-card" style="margin:0"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div></div></div>
+        <div class="config-card orc-anexos-zona" id="vnd-anexos-zona" style="margin-top:14px" ondragenter="anexoPedidoArrastando(event,true)" ondragover="anexoPedidoArrastando(event,true)" ondragleave="anexoPedidoArrastando(event,false)" ondrop="anexoPedidoSolto(event)">
+          <div class="orc-anexos-aviso">Solte os arquivos para anexar</div>
+          <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência<span class="orc-anexos-dica"> — ou arraste os arquivos para cá</span></div><button class="btn btn-ghost btn-sm" id="vnd-anexo-btn" onclick="document.getElementById('vnd-anexo-input').click()">+ Anexar Arquivo</button></div>
+          <input type="file" id="vnd-anexo-input" accept=".png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple style="display:none" onchange="uploadAnexoPedido(event)">
+          <div id="vnd-anexos-lista" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+        </div>
       </div>
     </div>
 
@@ -1646,7 +1653,7 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  navigate(secaoInicial());updateBadges();
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
  if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
- verificarColunaOrigem();verificarColunaObsFin();
+ verificarColunaOrigem();verificarColunaObsFin();verificarColunaAnexosVenda();
  carregarClientesSupabase();
  carregarFornecedoresSupabase();
  carregarProdutosSupabase();
@@ -2862,8 +2869,8 @@ async function confirmarImportNf(){
  }finally{btn.disabled=false;btn.textContent='Importar';}}
 
 /* ================= VENDAS ================= */
-function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data||null,pag:v.pag||null,status:v.status||null,obs:v.obs||null,itens:v.itens||[],total:v.total||0,baixa:!!v.baixa};if(v.num!==undefined&&v.num!==null)o.num=v.num;return comOrigem(o,v);}
-function vendaDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],total:row.total,baixa:row.baixa};}
+function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data||null,pag:v.pag||null,status:v.status||null,obs:v.obs||null,itens:v.itens||[],total:v.total||0,baixa:!!v.baixa};if(v.num!==undefined&&v.num!==null)o.num=v.num;return comOrigem(comAnexosVenda(o,v),v);}
+function vendaDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],total:row.total,baixa:row.baixa};}
 async function carregarVendasSupabase(){
  const {data,error}=await supa.from('vendas').select('*').order('num',{ascending:false});
  if(error){erroDeCarga('pedidos',error);return;}
@@ -3123,10 +3130,10 @@ function calcVenda(){let t=0;document.querySelectorAll('#vnd-itens > div').forEa
 /* O pedido virou página (era uma janela): lista e ficha dividem a seção Pedidos. */
 function vndShow(view){['lista','form'].forEach(v=>{const el=$('vendas-'+v+'-view');if(el)el.style.display=v===view?'block':'none';});}
 function cancelarPedido(){vndShow('lista');renderVendas();}
-function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-pag').value='PIX';$('vnd-origem').value='';$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);vndShow('form');}
+function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-pag').value='PIX';$('vnd-origem').value='';$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderAnexosPedido();vndShow('form');}
 function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-pag').value=v.pag;$('vnd-origem').value=v.origem||'';$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';
- $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);vndShow('form');}
+ $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderAnexosPedido();vndShow('form');}
 let ITEM_PARA_PEDIDO=null;
 function capturarPedido(){const itens=[];
  document.querySelectorAll('#vnd-itens > div').forEach(r=>{const sel=r.querySelector('.vi-prod'),desc=r.querySelector('.vi-desc');
@@ -3234,6 +3241,13 @@ async function delVenda(id){if(!guard()||!guardValores())return;const v=DB.venda
 /* Origem (Indicação, Instagram, Google...) fica numa coluna "origem" em orcamentos e vendas.
    Enquanto a coluna não existir no banco, o campo fica escondido e nada é enviado — senão toda gravação falharia. */
 let ORIGEM_NO_BANCO=false;
+/* a coluna anexos de vendas só existe depois do SQL; até lá o quadro fica escondido */
+let ANEXOS_VENDA_NO_BANCO=false;
+async function verificarColunaAnexosVenda(){
+ const r=await supa.from('vendas').select('anexos').limit(1);
+ ANEXOS_VENDA_NO_BANCO=!r.error;
+ document.body.classList.toggle('sem-anexos-pedido',!ANEXOS_VENDA_NO_BANCO);}
+const comAnexosVenda=(o,v)=>{if(ANEXOS_VENDA_NO_BANCO)o.anexos=v.anexos||[];return o;};
 async function verificarColunaOrigem(){
  const r=await supa.from('vendas').select('origem').limit(1);
  ORIGEM_NO_BANCO=!r.error;
@@ -3470,7 +3484,7 @@ function anexoSolto(ev){ev.preventDefault();$('orc-anexos-zona').classList.remov
  enviarAnexosOrc(Array.from((ev.dataTransfer&&ev.dataTransfer.files)||[]));}
 /* arquivo solto fora da área abriria no lugar do ERP, perdendo o que estava na tela */
 ['dragover','drop'].forEach(t=>window.addEventListener(t,e=>{
- if(e.dataTransfer&&Array.from(e.dataTransfer.types||[]).includes('Files')&&!e.target.closest?.('#orc-anexos-zona')){e.preventDefault();e.dataTransfer.dropEffect='none';}}));
+ if(e.dataTransfer&&Array.from(e.dataTransfer.types||[]).includes('Files')&&!e.target.closest?.('#orc-anexos-zona')&&!e.target.closest?.('#vnd-anexos-zona')){e.preventDefault();e.dataTransfer.dropEffect='none';}}));
 let ENVIANDO_ANEXOS=false;
 async function enviarAnexosOrc(files){if(!files.length||!guard())return;
  if(ENVIANDO_ANEXOS){toast('Aguarde terminar o envio anterior.','info');return;}
@@ -3506,6 +3520,73 @@ async function excluirAnexoOrc(path){if(!guard())return;if(!confirm('Excluir est
  const {error}=await supa.from('orcamentos').update({anexos}).eq('id',o.id);
  if(error){toast('Erro ao atualizar orçamento: '+error.message,'error');return;}
  o.anexos=anexos;saveDB();renderAnexosOrc(o);toast('Anexo excluído.','info');}
+/* ---- Anexos do pedido ----
+   Mesma ideia do orçamento: o arquivo vai para a área de arquivos do Supabase
+   (pasta "pedidos/<id>/") e a lista fica na coluna anexos da tabela de pedidos.
+   Pedido novo ainda não tem id: só dá para anexar depois de salvar. */
+function pedidoDosAnexos(){const id=$('vnd-id')?$('vnd-id').value:'';return id?DB.vendas.find(x=>x.id===id):null;}
+function renderAnexosPedido(){const lista=$('vnd-anexos-lista');if(!lista)return;
+ const btn=$('vnd-anexo-btn'),v=pedidoDosAnexos();
+ if(!v){lista.innerHTML='<div style="font-size:12px;color:var(--text-muted)">Salve o pedido para poder anexar arquivos.</div>';
+  if(btn)btn.disabled=true;return;}
+ if(btn)btn.disabled=!canEdit();
+ const anexos=v.anexos||[];
+ lista.innerHTML=anexos.map(a=>{
+  const isImg=anexoEhImagem(a);
+  const thumb=isImg?'<img src="'+a.url+'" style="width:100%;height:90px;object-fit:cover;border-radius:8px 8px 0 0">':'<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--surface2);border-radius:8px 8px 0 0">📄</div>';
+  const del=canEdit()?'<button class="btn btn-danger btn-sm" style="width:100%;border-radius:0 0 8px 8px" onclick="excluirAnexoPedido(\''+a.path.replace(/'/g,"\\'")+'\')">🗑️ Excluir</button>':'';
+  return '<div style="width:130px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)"><a href="'+a.url+'" target="_blank" rel="noopener" style="display:block">'+thumb+'</a><div style="font-size:10px;padding:5px 6px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(a.nome)+'">'+esc(a.nome)+'</div>'+del+'</div>';
+ }).join('')||'<div style="font-size:12px;color:var(--text-muted)">Nenhum anexo ainda.</div>';}
+function uploadAnexoPedido(ev){const files=Array.from(ev.target.files||[]);ev.target.value='';enviarAnexosPedido(files);}
+function anexoPedidoArrastando(ev,entrando){
+ if(!ev.dataTransfer||!Array.from(ev.dataTransfer.types||[]).includes('Files'))return;
+ ev.preventDefault();const z=$('vnd-anexos-zona');
+ if(entrando){ev.dataTransfer.dropEffect=(canEdit()&&pedidoDosAnexos())?'copy':'none';z.classList.add('arrastando');}
+ else if(!z.contains(ev.relatedTarget))z.classList.remove('arrastando');}
+function anexoPedidoSolto(ev){ev.preventDefault();$('vnd-anexos-zona').classList.remove('arrastando');
+ enviarAnexosPedido(Array.from((ev.dataTransfer&&ev.dataTransfer.files)||[]));}
+async function enviarAnexosPedido(files){if(!files.length||!guard())return;
+ const v=pedidoDosAnexos();
+ if(!v){toast('Salve o pedido antes de anexar arquivos.','info');return;}
+ if(ENVIANDO_ANEXOS){toast('Aguarde terminar o envio anterior.','info');return;}
+ const tiposOk=['image/png','image/jpeg','application/pdf'];
+ const recusados=files.filter(f=>!tiposOk.includes(f.type)||f.size>10*1024*1024);
+ const validos=files.filter(f=>!recusados.includes(f));
+ if(recusados.length)toast('Ficaram de fora (só PNG, JPEG ou PDF até 10MB): '+recusados.map(f=>f.name).join(', '),'error',7000);
+ if(!validos.length)return;
+ ENVIANDO_ANEXOS=true;
+ try{
+  toast(validos.length>1?'Enviando '+validos.length+' arquivos...':'Enviando arquivo...','info');
+  const novos=[];
+  for(const file of validos){
+   const path='pedidos/'+v.id+'/'+uid()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+   const {error:upErr}=await supa.storage.from('orcamentos-anexos').upload(path,file);
+   if(upErr){toast('Erro ao enviar '+file.name+': '+upErr.message,'error');continue;}
+   const {data:pub}=supa.storage.from('orcamentos-anexos').getPublicUrl(path);
+   novos.push({path,nome:file.name,url:pub.publicUrl});}
+  if(!novos.length)return;
+  const anexos=(v.anexos||[]).concat(novos);
+  const {error}=await supa.from('vendas').update({anexos}).eq('id',v.id);
+  if(error){toast('Erro ao salvar anexo no pedido: '+error.message,'error');return;}
+  v.anexos=anexos;saveDB();renderAnexosPedido();
+  toast(novos.length>1?novos.length+' anexos adicionados!':'Anexo adicionado!','success');
+ }finally{ENVIANDO_ANEXOS=false;}}
+/* o mesmo arquivo pode estar no pedido e no orçamento que o gerou: só apaga do servidor quando ninguém mais usa */
+const anexoUsadoPorOutro=(path,idPedido)=>
+ DB.orcamentos.some(o=>(o.anexos||[]).some(a=>a.path===path))||
+ DB.vendas.some(x=>x.id!==idPedido&&(x.anexos||[]).some(a=>a.path===path));
+async function excluirAnexoPedido(path){if(!guard())return;
+ const v=pedidoDosAnexos();if(!v)return;
+ const compartilhado=anexoUsadoPorOutro(path,v.id);
+ if(!confirm(compartilhado
+  ?'Tirar este anexo do pedido?\n\nO arquivo continua no orçamento que também o usa.'
+  :'Excluir este anexo?'))return;
+ if(!compartilhado){const {error:delErr}=await supa.storage.from('orcamentos-anexos').remove([path]);
+  if(delErr){toast('Erro ao excluir arquivo: '+delErr.message,'error');return;}}
+ const anexos=(v.anexos||[]).filter(a=>a.path!==path);
+ const {error}=await supa.from('vendas').update({anexos}).eq('id',v.id);
+ if(error){toast('Erro ao atualizar pedido: '+error.message,'error');return;}
+ v.anexos=anexos;saveDB();renderAnexosPedido();toast(compartilhado?'Anexo removido do pedido.':'Anexo excluído.','info');}
 function abrirAdicionarItem(){if(!guard())return;ORC_ITEM_EDITANDO=null;ORC_VOLTAR='detalhe';ORC_NOVO_INLINE=false;embutirCabecalhoOrc(null);orcShow('tipo');}
 function voltarDeItem(){if(ITEM_PARA_PEDIDO)return voltarAoPedido(null);
  if(FICHA_PROD_ID){FICHA_PROD_ID='';navigate('portfolio');return;}
@@ -3990,7 +4071,9 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
 
  // 1) Gerar pedido (venda) apenas com os itens aprovados
  const itensVenda=itens.map(it=>({prodId:it.prodId||null,desc:it.desc,qty:it.qty||1,preco:(it.qty||1)?Math.round((it.preco/(it.qty||1))*100)/100:it.preco}));
- const vendaObj={cliId:o.cliId||'',origem:o.origem||'',data:today(),pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':''),itens:itensVenda,total:totalAprovado};
+ /* as fotos de referência seguem para o pedido: mesmos arquivos, sem cópia no servidor */
+ const anexosDoOrc=(o.anexos||[]).map(a=>({path:a.path,nome:a.nome,url:a.url}));
+ const vendaObj={cliId:o.cliId||'',origem:o.origem||'',anexos:anexosDoOrc,data:today(),pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':''),itens:itensVenda,total:totalAprovado};
  const novaVenda=Object.assign({id:uid(),baixa:false},vendaObj);
  const {data:dv,error:erroVenda}=await supa.from('vendas').insert(vendaParaSupabase(novaVenda)).select().single();
  if(erroVenda){toast('Erro ao gerar pedido no Supabase: '+erroVenda.message,'error');return;}
@@ -6994,7 +7077,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.5';
+const APP_VERSAO='2026-09-24.6';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
