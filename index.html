@@ -3073,12 +3073,11 @@ function montarPdfRecibo(v,refs){
  const novaPagina=()=>{doc.addPage();fundo();return 22;};
  fundo();
 
- // Marca: igual à do orçamento
- const logoY=18,ico=11;
- doc.setFillColor(...DARK);doc.rect(M,logoY,ico,ico,'F');
- doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...DARK);doc.text('estúdio',M+ico+2.6,logoY+3.4);
- doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('mabe.',M+ico+2.2,logoY+ico);
- doc.setFont('helvetica','normal');doc.setFontSize(6.8);doc.setTextColor(...MUTED);doc.text('MARCENARIA  ·  MADEIRA MACIÇA',M,logoY+ico+5.5);
+ // Marca: o arquivo do estúdio, nas proporções certas
+ const logoY=17,larguraMarca=42,alturaMarca=larguraMarca/MARCA_PROP,ico=alturaMarca;
+ doc.addImage(MARCA_PNG,'PNG',M,logoY,larguraMarca,alturaMarca,'marca','SLOW');
+ doc.setFont('helvetica','normal');doc.setFontSize(6.8);doc.setTextColor(...MUTED);
+ doc.text('MARCENARIA  ·  MADEIRA MACIÇA',M,logoY+alturaMarca+4.6,{charSpace:0.3});
 
  // Contato do estúdio à direita
  let cy=logoY+2.6;
@@ -3154,7 +3153,11 @@ function montarPdfRecibo(v,refs){
  /* imagens escolhidas na hora de imprimir: entram depois do recibo, duas por página,
     cada uma inteira no seu espaço — mesma regra usada no orçamento */
  if(refs&&refs.length){
-  const topo=()=>{let ty=novaPagina()+4;
+  const topo=()=>{novaPagina();
+   /* a marca acompanha o documento também nas páginas de referência */
+   const lm=30,am=lm/MARCA_PROP;
+   doc.addImage(MARCA_PNG,'PNG',M,13,lm,am,'marca','SLOW');
+   let ty=13+am+9;
    doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...DARK);doc.text('REFERÊNCIAS',M,ty);
    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text('Pedido V-'+pad(v.num),R,ty,{align:'right'});
    ty+=4;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,ty,R,ty);return ty+7;};
@@ -7146,7 +7149,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.8';
+const APP_VERSAO='2026-09-24.9';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
