@@ -117,6 +117,10 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .kanban-card:hover { box-shadow:0 3px 12px rgba(0,0,0,0.08);transform:translateY(-1px); }
 .kanban-card-title { font-size:13px;font-weight:700;margin-bottom:4px;line-height:1.3; }
 .kanban-card-sub { font-size:11px;color:var(--text-muted);margin-bottom:8px; }
+/* responsavel direto no cartao: quem esta na bancada e o dado que mais muda no dia */
+.card-resp { display:flex;align-items:center;gap:5px;margin-bottom:8px;font-size:11px;color:var(--text-muted); }
+.card-resp select { flex:1;min-width:0;font-size:11px;font-family:inherit;font-weight:600;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 6px;cursor:pointer; }
+.card-resp select.vazio { color:var(--text-muted);font-weight:400; }
 .kanban-card-timer { font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-bottom:8px; }
 .kanban-card-footer { display:flex;align-items:center;justify-content:space-between; }
 .kanban-card-prazo { font-size:10px;font-family:var(--mono); }
@@ -1273,7 +1277,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div class="modal-overlay" id="modal-producao"><div class="modal"><div class="modal-header"><div class="modal-title" id="mop-title">Nova Ordem de Produção</div><button class="modal-close" onclick="closeModal('modal-producao')">✕</button></div><div class="modal-body"><input type="hidden" id="op-id"><div class="form-grid">
 <div class="form-group"><label class="form-label">Peça / Projeto *</label><input type="text" class="form-control" id="op-titulo" placeholder="Ex: Mesa de reunião Freijó 3,00m"></div>
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente</label><select class="form-control" id="op-cli"><option value="">—</option></select></div><div class="form-group"><label class="form-label">Prazo de Entrega</label><input type="date" class="form-control" id="op-prazo"></div></div>
-<div class="form-grid form-2"><div class="form-group"><label class="form-label">Responsável</label><input type="text" class="form-control" id="op-resp"></div><div class="form-group"><label class="form-label">Prioridade</label><select class="form-control" id="op-prio"><option>Normal</option><option>Alta</option><option>Urgente</option></select></div></div>
+<div class="form-grid form-2"><div class="form-group"><label class="form-label">Responsável</label><input type="text" class="form-control" id="op-resp" list="lista-resp" placeholder="Quem executa esta ordem"><datalist id="lista-resp"></datalist></div><div class="form-group"><label class="form-label">Prioridade</label><select class="form-control" id="op-prio"><option>Normal</option><option>Alta</option><option>Urgente</option></select></div></div>
 <div class="form-group"><label class="form-label">Etapa Atual</label><select class="form-control" id="op-etapa"><option value="0">📥 Fila</option><option value="1">🪚 Corte & Usinagem</option><option value="2">🔨 Montagem</option><option value="3">🎨 Acabamento</option><option value="4">🔁 Retrabalho</option><option value="5">📦 Pronto</option><option value="6">🚚 Entregue</option></select></div>
 <div class="form-group"><label class="form-label">Observações Técnicas</label><input type="text" class="form-control" id="op-obs" placeholder="Encaixes, acabamento, madeira, medidas..."></div>
 </div></div><div class="modal-footer"><button class="btn btn-danger" id="op-btn-del" style="margin-right:auto;display:none" onclick="delOPFromModal()">Excluir</button><button class="btn btn-ghost" onclick="closeModal('modal-producao')">Cancelar</button><button class="btn btn-primary" onclick="saveOP()">Salvar</button></div></div></div>
@@ -4948,12 +4952,47 @@ function renderPCP(){const t=today();
   +cards.map(o=>{const pcls=!o.prazo?'ok':o.prazo<t?'vencido':o.prazo===t?'hoje':'ok';
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
    const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶<span class="pcp-btn-txt"> '+esc(ETAPAS[i+1])+'</span></button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
-   return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(o.titulo)+'</div><div class="kanban-card-sub">'+esc(cliName(o.cliId))+(o.resp?' · '+esc(o.resp):'')+'</div>'+(o.criadoEm?'<div class="kanban-card-timer" data-criado="'+o.criadoEm+'">⏱ '+elapsedStr(o.criadoEm)+'</div>':'')+'<div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
+   const respLinha=canEdit()
+    ?'<div class="card-resp" onclick="event.stopPropagation()">👤<select class="'+(o.resp?'':'vazio')+'" title="Quem é o responsável por esta ordem" onchange="definirRespOP(\''+o.id+'\',this.value,this)">'+opcoesResp(o.resp||'')+'</select></div>'
+    :(o.resp?'<div class="card-resp">👤 '+esc(o.resp)+'</div>':'');
+   return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(o.titulo)+'</div><div class="kanban-card-sub">'+esc(cliName(o.cliId))+'</div>'+respLinha+(o.criadoEm?'<div class="kanban-card-timer" data-criado="'+o.criadoEm+'">⏱ '+elapsedStr(o.criadoEm)+'</div>':'')+'<div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
   +(cards.length?'':'<div class="kanban-col-vazia">Nenhuma ordem nesta etapa</div>')
   +'</div>';}).join('');}
-function openOP(){$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';$('op-prio').value='Normal';$('op-etapa').value='0';$('op-obs').value='';
+/* nao existe cadastro de marceneiro: a lista sai de quem ja apareceu em ordens,
+   entregas e usuarios — e o "+ Outro" abre para digitar um nome novo */
+function responsaveisConhecidos(){
+ const nomes=new Set();
+ (DB.producao||[]).forEach(o=>{if(o.resp)nomes.add(String(o.resp).trim());});
+ (DB.entregas||[]).forEach(e=>{if(e.resp)nomes.add(String(e.resp).trim());});
+ (DB.usuarios||[]).forEach(u=>{if(u.nome)nomes.add(String(u.nome).trim());});
+ return [...nomes].filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR'));}
+function opcoesResp(atual){
+ const nomes=responsaveisConhecidos();
+ if(atual&&!nomes.includes(atual))nomes.unshift(atual);
+ return '<option value=""'+(atual?'':' selected')+'>— sem responsável —</option>'
+  +nomes.map(n=>'<option value="'+esc(n)+'"'+(n===atual?' selected':'')+'>'+esc(n)+'</option>').join('')
+  +'<option value="__novo">+ Outro…</option>';}
+async function definirRespOP(id,valor,el){
+ const o=DB.producao.find(x=>x.id===id);if(!o)return;
+ const anterior=o.resp||'';
+ const volta=()=>{if(el)el.value=anterior;};
+ if(!guard()){volta();return;}
+ let novo=valor;
+ if(valor==='__novo'){novo=(prompt('Nome do responsável por esta ordem:',anterior)||'').trim();
+  if(!novo){volta();return;}}
+ if(novo===anterior){volta();return;}
+ o.resp=novo;
+ const {error}=await supa.from('producao').update({resp:novo||null}).eq('id',id);
+ if(error){o.resp=anterior;volta();toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ commit('editar','Produção','OP-'+pad(o.num||0)+': responsável '+(novo||'removido'));syncSheets('producao','upsert',o);
+ toast(novo?('Responsável: '+novo):'Responsável removido.','success');}
+/* o campo do formulário também sugere os nomes já usados, sem travar a digitação */
+function preencherDatalistResp(){const dl=$('lista-resp');if(!dl)return;
+ dl.innerHTML=responsaveisConhecidos().map(n=>'<option value="'+esc(n)+'"></option>').join('');}
+function openOP(){preencherDatalistResp();$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';$('op-prio').value='Normal';$('op-etapa').value='0';$('op-obs').value='';
  $('op-btn-del').style.display='none';$('mop-title').textContent='Nova Ordem de Produção';openModal('modal-producao');}
 function editOP(id){if(!canEdit())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
+ preencherDatalistResp();
  $('op-id').value=o.id;$('op-titulo').value=o.titulo;fillSel('op-cli',DB.clientes,c=>c.nome,o.cliId,'—');$('op-prazo').value=o.prazo||'';$('op-resp').value=o.resp||'';$('op-prio').value=o.prio||'Normal';$('op-etapa').value=String(o.etapa);$('op-obs').value=o.obs||'';
  $('op-btn-del').style.display='inline-flex';$('mop-title').textContent='Editar OP-'+pad(o.num||0);openModal('modal-producao');}
 async function saveOP(){if(!guard())return;const titulo=$('op-titulo').value.trim();if(!titulo){toast('Informe a peça / projeto.','error');return;}
@@ -5092,7 +5131,7 @@ function montarPdfPcp(){
    body:linhas,theme:'grid',
    styles:{lineColor:BORDA,lineWidth:0.2,fillColor:WHITE,fontSize:8,textColor:DARK,cellPadding:{top:2.6,bottom:2.6,left:2.6,right:2.6}},
    headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold'},
-   columnStyles:{0:{cellWidth:10},1:{cellWidth:20},2:{cellWidth:40},3:{cellWidth:32},4:{cellWidth:22},5:{cellWidth:18,halign:'center'},6:{cellWidth:20,halign:'center'},7:{cellWidth:16,halign:'right',textColor:MUTED}},
+   columnStyles:{0:{cellWidth:10},1:{cellWidth:20},2:{cellWidth:38},3:{cellWidth:32},4:{cellWidth:24},5:{cellWidth:18,halign:'center'},6:{cellWidth:20,halign:'center'},7:{cellWidth:16,halign:'right',textColor:MUTED}},
    /* o quadradinho para o marceneiro riscar na bancada */
    didDrawCell:d=>{if(d.section!=='body'||d.column.index!==0||linhasObs.has(d.row.index))return;
     const lado=4.2,cx=d.cell.x+d.cell.width/2-lado/2,cy=d.cell.y+d.cell.height/2-lado/2;
@@ -7395,7 +7434,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.18';
+const APP_VERSAO='2026-09-24.19';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
