@@ -5059,7 +5059,10 @@ function montarPdfPcp(){
   doc.text(ordens.length+' ordem(ns)',R,y,{align:'right'});
   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.6);doc.line(M,y+2.2,M+doc.getTextWidth(titulo)+3,y+2.2);
   y+=7;
-  const linhas=ordens.map(o=>{
+  /* as linhas de observação não levam quadrado de conferência: ficam marcadas aqui */
+  const linhasObs=new Set();
+  const linhas=[];
+  ordens.forEach(o=>{
    const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
    const ped=pedidoDaOp(o);
    /* ordem criada pelo pedido se chama "Pedido V-0019 — Cliente": com as colunas Pedido e
@@ -5068,20 +5071,37 @@ function montarPdfPcp(){
    if((!peca||peca===cliName(o.cliId))&&ped){
     const descs=(ped.itens||[]).map(i=>i.desc).filter(Boolean);
     peca=descs.slice(0,2).join(', ')+(descs.length>2?' +'+(descs.length-2):'');}
-   return [ped?'V-'+pad(ped.num):'—',peca||String(o.titulo||'—'),cliName(o.cliId),o.resp||'—',
+   linhas.push(['',ped?'V-'+pad(ped.num):'—',peca||String(o.titulo||'—'),cliName(o.cliId),o.resp||'—',
     (o.prio||'Normal'),(o.prazo?(atrasada?'! ':'')+fmtD(o.prazo):'sem prazo'),
-    o.criadoEm?diasNaFila(o.criadoEm):'—'];});
+    o.criadoEm?diasNaFila(o.criadoEm):'—']);
+   /* a observação é onde ficam as medidas e o que precisa ser feito: entra numa faixa
+      logo abaixo da ordem, em vez de espremer mais uma coluna */
+   let obs=String(o.obs||'').split('\n').map(l=>l.replace(/^[•\-\u2022\s]+/,'').trim()).filter(Boolean).join('   ·   ');
+   /* o pedido já é a primeira coluna e a peça a terceira: o que a ordem repete delas é ruído */
+   obs=obs.replace(/\(?\s*Gerado automaticamente do Pedido V-\d+\s*\)?/ig,'').trim();
+   const alvo=String(peca||'').trim();
+   if(alvo&&obs.toLowerCase().startsWith(alvo.toLowerCase())){
+    const resto=obs.slice(alvo.length).trim();
+    if(/^[—\-:]/.test(resto))obs=resto.replace(/^[—\-:]\s*/,'');}
+   obs=obs.replace(/^[\s·]+|[\s·]+$/g,'');
+   if(obs){linhasObs.add(linhas.length);
+    linhas.push([{content:'',styles:{fillColor:CREAM}},{content:'Obs.  '+(obs.length>420?obs.slice(0,420)+'…':obs),colSpan:7,
+     styles:{fontSize:7.5,textColor:MUTED,fillColor:CREAM,cellPadding:{top:2,bottom:2.4,left:2.6,right:2.6}}}]);}});
   doc.autoTable({startY:y,margin:{left:M,right:210-R,top:24,bottom:297-RODAPE_Y+4},
-   head:[[cab('Pedido'),'Peça / projeto','Cliente','Responsável',cab('Prioridade','center'),cab('Prazo','center'),cab('Na fila','right')]],
+   head:[[cab('OK','center'),cab('Pedido'),'Peça / projeto','Cliente','Responsável',cab('Prioridade','center'),cab('Prazo','center'),cab('Na fila','right')]],
    body:linhas,theme:'grid',
    styles:{lineColor:BORDA,lineWidth:0.2,fillColor:WHITE,fontSize:8,textColor:DARK,cellPadding:{top:2.6,bottom:2.6,left:2.6,right:2.6}},
    headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold'},
-   columnStyles:{0:{cellWidth:20},2:{cellWidth:32},3:{cellWidth:24},4:{cellWidth:20,halign:'center'},5:{cellWidth:22,halign:'center'},6:{cellWidth:16,halign:'right',textColor:MUTED}},
+   columnStyles:{0:{cellWidth:10},1:{cellWidth:20},2:{cellWidth:40},3:{cellWidth:32},4:{cellWidth:22},5:{cellWidth:18,halign:'center'},6:{cellWidth:20,halign:'center'},7:{cellWidth:16,halign:'right',textColor:MUTED}},
+   /* o quadradinho para o marceneiro riscar na bancada */
+   didDrawCell:d=>{if(d.section!=='body'||d.column.index!==0||linhasObs.has(d.row.index))return;
+    const lado=4.2,cx=d.cell.x+d.cell.width/2-lado/2,cy=d.cell.y+d.cell.height/2-lado/2;
+    doc.setDrawColor(...MUTED);doc.setLineWidth(0.3);doc.rect(cx,cy,lado,lado);},
    didParseCell:d=>{if(d.section!=='body')return;
     /* prazo vencido em vermelho, e a linha inteira marcada */
     const texto=String(d.cell.raw||'');
-    if(d.column.index===5&&texto.indexOf('!')===0){d.cell.text=[texto.replace('! ','')];d.cell.styles.textColor=VERMELHO;d.cell.styles.fontStyle='bold';}
-    if(d.column.index===4&&(texto==='Urgente'||texto==='Alta'))d.cell.styles.textColor=VERMELHO;},
+    if(d.column.index===6&&texto.indexOf('!')===0){d.cell.text=[texto.replace('! ','')];d.cell.styles.textColor=VERMELHO;d.cell.styles.fontStyle='bold';}
+    if(d.column.index===5&&(texto==='Urgente'||texto==='Alta'))d.cell.styles.textColor=VERMELHO;},
    willDrawPage:()=>{},
   });
   y=doc.lastAutoTable.finalY+10;});
@@ -7375,7 +7395,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.17';
+const APP_VERSAO='2026-09-24.18';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
