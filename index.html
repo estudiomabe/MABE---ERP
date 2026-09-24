@@ -5040,8 +5040,9 @@ async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.i
 
 /* ================= PRODUÇÃO EM PDF =================
    O quadro do PCP não cabe no papel: são sete colunas lado a lado, que a folha corta.
-   Aqui ele vira uma folha em pé, uma seção por etapa, com as ordens em lista — para
-   levar para a bancada ou para a reunião. Respeita os filtros da tela. */
+   Aqui ele vira uma folha em pé, com todas as ordens numa lista só, por prazo, e a
+   etapa virando coluna — para levar para a bancada ou para a reunião. Respeita os
+   filtros da tela. */
 function montarPdfPcp(){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
@@ -5076,80 +5077,74 @@ function montarPdfPcp(){
  doc.text(resumo,CX,y,{align:'center'});
  if(fPrio){y+=7;doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text('Filtro: prioridade '+fPrio,CX,y,{align:'center'});}
 
- /* ---- páginas por etapa ---- */
- doc.addPage();fundo();
+ /* ---- a folha das ordens ---- */
+ doc.addPage();
  const lm=34,am=lm/MARCA_PROP;
- doc.addImage(MARCA_PNG,'PNG',M,12,lm,am,'marca','SLOW');
- doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...DARK);doc.text('PRODUÇÃO',R,16.5,{align:'right'});
- doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);doc.text(fmtD(t),R,21.5,{align:'right'});
- doc.setDrawColor(...ACCENT);doc.setLineWidth(0.7);doc.line(M,26,R,26);
- y=34;
+ /* agora é uma tabela só, que pode virar a página sozinha: o cabeçalho e o fundo
+    precisam ser redesenhados a cada página nova */
+ const cabecalhoPagina=()=>{
+  fundo();
+  doc.addImage(MARCA_PNG,'PNG',M,12,lm,am,'marca','SLOW');
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...DARK);doc.text('PRODUÇÃO',R,16.5,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);doc.text(fmtD(t),R,21.5,{align:'right'});
+  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.7);doc.line(M,26,R,26);};
 
  const cab=(txt,a)=>({content:txt,styles:{halign:a||'left'}});
- const vazias=[];
- ETAPAS.forEach((etapa,i)=>{
-  const ordens=ativas.filter(o=>Number(o.etapa)===i).sort(porPrazo);
-  /* etapa vazia nem ganha título: entra na linha de resumo do fim */
-  if(!ordens.length){vazias.push(semEmoji(etapa));return;}
-  /* título da etapa, com a contagem */
-  if(y>RODAPE_Y-30){doc.addPage();fundo();y=24;}
-  doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...DARK);
-  const titulo=semEmoji(etapa).toUpperCase();
-  doc.text(titulo,M,y,{charSpace:0.4});
-  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);
-  doc.text(ordens.length+' ordem(ns)',R,y,{align:'right'});
-  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.6);doc.line(M,y+2.2,M+doc.getTextWidth(titulo)+3,y+2.2);
-  y+=7;
-  /* as linhas de observação não levam quadrado de conferência: ficam marcadas aqui */
-  const linhasObs=new Set();
-  const linhas=[];
-  ordens.forEach(o=>{
-   const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
-   const ped=pedidoDaOp(o);
-   /* ordem criada pelo pedido se chama "Pedido V-0019 — Cliente": com as colunas Pedido e
-      Cliente ao lado, isso não diz o que é a peça. Nesse caso, usa os itens do pedido. */
-   let peca=String(o.titulo||'').replace(/^Pedido\s+V-\d+\s*[—-]\s*/,'').trim();
-   if((!peca||peca===cliName(o.cliId))&&ped){
-    const descs=(ped.itens||[]).map(i=>i.desc).filter(Boolean);
-    peca=descs.slice(0,2).join(', ')+(descs.length>2?' +'+(descs.length-2):'');}
-   linhas.push(['',ped?'V-'+pad(ped.num):'—',peca||String(o.titulo||'—'),cliName(o.cliId),o.resp||'—',
-    (o.prio||'Normal'),(o.prazo?(atrasada?'! ':'')+fmtD(o.prazo):'sem prazo'),
-    o.criadoEm?diasNaFila(o.criadoEm):'—']);
-   /* a observação é onde ficam as medidas e o que precisa ser feito: entra numa faixa
-      logo abaixo da ordem, em vez de espremer mais uma coluna */
-   let obs=String(o.obs||'').split('\n').map(l=>l.replace(/^[•\-\u2022\s]+/,'').trim()).filter(Boolean).join('   ·   ');
-   /* o pedido já é a primeira coluna e a peça a terceira: o que a ordem repete delas é ruído */
-   obs=obs.replace(/\(?\s*Gerado automaticamente do Pedido V-\d+\s*\)?/ig,'').trim();
-   const alvo=String(peca||'').trim();
-   if(alvo&&obs.toLowerCase().startsWith(alvo.toLowerCase())){
-    const resto=obs.slice(alvo.length).trim();
-    if(/^[—\-:]/.test(resto))obs=resto.replace(/^[—\-:]\s*/,'');}
-   obs=obs.replace(/^[\s·]+|[\s·]+$/g,'');
-   if(obs){linhasObs.add(linhas.length);
-    linhas.push([{content:'',styles:{fillColor:CREAM}},{content:'Obs.  '+(obs.length>420?obs.slice(0,420)+'…':obs),colSpan:7,
-     styles:{fontSize:7.5,textColor:MUTED,fillColor:CREAM,cellPadding:{top:2,bottom:2.4,left:2.6,right:2.6}}}]);}});
-  doc.autoTable({startY:y,margin:{left:M,right:210-R,top:24,bottom:297-RODAPE_Y+4},
-   head:[[cab('OK','center'),cab('Pedido'),'Peça / projeto','Cliente','Responsável',cab('Prioridade','center'),cab('Prazo','center'),cab('Na fila','right')]],
-   body:linhas,theme:'grid',
-   styles:{lineColor:BORDA,lineWidth:0.2,fillColor:WHITE,fontSize:8,textColor:DARK,cellPadding:{top:2.6,bottom:2.6,left:2.6,right:2.6}},
-   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold'},
-   columnStyles:{0:{cellWidth:10},1:{cellWidth:20},2:{cellWidth:38},3:{cellWidth:32},4:{cellWidth:24},5:{cellWidth:18,halign:'center'},6:{cellWidth:20,halign:'center'},7:{cellWidth:16,halign:'right',textColor:MUTED}},
-   /* o quadradinho para o marceneiro riscar na bancada */
-   didDrawCell:d=>{if(d.section!=='body'||d.column.index!==0||linhasObs.has(d.row.index))return;
-    const lado=4.2,cx=d.cell.x+d.cell.width/2-lado/2,cy=d.cell.y+d.cell.height/2-lado/2;
-    doc.setDrawColor(...MUTED);doc.setLineWidth(0.3);doc.rect(cx,cy,lado,lado);},
-   didParseCell:d=>{if(d.section!=='body')return;
-    /* prazo vencido em vermelho, e a linha inteira marcada */
-    const texto=String(d.cell.raw||'');
-    if(d.column.index===6&&texto.indexOf('!')===0){d.cell.text=[texto.replace('! ','')];d.cell.styles.textColor=VERMELHO;d.cell.styles.fontStyle='bold';}
-    if(d.column.index===5&&(texto==='Urgente'||texto==='Alta'))d.cell.styles.textColor=VERMELHO;},
-   willDrawPage:()=>{},
-  });
-  y=doc.lastAutoTable.finalY+10;});
- /* etapa sem ordem nenhuma não merece meia página: todas viram uma linha no fim */
+ /* sem separar por etapa: a fila inteira em ordem de prazo, do mais apertado ao mais folgado */
+ const ordens=ativas.slice().sort(porPrazo);
+ const vazias=ETAPAS.filter((_,i)=>!ativas.some(o=>Number(o.etapa)===i)).map(semEmoji);
+ /* as linhas de observação não levam quadrado de conferência: ficam marcadas aqui */
+ const linhasObs=new Set();
+ const linhas=[];
+ ordens.forEach(o=>{
+  const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
+  const ped=pedidoDaOp(o);
+  /* ordem criada pelo pedido se chama "Pedido V-0019 — Cliente": com as colunas Pedido e
+     Cliente ao lado, isso não diz o que é a peça. Nesse caso, usa os itens do pedido. */
+  let peca=String(o.titulo||'').replace(/^Pedido\s+V-\d+\s*[—-]\s*/,'').trim();
+  if((!peca||peca===cliName(o.cliId))&&ped){
+   const descs=(ped.itens||[]).map(i=>i.desc).filter(Boolean);
+   peca=descs.slice(0,2).join(', ')+(descs.length>2?' +'+(descs.length-2):'');}
+  linhas.push(['',ped?'V-'+pad(ped.num):'—',peca||String(o.titulo||'—'),cliName(o.cliId),
+   semEmoji(ETAPAS[Number(o.etapa)]||'—'),o.resp||'—',
+   (o.prio||'Normal'),(o.prazo?(atrasada?'! ':'')+fmtD(o.prazo):'sem prazo'),
+   o.criadoEm?diasNaFila(o.criadoEm):'—']);
+  /* a observação é onde ficam as medidas e o que precisa ser feito: entra numa faixa
+     logo abaixo da ordem, em vez de espremer mais uma coluna */
+  let obs=String(o.obs||'').split('\n').map(l=>l.replace(/^[•\-\u2022\s]+/,'').trim()).filter(Boolean).join('   ·   ');
+  /* o pedido já é a segunda coluna e a peça a terceira: o que a ordem repete delas é ruído */
+  obs=obs.replace(/\(?\s*Gerado automaticamente do Pedido V-\d+\s*\)?/ig,'').trim();
+  const alvo=String(peca||'').trim();
+  if(alvo&&obs.toLowerCase().startsWith(alvo.toLowerCase())){
+   const resto=obs.slice(alvo.length).trim();
+   if(/^[—\-:]/.test(resto))obs=resto.replace(/^[—\-:]\s*/,'');}
+  obs=obs.replace(/^[\s·]+|[\s·]+$/g,'');
+  if(obs){linhasObs.add(linhas.length);
+   linhas.push([{content:'',styles:{fillColor:CREAM}},{content:'Obs.  '+(obs.length>420?obs.slice(0,420)+'…':obs),colSpan:8,
+    styles:{fontSize:7,textColor:MUTED,fillColor:CREAM,cellPadding:{top:1.8,bottom:2.2,left:2.2,right:2.2}}}]);}});
+ doc.autoTable({startY:34,margin:{left:M,right:210-R,top:32,bottom:297-RODAPE_Y+4},
+  head:[[cab('OK','center'),cab('Pedido'),'Peça / projeto','Cliente','Status','Responsável',cab('Prio.','center'),cab('Prazo','center'),cab('Na fila','right')]],
+  body:linhas,theme:'grid',rowPageBreak:'avoid',
+  styles:{lineColor:BORDA,lineWidth:0.2,fillColor:WHITE,fontSize:7.5,textColor:DARK,cellPadding:{top:2.4,bottom:2.4,left:2.2,right:2.2}},
+  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7,fontStyle:'bold'},
+  columnStyles:{0:{cellWidth:9},1:{cellWidth:17},2:{cellWidth:35},3:{cellWidth:26},4:{cellWidth:24},5:{cellWidth:20},6:{cellWidth:16,halign:'center'},7:{cellWidth:18,halign:'center'},8:{cellWidth:13,halign:'right',textColor:MUTED}},
+  /* o quadradinho para o marceneiro riscar na bancada */
+  didDrawCell:d=>{if(d.section!=='body'||d.column.index!==0||linhasObs.has(d.row.index))return;
+   const lado=4,cx=d.cell.x+d.cell.width/2-lado/2,cy=d.cell.y+d.cell.height/2-lado/2;
+   doc.setDrawColor(...MUTED);doc.setLineWidth(0.3);doc.rect(cx,cy,lado,lado);},
+  didParseCell:d=>{if(d.section!=='body')return;
+   /* prazo vencido em vermelho, e a etapa em destaque para achar a ordem na fila */
+   const texto=String(d.cell.raw||'');
+   if(d.column.index===7&&texto.indexOf('!')===0){d.cell.text=[texto.replace('! ','')];d.cell.styles.textColor=VERMELHO;d.cell.styles.fontStyle='bold';}
+   if(d.column.index===6&&(texto==='Urgente'||texto==='Alta'))d.cell.styles.textColor=VERMELHO;
+   if(d.column.index===4)d.cell.styles.fontStyle='bold';},
+  willDrawPage:cabecalhoPagina,
+ });
+ y=doc.lastAutoTable.finalY+10;
+ /* etapa sem ordem nenhuma não aparece na coluna: vale dizer quais estão paradas */
  if(vazias.length){
-  if(y>RODAPE_Y-20){doc.addPage();fundo();y=24;}
-  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);
+  if(y>RODAPE_Y-20){doc.addPage();cabecalhoPagina();y=34;}
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
   doc.text(doc.splitTextToSize('Sem ordens hoje: '+vazias.join(', ')+'.',R-M),M,y);}
 
  /* ---- rodapé ---- */
@@ -7436,7 +7431,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.21';
+const APP_VERSAO='2026-09-24.22';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
