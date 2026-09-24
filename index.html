@@ -3080,7 +3080,7 @@ async function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.
    Mesma diagramação: muda o título, o rótulo do número e o bloco de pagamento. */
 /* Capa da folha do pedido: a marca no centro, o número e para quem — a mesma
    linguagem da capa do orçamento, sobre o creme do estúdio. */
-function capaPedido(doc,v,cores){
+function capaPedido(doc,v,cores,ehPedido){
  const {DARK,ACCENT,MUTED}=cores;const CX=105;
  const centralizar=(txt,yy,esp)=>doc.text(txt,CX-esp*(txt.length-1)/2,yy,{align:'center',charSpace:esp});
  const largura=86,lado=largura/MARCA_PROP,topo=80;
@@ -3088,9 +3088,9 @@ function capaPedido(doc,v,cores){
  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(CX-20,topo+lado+13,CX+20,topo+lado+13);
  let y=topo+lado+33;
  doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
- centralizar('PEDIDO',y,1.2);
+ centralizar(ehPedido?'PEDIDO':'RECIBO',y,1.2);
  y+=9;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);
- doc.text('Nº V-'+pad(v.num),CX,y,{align:'center'});
+ doc.text((ehPedido?'Nº V-':'Pedido Nº V-')+pad(v.num),CX,y,{align:'center'});
  y+=18;doc.setFontSize(7.5);doc.setTextColor(...MUTED);
  centralizar('CLIENTE',y,0.5);
  y+=9;doc.setFontSize(15);doc.setTextColor(...DARK);
@@ -3111,7 +3111,8 @@ function montarPdfRecibo(v,refs,modo,semValores){
  const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
  const novaPagina=()=>{doc.addPage();fundo();return 22;};
  fundo();
- if(ehPedido){capaPedido(doc,v,{DARK,ACCENT,MUTED});novaPagina();}
+ /* os dois documentos abrem com capa */
+ capaPedido(doc,v,{DARK,ACCENT,MUTED},ehPedido);novaPagina();
 
  // Marca: o arquivo do estúdio, nas proporções certas
  const logoY=17,larguraMarca=42,alturaMarca=larguraMarca/MARCA_PROP,ico=alturaMarca;
@@ -3233,7 +3234,8 @@ function montarPdfRecibo(v,refs,modo,semValores){
   if(doc.getTextWidth(tent)<=(R-M)-24)rodape=tent;else break;}
  rodape=rodape||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
  const n=doc.internal.getNumberOfPages();
- for(let pg=(ehPedido?2:1);pg<=n;pg++){doc.setPage(pg);
+ /* a capa não leva faixa de rodapé */
+ for(let pg=2;pg<=n;pg++){doc.setPage(pg);
   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(M,RODAPE_Y,R,RODAPE_Y);
   doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
   doc.text(rodape,M,RODAPE_Y+5.5);
@@ -7206,7 +7208,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.12';
+const APP_VERSAO='2026-09-24.13';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
