@@ -1049,7 +1049,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:8px">"Limpar cache" apaga só os arquivos guardados do app — seus dados, senhas e login não são afetados.</div>
       </div>
-      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio; use o <strong>Backup de Arquitetura</strong> se precisar recriar este sistema do zero um dia (não contém dados, só a descrição técnica de como o ERP foi construído — dá pra colar direto num Claude Code novo).</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="exportData()">📥 Baixar Backup Completo (JSON)</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Baixar backup em planilhas (Excel)</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 Baixar Backup Completo (PDF)</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupArquitetura()">🏛️ Backup de Arquitetura deste ERP</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
+      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio; O botão <strong>.zip</strong> baixa os quatro de uma vez, com um LEIA-ME explicando cada um. Se quiser só um deles, use os botões ao lado: use o <strong>Backup de Arquitetura</strong> se precisar recriar este sistema do zero um dia (não contém dados, só a descrição técnica de como o ERP foi construído — dá pra colar direto num Claude Code novo).</div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn btn-primary btn-sm" id="btn-backup-zip" onclick="baixarBackupZip()">📦 Baixar backup completo (.zip)</button><span style="font-size:12px;color:var(--text-muted)">ou baixe separado:</span><button class="btn btn-ghost btn-sm" onclick="exportData()">📥 JSON</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Excel</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 PDF</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupArquitetura()">🏛️ Arquitetura</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
   </div>
@@ -5929,16 +5929,23 @@ async function carregarConfigSupabase(){
   else if(DB.config.cf[campo]!==undefined)DB.config.cf[campo]=Number(valor)||0;});
  saveDB();
  if(CUR==='configuracoes'&&!CFG_EDITANDO)renderConfig();}
-function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+/* mesma montagem usada pelo backup em .zip */
+function montarBackupJson(){
  const backup=Object.assign({},DB,{
   usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,nivelAcesso:nivelDe(u),status:u.status,ultimo:u.ultimo})),
   geradoEm:new Date().toISOString()
  });
- const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+ return JSON.stringify(backup,null,2);}
+function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ const blob=new Blob([montarBackupJson()],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Backup-ERP-Mabe-'+today()+'.json';a.click();
  toast('Backup completo baixado! Guarde este arquivo em local seguro.','success');}
 async function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!await libPronta('xlsx'))return;
+ XLSX.writeFile(montarPlanilhaBackup(),'Backup-ERP-Mabe-'+today()+'.xlsx');
+ toast('Planilha de backup baixada! Guarde este arquivo em local seguro.','success');}
+/* mesma montagem usada pelo backup em .zip */
+function montarPlanilhaBackup(){
  /* ---- Identidade visual Estúdio Mabe ---- */
  const XL_DARK='FF1A1714',XL_ACCENT='FFC8A96E',XL_CREAM='FFF5F0E8',XL_SURF='FFFAF7F2',XL_MUTED='FF7A6F62',XL_BORDA='FFDDD5C8';
  const bordaFina={style:'thin',color:{rgb:XL_BORDA}};
@@ -6173,10 +6180,13 @@ async function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.',
   {t:'Ação',w:14,v:h=>txt(h.acao)},{t:'Módulo',w:20,v:h=>txt(h.modulo)},
   {t:'Detalhe',w:52,v:h=>txt(h.detalhe)}],DB.historico);
 
- XLSX.writeFile(wb,'Backup-ERP-Mabe-'+today()+'.xlsx');
- toast('Planilha de backup baixada! Guarde este arquivo em local seguro.','success');}
+ return wb;}
 async function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!await libPronta('jspdf'))return;
+ montarPdfBackup().save('Backup-ERP-Mabe-'+today()+'.pdf');
+ toast('Backup completo em PDF gerado! Confira sua pasta de downloads.','success');}
+/* mesma montagem usada pelo backup em .zip */
+function montarPdfBackup(){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  /* ---- Identidade visual Estúdio Mabe ---- */
@@ -6464,9 +6474,13 @@ async function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administrad
   doc.text('Estúdio Mabe — Marcenaria de madeira maciça',MX,RODAPE+6.5);
   doc.text('Página '+p+' de '+total,MX+LARG,RODAPE+6.5,{align:'right'});}
 
- doc.save('Backup-ERP-Mabe-'+today()+'.pdf');
- toast('Backup completo em PDF gerado! Confira sua pasta de downloads.','success');}
+ return doc;}
 function gerarBackupArquitetura(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ const blob=new Blob([textoArquitetura()],{type:'text/markdown;charset=utf-8'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Arquitetura-ERP-Mabe-'+today()+'.md';a.click();
+ toast('Backup de arquitetura gerado! Envie o arquivo .md pra quem for recriar o sistema.','success');}
+/* mesmo texto usado pelo backup em .zip */
+function textoArquitetura(){
  const txt=`# Arquitetura do ERP — Estúdio Mabe
 
 Documento técnico gerado automaticamente pelo próprio sistema em ${fmtD(today())}.
@@ -6806,9 +6820,94 @@ aprovação de orçamentos, que são as partes mais complexas do sistema.
 ---
 Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em ${fmtD(today())}.
 `;
- const blob=new Blob([txt],{type:'text/markdown;charset=utf-8'});
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Arquitetura-ERP-Mabe-'+today()+'.md';a.click();
- toast('Backup de arquitetura gerado! Envie o arquivo .md pra quem for recriar o sistema.','success');}
+ return txt;}
+/* ================= BACKUP EM .ZIP =================
+   Um clique e todos os backups descem juntos. O zip é montado aqui mesmo, sem
+   biblioteca nova: cabeçalho local + diretório central + EOCD, que é o formato
+   que qualquer descompactador entende. Quando o navegador tem compactação
+   embutida (CompressionStream), os arquivos entram comprimidos; quando não tem,
+   entram guardados como estão — o zip abre do mesmo jeito, só maior. */
+const TABELA_CRC=(()=>{const t=new Uint32Array(256);
+ for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(bytes){let c=0xFFFFFFFF;
+ for(let i=0;i<bytes.length;i++)c=TABELA_CRC[(c^bytes[i])&0xFF]^(c>>>8);
+ return (c^0xFFFFFFFF)>>>0;}
+async function comprimir(bytes){
+ if(typeof CompressionStream==='undefined')return null;
+ try{
+  const fluxo=new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+  const saida=new Uint8Array(await new Response(fluxo).arrayBuffer());
+  return saida.length<bytes.length?saida:null;   /* comprimir não valeu a pena: guarda como está */
+ }catch(e){return null;}}
+/* data e hora no formato MS-DOS, que é o que o zip guarda */
+function dataHoraDos(d){
+ const hora=((d.getHours()<<11)|(d.getMinutes()<<5)|(Math.floor(d.getSeconds()/2)))&0xFFFF;
+ const data=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF;
+ return {hora,data};}
+async function montarZip(arquivos){
+ const enc=new TextEncoder(),agora=dataHoraDos(new Date());
+ const partes=[],central=[];let deslocamento=0;
+ for(const arq of arquivos){
+  const nome=enc.encode(arq.nome);
+  const cru=arq.dados instanceof Uint8Array?arq.dados:enc.encode(String(arq.dados));
+  const comprimido=await comprimir(cru);
+  const corpo=comprimido||cru,metodo=comprimido?8:0;
+  const crc=crc32(cru);
+  const local=new DataView(new ArrayBuffer(30));
+  local.setUint32(0,0x04034B50,true);local.setUint16(4,20,true);local.setUint16(6,0x800,true);
+  local.setUint16(8,metodo,true);local.setUint16(10,agora.hora,true);local.setUint16(12,agora.data,true);
+  local.setUint32(14,crc,true);local.setUint32(18,corpo.length,true);local.setUint32(22,cru.length,true);
+  local.setUint16(26,nome.length,true);local.setUint16(28,0,true);
+  partes.push(new Uint8Array(local.buffer),nome,corpo);
+  const dir=new DataView(new ArrayBuffer(46));
+  dir.setUint32(0,0x02014B50,true);dir.setUint16(4,20,true);dir.setUint16(6,20,true);dir.setUint16(8,0x800,true);
+  dir.setUint16(10,metodo,true);dir.setUint16(12,agora.hora,true);dir.setUint16(14,agora.data,true);
+  dir.setUint32(16,crc,true);dir.setUint32(20,corpo.length,true);dir.setUint32(24,cru.length,true);
+  dir.setUint16(28,nome.length,true);dir.setUint32(42,deslocamento,true);
+  central.push(new Uint8Array(dir.buffer),nome);
+  deslocamento+=30+nome.length+corpo.length;}
+ const inicioCentral=deslocamento;
+ const tamanhoCentral=central.reduce((t,b)=>t+b.length,0);
+ const fim=new DataView(new ArrayBuffer(22));
+ fim.setUint32(0,0x06054B50,true);
+ fim.setUint16(8,arquivos.length,true);fim.setUint16(10,arquivos.length,true);
+ fim.setUint32(12,tamanhoCentral,true);fim.setUint32(16,inicioCentral,true);
+ return new Blob([...partes,...central,new Uint8Array(fim.buffer)],{type:'application/zip'});}
+function leiaMeBackup(dia){
+ return 'BACKUP DO ERP — ESTÚDIO MABE\r\n'
+ +'Gerado em '+new Date().toLocaleString('pt-BR')+'\r\n\r\n'
+ +'O QUE TEM AQUI\r\n'
+ +'  Dados-ERP-Mabe-'+dia+'.json         Todos os dados do ERP. É ESTE que restaura o sistema.\r\n'
+ +'  Planilha-ERP-Mabe-'+dia+'.xlsx      Os mesmos dados em planilha, uma aba por módulo, para conferir.\r\n'
+ +'  Relatorio-ERP-Mabe-'+dia+'.pdf      Documento para ler ou imprimir, com a identidade do estúdio.\r\n'
+ +'  Arquitetura-ERP-Mabe-'+dia+'.md     Como o ERP foi construído. Não contém dados; serve para recriar o sistema.\r\n\r\n'
+ +'COMO RESTAURAR\r\n'
+ +'  1. Abra o ERP e entre como administrador.\r\n'
+ +'  2. Vá em Configurações > Dados & Backup > Importar backup.\r\n'
+ +'  3. Escolha o arquivo .json que está dentro deste zip.\r\n\r\n'
+ +'O QUE NÃO ESTÁ AQUI\r\n'
+ +'  As senhas dos usuários, por segurança.\r\n'
+ +'  As fotos de referência dos orçamentos, que ficam guardadas no servidor.\r\n\r\n'
+ +'Guarde este arquivo em mais de um lugar (Google Drive, e-mail, HD externo).\r\n';}
+async function baixarBackupZip(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ const btn=$('btn-backup-zip');const rotulo=btn?btn.textContent:'';
+ if(btn){btn.disabled=true;btn.textContent='⏳ Montando o backup...';}
+ try{
+  if(!await libPronta('xlsx')||!await libPronta('jspdf'))return;
+  const dia=today();
+  const planilha=new Uint8Array(XLSX.write(montarPlanilhaBackup(),{bookType:'xlsx',type:'array'}));
+  const pdf=new Uint8Array(await montarPdfBackup().output('blob').arrayBuffer());
+  const zip=await montarZip([
+   {nome:'LEIA-ME.txt',dados:leiaMeBackup(dia)},
+   {nome:'Dados-ERP-Mabe-'+dia+'.json',dados:montarBackupJson()},
+   {nome:'Planilha-ERP-Mabe-'+dia+'.xlsx',dados:planilha},
+   {nome:'Relatorio-ERP-Mabe-'+dia+'.pdf',dados:pdf},
+   {nome:'Arquitetura-ERP-Mabe-'+dia+'.md',dados:textoArquitetura()}]);
+  const a=document.createElement('a');a.href=URL.createObjectURL(zip);a.download='Backup-ERP-Mabe-'+dia+'.zip';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),20000);
+  toast('Backup completo baixado ('+Math.max(1,Math.round(zip.size/1024))+' KB). Guarde o arquivo em local seguro.','success',7000);
+ }catch(e){toast('Não consegui montar o backup: '+(e.message||e),'error',7000);}
+ finally{if(btn){btn.disabled=false;btn.textContent=rotulo;}}}
 function confirmReset(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!confirm('⚠️ ATENÇÃO: todos os dados serão apagados. Continuar?'))return;
  if(!confirm('Tem certeza? Esta ação não pode ser desfeita. Exporte um backup antes!'))return;
@@ -6889,7 +6988,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.3';
+const APP_VERSAO='2026-09-24.4';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
