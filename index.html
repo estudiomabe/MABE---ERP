@@ -1112,7 +1112,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.7"></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this)"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-link-wrap"><label class="form-label">Link do material</label><input type="url" class="form-control" id="prod-link" placeholder="https://site-do-fornecedor.com/produto" inputmode="url" autocomplete="off"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Página do produto no site do fornecedor — abre pelo 🔗 na lista</div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
   <div class="modal-header"><div class="modal-title">📋 Nota Fiscal Eletrônica</div><button class="modal-close" onclick="closeModal('modal-nfe-info')">✕</button></div>
   <div class="modal-body" style="font-size:13px;line-height:1.7;color:var(--text)">
@@ -1348,6 +1348,7 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  if(!Array.isArray(DB.config.servicos))DB.config.servicos=[];
  if(!Array.isArray(DB.config.comissionados))DB.config.comissionados=[];
  if(!DB.config.fichasProdutos||typeof DB.config.fichasProdutos!=='object')DB.config.fichasProdutos={};
+ if(!DB.config.linksProdutos||typeof DB.config.linksProdutos!=='object')DB.config.linksProdutos={};
  if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];
  if(!DB.config.custosFixosExtras)DB.config.custosFixosExtras=[];
  if(!DB.config.temposProducao)DB.config.temposProducao={};
@@ -2338,7 +2339,8 @@ function linhasMateriaisProduto(p){const materiais=p.materiais||[];const qtdProd
  return qtdRow+rows;}
 function linhaProduto(p,i){const est=Number(p.est||0),min=Number(p.min||0);
  const matHint=((p.materiais&&p.materiais.length)?'<div style="font-size:10px;color:var(--text-muted)">📋 '+p.materiais.length+' material(is)</div>':'')
-  +(temFicha(p.id)?'<div style="font-size:10px;color:var(--text-muted)">🧮 com ficha de preço</div>':'');
+  +(temFicha(p.id)?'<div style="font-size:10px;color:var(--text-muted)">🧮 com ficha de preço</div>':'')
+  +(linkDoProduto(p.id)?'<div style="font-size:10px;color:var(--text-muted)">🔗 link do fornecedor</div>':'');
  const st=statusEstoque(est,min);
  const pct=min>0?Math.min(100,est/(min*2)*100):0;
  const isPortfolio=(p.tipo||'Portfólio')==='Portfólio';
@@ -2391,7 +2393,7 @@ function renderProdutoCards(lista,alvoId,isPortfolio){
    :(nMat
     ?'<button class="pc-itens-btn" onclick="toggleMateriaisProduto(\''+p.id+'\')">'+(aberto?'▾':'▸')+' '+nMat+(nMat>1?' materiais':' material')+'</button>'
     :'<button class="pc-itens-btn" onclick="toggleMateriaisProduto(\''+p.id+'\')">'+(aberto?'▾':'▸')+' sem materiais</button>');
-  const acoes=isPortfolio?botoesProduto(p):actionBtns("editProduto('"+p.id+"')","delProduto('"+p.id+"')");
+  const acoes=botoesProduto(p);
   return '<div class="pedido-card prod-card">'
    +'<div class="pc-topo"><span class="pc-num">'+(i+1)+'</span><span class="badge '+st[1]+'" title="'+st[3]+'">'+st[0]+'</span></div>'
    +'<div class="pc-cliente">'+esc(p.nome)+'</div>'
@@ -2436,10 +2438,10 @@ function resolverMaterialEstoque(ref){if(!ref)return null;const tipo=ref.slice(0
  if(tipo==='m'){const m=DB.madeiras.find(x=>x.id===mid);if(!m)return null;return{nome:m.especie+(m.tipo?' '+m.tipo:''),estoque:madM3(m),un:'m³'};}
  if(tipo==='p'){const pr=DB.produtos.find(x=>x.id===mid);if(!pr)return null;return{nome:pr.nome,estoque:Number(pr.est||0),un:pr.un||'un'};}
  return null;}
-function openProduto(tipoPadrao){if(!guardValores())return;PRODUTO_RAPIDO_ORC=false;['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-tempo').value='';$('prod-un').value='un';$('prod-tipo').value=tipoPadrao||'Portfólio';$('mp-title').textContent='Novo '+(tipoPadrao==='Insumo'?'Material/Insumo':'Produto');
+function openProduto(tipoPadrao){if(!guardValores())return;PRODUTO_RAPIDO_ORC=false;['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-tempo').value='';$('prod-link').value='';$('prod-un').value='un';$('prod-tipo').value=tipoPadrao||'Portfólio';$('mp-title').textContent='Novo '+(tipoPadrao==='Insumo'?'Material/Insumo':'Produto');
  PROD_MATERIAIS=[];renderProdMateriais();toggleProdMateriaisVisibility();openModal('modal-produtos');}
 function editProduto(id){if(!guard()||!guardValores())return;const p=DB.produtos.find(x=>x.id===id);if(!p)return;
- $('prod-id').value=p.id;$('prod-nome').value=p.nome;$('prod-tipo').value=p.tipo||'Portfólio';$('prod-cat').value=p.cat||'';$('prod-un').value=p.un||'un';$('prod-preco').value=p.preco;$('prod-custo').value=p.custo;$('prod-est').value=p.est;$('prod-min').value=p.min;$('prod-tempo').value=(DB.config.temposProducao||{})[p.id]||'';$('mp-title').textContent='Editar '+(p.tipo==='Insumo'?'Material/Insumo':'Produto');
+ $('prod-id').value=p.id;$('prod-nome').value=p.nome;$('prod-tipo').value=p.tipo||'Portfólio';$('prod-cat').value=p.cat||'';$('prod-un').value=p.un||'un';$('prod-preco').value=p.preco;$('prod-custo').value=p.custo;$('prod-est').value=p.est;$('prod-min').value=p.min;$('prod-tempo').value=(DB.config.temposProducao||{})[p.id]||'';$('prod-link').value=linkDoProduto(p.id);$('mp-title').textContent='Editar '+(p.tipo==='Insumo'?'Material/Insumo':'Produto');
  PROD_MATERIAIS=(p.materiais||[]).slice();renderProdMateriais();toggleProdMateriaisVisibility();openModal('modal-produtos');}
 async function saveProduto(){if(!guard())return;const nome=$('prod-nome').value.trim();if(!nome){toast('Informe o nome do produto.','error');return;}
  const id=$('prod-id').value;const ehPortfolio=$('prod-tipo').value==='Portfólio';
@@ -2453,6 +2455,14 @@ async function saveProduto(){if(!guard())return;const nome=$('prod-nome').value.
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
  if(!DB.config.temposProducao)DB.config.temposProducao={};
  if(o.tipo==='Portfólio'&&num('prod-tempo')>0)DB.config.temposProducao[registro.id]=num('prod-tempo');else delete DB.config.temposProducao[registro.id];
+ /* link do material: entra e sai do mapa em config, junto com o produto */
+ const linkNovo=normalizarLink($('prod-link').value);
+ const mapaLinks=linksProdutos();
+ const linkMudou=(mapaLinks[registro.id]||'')!==linkNovo;
+ if(linkNovo)mapaLinks[registro.id]=linkNovo;else delete mapaLinks[registro.id];
+ if(linkMudou){const {error:erroLink}=await supa.from('config').upsert({campo:'linksProdutos',valor:JSON.stringify(mapaLinks)});
+  if(erroLink)toast('Produto salvo, mas houve erro ao salvar o link: '+erroLink.message,'error');
+  else syncSheets('config','upsert',{campo:'linksProdutos',valor:JSON.stringify(mapaLinks)});}
  const {error:erroTempo}=await supa.from('config').upsert({campo:'temposProducao',valor:JSON.stringify(DB.config.temposProducao)});
  if(erroTempo)toast('Produto salvo, mas houve erro ao salvar o tempo de produção: '+erroTempo.message,'error');
  else syncSheets('config','upsert',{campo:'temposProducao',valor:JSON.stringify(DB.config.temposProducao)});
@@ -2466,6 +2476,8 @@ async function delProduto(id){if(!guard()||!guardValores())return;const p=DB.pro
  const {error}=await supa.from('produtos').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.produtos=DB.produtos.filter(x=>x.id!==id);
+ if(DB.config.linksProdutos&&DB.config.linksProdutos[id]){delete DB.config.linksProdutos[id];
+  supa.from('config').upsert({campo:'linksProdutos',valor:JSON.stringify(DB.config.linksProdutos)});}
  if(DB.config.temposProducao&&DB.config.temposProducao[id]){delete DB.config.temposProducao[id];
   supa.from('config').upsert({campo:'temposProducao',valor:JSON.stringify(DB.config.temposProducao)}).then(({error})=>{if(!error)syncSheets('config','upsert',{campo:'temposProducao',valor:JSON.stringify(DB.config.temposProducao)});});}
  commit('excluir','Produtos',p.nome);syncSheets('produtos','delete',{id});toast('Produto excluído.','info');}
@@ -3753,6 +3765,13 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
    acontece com o tempo de produção, sem precisar de coluna nova no banco.
    A tela é a mesma do item do orçamento: muda só o dono do que é salvo. */
 const fichasProdutos=()=>DB.config.fichasProdutos||(DB.config.fichasProdutos={});
+/* link da página do material no site do fornecedor, guardado em config (campo "linksProdutos"),
+   como o tempo de produção — sem coluna nova na tabela de produtos */
+const linksProdutos=()=>DB.config.linksProdutos||(DB.config.linksProdutos={});
+const linkDoProduto=id=>linksProdutos()[id]||'';
+/* aceita "site.com/produto" digitado sem o https:// */
+function normalizarLink(v){v=String(v||'').trim();if(!v)return '';
+ return /^https?:\/\//i.test(v)?v:'https://'+v;}
 const fichaDoProduto=id=>fichasProdutos()[id]||null;
 const temFicha=id=>!!fichaDoProduto(id);
 /* produto antigo, sem ficha: começa com os materiais que já estão cadastrados nele e os percentuais padrão */
@@ -3862,8 +3881,13 @@ function abrirFichaDoPortfolioNoItem(prod,qty,f,obs){
    Nome, categoria, estoque e tempo de produção continuam a um clique, no botão de cadastro
    que aparece dentro da própria ficha. */
 function botoesProduto(prod){
- if((prod.tipo||'Portfólio')!=='Portfólio')return actionBtns("editProduto('"+prod.id+"')","delProduto('"+prod.id+"')");
- return actionBtns("abrirFichaProduto('"+prod.id+"')","delProduto('"+prod.id+"')");}
+ const acoes=(prod.tipo||'Portfólio')!=='Portfólio'
+  ?actionBtns("editProduto('"+prod.id+"')","delProduto('"+prod.id+"')")
+  :actionBtns("abrirFichaProduto('"+prod.id+"')","delProduto('"+prod.id+"')");
+ const link=linkDoProduto(prod.id);
+ if(!acoes||!link)return acoes;
+ /* o 🔗 abre a página do material no site do fornecedor */
+ return acoes.replace('<div class="row-actions">','<div class="row-actions"><a class="btn btn-ghost btn-sm" href="'+esc(link)+'" target="_blank" rel="noopener" title="Abrir a página do material no fornecedor" onclick="event.stopPropagation()">🔗</a>');}
 function fichaDoProdutoAberto(){const id=$('prod-id').value;if(!id)return;closeModal('modal-produtos');abrirFichaProduto(id);}
 async function excluirItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const it=(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
@@ -5888,7 +5912,9 @@ async function carregarConfigSupabase(){
  const {data,error}=await supa.from('config').select('*');
  if(error){erroDeCarga('configurações',error);return;}
  (data||[]).forEach(({campo,valor})=>{
-  if(campo==='fichasProdutos'){try{const m=JSON.parse(valor);if(m&&typeof m==='object'&&!Array.isArray(m))DB.config.fichasProdutos=m;}catch(e){}
+  if(campo==='linksProdutos'){try{const m=JSON.parse(valor);if(m&&typeof m==='object'&&!Array.isArray(m))DB.config.linksProdutos=m;}catch(e){}
+   if(CUR==='insumos')renderInsumos();else if(CUR==='portfolio')renderPortfolio();}
+  else if(campo==='fichasProdutos'){try{const m=JSON.parse(valor);if(m&&typeof m==='object'&&!Array.isArray(m))DB.config.fichasProdutos=m;}catch(e){}
    if(CUR==='portfolio')renderPortfolio();}
   else if(campo==='comissionados'){try{const arr=JSON.parse(valor);if(Array.isArray(arr))DB.config.comissionados=arr;}catch(e){}
    if(CUR==='comissoes')renderComissoes();}
@@ -6863,7 +6889,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.2';
+const APP_VERSAO='2026-09-24.3';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
