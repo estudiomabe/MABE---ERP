@@ -945,7 +945,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
     </div>
 
-    <div class="section" id="section-pcp"><div class="period-bar"><select class="form-control" id="pcp-prio-filter" style="width:auto;min-width:150px" onchange="renderPCP()"><option value="">Todas as prioridades</option><option>Alta</option><option>Normal</option><option>Baixa</option></select><label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="pcp-ver-concluidas" onchange="renderPCP()" style="cursor:pointer">Mostrar concluídas</label><span id="pcp-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div class="pcp-stats" id="pcp-stats"></div><div class="pcp-abas" id="pcp-abas"></div><div class="kanban-board" id="pcp-kanban"></div></div>
+    <div class="section" id="section-pcp"><div class="period-bar"><select class="form-control" id="pcp-prio-filter" style="width:auto;min-width:150px" onchange="renderPCP()"><option value="">Todas as prioridades</option><option>Alta</option><option>Normal</option><option>Baixa</option></select><label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="pcp-ver-concluidas" onchange="renderPCP()" style="cursor:pointer">Mostrar concluídas</label><span id="pcp-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span><button class="btn btn-ghost btn-sm" onclick="imprimirPcp()">🖨️ Imprimir PCP</button></div><div class="pcp-stats" id="pcp-stats"></div><div class="pcp-abas" id="pcp-abas"></div><div class="kanban-board" id="pcp-kanban"></div></div>
 
     <div class="section" id="section-usuarios"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Usuários do Sistema</div></div><table><thead><tr><th>Login</th><th>Nome</th><th>Nível de Acesso</th><th title="Registrado por dispositivo: mostra o último acesso feito neste navegador">Último acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-usuarios"></tbody></table></div><div class="table-wrapper" style="margin-top:14px"><div class="table-toolbar"><div class="table-toolbar-title">O que cada nível enxerga</div></div><div class="niveis-legenda" id="usr-legenda"></div></div></div>
     <div class="section" id="section-historico"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Histórico de Edições</div><button class="btn btn-danger btn-sm" onclick="clearHistorico()">🗑️ Limpar</button></div><table><thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Módulo</th><th>Detalhe</th></tr></thead><tbody id="tb-historico"></tbody></table></div></div>
@@ -4950,6 +4950,116 @@ async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.i
  else toast('OP concluída!','success');
  commit('editar','Produção','Concluída: '+o.titulo);syncSheets('pcp','upsert',o);}
 
+/* ================= PRODUÇÃO EM PDF =================
+   O quadro do PCP não cabe no papel: são sete colunas lado a lado, que a folha corta.
+   Aqui ele vira uma folha em pé, uma seção por etapa, com as ordens em lista — para
+   levar para a bancada ou para a reunião. Respeita os filtros da tela. */
+function montarPdfPcp(){
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF();
+ const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],WHITE=[255,255,255],BORDA=[206,197,183],VERMELHO=[176,58,46];
+ const emp=DB.config.empresa||{};
+ const M=16,R=194,RODAPE_Y=280,CX=105;
+ const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
+ const t=today();
+ /* mesma lista que está na tela: filtros de prioridade e de concluídas valem aqui */
+ const verConcluidas=$('pcp-ver-concluidas')?$('pcp-ver-concluidas').checked:false;
+ const fPrio=$('pcp-prio-filter')?$('pcp-prio-filter').value:'';
+ const ativas=DB.producao.filter(o=>(verConcluidas||o.status!=='Concluída')&&(!fPrio||(o.prio||'Normal')===fPrio));
+ /* na folha impressa, horas e minutos não ajudam: basta há quantos dias a ordem espera */
+ const diasNaFila=iso=>{const d=Math.floor((Date.now()-new Date(iso).getTime())/86400000);return d<=0?'hoje':d+(d===1?' dia':' dias');};
+ const semEmoji=x=>String(x).replace(/[^\p{L}\p{N}\s&\/.\-]/gu,'').trim();
+
+ /* ---- capa ---- */
+ fundo();
+ const largura=86,lado=largura/MARCA_PROP,topo=80;
+ doc.addImage(MARCA_PNG,'PNG',CX-largura/2,topo,largura,lado,'marca','SLOW');
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(CX-20,topo+lado+13,CX+20,topo+lado+13);
+ const centralizar=(txt,yy,esp)=>doc.text(txt,CX-esp*(txt.length-1)/2,yy,{align:'center',charSpace:esp});
+ let y=topo+lado+33;
+ doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
+ centralizar('PRODUÇÃO',y,1.2);
+ y+=9;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);
+ doc.text('Quadro de ordens \u2014 '+fmtD(t),CX,y,{align:'center'});
+ y+=18;doc.setFontSize(7.5);centralizar('SITUAÇÃO DE HOJE',y,0.5);
+ y+=9;doc.setFontSize(11);doc.setTextColor(...DARK);
+ const atrasadas=ativas.filter(o=>o.prazo&&o.prazo<t&&o.status!=='Concluída').length;
+ const resumo=ativas.length+' ordem(ns) em aberto'+(atrasadas?'   ·   '+atrasadas+' atrasada(s)':'');
+ doc.text(resumo,CX,y,{align:'center'});
+ if(fPrio){y+=7;doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text('Filtro: prioridade '+fPrio,CX,y,{align:'center'});}
+
+ /* ---- páginas por etapa ---- */
+ doc.addPage();fundo();
+ const lm=34,am=lm/MARCA_PROP;
+ doc.addImage(MARCA_PNG,'PNG',M,12,lm,am,'marca','SLOW');
+ doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...DARK);doc.text('PRODUÇÃO',R,16.5,{align:'right'});
+ doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);doc.text(fmtD(t),R,21.5,{align:'right'});
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.7);doc.line(M,26,R,26);
+ y=34;
+
+ const cab=(txt,a)=>({content:txt,styles:{halign:a||'left'}});
+ const vazias=[];
+ ETAPAS.forEach((etapa,i)=>{
+  const ordens=ativas.filter(o=>Number(o.etapa)===i)
+   .sort((a,b)=>String(a.prazo||'9999').localeCompare(String(b.prazo||'9999')));
+  /* etapa vazia nem ganha título: entra na linha de resumo do fim */
+  if(!ordens.length){vazias.push(semEmoji(etapa));return;}
+  /* título da etapa, com a contagem */
+  if(y>RODAPE_Y-30){doc.addPage();fundo();y=24;}
+  doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...DARK);
+  const titulo=semEmoji(etapa).toUpperCase();
+  doc.text(titulo,M,y,{charSpace:0.4});
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);
+  doc.text(ordens.length+' ordem(ns)',R,y,{align:'right'});
+  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.6);doc.line(M,y+2.2,M+doc.getTextWidth(titulo)+3,y+2.2);
+  y+=7;
+  const linhas=ordens.map(o=>{
+   const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
+   return ['OP-'+pad(o.num||0),String(o.titulo||'—'),cliName(o.cliId),o.resp||'—',
+    (o.prio||'Normal'),(o.prazo?(atrasada?'! ':'')+fmtD(o.prazo):'sem prazo'),
+    o.criadoEm?diasNaFila(o.criadoEm):'—'];});
+  doc.autoTable({startY:y,margin:{left:M,right:210-R,top:24,bottom:297-RODAPE_Y+4},
+   head:[[cab('OP'),'Peça / projeto','Cliente','Responsável',cab('Prioridade','center'),cab('Prazo','center'),cab('Na fila','right')]],
+   body:linhas,theme:'grid',
+   styles:{lineColor:BORDA,lineWidth:0.2,fillColor:WHITE,fontSize:8,textColor:DARK,cellPadding:{top:2.6,bottom:2.6,left:2.6,right:2.6}},
+   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold'},
+   columnStyles:{0:{cellWidth:20},2:{cellWidth:32},3:{cellWidth:24},4:{cellWidth:20,halign:'center'},5:{cellWidth:22,halign:'center'},6:{cellWidth:16,halign:'right',textColor:MUTED}},
+   didParseCell:d=>{if(d.section!=='body')return;
+    /* prazo vencido em vermelho, e a linha inteira marcada */
+    const texto=String(d.cell.raw||'');
+    if(d.column.index===5&&texto.indexOf('!')===0){d.cell.text=[texto.replace('! ','')];d.cell.styles.textColor=VERMELHO;d.cell.styles.fontStyle='bold';}
+    if(d.column.index===4&&(texto==='Urgente'||texto==='Alta'))d.cell.styles.textColor=VERMELHO;},
+   willDrawPage:()=>{},
+  });
+  y=doc.lastAutoTable.finalY+10;});
+ /* etapa sem ordem nenhuma não merece meia página: todas viram uma linha no fim */
+ if(vazias.length){
+  if(y>RODAPE_Y-20){doc.addPage();fundo();y=24;}
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);
+  doc.text(doc.splitTextToSize('Sem ordens hoje: '+vazias.join(', ')+'.',R-M),M,y);}
+
+ /* ---- rodapé ---- */
+ const n=doc.internal.getNumberOfPages();
+ let rodape='';
+ doc.setFont('helvetica','normal');doc.setFontSize(7);
+ for(const parte of [enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean)){
+  const tent=rodape?rodape+'   ·   '+parte:String(parte);
+  if(doc.getTextWidth(tent)<=(R-M)-30)rodape=tent;else break;}
+ for(let pg=2;pg<=n;pg++){doc.setPage(pg);
+  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(M,RODAPE_Y,R,RODAPE_Y);
+  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
+  doc.text(rodape||'Quadro de produção',M,RODAPE_Y+5.5);
+  doc.text('Página '+pg+' de '+n,R,RODAPE_Y+5.5,{align:'right'});}
+ return doc;}
+async function imprimirPcp(){
+ if(!await libPronta('jspdf'))return;
+ const doc=montarPdfPcp();
+ const nome='Producao-PCP-'+today()+'.pdf';
+ /* no celular um PDF aberto em aba não imprime: entrega o arquivo, que abre no leitor */
+ if(window.matchMedia('(hover:none)').matches){doc.save(nome);toast('PDF baixado — abra o arquivo para imprimir.','info',6000);return;}
+ doc.autoPrint();
+ const w=window.open(doc.output('bloburl'),'_blank');
+ if(!w){doc.save(nome);toast('O navegador bloqueou a janela de impressão — o PDF foi baixado para você imprimir.','info',7000);}}
 /* ================= CALENDÁRIO DE ENTREGAS ================= */
 let CAL={ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function calMudarMes(delta){CAL.mes+=delta;if(CAL.mes<0){CAL.mes=11;CAL.ano--;}else if(CAL.mes>11){CAL.mes=0;CAL.ano++;}renderCalendario();}
@@ -7212,7 +7322,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.14';
+const APP_VERSAO='2026-09-24.15';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
