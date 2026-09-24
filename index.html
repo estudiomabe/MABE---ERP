@@ -2883,6 +2883,16 @@ async function carregarVendasSupabase(){
  if(CUR==='calendario')renderCalendario();}
 let VND_EXPANDIDOS=new Set();
 function toggleItensVenda(id){if(VND_EXPANDIDOS.has(id))VND_EXPANDIDOS.delete(id);else VND_EXPANDIDOS.add(id);renderVendas();}
+/* O contrário de opDoPedido: acha o pedido de uma ordem de produção.
+   Primeiro pelo V-00XX escrito no título ou nas observações da ordem; depois pelo
+   orçamento que gerou as duas, quando a ordem veio de uma aprovação. */
+function pedidoDaOp(op){
+ if(!op)return null;
+ const m=((op.titulo||'')+' '+(op.obs||'')).match(/V-(\d+)/);
+ if(m){const v=DB.vendas.find(x=>Number(x.num)===Number(m[1]));if(v)return v;}
+ if(op.orcId){const orc=DB.orcamentos.find(o=>o.id===op.orcId);
+  if(orc)return DB.vendas.find(v=>(v.obs||'').includes('ORC-'+pad(orc.num)))||null;}
+ return null;}
 function opDoPedido(v){
  const porTitulo=DB.producao.find(o=>(o.titulo||'').includes('V-'+pad(v.num))||(o.obs||'').includes('V-'+pad(v.num)));
  if(porTitulo)return porTitulo;
@@ -5015,11 +5025,18 @@ function montarPdfPcp(){
   y+=7;
   const linhas=ordens.map(o=>{
    const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
-   return ['OP-'+pad(o.num||0),String(o.titulo||'—'),cliName(o.cliId),o.resp||'—',
+   const ped=pedidoDaOp(o);
+   /* ordem criada pelo pedido se chama "Pedido V-0019 — Cliente": com as colunas Pedido e
+      Cliente ao lado, isso não diz o que é a peça. Nesse caso, usa os itens do pedido. */
+   let peca=String(o.titulo||'').replace(/^Pedido\s+V-\d+\s*[—-]\s*/,'').trim();
+   if((!peca||peca===cliName(o.cliId))&&ped){
+    const descs=(ped.itens||[]).map(i=>i.desc).filter(Boolean);
+    peca=descs.slice(0,2).join(', ')+(descs.length>2?' +'+(descs.length-2):'');}
+   return [ped?'V-'+pad(ped.num):'—',peca||String(o.titulo||'—'),cliName(o.cliId),o.resp||'—',
     (o.prio||'Normal'),(o.prazo?(atrasada?'! ':'')+fmtD(o.prazo):'sem prazo'),
     o.criadoEm?diasNaFila(o.criadoEm):'—'];});
   doc.autoTable({startY:y,margin:{left:M,right:210-R,top:24,bottom:297-RODAPE_Y+4},
-   head:[[cab('OP'),'Peça / projeto','Cliente','Responsável',cab('Prioridade','center'),cab('Prazo','center'),cab('Na fila','right')]],
+   head:[[cab('Pedido'),'Peça / projeto','Cliente','Responsável',cab('Prioridade','center'),cab('Prazo','center'),cab('Na fila','right')]],
    body:linhas,theme:'grid',
    styles:{lineColor:BORDA,lineWidth:0.2,fillColor:WHITE,fontSize:8,textColor:DARK,cellPadding:{top:2.6,bottom:2.6,left:2.6,right:2.6}},
    headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold'},
@@ -7322,7 +7339,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.15';
+const APP_VERSAO='2026-09-24.16';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
