@@ -1126,7 +1126,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.7"></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this)"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title" id="imp-titulo">🖨️ Imprimir pedido (PCP)</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div id="imp-explicacao" style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O pedido sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
+<div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title" id="imp-titulo">🖨️ Imprimir pedido (PCP)</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div id="imp-explicacao" style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O pedido sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><label style="display:flex;align-items:center;gap:9px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;cursor:pointer"><input type="checkbox" id="imp-sem-valores" style="width:17px;height:17px;flex-shrink:0">Ocultar valores nesta impressão<span style="font-size:11px;color:var(--text-muted)">— para mandar à oficina</span></label><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-link-wrap"><label class="form-label">Link do material</label><input type="url" class="form-control" id="prod-link" placeholder="https://site-do-fornecedor.com/produto" inputmode="url" autocomplete="off"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Página do produto no site do fornecedor — abre pelo 🔗 na lista</div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
   <div class="modal-header"><div class="modal-title">📋 Nota Fiscal Eletrônica</div><button class="modal-close" onclick="closeModal('modal-nfe-info')">✕</button></div>
@@ -3017,7 +3017,8 @@ function imprimirPedido(modo){if(!guardValores())return;
  const v=pedidoDosAnexos();
  if(!v){toast('Salve o pedido antes de imprimir.','info');return;}
  const anexos=v.anexos||[];
- if(!anexos.length)return executarImpressaoPedido(v,[]);
+ if($('imp-sem-valores'))$('imp-sem-valores').checked=false;
+ if(!anexos.length)return abrirSoOcultarValores(v);
  const nome=MODO_IMPRESSAO==='recibo'?'recibo':'pedido';
  $('imp-titulo').textContent=MODO_IMPRESSAO==='recibo'?'🧾 Imprimir recibo':'🖨️ Imprimir pedido (PCP)';
  $('imp-explicacao').textContent='O '+nome+' sempre é impresso. Marque os anexos que devem sair junto.';
@@ -3032,9 +3033,15 @@ function imprimirPedido(modo){if(!guardValores())return;
    +'<span style="font-size:11px;color:var(--text-muted)">'+(img?'imagem — sai no fim do documento':'PDF — abre em outra aba')+'</span></span></label>';}).join('');
  $('imp-aviso-pdf').style.display=anexos.some(a=>!anexoEhImagem(a))?'block':'none';
  openModal('modal-imprimir-pedido');}
+/* pedido sem anexo: a janela ainda serve para escolher se sai com ou sem valores */
+function abrirSoOcultarValores(v){
+ $('imp-anexos-lista').innerHTML='<div style="font-size:12px;color:var(--text-muted)">Este pedido não tem anexos.</div>';
+ $('imp-aviso-pdf').style.display='none';
+ openModal('modal-imprimir-pedido');}
 async function confirmarImpressaoPedido(){
  const v=pedidoDosAnexos();if(!v)return;
  const anexos=v.anexos||[];
+ const semValores=!!($('imp-sem-valores')&&$('imp-sem-valores').checked);
  const escolhidos=[...document.querySelectorAll('.imp-anexo:checked')].map(c=>anexos[Number(c.dataset.i)]).filter(Boolean);
  closeModal('modal-imprimir-pedido');
  const imagens=escolhidos.filter(anexoEhImagem);
@@ -3043,8 +3050,8 @@ async function confirmarImpressaoPedido(){
  const bloqueados=[];
  pdfs.forEach(a=>{const w=window.open(a.url,'_blank');if(!w)bloqueados.push(a.nome);});
  if(bloqueados.length)toast('O navegador bloqueou a aba de: '+bloqueados.join(', ')+'. Abra pelo quadro de anexos para imprimir.','info',8000);
- executarImpressaoPedido(v,imagens);}
-async function executarImpressaoPedido(v,imagens){
+ executarImpressaoPedido(v,imagens,semValores);}
+async function executarImpressaoPedido(v,imagens,semValores){
  if(!await libPronta('jspdf'))return;
  let refs=[];
  if(imagens&&imagens.length){
@@ -3052,8 +3059,8 @@ async function executarImpressaoPedido(v,imagens){
   refs=(await Promise.all(imagens.map(a=>imagemParaPdf(a.url)))).filter(Boolean);
   const falhas=imagens.length-refs.length;
   if(falhas)toast(falhas+' imagem(ns) não carregaram e ficaram fora (verifique a internet).','error',6000);}
- const doc=montarPdfRecibo(v,refs,MODO_IMPRESSAO);
- const nome=(MODO_IMPRESSAO==='recibo'?'Recibo-V-':'Pedido-V-')+pad(v.num)+'.pdf';
+ const doc=montarPdfRecibo(v,refs,MODO_IMPRESSAO,semValores);
+ const nome=(MODO_IMPRESSAO==='recibo'?'Recibo-V-':'Pedido-V-')+pad(v.num)+(semValores?'-sem-valores':'')+'.pdf';
  /* no celular um PDF aberto em aba não imprime: entrega o arquivo, que abre no leitor com a opção de imprimir */
  if(window.matchMedia('(hover:none)').matches){doc.save(nome);toast('PDF baixado — abra o arquivo para imprimir.','info',6000);return;}
  doc.autoPrint();
@@ -3071,8 +3078,31 @@ async function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.
 /* mesma montagem usada pela pré-visualização em Documentos */
 /* modo 'pedido' = a folha do pedido (o que foi combinado); modo 'recibo' = o comprovante.
    Mesma diagramação: muda o título, o rótulo do número e o bloco de pagamento. */
-function montarPdfRecibo(v,refs,modo){
+/* Capa da folha do pedido: a marca no centro, o número e para quem — a mesma
+   linguagem da capa do orçamento, sobre o creme do estúdio. */
+function capaPedido(doc,v,cores){
+ const {DARK,ACCENT,MUTED}=cores;const CX=105;
+ const centralizar=(txt,yy,esp)=>doc.text(txt,CX-esp*(txt.length-1)/2,yy,{align:'center',charSpace:esp});
+ const largura=86,lado=largura/MARCA_PROP,topo=80;
+ doc.addImage(MARCA_PNG,'PNG',CX-largura/2,topo,largura,lado,'marca','SLOW');
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(CX-20,topo+lado+13,CX+20,topo+lado+13);
+ let y=topo+lado+33;
+ doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
+ centralizar('PEDIDO',y,1.2);
+ y+=9;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);
+ doc.text('Nº V-'+pad(v.num),CX,y,{align:'center'});
+ y+=18;doc.setFontSize(7.5);doc.setTextColor(...MUTED);
+ centralizar('CLIENTE',y,0.5);
+ y+=9;doc.setFontSize(15);doc.setTextColor(...DARK);
+ doc.splitTextToSize(cliName(v.cliId),150).forEach(l=>{doc.text(l,CX,y,{align:'center'});y+=7;});
+ const entrega=lerMarcaObs(v.obs,'Entrega combinada');
+ const datas=[v.data?'Pedido '+fmtD(v.data):'',entrega?'Entrega '+fmtD(entrega):''].filter(Boolean).join('     ·     ');
+ if(datas){y+=5;doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text(datas,CX,y,{align:'center'});}}
+function montarPdfRecibo(v,refs,modo,semValores){
  const ehPedido=modo==='pedido';
+ /* sem valores: a folha vai para a oficina sem preço nenhum — some o unitário,
+    o subtotal, a caixa do total e as condições de pagamento */
+ const comValores=!semValores;
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],ZEBRA=[250,247,242],WHITE=[255,255,255];
@@ -3081,6 +3111,7 @@ function montarPdfRecibo(v,refs,modo){
  const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
  const novaPagina=()=>{doc.addPage();fundo();return 22;};
  fundo();
+ if(ehPedido){capaPedido(doc,v,{DARK,ACCENT,MUTED});novaPagina();}
 
  // Marca: o arquivo do estúdio, nas proporções certas
  const logoY=17,larguraMarca=42,alturaMarca=larguraMarca/MARCA_PROP,ico=alturaMarca;
@@ -3103,7 +3134,11 @@ function montarPdfRecibo(v,refs,modo){
 
  // Cliente / Data / Pagamento
  y+=11;
- const meta=[{rot:'CLIENTE',val:cliName(v.cliId),x:M,w:98},{rot:'DATA',val:fmtD(v.data),x:124,w:32},{rot:'PAGAMENTO',val:v.pag||'—',x:160,w:32}];
+ /* na folha sem valores, a forma de pagamento não interessa à oficina: entra a data de entrega */
+ const entregaCombinada=lerMarcaObs(v.obs,'Entrega combinada');
+ const terceira=comValores?{rot:'PAGAMENTO',val:v.pag||'—'}
+  :{rot:'ENTREGA',val:entregaCombinada?fmtD(entregaCombinada):'—'};
+ const meta=[{rot:'CLIENTE',val:cliName(v.cliId),x:M,w:98},{rot:'DATA',val:fmtD(v.data),x:124,w:32},{rot:terceira.rot,val:terceira.val,x:160,w:32}];
  let metaLinhas=1;
  meta.forEach(c=>{doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text(c.rot,c.x,y);
   doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...DARK);
@@ -3112,16 +3147,21 @@ function montarPdfRecibo(v,refs,modo){
 
  // Itens: mesmas alturas e colunas da tabela do orçamento
  const itens=v.itens||[];
- const linhas=itens.map((it,i)=>{const qty=it.qty||1;return [String(i+1),String(it.desc||'—'),String(qty),fmt(it.preco),fmt(qty*Number(it.preco||0))];});
+ const linhas=itens.map((it,i)=>{const qty=it.qty||1;
+  return comValores?[String(i+1),String(it.desc||'—'),String(qty),fmt(it.preco),fmt(qty*Number(it.preco||0))]
+                   :[String(i+1),String(it.desc||'—'),String(qty)];});
  const cab=(t,a)=>({content:t,styles:{halign:a}});
+ let tabelaJaPassouPorUmaPagina=false;
  const entrelinhaAntes=doc.getLineHeightFactor();doc.setLineHeightFactor(1.35);
  doc.autoTable({startY:y,margin:{left:M,right:210-R,top:22,bottom:297-RODAPE_Y+4},
-  head:[[cab('#','center'),'Item',cab('Qtd','center'),cab('Unitário','right'),cab('Subtotal','right')]],
+  head:[comValores?[cab('#','center'),'Item',cab('Qtd','center'),cab('Unitário','right'),cab('Subtotal','right')]
+                  :[cab('#','center'),'Item',cab('Qtd','center')]],
   body:linhas,theme:'plain',rowPageBreak:'avoid',
   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3.8,bottom:3.8,left:3.5,right:3.5}},
   bodyStyles:{fontSize:9,textColor:DARK,valign:'top',cellPadding:{top:4.2,bottom:4.2,left:3.5,right:3.5}},
-  columnStyles:{0:{cellWidth:12,halign:'center',textColor:MUTED,cellPadding:{top:4.2,bottom:4.2,left:1,right:1}},2:{cellWidth:14,halign:'center'},3:{cellWidth:30,halign:'right'},4:{cellWidth:32,halign:'right',fontStyle:'bold'}},
-  willDrawPage:d=>{if(d.pageNumber>1)fundo();},
+  columnStyles:comValores?{0:{cellWidth:12,halign:'center',textColor:MUTED,cellPadding:{top:4.2,bottom:4.2,left:1,right:1}},2:{cellWidth:14,halign:'center'},3:{cellWidth:30,halign:'right'},4:{cellWidth:32,halign:'right',fontStyle:'bold'}}
+                          :{0:{cellWidth:12,halign:'center',textColor:MUTED,cellPadding:{top:4.2,bottom:4.2,left:1,right:1}},2:{cellWidth:20,halign:'center'}},
+  willDrawPage:()=>{if(tabelaJaPassouPorUmaPagina)fundo();tabelaJaPassouPorUmaPagina=true;},
   /* pinta a linha inteira antes das células: sem isso o leitor de PDF mostra frestas finas entre as colunas */
   willDrawCell:d=>{if(d.column.index!==0)return;const cor=d.cell.styles.fillColor;if(!cor)return;
    doc.setFillColor(...cor);doc.rect(M,d.cell.y,R-M,d.row.height,'F');},
@@ -3134,9 +3174,10 @@ function montarPdfRecibo(v,refs,modo){
  doc.setFont('helvetica','normal');doc.setFontSize(8.5);
  const obsL=obs?doc.splitTextToSize(obs,96):[];
  const boxW=68,boxH=16,boxX=R-boxW,subH=10;
- const pagAlt=subH+boxH+9+5.2*(ehPedido?2:1)+1;
+ const pagAlt=comValores?subH+boxH+9+5.2*(ehPedido?2:1)+1:(ehPedido?9+5.2:0);
  const blocoAlt=Math.max(obs?9.5+obsL.length*4.5:0,pagAlt);
  if(fy+blocoAlt>RODAPE_Y-6)fy=novaPagina();
+ if(comValores){
  /* um bloco só: fundo escuro arredondado, faixa branca do subtotal por cima (cantos de cima arredondados) */
  doc.setFillColor(...DARK);doc.roundedRect(boxX,fy,boxW,subH+boxH,1.5,1.5,'F');
  doc.setFillColor(...WHITE);doc.roundedRect(boxX,fy,boxW,subH,1.5,1.5,'F');doc.rect(boxX,fy+subH-2,boxW,2,'F');
@@ -3150,6 +3191,11 @@ function montarPdfRecibo(v,refs,modo){
  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);py+=5.2;
  doc.text('Forma de pagamento: '+(v.pag||'—'),boxX+1,py);
  if(ehPedido){py+=5.2;doc.text('Situação: '+(v.status||'—'),boxX+1,py);}
+ } else if(ehPedido){
+  /* sem valores, sobra o que a oficina precisa saber */
+  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text('SITUAÇÃO',boxX+1,fy);
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);doc.text(v.status||'—',boxX+1,fy+5.2);
+ }
  if(obs){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...DARK);doc.text('OBSERVAÇÕES',M,fy+3);
   doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);doc.text(obsL,M,fy+9.5,{lineHeightFactor:1.5});}
 
@@ -3187,7 +3233,7 @@ function montarPdfRecibo(v,refs,modo){
   if(doc.getTextWidth(tent)<=(R-M)-24)rodape=tent;else break;}
  rodape=rodape||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
  const n=doc.internal.getNumberOfPages();
- for(let pg=1;pg<=n;pg++){doc.setPage(pg);
+ for(let pg=(ehPedido?2:1);pg<=n;pg++){doc.setPage(pg);
   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(M,RODAPE_Y,R,RODAPE_Y);
   doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
   doc.text(rodape,M,RODAPE_Y+5.5);
@@ -7160,7 +7206,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.11';
+const APP_VERSAO='2026-09-24.12';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
