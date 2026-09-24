@@ -3060,7 +3060,9 @@ async function executarImpressaoPedido(v,imagens,semValores){
   const falhas=imagens.length-refs.length;
   if(falhas)toast(falhas+' imagem(ns) não carregaram e ficaram fora (verifique a internet).','error',6000);}
  const doc=montarPdfRecibo(v,refs,MODO_IMPRESSAO,semValores);
- const nome=(MODO_IMPRESSAO==='recibo'?'Recibo-V-':'Pedido-V-')+pad(v.num)+(semValores?'-sem-valores':'')+'.pdf';
+ /* mesmo padrao dos outros documentos: tipo, numero e cliente. A via sem valores ganha
+    o sufixo "oficina", que diz para que ela serve. */
+ const nome=(MODO_IMPRESSAO==='recibo'?'Recibo-V-':'Pedido-V-')+pad(v.num)+'-'+textoParaArquivo(cliName(v.cliId))+(semValores?'-oficina':'')+'.pdf';
  /* no celular um PDF aberto em aba não imprime: entrega o arquivo, que abre no leitor com a opção de imprimir */
  if(window.matchMedia('(hover:none)').matches){doc.save(nome);toast('PDF baixado — abra o arquivo para imprimir.','info',6000);return;}
  doc.autoPrint();
@@ -4691,6 +4693,8 @@ function montarPdfFichaTecnica(o,prod){
    atraso, rescisão, propriedade intelectual, LGPD e foro).
    Os campos que mudam a cada obra saem como "____" para preencher à mão ou em aditivo.
    É um modelo: vale passar pelo seu advogado antes de usar com cliente. */
+/* tira acentos e troca o que nao serve em nome de arquivo por hifen */
+function textoParaArquivo(t){return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'');}
 function nomePdfContrato(o){return 'Contrato-ORC-'+pad(o.num)+'-'+cliName(o.cliId).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'.pdf';}
 /* o contrato sai do orçamento aberto: cliente, valor, percentual de entrada e a referência do ORC
    vêm preenchidos; prazo, multas e data continuam em branco, para combinar com o cliente */
@@ -7208,7 +7212,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.13';
+const APP_VERSAO='2026-09-24.14';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
