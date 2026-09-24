@@ -345,6 +345,9 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
   /* mesma coisa na ficha do item/produto: título em cima, ações na linha de baixo */
   #orc-form-view > div:first-child { flex-wrap:wrap; }
   #orc-form-view > div:first-child > div:last-child { margin-left:0 !important;width:100%;flex-wrap:wrap; }
+  /* e na página do pedido, que agora tem Imprimir ao lado de Salvar */
+  #vendas-form-view > div:first-child { flex-wrap:wrap; }
+  #vendas-form-view > div:first-child > div:last-child { margin-left:0 !important;width:100%;flex-wrap:wrap; }
   .compras-topo { display:flex;justify-content:flex-end;margin-bottom:12px; }
   .pcp-abas { display:flex;gap:6px;overflow-x:auto;margin:0 -2px 12px;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none; }
   .pcp-abas::-webkit-scrollbar { display:none; }
@@ -596,7 +599,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
           <button class="btn btn-ghost btn-sm" onclick="cancelarPedido()">← Voltar</button>
           <h2 style="font-size:16px;font-weight:700" id="mv-title">Novo Pedido</h2>
-          <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="saveVenda()">💾 Salvar Pedido</button></div>
+          <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" id="vnd-btn-imprimir" style="display:none" onclick="imprimirPedido()">🖨️ Imprimir</button><button class="btn btn-primary btn-sm" onclick="saveVenda()">💾 Salvar Pedido</button></div>
         </div>
         <div class="config-card" style="margin:0"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div></div></div>
         <div class="config-card orc-anexos-zona" id="vnd-anexos-zona" style="margin-top:14px" ondragenter="anexoPedidoArrastando(event,true)" ondragover="anexoPedidoArrastando(event,true)" ondragleave="anexoPedidoArrastando(event,false)" ondrop="anexoPedidoSolto(event)">
@@ -3002,6 +3005,21 @@ async function duplicarOrcamento(id){
 function abrirInfoNotaFiscal(id){openModal('modal-nfe-info');}
 /* Recibo com a mesma estrutura e o mesmo espaçamento do PDF do orçamento: cabeçalho com logo e contato,
    título + número, régua dourada, dados do pedido, tabela, total e assinaturas, rodapé numerado. */
+/* Imprime o recibo do pedido aberto — o mesmo PDF do botão 🧾 da lista.
+   Pedido novo ainda não tem número: o botão só aparece depois de salvar. */
+async function imprimirPedido(){if(!guardValores())return;
+ const v=pedidoDosAnexos();
+ if(!v){toast('Salve o pedido antes de imprimir.','info');return;}
+ if(!await libPronta('jspdf'))return;
+ const doc=montarPdfRecibo(v);
+ const nome='Recibo-V-'+pad(v.num)+'.pdf';
+ /* no celular um PDF aberto em aba não imprime: entrega o arquivo, que abre no leitor com a opção de imprimir */
+ if(window.matchMedia('(hover:none)').matches){doc.save(nome);toast('PDF baixado — abra o arquivo para imprimir.','info',6000);return;}
+ doc.autoPrint();
+ const w=window.open(doc.output('bloburl'),'_blank');
+ if(!w){doc.save(nome);toast('O navegador bloqueou a janela de impressão — o PDF foi baixado para você imprimir.','info',7000);}}
+function atualizarBotaoImprimirPedido(){const b=$('vnd-btn-imprimir');if(!b)return;
+ b.style.display=(pedidoDosAnexos()&&verValores())?'inline-flex':'none';}
 async function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  if(!await libPronta('jspdf'))return;
  const doc=montarPdfRecibo(v);
@@ -3130,10 +3148,10 @@ function calcVenda(){let t=0;document.querySelectorAll('#vnd-itens > div').forEa
 /* O pedido virou página (era uma janela): lista e ficha dividem a seção Pedidos. */
 function vndShow(view){['lista','form'].forEach(v=>{const el=$('vendas-'+v+'-view');if(el)el.style.display=v===view?'block':'none';});}
 function cancelarPedido(){vndShow('lista');renderVendas();}
-function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-pag').value='PIX';$('vnd-origem').value='';$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderAnexosPedido();vndShow('form');}
+function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-pag').value='PIX';$('vnd-origem').value='';$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-pag').value=v.pag;$('vnd-origem').value=v.origem||'';$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';
- $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderAnexosPedido();vndShow('form');}
+ $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 let ITEM_PARA_PEDIDO=null;
 function capturarPedido(){const itens=[];
  document.querySelectorAll('#vnd-itens > div').forEach(r=>{const sel=r.querySelector('.vi-prod'),desc=r.querySelector('.vi-desc');
@@ -7077,7 +7095,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.6';
+const APP_VERSAO='2026-09-24.7';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
