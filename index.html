@@ -4932,6 +4932,9 @@ async function carregarProducaoSupabase(){
  DB.producao=(data||[]).map(opDeSupabase);saveDB();
  if(CUR==='pcp')renderPCP();
  if(CUR==='calendario')renderCalendario();}
+/* ordem da fila: prazo mais apertado primeiro, e quem não tem prazo fica no fim.
+   Vale para o quadro e para o PDF, para os dois nunca discordarem. */
+const porPrazo=(a,b)=>String(a.prazo||'9999-99-99').localeCompare(String(b.prazo||'9999-99-99'));
 let PCP_ETAPA_MOBILE=null;
 function selecionarEtapaPCP(i){PCP_ETAPA_MOBILE=i;renderPCP();
  const aba=document.querySelector('.pcp-aba.ativa');if(aba)aba.scrollIntoView({block:'nearest',inline:'center'});}
@@ -4947,7 +4950,7 @@ function renderPCP(){const t=today();
  $('pcp-stats').innerHTML=[['Planejamento',ativas.filter(o=>o.etapa==0).length,''],['Em produção',ativas.filter(o=>o.etapa>0&&o.etapa<4).length,''],['Retrabalho',ativas.filter(o=>o.etapa==4).length,'color:var(--warning)'],['Prontas',ativas.filter(o=>o.etapa==5).length,''],['Atrasadas',atras,'color:var(--danger)'],['Concluídas (mês)',concMes,'color:var(--success)']].map(s=>'<div class="pcp-stat"><div class="pcp-stat-val" style="'+s[2]+'">'+s[1]+'</div><div class="pcp-stat-label">'+s[0]+'</div></div>').join('');
  if(PCP_ETAPA_MOBILE===null){const primeira=ETAPAS.findIndex((_,i)=>ativas.some(o=>Number(o.etapa)===i));PCP_ETAPA_MOBILE=primeira<0?0:primeira;}
  $('pcp-abas').innerHTML=ETAPAS.map((et,i)=>'<button class="pcp-aba'+(i===PCP_ETAPA_MOBILE?' ativa':'')+'" onclick="selecionarEtapaPCP('+i+')">'+esc(et)+'<span class="pcp-aba-n">'+ativas.filter(o=>Number(o.etapa)===i).length+'</span></button>').join('');
- $('pcp-kanban').innerHTML=ETAPAS.map((et,i)=>{const cards=ativas.filter(o=>Number(o.etapa)===i);
+ $('pcp-kanban').innerHTML=ETAPAS.map((et,i)=>{const cards=ativas.filter(o=>Number(o.etapa)===i).sort(porPrazo);
   return '<div class="kanban-col'+(i===PCP_ETAPA_MOBILE?' ativa':'')+'"><div class="kanban-col-header"><span class="kanban-col-title">'+et+'</span><span class="kanban-count">'+cards.length+'</span></div>'
   +cards.map(o=>{const pcls=!o.prazo?'ok':o.prazo<t?'vencido':o.prazo===t?'hoje':'ok';
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
@@ -5085,8 +5088,7 @@ function montarPdfPcp(){
  const cab=(txt,a)=>({content:txt,styles:{halign:a||'left'}});
  const vazias=[];
  ETAPAS.forEach((etapa,i)=>{
-  const ordens=ativas.filter(o=>Number(o.etapa)===i)
-   .sort((a,b)=>String(a.prazo||'9999').localeCompare(String(b.prazo||'9999')));
+  const ordens=ativas.filter(o=>Number(o.etapa)===i).sort(porPrazo);
   /* etapa vazia nem ganha título: entra na linha de resumo do fim */
   if(!ordens.length){vazias.push(semEmoji(etapa));return;}
   /* título da etapa, com a contagem */
@@ -7434,7 +7436,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.19';
+const APP_VERSAO='2026-09-24.20';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
