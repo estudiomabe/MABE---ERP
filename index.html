@@ -4967,6 +4967,9 @@ function badgePrio(prio){const p=prio||'Normal';
  return '<span style="font-size:11px;color:var(--text-muted)">'+esc(p)+'</span>';}
 /* Kanban (o quadro) ou Lista (a mesma folha que sai na impressão) — fica gravado no aparelho */
 let PCP_MODO=(()=>{try{return localStorage.getItem('mabe_pcp_modo')||'kanban';}catch(e){return 'kanban';}})();
+/* a observação é detalhe de bancada: fica fechada até alguém pedir */
+let PCP_OBS_ABERTAS=new Set();
+function togglePcpObs(id){if(PCP_OBS_ABERTAS.has(id))PCP_OBS_ABERTAS.delete(id);else PCP_OBS_ABERTAS.add(id);renderPCP();}
 function definirModoPcp(m){PCP_MODO=m;try{localStorage.setItem('mabe_pcp_modo',m);}catch(e){}renderPCP();}
 let PCP_ETAPA_MOBILE=null;
 function selecionarEtapaPCP(i){PCP_ETAPA_MOBILE=i;renderPCP();
@@ -5054,8 +5057,12 @@ function renderPcpLista(ordens,t){
     +(i<ETAPA_FINAL?'<button class="btn btn-ghost btn-sm" title="Avançar para '+esc(semEmoji(ETAPAS[i+1]))+'" onclick="moveOP(\''+o.id+'\',1)">▶</button>':'<button class="btn btn-ghost btn-sm" title="Concluir" onclick="concluirOP(\''+o.id+'\')">✓</button>')
     +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
    :'';
+  const aberta=PCP_OBS_ABERTAS.has(o.id);
+  const seta=obs
+   ?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(aberta?'Esconder observação':'Ver observação')+'" onclick="event.stopPropagation();togglePcpObs(\''+o.id+'\')">'+(aberta?'▾':'▸')+'</button>'
+   :'<span style="display:inline-block;width:29px"></span>';
   const linha='<tr style="cursor:pointer" onclick="if(event.target.closest(\'button\')||event.target.closest(\'select\'))return;editOP(\''+o.id+'\')">'
-   +'<td class="mono" style="white-space:nowrap;font-weight:700;color:var(--text)">'+(ped?'V-'+pad(ped.num):'—')+'</td>'
+   +'<td class="mono" style="white-space:nowrap;font-weight:700;color:var(--text)">'+seta+(ped?'V-'+pad(ped.num):'—')+'</td>'
    +'<td><strong style="color:var(--text)">'+esc(peca)+'</strong></td>'
    +'<td>'+esc(cliName(o.cliId))+'</td>'
    +'<td>'+badgeEtapa(o.etapa)+'</td>'
@@ -5064,7 +5071,7 @@ function renderPcpLista(ordens,t){
    +'<td>'+prazo+'</td>'
    +'<td class="mono" style="font-size:11px;color:var(--text-muted)">'+(o.criadoEm?diasNaFila(o.criadoEm):'—')+'</td>'
    +'<td onclick="event.stopPropagation()">'+acoes+'</td></tr>';
-  const linhaObs=obs?'<tr class="sub-row"><td></td><td colspan="8" style="padding:4px 14px 8px;font-size:11px;color:rgba(122,111,98,0.9)">Obs. '+esc(obs)+'</td></tr>':'';
+  const linhaObs=(obs&&aberta)?'<tr class="sub-row"><td></td><td colspan="8" style="padding:4px 14px 8px;font-size:11px;color:rgba(122,111,98,0.9)">Obs. '+esc(obs)+'</td></tr>':'';
   return linha+linhaObs;}).join('')||emptyRow(9,'Nenhuma ordem nesta seleção');
  renderPcpListaCards(ordens,t);}
 /* no celular a tabela de nove colunas não cabe: vira cartão, como nas outras telas */
@@ -5092,7 +5099,8 @@ function renderPcpListaCards(ordens,t){
    +'<div class="pc-pag">'+esc(cliName(o.cliId))+'</div>'
    +'<div class="pc-status">'+badgeEtapa(o.etapa)+badgePrio(o.prio)+'<span style="font-size:11.5px;color:var(--text-muted)">'+(o.criadoEm?'na fila '+diasNaFila(o.criadoEm):'')+'</span></div>'
    +resp
-   +(obs?'<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Obs. '+esc(obs)+'</div>':'')
+   +(obs?'<button class="pc-itens-btn" onclick="togglePcpObs(\''+o.id+'\')">'+(PCP_OBS_ABERTAS.has(o.id)?'▾':'▸')+' observação</button>':'')
+   +((obs&&PCP_OBS_ABERTAS.has(o.id))?'<div style="font-size:12.5px;color:var(--text-muted);margin:6px 0 8px">Obs. '+esc(obs)+'</div>':'')
    +acoes+'</div>';}).join('');}
 function openOP(){preencherDatalistResp();$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';$('op-prio').value='Normal';$('op-etapa').value='0';$('op-obs').value='';
  $('op-btn-del').style.display='none';$('mop-title').textContent='Nova Ordem de Produção';openModal('modal-producao');}
@@ -7518,7 +7526,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.23';
+const APP_VERSAO='2026-09-24.24';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
