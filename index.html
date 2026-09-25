@@ -1075,7 +1075,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:8px">"Limpar cache" apaga só os arquivos guardados do app — seus dados, senhas e login não são afetados.</div>
       </div>
-      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio; O botão <strong>.zip</strong> baixa os quatro de uma vez, com um LEIA-ME explicando cada um. Se quiser só um deles, use os botões ao lado: use o <strong>Backup de Arquitetura</strong> se precisar recriar este sistema do zero um dia (não contém dados, só a descrição técnica de como o ERP foi construído — dá pra colar direto num Claude Code novo).</div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn btn-primary btn-sm" id="btn-backup-zip" onclick="baixarBackupZip()">📦 Baixar backup completo (.zip)</button><span style="font-size:12px;color:var(--text-muted)">ou baixe separado:</span><button class="btn btn-ghost btn-sm" onclick="exportData()">📥 JSON</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Excel</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 PDF</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupArquitetura()">🏛️ Arquitetura</button><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
+      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio; O botão <strong>.zip</strong> baixa os quatro de uma vez, com um LEIA-ME explicando cada um. Se quiser só um deles, use os botões ao lado: use o <strong>Backup de Arquitetura</strong> se precisar recriar este sistema do zero um dia (não contém dados, só a descrição técnica de como o ERP foi construído — dá pra colar direto num Claude Code novo).<br><strong>Restaurar backup (.json)</strong> faz o caminho de volta: lê o arquivo, mostra quantos registros de cada módulo vão entrar e grava por cima dos que tiverem o mesmo código — nada é apagado. Usuários e histórico não são restaurados.</div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn btn-primary btn-sm" id="btn-backup-zip" onclick="baixarBackupZip()">📦 Baixar backup completo (.zip)</button><span style="font-size:12px;color:var(--text-muted)">ou baixe separado:</span><button class="btn btn-ghost btn-sm" onclick="exportData()">📥 JSON</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Excel</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 PDF</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupArquitetura()">🏛️ Arquitetura</button><button class="btn btn-ghost btn-sm" id="btn-restaurar-backup" onclick="document.getElementById('backup-json-input').click()">📤 Restaurar backup (.json)</button><input type="file" id="backup-json-input" accept=".json,application/json" style="display:none" onchange="restaurarBackupJson(event)"><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
   </div>
@@ -6467,20 +6467,39 @@ async function carregarConfigSupabase(){
   else if(DB.config.cf[campo]!==undefined)DB.config.cf[campo]=Number(valor)||0;});
  saveDB();
  if(CUR==='configuracoes'&&!CFG_EDITANDO)renderConfig();}
+/* A tela guarda só os 400 registros mais recentes do histórico — o banco guarda todos.
+   Antes de montar qualquer backup, busca a lista inteira e deixa aqui; os montadores
+   usam esta lista quando ela existe. */
+let HISTORICO_BACKUP=null;
+const historicoDoBackup=()=>HISTORICO_BACKUP||DB.historico||[];
+async function comHistoricoCompleto(montar){
+ try{
+  const linhas=[];const passo=1000;
+  for(let de=0;de<50000;de+=passo){
+   const {data,error}=await supa.from('historico').select('*').order('id',{ascending:false}).range(de,de+passo-1);
+   if(error||!data||!data.length)break;
+   linhas.push.apply(linhas,data.map(historicoDeSupabase));
+   if(data.length<passo)break;}
+  if(linhas.length)HISTORICO_BACKUP=linhas;
+ }catch(e){/* sem rede, o backup segue com o que a tela tem */}
+ try{return await montar();}
+ finally{HISTORICO_BACKUP=null;}}
 /* mesma montagem usada pelo backup em .zip */
 function montarBackupJson(){
  const backup=Object.assign({},DB,{
   usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,nivelAcesso:nivelDe(u),status:u.status,ultimo:u.ultimo})),
+  historico:historicoDoBackup(),
   geradoEm:new Date().toISOString()
  });
  return JSON.stringify(backup,null,2);}
-function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
- const blob=new Blob([montarBackupJson()],{type:'application/json'});
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Backup-ERP-Mabe-'+today()+'.json';a.click();
+async function exportData(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ await comHistoricoCompleto(async()=>{
+  const blob=new Blob([montarBackupJson()],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Backup-ERP-Mabe-'+today()+'.json';a.click();});
  toast('Backup completo baixado! Guarde este arquivo em local seguro.','success');}
 async function exportDataExcel(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!await libPronta('xlsx'))return;
- XLSX.writeFile(montarPlanilhaBackup(),'Backup-ERP-Mabe-'+today()+'.xlsx');
+ await comHistoricoCompleto(async()=>XLSX.writeFile(montarPlanilhaBackup(),'Backup-ERP-Mabe-'+today()+'.xlsx'));
  toast('Planilha de backup baixada! Guarde este arquivo em local seguro.','success');}
 /* mesma montagem usada pelo backup em .zip */
 function montarPlanilhaBackup(){
@@ -6542,7 +6561,10 @@ function montarPlanilhaBackup(){
    ['Madeiras',DB.madeiras.length],['Máquinas & Ferramentas',DB.ferramentas.length],
    ['Fornecedores',DB.fornecedores.length],['Ordens de Compra',DB.compras.length],
    ['Folha de Pagamento',(DB.config.folhaPagamento||[]).length],
-   ['Registros no Histórico',DB.historico.length]];
+   ['Serviços de Terceiros',(DB.config.servicos||[]).length],
+   ['Comissionados',(DB.config.comissionados||[]).length],
+   ['Fichas de Preço',Object.keys(DB.config.fichasProdutos||{}).length],
+   ['Registros no Histórico',historicoDoBackup().length]];
   const aoa=[['estúdio mabe.',''],['MARCENARIA · MADEIRA MACIÇA',''],['',''],['BACKUP COMPLETO EM PLANILHAS',''],
    ['Gerado em '+fmtD(today()),''],['',''],['Módulo','Registros']];
   resumo.forEach(r=>aoa.push([r[0],r[1]]));
@@ -6670,7 +6692,8 @@ function montarPlanilhaBackup(){
   {t:'Custo',w:14,fmt:FMT_MOEDA,al:'right',v:p=>Number(p.custo)||0},
   {t:'Estoque',w:11,fmt:FMT_INT,al:'right',v:p=>Number(p.est)||0},
   {t:'Estoque mínimo',w:15,fmt:FMT_INT,al:'right',v:p=>Number(p.min)||0},
-  {t:'Unidade',w:10,al:'center',v:p=>txt(p.un)}],DB.produtos.filter(p=>p.tipo==='Insumo'));
+  {t:'Unidade',w:10,al:'center',v:p=>txt(p.un)},
+  {t:'Link de compra',w:52,v:p=>txt(linkDoProduto(p.id))}],DB.produtos.filter(p=>p.tipo==='Insumo'));
 
  criarAba('Madeiras','ESTOQUE DE MADEIRAS',[
   {t:'Espécie',w:26,v:m=>txt(m.especie)},{t:'Tipo',w:14,v:m=>txt(m.tipo)},
@@ -6713,15 +6736,83 @@ function montarPlanilhaBackup(){
   {t:'Colaborador',w:38,v:c=>txt(c.nome)},
   {t:'Salário mensal',w:18,fmt:FMT_MOEDA,al:'right',v:c=>Number(c.salario)||0}],DB.config.folhaPagamento||[]);
 
+ /* o que antes só existia no JSON e no PDF: agora dá para conferir na planilha */
+ const cfg=DB.config||{},cfx=cfg.cf||{},empBk=cfg.empresa||{};
+ const ajustes=[];
+ const põe=(grupo,item,valor)=>ajustes.push({grupo,item,valor});
+ põe('Custos fixos mensais','Aluguel',Number(cfx.aluguel)||0);
+ põe('Custos fixos mensais','IPTU',Number(cfx.iptu)||0);
+ põe('Custos fixos mensais','Água',Number(cfx.agua)||0);
+ põe('Custos fixos mensais','Energia',Number(cfx.energia)||0);
+ põe('Custos fixos mensais','Contador',Number(cfx.contador)||0);
+ põe('Custos fixos mensais','Outros',Number(cfx.outros)||0);
+ (cfg.custosFixosExtras||[]).forEach(e=>põe('Custos fixos mensais',txt(e.nome),Number(e.valor)||0));
+ (cfg.folhaPagamento||[]).forEach(c=>põe('Folha de pagamento',txt(c.nome),Number(c.salario)||0));
+ (cfg.mdoTipos||[]).forEach(m=>põe('Mão de obra (por hora)',txt(m.nome),Number(m.valorHora)||0));
+ põe('Parâmetros de preço','Horas produtivas por mês',Number(cfx.hmes)||0);
+ põe('Parâmetros de preço','Imposto (%)',Number(cfx.imposto)||0);
+ põe('Parâmetros de preço','Markup padrão (%)',Number(cfx.markup)||0);
+ põe('Parâmetros de preço','Taxa de máquina (R$/h)',Number(cfx.taxaMaquina)||0);
+ põe('Condições de pagamento','PIX — entrada (%)',Number(cfx.pixAntecipado)||0);
+ for(let i=1;i<=10;i++)põe('Condições de pagamento','Cartão '+i+'x — taxa (%)',Number(cfx['taxaParc'+i])||0);
+ põe('Financeiro','Saldo inicial',Number(cfx.saldoInicial)||0);
+ põe('Empresa','Endereço',txt(empBk.endereco));
+ põe('Empresa','Bairro',txt(empBk.bairro));
+ põe('Empresa','CEP',txt(empBk.cep));
+ põe('Empresa','Cidade',txt(empBk.cidade));
+ põe('Empresa','Estado',txt(empBk.estado));
+ põe('Empresa','Telefone',txt(empBk.telefone));
+ põe('Empresa','E-mail',txt(empBk.email));
+ põe('Empresa','Site',txt(empBk.site));
+ criarAba('Configurações','CONFIGURAÇÕES DO SISTEMA',[
+  {t:'Grupo',w:26,v:a=>txt(a.grupo)},{t:'Item',w:38,v:a=>txt(a.item)},
+  {t:'Valor',w:20,al:'right',v:a=>a.valor}],ajustes);
+
+ criarAba('Serviços','SERVIÇOS DE TERCEIROS',[
+  {t:'Serviço',w:38,v:sv=>txt(sv.nome)},{t:'Unidade',w:18,v:sv=>txt(sv.unidade)},
+  {t:'Valor',w:15,fmt:FMT_MOEDA,al:'right',v:sv=>Number(sv.valor)||0},
+  {t:'Fornecedor',w:28,v:sv=>sv.fornId?fornName(sv.fornId):''},
+  {t:'Observações',w:44,v:sv=>txt(sv.obs)}],cfg.servicos||[]);
+
+ criarAba('Comissionados','QUEM RECEBE COMISSÃO',[
+  {t:'Nome',w:30,v:c=>txt(c.nome)},{t:'Papel',w:22,v:c=>txt(c.papel)},
+  {t:'Comissão padrão (%)',w:18,al:'right',v:c=>Number(c.pct)||0},
+  {t:'Contato',w:26,v:c=>txt(c.contato)},
+  {t:'Observações',w:40,v:c=>txt(c.obs)}],cfg.comissionados||[]);
+
+ /* ficha de preço: a composição que o portfólio guarda para cada item */
+ const fichasLinhas=[];
+ Object.entries(cfg.fichasProdutos||{}).forEach(([prodId,f])=>{
+  if(!f)return;const prod=DB.produtos.find(x=>x.id===prodId);
+  const somaMat=(f.materiais||[]).reduce((t2,m)=>t2+(Number(m.qty)||0)*(Number(m.custo)||0),0);
+  const somaMdo=(f.mdo||[]).reduce((t2,m)=>t2+(Number(m.horas)||0)*(Number(m.valorHora)||0),0);
+  const somaSvc=(f.servicos||[]).reduce((t2,x)=>t2+(Number(x.valor)||0)*(Number(x.qty)||1),0);
+  fichasLinhas.push({nome:prod?prod.nome:'(produto removido)',mat:somaMat,mdo:somaMdo,svc:somaSvc,
+   imposto:Number(f.imposto)||0,markup:Number(f.markup)||0,comissao:Number(f.comissao)||0,
+   maquina:Number(f.maquina)||0,manual:f.precoManual?'Sim':'Não',
+   custo:prod?Number(prod.custo)||0:0,preco:prod?Number(prod.preco)||0:0});});
+ criarAba('Fichas de Preço','FICHAS DE PREÇO DO PORTFÓLIO',[
+  {t:'Produto',w:34,v:f=>txt(f.nome)},
+  {t:'Materiais',w:15,fmt:FMT_MOEDA,al:'right',v:f=>f.mat},
+  {t:'Mão de obra',w:15,fmt:FMT_MOEDA,al:'right',v:f=>f.mdo},
+  {t:'Serviços',w:15,fmt:FMT_MOEDA,al:'right',v:f=>f.svc},
+  {t:'Taxa de máquina (R$/h)',w:18,al:'right',v:f=>f.maquina},
+  {t:'Imposto (%)',w:12,al:'right',v:f=>f.imposto},
+  {t:'Markup (%)',w:12,al:'right',v:f=>f.markup},
+  {t:'Comissão (%)',w:13,al:'right',v:f=>f.comissao},
+  {t:'Preço manual',w:13,al:'center',v:f=>f.manual},
+  {t:'Custo gravado',w:15,fmt:FMT_MOEDA,al:'right',v:f=>f.custo},
+  {t:'Preço gravado',w:15,fmt:FMT_MOEDA,al:'right',v:f=>f.preco}],fichasLinhas);
+
  criarAba('Histórico','HISTÓRICO DE EDIÇÕES',[
   {t:'Data / Hora',w:20,v:h=>txt(h.dt)},{t:'Usuário',w:22,v:h=>txt(h.user||h.usuario)},
   {t:'Ação',w:14,v:h=>txt(h.acao)},{t:'Módulo',w:20,v:h=>txt(h.modulo)},
-  {t:'Detalhe',w:52,v:h=>txt(h.detalhe)}],DB.historico);
+  {t:'Detalhe',w:52,v:h=>txt(h.detalhe)}],historicoDoBackup());
 
  return wb;}
 async function gerarBackupCompletoPdf(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!await libPronta('jspdf'))return;
- montarPdfBackup().save('Backup-ERP-Mabe-'+today()+'.pdf');
+ await comHistoricoCompleto(async()=>montarPdfBackup().save('Backup-ERP-Mabe-'+today()+'.pdf'));
  toast('Backup completo em PDF gerado! Confira sua pasta de downloads.','success');}
 /* mesma montagem usada pelo backup em .zip */
 function montarPdfBackup(){
@@ -6748,13 +6839,9 @@ function montarPdfBackup(){
    const q=Number(i.qty)||1;return (q>1?q+'x ':'')+n;}).filter(Boolean).join('; ');return s||'—';};
 
  /* ================= CAPA ================= */
- doc.setFillColor(...DARK);doc.rect(MX,26,11,11,'F');
- doc.setFont('helvetica','normal');doc.setFontSize(12);doc.setTextColor(...DARK);
- doc.text('estúdio',MX+15,32.5);
- doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
- doc.text('mabe.',MX+15,42.5);
- doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
- doc.text('M A R C E N A R I A   ·   M A D E I R A   M A C I Ç A',MX,50);
+ /* a marca do estúdio, o mesmo arquivo usado na proposta e no PCP */
+ const capaLarg=62,capaAlt=capaLarg/MARCA_PROP;
+ doc.addImage(MARCA_PNG,'PNG',MX,26,capaLarg,capaAlt,'marca','SLOW');
 
  doc.setDrawColor(...ACCENT);doc.setLineWidth(1.2);doc.line(MX,86,MX+46,86);
  doc.setFont('helvetica','bold');doc.setFontSize(30);doc.setTextColor(...DARK);
@@ -6773,17 +6860,23 @@ function montarPdfBackup(){
   ['Insumos',DB.produtos.filter(p=>p.tipo==='Insumo').length],
   ['Madeiras',DB.madeiras.length],['Máquinas & Ferramentas',DB.ferramentas.length],
   ['Fornecedores',DB.fornecedores.length],['Ordens de Compra',DB.compras.length],
-  ['Usuários',DB.usuarios.length],['Registros no Histórico',DB.historico.length]];
+  ['Usuários',DB.usuarios.length],
+  ['Serviços de Terceiros',(DB.config.servicos||[]).length],
+  ['Fichas de Preço',Object.keys(DB.config.fichasProdutos||{}).length],
+  ['Registros no Histórico',historicoDoBackup().length]];
  doc.autoTable({startY:140,margin:{left:MX,right:MX},
   head:[['Módulo','Registros']],body:resumo.map(r=>[r[0],String(r[1])]),theme:'grid',
-  styles:{fontSize:8.5,cellPadding:{top:2,bottom:2,left:3,right:3},lineColor:LINHA,lineWidth:0.1,textColor:DARK},
-  headStyles:{fillColor:DARK,textColor:CREAM,fontSize:8.5,fontStyle:'bold',lineColor:DARK},
+  styles:{fontSize:8,cellPadding:{top:1.4,bottom:1.4,left:3,right:3},lineColor:LINHA,lineWidth:0.1,textColor:DARK},
+  headStyles:{fillColor:DARK,textColor:CREAM,fontSize:8,fontStyle:'bold',lineColor:DARK},
   bodyStyles:{fillColor:WHITE},alternateRowStyles:{fillColor:ZEBRA},
   columnStyles:{1:{halign:'right',fontStyle:'bold',cellWidth:32}}});
- let yCapa=doc.lastAutoTable.finalY+9;
+ let yCapa=Math.min(doc.lastAutoTable.finalY+9,RODAPE-16);
  doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(...MUTED);
- if(yCapa<=RODAPE-6)doc.text('As senhas de usuários não são incluídas neste arquivo, por segurança.',MX,yCapa);
- if(rodapeCapa.length&&yCapa+5<=RODAPE-6)doc.text(rodapeCapa.join('   ·   '),MX,yCapa+5);
+ if(yCapa<=RODAPE-6){doc.text('As senhas de usuários não são incluídas neste arquivo, por segurança.',MX,yCapa);yCapa+=5;}
+ /* endereço + telefone + e-mail + site não cabem numa linha só: quebra na largura da folha */
+ if(rodapeCapa.length){
+  const linhas=doc.splitTextToSize(rodapeCapa.join('   ·   '),LARG);
+  linhas.forEach(linha=>{if(yCapa<=RODAPE-6){doc.text(linha,MX,yCapa);yCapa+=4.2;}});}
 
  /* ================= SEÇÕES ================= */
  doc.addPage();let y=TOPO;
@@ -6985,6 +7078,33 @@ function montarPdfBackup(){
  for(let n=1;n<=10;n++)cond.push(['Cartão '+n+'x — taxa',fmtN(cf['taxaParc'+n],1)+'%']);
  tabela(['Condição','Valor'],cond,{0:{cellWidth:80},1:{cellWidth:40,halign:'right'}});
 
+ const svcs=DB.config.servicos||[];
+ if(svcs.length){subTitulo('Serviços de terceiros');
+  tabela(['Serviço','Unidade','Valor','Fornecedor'],
+   svcs.map(sv=>[t(sv.nome),t(sv.unidade),fmt(sv.valor),sv.fornId?t(fornName(sv.fornId)):'—']),
+   {0:{cellWidth:66},1:{cellWidth:30},2:{cellWidth:28,halign:'right'},3:{cellWidth:58}});}
+
+ const coms=DB.config.comissionados||[];
+ if(coms.length){subTitulo('Quem recebe comissão');
+  tabela(['Nome','Papel','Comissão','Contato'],
+   coms.map(c=>[t(c.nome),t(c.papel),fmtN(Number(c.pct)||0,1)+'%',t(c.contato)]),
+   {0:{cellWidth:56},1:{cellWidth:40},2:{cellWidth:26,halign:'right'},3:{cellWidth:60}});}
+
+ /* a composição de preço de cada item do portfólio */
+ const fichas=Object.entries(DB.config.fichasProdutos||{}).map(([id,f])=>{
+  if(!f)return null;const prod=DB.produtos.find(x=>x.id===id);
+  const soma=(arr,mult)=>(arr||[]).reduce((s2,x)=>s2+mult(x),0);
+  return [t(prod?prod.nome:'(produto removido)'),
+   fmt(soma(f.materiais,m=>(Number(m.qty)||0)*(Number(m.custo)||0))),
+   fmt(soma(f.mdo,m=>(Number(m.horas)||0)*(Number(m.valorHora)||0))),
+   fmt(soma(f.servicos,x=>(Number(x.valor)||0)*(Number(x.qty)||1))),
+   fmtN(Number(f.markup)||0,1)+'%',
+   fmt(prod?prod.preco:0)];}).filter(Boolean);
+ if(fichas.length){subTitulo('Fichas de preço do portfólio');
+  tabela(['Produto','Materiais','Mão de obra','Serviços','Markup','Preço'],fichas,
+   {0:{cellWidth:52},1:{cellWidth:26,halign:'right'},2:{cellWidth:26,halign:'right'},
+    3:{cellWidth:24,halign:'right'},4:{cellWidth:20,halign:'right'},5:{cellWidth:28,halign:'right'}});}
+
  subTitulo('Dados do estúdio');
  tabela(['Campo','Valor'],[['Endereço',t(emp.endereco)],['Bairro',t(emp.bairro)],['CEP',t(emp.cep)],
   ['Cidade',t(emp.cidade)],['Estado',t(emp.estado)],['Telefone / WhatsApp',t(emp.telefone)],
@@ -6992,18 +7112,17 @@ function montarPdfBackup(){
   {0:{cellWidth:50},1:{cellWidth:110}});
 
  /* ---- Histórico ---- */
- secao('Histórico de Edições',DB.historico.length);
+ secao('Histórico de Edições',historicoDoBackup().length);
  tabela(['Data / Hora','Usuário','Ação','Módulo','Detalhe'],
-  DB.historico.map(h=>[t(h.dt),t(h.user||h.usuario),t(h.acao),t(h.modulo),t(h.detalhe)]),
+  historicoDoBackup().map(h=>[t(h.dt),t(h.user||h.usuario),t(h.acao),t(h.modulo),t(h.detalhe)]),
   {0:{cellWidth:30},1:{cellWidth:28},2:{cellWidth:18},3:{cellWidth:26}});
 
  /* ================= CABEÇALHO CORRIDO E RODAPÉ ================= */
  const total=doc.internal.getNumberOfPages();
  for(let p=1;p<=total;p++){doc.setPage(p);
   if(p>1){
-   doc.setFillColor(...DARK);doc.rect(MX,12,4.6,4.6,'F');
-   doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...DARK);
-   doc.text('estúdio mabe.',MX+6.6,15.8);
+   const cabLarg=26,cabAlt=cabLarg/MARCA_PROP;
+   doc.addImage(MARCA_PNG,'PNG',MX,11,cabLarg,cabAlt,'marca','SLOW');
    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
    doc.text('Backup completo · '+fmtD(today()),MX+LARG,15.8,{align:'right'});
    doc.setDrawColor(...ACCENT);doc.setLineWidth(0.5);doc.line(MX,19,MX+LARG,19);}
@@ -7129,16 +7248,29 @@ prompt pronto na última seção).
     status, obs, lancado (boolean)
 12. historico (auditoria) — dt, user_nome, acao, modulo, detalhe; toda
     ação relevante do sistema grava uma linha aqui
-13. config — tabela chave-valor simples (campo, valor); guarda: custos
-    fixos padrão, tipos de mão de obra (JSON), custos fixos extras
-    (JSON), condições de pagamento (taxas de parcelamento, % de PIX
-    antecipado), dados cadastrais da empresa, e a URL do Google Apps
-    Script
+13. usuarios — login, senha (hash SHA-256), nome, perfil, status, ultimo
+    acesso, pergunta e resposta de recuperação
+14. config — tabela chave-valor simples (campo, valor). É o "porão" do
+    sistema: tudo que precisaria de uma tabela nova mora aqui como JSON
+    numa linha, porque o app não roda DDL. Guarda custos fixos padrão,
+    custos fixos extras, tipos de mão de obra, folha de pagamento,
+    condições de pagamento (taxas de parcelamento e % de PIX antecipado),
+    dados cadastrais da empresa, saldo inicial do caixa, data da última
+    importação de OFX, catálogo de serviços de terceiros, lista de
+    comissionados, tempos de produção por produto, links de compra dos
+    materiais e as fichas de preço do portfólio.
 
-Observação importante: NÃO existe tabela de usuários no Supabase — o
-cadastro de usuários (login/senha/perfil) fica só no localStorage de cada
-navegador. Ou seja, os usuários do sistema são locais por máquina, não
-compartilhados entre dispositivos.
+Storage (arquivos): existe um bucket "orcamentos-anexos" no Supabase
+Storage, com as pastas "orcamentos/<id>/" e "pedidos/<id>/", onde ficam
+os arquivos de referência anexados a cada orçamento e a cada pedido. No
+banco, as tabelas guardam só a lista (nome, caminho e URL) na coluna
+"anexos".
+
+Colunas que nasceram depois: algumas colunas foram acrescentadas à mão no
+Supabase (orcamentos.origem, financeiro.obs, vendas.anexos). Como o app
+não roda DDL, ele detecta em tempo de execução se a coluna existe antes
+de gravar — assim continua funcionando mesmo num banco que ainda não a
+tenha.
 
 Convenção de nomes: no banco os campos usam "snake_case" (ex: cli_id,
 centro_custo, for_id) e no JavaScript usam "camelCase" (ex: cliId,
@@ -7172,36 +7304,66 @@ ORC-0007, V-0014, OP-0009, OC-0003.
   pedidos, estoque crítico, últimas transações; botão para gerar um PDF
   com o mesmo conteúdo do período selecionado.
 - Orçamentos — criação de orçamentos com múltiplos itens (sob medida,
-  catálogo ou novo produto); aprovação parcial de itens (checklist) que
-  gera automaticamente um Pedido, contas a receber e uma Ordem de
-  Produção; geração de PDF do orçamento para o cliente.
+  catálogo ou novo produto); status em caixa de seleção na própria lista
+  (Rascunho, Enviado, Aprovado, Reprovado, Concluído); aprovação parcial
+  de itens (checklist) que gera automaticamente um Pedido, contas a
+  receber e uma Ordem de Produção; anexos de referência (fotos, PDFs);
+  geração do PDF da proposta (com capa), do contrato de prestação de
+  serviço e envio por WhatsApp ou e-mail.
 - Pedidos (Vendas) — lista de pedidos gerados manualmente ou a partir da
-  aprovação de orçamentos, com baixa financeira.
-- Produção (PCP) — kanban com 7 etapas fixas: Planejamento, Corte &
-  Usinagem, Montagem, Acabamento, Retrabalho, Pronto, Entregue.
+  aprovação de orçamentos, com baixa financeira, anexos de referência
+  próprios e dois documentos para impressão: "Imprimir pedido (PCP)",
+  com opção de ocultar valores para a oficina, e "Imprimir recibo" para
+  o cliente. Em ambos dá para escolher, por caixa de seleção, quais
+  anexos saem junto.
+- Produção (PCP) — 7 etapas fixas: Planejamento, Corte & Usinagem,
+  Montagem, Acabamento, Retrabalho, Pronto, Entregue. Dois modos de
+  visualização, escolhidos num seletor e gravados no aparelho: Kanban
+  (quadro por etapa) e Lista (tabela única por prazo, com a etapa em
+  coluna de status e a observação recolhível). O responsável por cada
+  ordem é escolhido direto no cartão ou na linha. O botão "Imprimir PCP"
+  gera a folha de produção em PDF, com quadrado de conferência e a
+  observação de cada ordem.
 - Entregas — controle de entregas/instalações vinculadas às ordens de
   produção.
 - Máquinas & Ferramentas — cadastro com alerta de manutenção preventiva
   vencida.
 - Material/Insumo — estoque de matéria-prima com alerta de estoque
-  mínimo.
+  mínimo e link de compra do material (o nome fica sublinhado e abre a
+  página do fornecedor).
 - Portfólio — catálogo de produtos prontos vendáveis, também com alerta
-  de estoque mínimo.
+  de estoque mínimo. Cada item tem uma FICHA DE PREÇO (a mesma tela de
+  composição usada no orçamento: materiais, mão de obra, serviços,
+  máquina, imposto, comissão e markup), guardada em config.fichasProdutos.
+  Ao adicionar o item a um orçamento, a ficha vem preenchida e é
+  recalculada com os custos do dia. Cada item também gera uma Ficha
+  Técnica em PDF para a execução na oficina.
 - Madeiras — estoque de madeira com cálculo de volume em m³.
-- Financeiro — lançamentos de entrada/saída, com status de pagamento.
+- Financeiro — lançamentos de entrada/saída com status de pagamento,
+  importação de extrato bancário em OFX e conciliação com os lançamentos
+  já existentes.
 - Centro de Custos — segmentação dos lançamentos financeiros por setor
   fixo (Marketing, Vendas, Pedidos, Folha de Pagamento, Administrativo,
   Manutenção).
 - Relatórios — relatório financeiro detalhado por período.
-- Compras (Ordens de Compra) — pedidos a fornecedores.
+- Compras (Ordens de Compra) — pedidos a fornecedores, com importação da
+  NF-e em XML, que atualiza os custos no cadastro de material/insumo.
+- Serviços de Terceiros — catálogo de serviços contratados (corte a
+  laser, tapeçaria, vidro) com valor e unidade, usado na composição de
+  preço dos orçamentos.
+- Comissões — cadastro de quem recebe comissão e o percentual padrão.
+- Documentos (modelos) — um lugar só para ver e gerar em branco todos os
+  documentos que o ERP produz: proposta, recibo, pedido, contrato, ficha
+  técnica, relatórios e backups.
 - Fornecedores / Clientes — CRMs simples.
 - Usuários — gestão de usuários e perfis (só Admin; dados 100% locais).
 - Histórico de Edições — auditoria de todas as ações relevantes (quem fez
   o quê e quando).
 - Configurações — sincronização com Google Sheets, custos fixos padrão
-  (mais custos fixos extras dinâmicos), tipos de mão de obra, condições
-  de pagamento, dados cadastrais da empresa, backups (JSON/Excel/PDF/
-  Arquitetura) e reset de dados.
+  (mais custos fixos extras dinâmicos), folha de pagamento, tipos de mão
+  de obra, condições de pagamento, dados cadastrais da empresa, backups
+  (o .zip com tudo, ou JSON/Excel/PDF/Arquitetura separados), restaurar
+  backup e reset de dados.
 
 
 ## 8. Motor de precificação de orçamentos (a regra de negócio mais importante)
@@ -7256,12 +7418,26 @@ Produção vinculada, já na etapa "Planejamento".
 
 ## 11. Geração de PDFs
 
-Todos os PDFs do sistema (orçamento para o cliente, backup completo,
-relatório do dashboard, este próprio documento de arquitetura não é PDF
-mas os outros três são) seguem o mesmo padrão visual: cabeçalho com o
-logo da Mabe, título, linha divisória dourada, tabelas com cabeçalho
-escuro e linhas zebradas, rodapé com "Estúdio Mabe" + data + número de
-página.
+Os documentos em PDF são: proposta do orçamento, contrato de prestação de
+serviço, ficha técnica do produto, pedido para a oficina (PCP), recibo do
+cliente, folha de produção do PCP, relatório do dashboard, relatório
+financeiro e o backup completo. Todos seguem o mesmo padrão visual:
+cabeçalho com a marca da Mabe, título, linha divisória dourada, tabelas
+com cabeçalho escuro e linhas zebradas, rodapé com endereço/contato +
+número de página. Os documentos que vão para o cliente ou para a oficina
+abrem com uma página de capa, com a marca centralizada.
+
+A marca é um PNG com fundo transparente embutido no próprio index.html
+como data URI (constante MARCA_PNG, com a proporção em MARCA_PROP), e é
+desenhada com addImage(...,'SLOW') — assim o arquivo final fica na casa
+das dezenas de KB em vez de centenas. Não se deve redesenhar o logotipo
+com fonte do jsPDF: a fonte da marca é geométrica e o resultado não bate.
+
+Duas armadilhas do jsPDF que o código contorna: as fontes são Latin-1, de
+modo que emojis e setas corrompem a linha inteira (há uma função que
+limpa o texto antes de escrever); e o alinhamento centralizado ignora o
+charSpace, então existe um helper que desconta a largura do espaçamento
+ao centralizar títulos espaçados.
 
 Detalhe técnico relevante: a biblioteca jspdf-autotable pode criar
 páginas extras sozinha quando uma tabela não cabe numa página só. Para
@@ -7284,14 +7460,37 @@ apenas o Supabase.
 
 ## 13. Backups existentes
 
+O botão principal baixa um único arquivo .zip com os quatro documentos
+abaixo mais um LEIA-ME explicando cada um. O .zip é montado pelo próprio
+navegador, sem biblioteca: o código escreve os cabeçalhos locais, o
+diretório central e o EOCD na mão, com CRC-32 próprio e compressão via
+CompressionStream('deflate-raw').
+
 - Backup Completo (JSON) — todos os dados, exceto senhas de usuário;
-  serve para restaurar o sistema.
-- Backup em Planilhas (Excel) — os mesmos dados, organizados em abas, uma
-  por módulo, para consulta humana.
+  é o arquivo que restaura o sistema.
+- Backup em Planilhas (Excel) — os mesmos dados em abas, uma por módulo,
+  incluindo configurações, serviços, comissionados e fichas de preço.
 - Backup Completo (PDF) — documento visual com a identidade da marca,
   para leitura ou impressão.
 - Backup de Arquitetura (este documento) — não contém dados, contém a
   descrição de como o sistema foi construído.
+
+Restaurar: "Restaurar backup (.json)" lê o arquivo, mostra quantos
+registros de cada módulo serão gravados, pede confirmação por escrito e
+então grava por cima no Supabase (upsert pelo id, em blocos de 100). Nada
+é apagado: o que existe no banco e não está no arquivo permanece. Não são
+restaurados os usuários (o backup não guarda senhas) nem o histórico (é
+um diário; recarregá-lo duplicaria as linhas). Depois de restaurar num
+banco novo, vale conferir as sequências de numeração (num) das tabelas
+orcamentos, vendas, producao e compras.
+
+O histórico do backup vem completo: a tela guarda os 400 registros mais
+recentes, mas na hora de montar o backup o sistema busca a tabela inteira
+no Supabase, paginada.
+
+O que NÃO entra no backup: os arquivos anexados (fotos e PDFs de
+referência), que ficam no Supabase Storage — o backup guarda só o nome e
+o link de cada um.
 
 
 ## 14. Segurança
@@ -7421,11 +7620,20 @@ function leiaMeBackup(dia){
  +'  Arquitetura-ERP-Mabe-'+dia+'.md     Como o ERP foi construído. Não contém dados; serve para recriar o sistema.\r\n\r\n'
  +'COMO RESTAURAR\r\n'
  +'  1. Abra o ERP e entre como administrador.\r\n'
- +'  2. Vá em Configurações > Dados & Backup > Importar backup.\r\n'
- +'  3. Escolha o arquivo .json que está dentro deste zip.\r\n\r\n'
+ +'  2. Vá em Configurações > Dados & Backup.\r\n'
+ +'  3. Clique em "Restaurar backup (.json)" e escolha o arquivo Dados-ERP-Mabe.\r\n'
+ +'  4. Confira o resumo, confirme, e digite RESTAURAR quando for pedido.\r\n\r\n'
+ +'  Cada registro entra por cima do que tiver o mesmo código. Nada é apagado:\r\n'
+ +'  o que estiver no sistema e não estiver no arquivo continua no lugar.\r\n'
+ +'  Depois de restaurar num banco vazio, confira a numeração de orçamentos,\r\n'
+ +'  pedidos, ordens de produção e compras antes de criar documentos novos.\r\n\r\n'
  +'O QUE NÃO ESTÁ AQUI\r\n'
- +'  As senhas dos usuários, por segurança.\r\n'
- +'  As fotos de referência dos orçamentos, que ficam guardadas no servidor.\r\n\r\n'
+ +'  As senhas dos usuários, por segurança — por isso os usuários não são\r\n'
+ +'  restaurados: seria criar contas em que ninguém consegue entrar.\r\n'
+ +'  O histórico de edições está no arquivo para consulta, mas não é\r\n'
+ +'  restaurado, para não duplicar o diário do sistema.\r\n'
+ +'  As fotos e PDFs de referência de orçamentos e pedidos, que ficam\r\n'
+ +'  guardados no servidor — aqui está só o nome e o link de cada um.\r\n\r\n'
  +'Guarde este arquivo em mais de um lugar (Google Drive, e-mail, HD externo).\r\n';}
 async function baixarBackupZip(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  const btn=$('btn-backup-zip');const rotulo=btn?btn.textContent:'';
@@ -7433,11 +7641,14 @@ async function baixarBackupZip(){if(!isAdmin()){toast('Apenas administradores.',
  try{
   if(!await libPronta('xlsx')||!await libPronta('jspdf'))return;
   const dia=today();
-  const planilha=new Uint8Array(XLSX.write(montarPlanilhaBackup(),{bookType:'xlsx',type:'array'}));
-  const pdf=new Uint8Array(await montarPdfBackup().output('blob').arrayBuffer());
+  /* o histórico inteiro vale para os três arquivos: busca uma vez só */
+  const {planilha,pdf,json}=await comHistoricoCompleto(async()=>({
+   planilha:new Uint8Array(XLSX.write(montarPlanilhaBackup(),{bookType:'xlsx',type:'array'})),
+   pdf:new Uint8Array(await montarPdfBackup().output('blob').arrayBuffer()),
+   json:montarBackupJson()}));
   const zip=await montarZip([
    {nome:'LEIA-ME.txt',dados:leiaMeBackup(dia)},
-   {nome:'Dados-ERP-Mabe-'+dia+'.json',dados:montarBackupJson()},
+   {nome:'Dados-ERP-Mabe-'+dia+'.json',dados:json},
    {nome:'Planilha-ERP-Mabe-'+dia+'.xlsx',dados:planilha},
    {nome:'Relatorio-ERP-Mabe-'+dia+'.pdf',dados:pdf},
    {nome:'Arquitetura-ERP-Mabe-'+dia+'.md',dados:textoArquitetura()}]);
@@ -7446,6 +7657,91 @@ async function baixarBackupZip(){if(!isAdmin()){toast('Apenas administradores.',
   toast('Backup completo baixado ('+Math.max(1,Math.round(zip.size/1024))+' KB). Guarde o arquivo em local seguro.','success',7000);
  }catch(e){toast('Não consegui montar o backup: '+(e.message||e),'error',7000);}
  finally{if(btn){btn.disabled=false;btn.textContent=rotulo;}}}
+/* ================= RESTAURAR BACKUP =================
+   O .json do backup volta para o Supabase. É uma gravação por cima (upsert pelo
+   código do registro): o que está no arquivo entra ou atualiza, e o que existe hoje
+   no banco e não está no arquivo continua lá. Nada é apagado.
+   Fora do alvo de propósito: usuários (o backup não tem as senhas, e restaurar
+   criaria contas sem entrada) e histórico (é um diário; recarregá-lo duplicaria). */
+const TABELAS_RESTAURO=[
+ {chave:'clientes',tabela:'clientes',rotulo:'Clientes',conv:c=>clienteParaSupabase(c)},
+ {chave:'fornecedores',tabela:'fornecedores',rotulo:'Fornecedores',conv:f=>({id:f.id,nome:f.nome,cnpj:f.cnpj||null,tel:f.tel||null,email:f.email||null,cidade:f.cidade||null,status:f.status||'Ativo'})},
+ {chave:'produtos',tabela:'produtos',rotulo:'Portfólio e insumos',conv:x=>({id:x.id,nome:x.nome,tipo:x.tipo||'Portfólio',cat:x.cat||null,un:x.un||'un',preco:Number(x.preco)||0,custo:Number(x.custo)||0,est:Number(x.est)||0,min:Number(x.min)||0,materiais:x.materiais||[]})},
+ {chave:'madeiras',tabela:'madeiras',rotulo:'Madeiras',conv:m=>({id:m.id,especie:m.especie,tipo:m.tipo||null,esp:Number(m.esp)||0,larg:Number(m.larg)||0,comp:Number(m.comp)||0,qtd:Number(m.qtd)||0,custo:Number(m.custo)||0,umidade:Number(m.umidade)||0,min:Number(m.min)||0,forn:m.forn||null})},
+ {chave:'ferramentas',tabela:'ferramentas',rotulo:'Máquinas e ferramentas',conv:f=>ferramentaParaSupabase(f)},
+ {chave:'orcamentos',tabela:'orcamentos',rotulo:'Orçamentos',conv:o=>orcParaSupabase(o)},
+ {chave:'vendas',tabela:'vendas',rotulo:'Pedidos',conv:v=>vendaParaSupabase(v)},
+ {chave:'producao',tabela:'producao',rotulo:'Ordens de produção',conv:o=>opParaSupabase(o)},
+ {chave:'entregas',tabela:'entregas',rotulo:'Entregas',conv:e=>entregaParaSupabase(e)},
+ {chave:'compras',tabela:'compras',rotulo:'Ordens de compra',conv:c=>compraParaSupabase(c)},
+ {chave:'financeiro',tabela:'financeiro',rotulo:'Financeiro',conv:f=>financeiroParaSupabase(f)}];
+/* a config é chave-valor: cada campo vira uma linha, do mesmo jeito que o ERP grava */
+function linhasConfigDoBackup(cfg){
+ const linhas=[];
+ const põe=(campo,valor)=>{if(valor!==undefined&&valor!==null)linhas.push({campo,valor:String(valor)});};
+ const cf=cfg.cf||{};
+ Object.keys(cf).forEach(k=>põe(k,cf[k]));
+ põe('empresaInfo',JSON.stringify(cfg.empresa||{}));
+ põe('mdoTipos',JSON.stringify(cfg.mdoTipos||[]));
+ põe('custosFixosExtras',JSON.stringify(cfg.custosFixosExtras||[]));
+ põe('folhaPagamento',JSON.stringify(cfg.folhaPagamento||[]));
+ põe('servicos',JSON.stringify(cfg.servicos||[]));
+ põe('comissionados',JSON.stringify(cfg.comissionados||[]));
+ põe('temposProducao',JSON.stringify(cfg.temposProducao||{}));
+ põe('fichasProdutos',JSON.stringify(cfg.fichasProdutos||{}));
+ põe('linksProdutos',JSON.stringify(cfg.linksProdutos||{}));
+ if(cfg.ultimaImportacaoOfx)põe('ultimaImportacaoOfx',cfg.ultimaImportacaoOfx);
+ return linhas;}
+async function restaurarBackupJson(ev){
+ const arquivo=ev.target.files&&ev.target.files[0];ev.target.value='';
+ if(!arquivo)return;
+ if(!isAdmin()){toast('Apenas administradores.','error');return;}
+ let dados;
+ try{dados=JSON.parse(await arquivo.text());}
+ catch(e){toast('Não consegui ler o arquivo: ele não parece um .json válido.','error',6000);return;}
+ if(!dados||typeof dados!=='object'||!Array.isArray(dados.clientes)||!dados.config){
+  toast('Este arquivo não é um backup do ERP da Mabe.','error',6000);return;}
+ /* o que vai entrar, contado antes de qualquer gravação */
+ const plano=TABELAS_RESTAURO.map(t=>({t,itens:Array.isArray(dados[t.chave])?dados[t.chave].filter(x=>x&&x.id):[]})).filter(x=>x.itens.length);
+ const totalRegistros=plano.reduce((s,x)=>s+x.itens.length,0);
+ const quando=dados.geradoEm?new Date(dados.geradoEm).toLocaleString('pt-BR'):'data não informada';
+ const resumo=plano.map(x=>'   • '+x.t.rotulo+': '+x.itens.length).join('\n')||'   (nenhum registro)';
+ if(!totalRegistros){toast('O arquivo não tem registros para restaurar.','info',6000);return;}
+ if(!confirm('RESTAURAR BACKUP\n\nArquivo gerado em '+quando+'\n\nSerão gravados '+totalRegistros+' registro(s):\n'+resumo
+  +'\n\nMais as configurações (custos fixos, markup, mão de obra, fichas de preço, serviços).'
+  +'\n\nComo funciona: cada registro entra por cima do que tiver o mesmo código. Nada é apagado — o que existe hoje e não está no arquivo continua no lugar.'
+  +'\n\nNão são restaurados: usuários (o backup não guarda senhas) e histórico de edições.'))return;
+ if((prompt('Esta ação grava por cima dos dados atuais.\n\nPara confirmar, digite RESTAURAR:')||'').trim().toUpperCase()!=='RESTAURAR'){
+  toast('Restauração cancelada.','info');return;}
+ const btn=$('btn-restaurar-backup');const rotulo=btn?btn.textContent:'';
+ if(btn){btn.disabled=true;}
+ const erros=[];let gravados=0;
+ try{
+  for(const {t,itens} of plano){
+   if(btn)btn.textContent='⏳ '+t.rotulo+'...';
+   const linhas=itens.map(t.conv);
+   /* em blocos: uma carga de 400 lançamentos de uma vez costuma estourar o pedido */
+   for(let i=0;i<linhas.length;i+=100){
+    const bloco=linhas.slice(i,i+100);
+    const {error}=await supa.from(t.tabela).upsert(bloco);
+    if(error){erros.push(t.rotulo+': '+error.message);break;}
+    gravados+=bloco.length;}}
+  if(btn)btn.textContent='⏳ Configurações...';
+  const linhasCfg=linhasConfigDoBackup(dados.config||{});
+  if(linhasCfg.length){const {error}=await supa.from('config').upsert(linhasCfg);
+   if(error)erros.push('Configurações: '+error.message);}
+ }catch(e){erros.push(String(e&&e.message||e));}
+ finally{if(btn){btn.disabled=false;btn.textContent=rotulo;}}
+ /* recarrega tudo do banco, para a tela mostrar o que foi restaurado de verdade */
+ if(btn)btn.textContent=rotulo;
+ await Promise.all([carregarClientesSupabase(),carregarFornecedoresSupabase(),carregarProdutosSupabase(),
+  carregarMadeirasSupabase(),carregarFerramentasSupabase(),carregarVendasSupabase(),carregarOrcamentosSupabase(),
+  carregarProducaoSupabase(),carregarEntregasSupabase(),carregarComprasSupabase(),carregarFinanceiroSupabase(),
+  carregarConfigSupabase()]);
+ renderSection(CUR);updateBadges();
+ if(erros.length){toast('Restaurado em parte: '+gravados+' registro(s). Problemas: '+erros.join(' · '),'error',12000);}
+ else{commit('criar','Configurações','Backup restaurado ('+gravados+' registros, arquivo de '+quando+')');
+  toast('Backup restaurado: '+gravados+' registro(s) gravados. Confira os módulos antes de seguir.','success',10000);}}
 function confirmReset(){if(!isAdmin()){toast('Apenas administradores.','error');return;}
  if(!confirm('⚠️ ATENÇÃO: todos os dados serão apagados. Continuar?'))return;
  if(!confirm('Tem certeza? Esta ação não pode ser desfeita. Exporte um backup antes!'))return;
@@ -7526,7 +7822,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.24';
+const APP_VERSAO='2026-09-24.25';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
