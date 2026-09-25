@@ -1075,7 +1075,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:8px">"Limpar cache" apaga só os arquivos guardados do app — seus dados, senhas e login não são afetados.</div>
       </div>
-      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. As senhas de usuários não são incluídas, por segurança.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio; O botão <strong>.zip</strong> baixa os quatro de uma vez, com um LEIA-ME explicando cada um. Se quiser só um deles, use os botões ao lado: use o <strong>Backup de Arquitetura</strong> se precisar recriar este sistema do zero um dia (não contém dados, só a descrição técnica de como o ERP foi construído — dá pra colar direto num Claude Code novo).<br><strong>Restaurar backup (.json)</strong> faz o caminho de volta: lê o arquivo, mostra quantos registros de cada módulo vão entrar e grava por cima dos que tiverem o mesmo código — nada é apagado. Usuários e histórico não são restaurados.</div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn btn-primary btn-sm" id="btn-backup-zip" onclick="baixarBackupZip()">📦 Baixar backup completo (.zip)</button><span style="font-size:12px;color:var(--text-muted)">ou baixe separado:</span><button class="btn btn-ghost btn-sm" onclick="exportData()">📥 JSON</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Excel</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 PDF</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupArquitetura()">🏛️ Arquitetura</button><button class="btn btn-ghost btn-sm" id="btn-restaurar-backup" onclick="document.getElementById('backup-json-input').click()">📤 Restaurar backup (.json)</button><input type="file" id="backup-json-input" accept=".json,application/json" style="display:none" onchange="restaurarBackupJson(event)"><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
+      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. <strong>Atenção:</strong> o arquivo <strong>.json</strong> leva as senhas embaralhadas dos usuários, para que o restauro devolva os acessos — trate esse arquivo como confidencial e não mande por grupo de WhatsApp nem deixe em pasta compartilhada. A planilha e o PDF não levam senha nenhuma.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio; O botão <strong>.zip</strong> baixa os quatro de uma vez, com um LEIA-ME explicando cada um. Se quiser só um deles, use os botões ao lado: use o <strong>Backup de Arquitetura</strong> se precisar recriar este sistema do zero um dia (não contém dados, só a descrição técnica de como o ERP foi construído — dá pra colar direto num Claude Code novo).<br><strong>Restaurar backup (.json)</strong> faz o caminho de volta: lê o arquivo, mostra quantos registros de cada módulo vão entrar e grava por cima dos que tiverem o mesmo código — nada é apagado. Os usuários voltam com a senha que tinham; o histórico não é restaurado.</div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn btn-primary btn-sm" id="btn-backup-zip" onclick="baixarBackupZip()">📦 Baixar backup completo (.zip)</button><span style="font-size:12px;color:var(--text-muted)">ou baixe separado:</span><button class="btn btn-ghost btn-sm" onclick="exportData()">📥 JSON</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Excel</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 PDF</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupArquitetura()">🏛️ Arquitetura</button><button class="btn btn-ghost btn-sm" id="btn-restaurar-backup" onclick="document.getElementById('backup-json-input').click()">📤 Restaurar backup (.json)</button><input type="file" id="backup-json-input" accept=".json,application/json" style="display:none" onchange="restaurarBackupJson(event)"><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
   </div>
@@ -6486,8 +6486,15 @@ async function comHistoricoCompleto(montar){
  finally{HISTORICO_BACKUP=null;}}
 /* mesma montagem usada pelo backup em .zip */
 function montarBackupJson(){
+ /* a senha vai como está guardada: "sha256$sal$resumo". Não é a senha em si e não
+    dá para voltar dela à senha digitada — mas é o que o login confere, então com ela
+    no arquivo as pessoas continuam entrando com a mesma senha depois de um restauro.
+    Vale para a resposta da pergunta de segurança, guardada do mesmo jeito.
+    Só o .json leva isso; a planilha e o PDF, que são para ler e imprimir, não. */
  const backup=Object.assign({},DB,{
-  usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,nivelAcesso:nivelDe(u),status:u.status,ultimo:u.ultimo})),
+  usuarios:(DB.usuarios||[]).map(u=>({id:u.id,login:u.login,nome:u.nome,perfil:u.perfil,
+   nivelAcesso:nivelDe(u),status:u.status,ultimo:u.ultimo,
+   senha:u.senha||'',pergunta:u.pergunta||'',resposta:u.resposta||''})),
   historico:historicoDoBackup(),
   geradoEm:new Date().toISOString()
  });
@@ -6569,7 +6576,7 @@ function montarPlanilhaBackup(){
    ['Gerado em '+fmtD(today()),''],['',''],['Módulo','Registros']];
   resumo.forEach(r=>aoa.push([r[0],r[1]]));
   aoa.push(['','']);
-  aoa.push(['As senhas de usuários não são incluídas neste arquivo, por segurança.','']);
+  aoa.push(['As senhas não aparecem nesta planilha. Elas ficam só no arquivo .json do backup.','']);
   aoa.push(['Cada aba desta planilha corresponde a um módulo do ERP.','']);
   const ws=XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols']=[{wch:36},{wch:14}];
@@ -6872,7 +6879,7 @@ function montarPdfBackup(){
   columnStyles:{1:{halign:'right',fontStyle:'bold',cellWidth:32}}});
  let yCapa=Math.min(doc.lastAutoTable.finalY+9,RODAPE-16);
  doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(...MUTED);
- if(yCapa<=RODAPE-6){doc.text('As senhas de usuários não são incluídas neste arquivo, por segurança.',MX,yCapa);yCapa+=5;}
+ if(yCapa<=RODAPE-6){doc.text('As senhas não aparecem neste documento. Elas ficam só no arquivo .json do backup.',MX,yCapa);yCapa+=5;}
  /* endereço + telefone + e-mail + site não cabem numa linha só: quebra na largura da folha */
  if(rodapeCapa.length){
   const linhas=doc.splitTextToSize(rodapeCapa.join('   ·   '),LARG);
@@ -7466,8 +7473,9 @@ navegador, sem biblioteca: o código escreve os cabeçalhos locais, o
 diretório central e o EOCD na mão, com CRC-32 próprio e compressão via
 CompressionStream('deflate-raw').
 
-- Backup Completo (JSON) — todos os dados, exceto senhas de usuário;
-  é o arquivo que restaura o sistema.
+- Backup Completo (JSON) — todos os dados, inclusive os usuários com a senha
+  na forma em que ela é guardada ("sha256$sal$resumo"); é o arquivo que
+  restaura o sistema, e por isso deve ser tratado como confidencial.
 - Backup em Planilhas (Excel) — os mesmos dados em abas, uma por módulo,
   incluindo configurações, serviços, comissionados e fichas de preço.
 - Backup Completo (PDF) — documento visual com a identidade da marca,
@@ -7478,9 +7486,12 @@ CompressionStream('deflate-raw').
 Restaurar: "Restaurar backup (.json)" lê o arquivo, mostra quantos
 registros de cada módulo serão gravados, pede confirmação por escrito e
 então grava por cima no Supabase (upsert pelo id, em blocos de 100). Nada
-é apagado: o que existe no banco e não está no arquivo permanece. Não são
-restaurados os usuários (o backup não guarda senhas) nem o histórico (é
-um diário; recarregá-lo duplicaria as linhas). Depois de restaurar num
+é apagado: o que existe no banco e não está no arquivo permanece. Os
+usuários entram com a senha que tinham, de modo que as pessoas continuam
+entrando com a mesma senha de antes; usuários vindos de um backup antigo,
+sem o campo senha, são ignorados, para não criar contas sem entrada. O
+histórico não é restaurado (é um diário; recarregá-lo duplicaria as
+linhas). Depois de restaurar num
 banco novo, vale conferir as sequências de numeração (num) das tabelas
 orcamentos, vendas, producao e compras.
 
@@ -7627,9 +7638,13 @@ function leiaMeBackup(dia){
  +'  o que estiver no sistema e não estiver no arquivo continua no lugar.\r\n'
  +'  Depois de restaurar num banco vazio, confira a numeração de orçamentos,\r\n'
  +'  pedidos, ordens de produção e compras antes de criar documentos novos.\r\n\r\n'
+ +'CUIDADO COM ESTE ARQUIVO\r\n'
+ +'  O .json leva as senhas dos usuários na forma embaralhada em que o sistema\r\n'
+ +'  as guarda (ninguém consegue ler a senha a partir dele, mas ela é o que o\r\n'
+ +'  login confere). É por isso que o restauro devolve os acessos funcionando.\r\n'
+ +'  Trate este zip como confidencial: nada de grupo de WhatsApp ou pasta\r\n'
+ +'  compartilhada com terceiros. A planilha e o PDF não levam senha alguma.\r\n\r\n'
  +'O QUE NÃO ESTÁ AQUI\r\n'
- +'  As senhas dos usuários, por segurança — por isso os usuários não são\r\n'
- +'  restaurados: seria criar contas em que ninguém consegue entrar.\r\n'
  +'  O histórico de edições está no arquivo para consulta, mas não é\r\n'
  +'  restaurado, para não duplicar o diário do sistema.\r\n'
  +'  As fotos e PDFs de referência de orçamentos e pedidos, que ficam\r\n'
@@ -7674,7 +7689,9 @@ const TABELAS_RESTAURO=[
  {chave:'producao',tabela:'producao',rotulo:'Ordens de produção',conv:o=>opParaSupabase(o)},
  {chave:'entregas',tabela:'entregas',rotulo:'Entregas',conv:e=>entregaParaSupabase(e)},
  {chave:'compras',tabela:'compras',rotulo:'Ordens de compra',conv:c=>compraParaSupabase(c)},
- {chave:'financeiro',tabela:'financeiro',rotulo:'Financeiro',conv:f=>financeiroParaSupabase(f)}];
+ {chave:'financeiro',tabela:'financeiro',rotulo:'Financeiro',conv:f=>financeiroParaSupabase(f)},
+ /* com a senha no arquivo, faz sentido restaurar quem entra no sistema */
+ {chave:'usuarios',tabela:'usuarios',rotulo:'Usuários e senhas',conv:u=>usuarioParaSupabase(u)}];
 /* a config é chave-valor: cada campo vira uma linha, do mesmo jeito que o ERP grava */
 function linhasConfigDoBackup(cfg){
  const linhas=[];
@@ -7702,7 +7719,11 @@ async function restaurarBackupJson(ev){
  if(!dados||typeof dados!=='object'||!Array.isArray(dados.clientes)||!dados.config){
   toast('Este arquivo não é um backup do ERP da Mabe.','error',6000);return;}
  /* o que vai entrar, contado antes de qualquer gravação */
- const plano=TABELAS_RESTAURO.map(t=>({t,itens:Array.isArray(dados[t.chave])?dados[t.chave].filter(x=>x&&x.id):[]})).filter(x=>x.itens.length);
+ const plano=TABELAS_RESTAURO.map(t=>({t,itens:Array.isArray(dados[t.chave])?dados[t.chave].filter(x=>{
+  if(!x||!x.id)return false;
+  /* backup antigo não trazia senha: restaurar esses usuários criaria contas sem entrada */
+  if(t.chave==='usuarios')return !!x.senha;
+  return true;}):[]})).filter(x=>x.itens.length);
  const totalRegistros=plano.reduce((s,x)=>s+x.itens.length,0);
  const quando=dados.geradoEm?new Date(dados.geradoEm).toLocaleString('pt-BR'):'data não informada';
  const resumo=plano.map(x=>'   • '+x.t.rotulo+': '+x.itens.length).join('\n')||'   (nenhum registro)';
@@ -7710,7 +7731,8 @@ async function restaurarBackupJson(ev){
  if(!confirm('RESTAURAR BACKUP\n\nArquivo gerado em '+quando+'\n\nSerão gravados '+totalRegistros+' registro(s):\n'+resumo
   +'\n\nMais as configurações (custos fixos, markup, mão de obra, fichas de preço, serviços).'
   +'\n\nComo funciona: cada registro entra por cima do que tiver o mesmo código. Nada é apagado — o que existe hoje e não está no arquivo continua no lugar.'
-  +'\n\nNão são restaurados: usuários (o backup não guarda senhas) e histórico de edições.'))return;
+  +'\n\nOs usuários voltam com a senha que tinham quando o backup foi gerado.'
+  +'\nO histórico de edições não é restaurado, para não duplicar o diário do sistema.'))return;
  if((prompt('Esta ação grava por cima dos dados atuais.\n\nPara confirmar, digite RESTAURAR:')||'').trim().toUpperCase()!=='RESTAURAR'){
   toast('Restauração cancelada.','info');return;}
  const btn=$('btn-restaurar-backup');const rotulo=btn?btn.textContent:'';
@@ -7822,7 +7844,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.25';
+const APP_VERSAO='2026-09-24.26';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
