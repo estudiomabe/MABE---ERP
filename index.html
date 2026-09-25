@@ -887,7 +887,8 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
               <div class="form-grid form-2"><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="np-un"><option>un</option><option>m</option><option>m²</option><option>cx</option><option>par</option></select></div><div class="form-group"><label class="form-label">Estoque Inicial</label><input type="number" class="form-control" id="np-est" value="0" min="0"></div></div>
               <div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="np-min" value="1" min="0"></div>
             </div></div>
-            <div class="config-card" style="margin:0"><div class="config-title">🏢 Custos Fixos (Rateio)</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Definidos em Configurações — rateados automaticamente pelas horas trabalhadas neste item</div>
+            <div class="config-card" style="margin:0"><div class="config-title">🏢 Custos Fixos (Rateio)</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Definidos em Configurações — rateados pelas horas deste item</div>
+              <div class="form-group" style="margin-bottom:10px"><label class="form-label">Horas para o rateio</label><input type="number" class="form-control" id="orc-cf-horas" step="0.5" min="0" oninput="ajustarHorasCf()"><div style="font-size:11px;color:var(--text-muted);margin-top:4px" id="orc-cf-hint"></div><button type="button" class="btn btn-ghost btn-sm" id="orc-cf-voltar" style="display:none;margin-top:7px;padding:3px 9px;font-size:11px" onclick="voltarHorasCfDaMdo()">↺ Usar as horas da mão de obra</button></div>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total rateado</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-cf">R$ 0,00</span></div>
             </div>
             <div class="config-card" style="margin:0"><div class="config-title">👷 Mão de Obra</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Tipos e taxas definidos em Configurações — adicione as horas deste item</div>
@@ -3781,6 +3782,7 @@ function selecionarTipoOrc(tipo){if(tipo==='catalogo'){resetOrcCatalogo();orcSho
  resetOrcForm(tipo);orcShow('form');}
 function resetOrcForm(tipo){const cf=DB.config.cf;
  PRECO_MANUAL=false;MARGEM_SUGERIDA=null;$('preco-manual-hint').style.display='none';
+ aplicarHorasCf(null);
  atualizarDatalistMateriais();
  $('orc-id').value='';$('orc-tipo').value=tipo;$('orc-desc').value='';$('orc-qty').value=1;$('orc-obs').value='';
  $('orc-mdo').innerHTML='';
@@ -3864,7 +3866,12 @@ function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua',
   const tipo=DB.config.mdoTipos.find(t=>t.id===sel.value);const valorHora=tipo?Number(tipo.valorHora)||0:0;const sub=horas*valorHora;
   r.querySelector('.md-sub').textContent=fmt(sub);mdo+=sub;horasTotal+=horas;
   mdoLinhas.push({tipoId:sel.value,tipoNome:tipo?tipo.nome:'',horas,valorHora});});
- const cfRat=cfT/hmes*horasTotal;
+ /* por padrão o rateio segue as horas da mão de obra; quando alguém digita outro
+    número, é esse que manda — serve para item que ocupa a oficina sem gastar hora de
+    marceneiro (secagem, cura, montagem em obra) ou para o contrário. */
+ const horasCf=CF_HORAS_MANUAL?Math.max(0,parseFloat(($('orc-cf-horas')||{}).value)||0):horasTotal;
+ const cfHora=cfT/hmes;
+ const cfRat=cfHora*horasCf;
  let mat=0;const materiais=[];
  document.querySelectorAll('#orc-materiais > div').forEach(r=>{const qty=parseFloat(r.querySelector('.om-qty').value)||0;const custo=parseFloat(r.querySelector('.om-custo').value)||0;const sub=qty*custo;
   r.querySelector('.om-sub').textContent=fmt(sub);mat+=sub;
@@ -3895,7 +3902,16 @@ function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua',
   preco=precoAuto;
   impostoVal=preco*imp/100;comissaoVal=preco*com/100;maquinaVal=preco*maq/100;lucro=preco*margem/100;
  }
- return{cfRat,mdo,mdoLinhas,mat,materiais,serv,servicos,custo,custoBase,precoAuto,impostoVal,comissaoPct:com,comissaoNome,comissaoVal,maquinaPct:maq,maquinaVal,preco,lucro,margemImplicita};}
+ return{cfRat,cfHora,horasCf,horasMdo:horasTotal,cfHorasManual:CF_HORAS_MANUAL,mdo,mdoLinhas,mat,materiais,serv,servicos,custo,custoBase,precoAuto,impostoVal,comissaoPct:com,comissaoNome,comissaoVal,maquinaPct:maq,maquinaVal,preco,lucro,margemImplicita};}
+/* estado do ajuste: enquanto for automático, o campo espelha as horas da mão de obra */
+let CF_HORAS_MANUAL=false;
+function ajustarHorasCf(){CF_HORAS_MANUAL=true;calcOrc();}
+/* null = volta a seguir a mão de obra; número = horas gravadas naquele item */
+function aplicarHorasCf(horas){
+ CF_HORAS_MANUAL=horas!==null&&horas!==undefined&&horas!=='';
+ const campo=$('orc-cf-horas');if(!campo)return;
+ campo.value=CF_HORAS_MANUAL?horas:'';}
+function voltarHorasCfDaMdo(){CF_HORAS_MANUAL=false;calcOrc();}
 /* preço e margem andam juntos: digitar o preço recalcula a margem; digitar a margem recalcula o preço.
    MARGEM_SUGERIDA guarda a margem de antes do ajuste, para "recalcular automático" e para o preço sugerido. */
 let PRECO_MANUAL=false,MARGEM_SUGERIDA=null;
@@ -3946,6 +3962,14 @@ function comissaoPorPessoa(o){const m={};
 /* a tela de precificação calcula 1 unidade; o item guarda os valores já multiplicados pela quantidade */
 function qtdItemOrc(){const el=$('orc-qty');return Math.max(1,el?(parseFloat(el.value)||1):1);}
 function calcOrc(){const t=computeOrc();
+ const campoH=$('orc-cf-horas');
+ if(campoH){
+  if(!CF_HORAS_MANUAL)campoH.value=t.horasMdo?fmtN(t.horasMdo,t.horasMdo%1?1:0):'';
+  const hint=$('orc-cf-hint');
+  if(hint)hint.textContent=fmt(t.cfHora)+' por hora'+(CF_HORAS_MANUAL
+   ?'  ·  ajustado à mão (a mão de obra soma '+fmtN(t.horasMdo,t.horasMdo%1?1:0)+' h)'
+   :'  ·  seguindo as horas da mão de obra');
+  const btnV=$('orc-cf-voltar');if(btnV)btnV.style.display=CF_HORAS_MANUAL?'inline-flex':'none';}
  $('orc-total-cf').textContent=fmt(t.cfRat);$('orc-total-mdo').textContent=fmt(t.mdo);$('orc-total-mat').textContent=fmt(t.mat);$('orc-total-serv').textContent=fmt(t.serv);
  $('res-cf').textContent=fmt(t.cfRat);$('res-mat').textContent=fmt(t.mat);$('res-mdo').textContent=fmt(t.mdo);$('res-serv').textContent=fmt(t.serv);$('res-custo').textContent=fmt(t.custo);
  if(!PRECO_MANUAL)$('res-preco-input').value=t.preco.toFixed(2);
@@ -3989,7 +4013,7 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
  const tipo=$('orc-tipo').value;const t=computeOrc();
  if(tipo==='novo_produto'&&!await cadastrarProdutoDoItem(desc,t))return;
  const cfgAtual=DB.config.cf;const qty=qtdItemOrc();
- const item={id:ORC_ITEM_EDITANDO||uid(),tipo:ORC_ITEM_PROD_ID?'catalogo':tipo,prodId:ORC_ITEM_PROD_ID||null,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,imposto:num('orc-imposto'),maquina:t.maquinaPct,maquinaVal:t.maquinaVal*qty,comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal*qty,markup:num('orc-markup'),margemSugerida:PRECO_MANUAL?MARGEM_SUGERIDA:null,precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto*qty,qty,custo:t.custo*qty,preco:Math.round(Math.round(t.preco*100)*qty)/100,lucro:t.lucro*qty};
+ const item={id:ORC_ITEM_EDITANDO||uid(),tipo:ORC_ITEM_PROD_ID?'catalogo':tipo,prodId:ORC_ITEM_PROD_ID||null,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,imposto:num('orc-imposto'),maquina:t.maquinaPct,maquinaVal:t.maquinaVal*qty,comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal*qty,markup:num('orc-markup'),cfHoras:t.cfHorasManual?t.horasCf:null,margemSugerida:PRECO_MANUAL?MARGEM_SUGERIDA:null,precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto*qty,qty,custo:t.custo*qty,preco:Math.round(Math.round(t.preco*100)*qty)/100,lucro:t.lucro*qty};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
@@ -4022,6 +4046,7 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
   if(it.mdo.qhsocio)addMdoItem({tipoId:'socio',horas:it.mdo.qhsocio});
   if(it.mdo.qhaux)addMdoItem({tipoId:'auxiliar',horas:it.mdo.qhaux});
  }
+ aplicarHorasCf(it.cfHoras);
  $('orc-imposto').value=it.imposto;$('orc-markup').value=it.markup;
  $('orc-maquina').value=it.maquina||0;
  $('orc-comissao').value=it.comissao||0;$('orc-comissao-nome').value=it.comissaoNome||'';selecionarComissaoDoItem(it.comissaoNome||'');
@@ -4067,6 +4092,7 @@ function fichaDoFormulario(t){return{
  mdo:t.mdoLinhas,materiais:t.materiais,servicos:t.servicos,
  imposto:num('orc-imposto'),maquina:t.maquinaPct,
  comissao:t.comissaoPct,comissaoNome:t.comissaoNome,markup:num('orc-markup'),
+ cfHoras:t.cfHorasManual?t.horasCf:null,
  precoManual:PRECO_MANUAL,margemSugerida:PRECO_MANUAL?MARGEM_SUGERIDA:null,
  custo:Math.round(t.custo*100)/100,preco:Math.round(t.preco*100)/100,atualizada:today()};}
 /* preenche o formulário: serve para a ficha do produto e para o item do orçamento */
@@ -4076,6 +4102,7 @@ function preencherFormComFicha(f){
  else if(f.mdo&&(f.mdo.qhsocio||f.mdo.qhaux)){ /* itens antigos, com Sócio/Auxiliar fixos */
   if(f.mdo.qhsocio)addMdoItem({tipoId:'socio',horas:f.mdo.qhsocio});
   if(f.mdo.qhaux)addMdoItem({tipoId:'auxiliar',horas:f.mdo.qhaux});}
+ aplicarHorasCf(f.cfHoras);
  $('orc-imposto').value=f.imposto||0;$('orc-markup').value=f.markup||0;
  $('orc-maquina').value=f.maquina||0;
  $('orc-comissao').value=f.comissao||0;$('orc-comissao-nome').value=f.comissaoNome||'';selecionarComissaoDoItem(f.comissaoNome||'');
@@ -7844,7 +7871,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-24.26';
+const APP_VERSAO='2026-09-25.1';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
