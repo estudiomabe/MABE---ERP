@@ -161,6 +161,13 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .status-drop select { appearance:none;-webkit-appearance:none;border:0;background:transparent;color:inherit;font:inherit;font-weight:700;padding:0;margin:0;cursor:pointer;outline:none; }
 .status-drop select option { color:var(--text);background:var(--surface);font-weight:600; }
 .status-drop .seta { font-size:10px;opacity:.75;pointer-events:none;margin-left:-1px; }
+/* uma linha por forma de pagamento na caixa de aprovacao */
+.pag-linha { display:flex;flex-wrap:wrap;gap:7px;align-items:flex-end;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px; }
+.pag-linha > div { flex:1 1 118px;min-width:0; }
+.pag-linha .rot { font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;display:block; }
+.pag-linha .form-control { padding:7px 9px;font-size:12.5px; }
+.pag-linha .tirar { flex:0 0 auto;padding:7px 10px;align-self:flex-end; }
+@media (max-width:640px){ .pag-linha > div { flex:1 1 130px; } }
 .form-control::placeholder { color:var(--text-muted); }
 select.form-control { cursor:pointer; } select.form-control option { background:#fff;color:var(--text); }
 .stat-row { display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap; }
@@ -1115,25 +1122,19 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div id="pdf-refs-lista" style="display:flex;flex-wrap:wrap;gap:8px"></div>
 </div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-pdf-orc')">Cancelar</button><button class="btn btn-primary" onclick="gerarPdfOrcamento()">📄 Gerar PDF</button></div></div></div>
-<div class="modal-overlay" id="modal-aprovar-orc"><div class="modal"><div class="modal-header"><div class="modal-title">✔ Aprovar Orçamento</div><button class="modal-close" onclick="closeModal('modal-aprovar-orc')">✕</button></div><div class="modal-body">
+<div class="modal-overlay" id="modal-aprovar-orc"><div class="modal" style="width:660px"><div class="modal-header"><div class="modal-title">✔ Aprovar Orçamento</div><button class="modal-close" onclick="closeModal('modal-aprovar-orc')">✕</button></div><div class="modal-body">
 <input type="hidden" id="aprv-orc-id">
 <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px" id="aprv-orc-desc"></p>
 <div class="form-group"><label class="form-label">Quais itens foram aprovados pelo cliente? *</label><div id="aprv-itens-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px"></div></div>
-<div class="form-grid">
-<div class="form-group"><label class="form-label">Forma de Pagamento escolhida pelo cliente *</label><select class="form-control" id="aprv-pag" onchange="atualizarPreviewAprov()">
-<option value="pix">PIX — antecipado + na entrega</option>
-<option value="cartao">Cartão de Crédito — 1x a 10x</option>
-<option value="dinheiro">Dinheiro — 100% antecipado</option>
-<option value="transferencia">Transferência — 100% antecipado</option>
-<option value="boleto">Boleto — 100% na entrega</option>
-</select></div>
-<div class="form-group" id="aprv-parc-wrap" style="display:none"><label class="form-label">Número de Parcelas</label><select class="form-control" id="aprv-parcelas" onchange="atualizarPreviewAprov()"></select></div>
-<div class="form-group"><label class="form-label">Data de Entrega combinada com o cliente *</label><input type="date" class="form-control" id="aprv-prazo" onchange="atualizarPreviewAprov()"></div>
+<div class="form-group"><label class="form-label">Como o cliente vai pagar? *</label>
+<div id="aprv-pags" style="display:flex;flex-direction:column;gap:8px"></div>
+<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento()">+ Adicionar forma de pagamento</button>
+<div id="aprv-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
 </div>
-<div class="form-group" id="aprv-receb-wrap"><label class="form-label">O pagamento inicial já foi recebido?</label><select class="form-control" id="aprv-recebido" onchange="atualizarPreviewAprov()">
-<option value="nao">Ainda não recebi — deixar como Pendente</option>
-<option value="extrato">Já recebi nesta conta — usar um lançamento do extrato</option>
-<option value="fora">Já recebi por fora (dinheiro ou outra conta) — lançar como Pago</option>
+<div class="form-group"><label class="form-label">Data de Entrega combinada com o cliente *</label><input type="date" class="form-control" id="aprv-prazo" onchange="aoMudarPrazoAprov()"></div>
+<div class="form-group" id="aprv-receb-wrap"><label class="form-label">O primeiro pagamento já está no extrato do banco?</label><select class="form-control" id="aprv-recebido" onchange="atualizarPreviewAprov()">
+<option value="nao">Não — lançar conforme a situação escolhida em cada forma</option>
+<option value="extrato">Sim — usar um lançamento que já está no extrato</option>
 </select></div>
 <div class="form-group" id="aprv-lanc-wrap" style="display:none"><label class="form-label">Qual lançamento do extrato é este pagamento?</label><select class="form-control" id="aprv-lanc" onchange="atualizarPreviewAprov()"></select>
 <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Entradas já pagas e ainda não ligadas a nenhum pedido. O escolhido passa a contar como o pagamento deste pedido, sem criar lançamento novo.</div></div>
@@ -4258,14 +4259,85 @@ async function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=
  toast('Orçamento excluído.'+(opsVinculadas.length?' Ordem(ns) de produção mantidas no PCP.':''),'info');}
 const PAG_LABELS={pix:'PIX',cartao:'Cartão de Crédito',dinheiro:'Dinheiro',transferencia:'Transferência',boleto:'Boleto'};
 function taxaParcela(n){return Number(DB.config.cf['taxaParc'+n])||0;}
-function popularParcelasSelect(valor){const sel=$('aprv-parcelas');let h='';for(let n=1;n<=10;n++){const taxa=taxaParcela(n);const total=valor*(1+taxa/100);h+='<option value="'+n+'"'+(n===2?' selected':'')+'>'+n+'x'+(taxa?' (+'+fmtN(taxa,1)+'%)':'')+' de '+fmt(total/n)+'</option>';}sel.innerHTML=h;}
+function opcoesParcelas(valor,escolhida){let h='';
+ for(let n=1;n<=10;n++){const taxa=taxaParcela(n);const total=(Number(valor)||0)*(1+taxa/100);
+  h+='<option value="'+n+'"'+(n===Number(escolhida||1)?' selected':'')+'>'+n+'x'+(taxa?' (+'+fmtN(taxa,1)+'%)':'')+' de '+fmt(n?total/n:0)+'</option>';}
+ return h;}
+/* Cada forma de pagamento é uma linha: o que o cliente paga, quanto, quando e se já entrou.
+   Somadas, precisam fechar o total aprovado — os juros do cartão entram por cima depois. */
+function addFormaPagamento(dados){
+ const d=dados||{};
+ const alvo=$('aprv-pags');if(!alvo)return;
+ const forma=d.forma||'pix';
+ const opts=[['pix','PIX'],['cartao','Cartão de Crédito'],['dinheiro','Dinheiro'],['transferencia','Transferência'],['boleto','Boleto']]
+  .map(o=>'<option value="'+o[0]+'"'+(o[0]===forma?' selected':'')+'>'+o[1]+'</option>').join('');
+ const div=document.createElement('div');
+ div.className='pag-linha';
+ div.innerHTML='<div><span class="rot">Forma</span><select class="form-control ap-forma" onchange="aoMudarFormaPag(this)">'+opts+'</select></div>'
+  +'<div><span class="rot">Valor (R$)</span><input type="number" class="form-control ap-valor" step="0.01" min="0" value="'+(d.valor!==undefined?d.valor:'')+'" oninput="atualizarPreviewAprov()"></div>'
+  +'<div class="ap-parc-wrap" style="display:'+(forma==='cartao'?'block':'none')+'"><span class="rot">Parcelas</span><select class="form-control ap-parcelas" onchange="atualizarPreviewAprov()">'+opcoesParcelas(d.valor||0,d.parcelas)+'</select></div>'
+  +'<div><span class="rot">Vencimento</span><input type="date" class="form-control ap-data" value="'+(d.data||today())+'" onchange="atualizarPreviewAprov()"></div>'
+  +'<div><span class="rot">Situação</span><select class="form-control ap-situacao" onchange="atualizarPreviewAprov()"><option value="Pendente"'+(d.status==='Pago'?'':' selected')+'>A receber</option><option value="Pago"'+(d.status==='Pago'?' selected':'')+'>Já recebido</option></select></div>'
+  +'<button class="btn btn-danger btn-sm tirar" title="Tirar esta forma" onclick="removerFormaPagamento(this)">✕</button>';
+ alvo.appendChild(div);
+ atualizarPreviewAprov();}
+function removerFormaPagamento(btn){
+ const alvo=$('aprv-pags');
+ if(alvo.querySelectorAll('.pag-linha').length<=1){toast('O pedido precisa de ao menos uma forma de pagamento.','info');return;}
+ btn.closest('.pag-linha').remove();atualizarPreviewAprov();}
+function aoMudarFormaPag(sel){
+ const linha=sel.closest('.pag-linha');
+ const ehCartao=sel.value==='cartao';
+ linha.querySelector('.ap-parc-wrap').style.display=ehCartao?'block':'none';
+ /* boleto é o que se paga na entrega; o resto, por padrão, é do dia */
+ const data=linha.querySelector('.ap-data');
+ if(sel.value==='boleto')data.value=$('aprv-prazo').value||data.value;
+ atualizarPreviewAprov();}
+function aoMudarPrazoAprov(){
+ document.querySelectorAll('#aprv-pags .pag-linha').forEach(l=>{
+  if(l.querySelector('.ap-forma').value==='boleto')l.querySelector('.ap-data').value=$('aprv-prazo').value;});
+ atualizarPreviewAprov();}
+function formasPagamentoAprov(){
+ return [...document.querySelectorAll('#aprv-pags .pag-linha')].map(l=>({
+  forma:l.querySelector('.ap-forma').value,
+  valor:Math.max(0,parseFloat(l.querySelector('.ap-valor').value)||0),
+  parcelas:Math.max(1,Number(l.querySelector('.ap-parcelas').value)||1),
+  data:l.querySelector('.ap-data').value||today(),
+  status:l.querySelector('.ap-situacao').value,
+  linha:l}));}
+/* o pedido guarda a forma em texto: com mais de uma, junta as duas */
+function rotuloPagamento(formas){
+ return formas.map(f=>PAG_LABELS[f.forma]+(f.forma==='cartao'&&f.parcelas>1?' '+f.parcelas+'x':'')).join(' + ');}
+/* as contas a receber que cada linha vai gerar */
+function lancamentosDasFormas(formas,baseDesc){
+ const saida=[];
+ formas.forEach(f=>{
+  if(!f.valor)return;
+  if(f.forma==='cartao'){
+   const n=f.parcelas,taxa=taxaParcela(n);
+   const total=Math.round(f.valor*(1+taxa/100)*100)/100;
+   const parcela=Math.round((total/n)*100)/100;
+   for(let i=0;i<n;i++){const ultima=i===n-1;
+    saida.push({tipo:'Entrada',data:i===0?f.data:addMonths(f.data,i),
+     desc:baseDesc+' — Cartão de Crédito '+(n>1?'Parcela '+(i+1)+'/'+n:'à vista')+(taxa?' (taxa '+fmtN(taxa,1)+'%)':''),
+     cat:'Pedidos',val:ultima?Math.round((total-parcela*(n-1))*100)/100:parcela,
+     status:i===0?f.status:'Pendente'});}
+  }else{
+   saida.push({tipo:'Entrada',data:f.data,desc:baseDesc+' — '+PAG_LABELS[f.forma],cat:'Pedidos',val:f.valor,status:f.status});}});
+ return saida;}
 function abrirAprovarOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  if(o.status==='Aprovado'){toast('Este orçamento já está aprovado.','info');return;}
  if(!itensOrc(o).length){toast('Adicione ao menos um item antes de aprovar.','error');return;}
  $('aprv-orc-id').value=id;$('aprv-orc-desc').textContent=resumoOrc(o)+' — '+cliName(o.cliId)+' — '+fmt(o.preco);
  $('aprv-itens-lista').innerHTML=aprvItensChecklistHtml(itensOrc(o));
- $('aprv-pag').value='pix';$('aprv-prazo').value=o.validade||addDays(today(),30);$('aprv-recebido').value='nao';$('aprv-lanc').innerHTML='';
- popularParcelasSelect(o.preco);
+ $('aprv-prazo').value=o.validade||addDays(today(),30);$('aprv-recebido').value='nao';$('aprv-lanc').innerHTML='';
+ /* começa como o estúdio combina na maioria das vezes: PIX em duas partes.
+    Trocar a forma da primeira linha e tirar a segunda dá o caso de pagamento único. */
+ $('aprv-pags').innerHTML='';
+ const pct=Number(DB.config.cf.pixAntecipado)||50;
+ const entrada=Math.round(o.preco*pct/100*100)/100;
+ addFormaPagamento({forma:'pix',valor:entrada,data:today(),status:'Pendente'});
+ if(o.preco-entrada>0.004)addFormaPagamento({forma:'pix',valor:Math.round((o.preco-entrada)*100)/100,data:$('aprv-prazo').value,status:'Pendente'});
  atualizarPreviewAprov();
  openModal('modal-aprovar-orc');}
 function aprvItensChecklistHtml(itens){return itens.map((it,i)=>'<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" class="aprv-item-chk" data-idx="'+i+'" checked onchange="atualizarPreviewAprov()"><span style="flex:1">'+esc(it.desc)+'</span><span class="mono" style="font-weight:700">'+fmt(it.preco)+'</span></label>').join('');}
@@ -4283,37 +4355,48 @@ function popularLancamentosAprov(){
   .map(f=>'<option value="'+f.id+'">'+fmtD(f.data)+' · '+fmt(f.val)+' · '+esc(String(f.desc||'').slice(0,50))+'</option>').join('');
  if(atual)sel.value=atual;}
 function atualizarPreviewAprov(){const o=DB.orcamentos.find(x=>x.id===$('aprv-orc-id').value);if(!o)return;
- const pag=$('aprv-pag').value,cf=DB.config.cf,prazo=$('aprv-prazo').value;
- $('aprv-parc-wrap').style.display=pag==='cartao'?'block':'none';
+ const prazo=$('aprv-prazo').value;
  const recebido=$('aprv-recebido').value;
- $('aprv-receb-wrap').style.display=pag==='boleto'?'none':'block';
- $('aprv-lanc-wrap').style.display=(pag!=='boleto'&&recebido==='extrato')?'block':'none';
- if(pag!=='boleto'&&recebido==='extrato')popularLancamentosAprov();
- const itensSel=itensSelecionadosAprov(o);const totalSel=itensSel.reduce((s,it)=>s+Number(it.preco||0),0);
- if(!itensSel.length){$('aprv-preview').innerHTML='<span style="color:var(--danger)">Selecione ao menos um item aprovado para gerar o pedido.</span>';return;}
- if(pag==='cartao'){const selAtual=$('aprv-parcelas').value;popularParcelasSelect(totalSel);if(selAtual)$('aprv-parcelas').value=selAtual;}
+ $('aprv-lanc-wrap').style.display=recebido==='extrato'?'block':'none';
+ if(recebido==='extrato')popularLancamentosAprov();
+ const itensSel=itensSelecionadosAprov(o);const totalSel=Math.round(itensSel.reduce((s2,it)=>s2+Number(it.preco||0),0)*100)/100;
+ if(!itensSel.length){$('aprv-preview').innerHTML='<span style="color:var(--danger)">Selecione ao menos um item aprovado para gerar o pedido.</span>';
+  $('aprv-pags-soma').innerHTML='';return;}
+ const formas=formasPagamentoAprov();
+ /* a lista de parcelas de cada cartão acompanha o valor digitado na linha */
+ formas.forEach(f=>{if(f.forma==='cartao'){const sel=f.linha.querySelector('.ap-parcelas');const n=sel.value;sel.innerHTML=opcoesParcelas(f.valor,n);}});
+ const somado=Math.round(formas.reduce((s2,f)=>s2+f.valor,0)*100)/100;
+ const falta=Math.round((totalSel-somado)*100)/100;
+ const soma=$('aprv-pags-soma');
+ if(Math.abs(falta)<0.005)soma.innerHTML='<span style="color:var(--success)">✔ As formas somam '+fmt(somado)+', igual ao total aprovado.</span>';
+ else if(falta>0)soma.innerHTML='<span style="color:var(--danger)">Somam '+fmt(somado)+' de '+fmt(totalSel)+' — faltam '+fmt(falta)+'.</span>';
+ else soma.innerHTML='<span style="color:var(--danger)">Somam '+fmt(somado)+', que passa '+fmt(-falta)+' do total aprovado ('+fmt(totalSel)+').</span>';
+ const lancs=lancamentosDasFormas(formas,'Pedido');
  let html='';
- if(pag==='pix'){const pct=Number(cf.pixAntecipado)||50;const p1=Math.round(totalSel*pct/100*100)/100,p2=Math.round((totalSel-p1)*100)/100;
-  html='💰 '+pct+'% antecipado (hoje): <strong>'+fmt(p1)+'</strong><br>💰 '+(100-pct)+'% na entrega ('+fmtD(prazo)+'): <strong>'+fmt(p2)+'</strong><br>→ Gera 2 contas a receber.';}
- else if(pag==='cartao'){const n=Number($('aprv-parcelas').value)||1;const taxa=taxaParcela(n);const total=Math.round(totalSel*(1+taxa/100)*100)/100;
-  html='💳 Cartão de Crédito em <strong>'+n+'x de '+fmt(total/n)+'</strong>'+(taxa?' (+'+fmtN(taxa,1)+'% de juros — total '+fmt(total)+')':'')+'.<br>→ Gera '+n+' conta(s) a receber'+(n>1?', mensalmente a partir de hoje':' (à vista)')+'.';}
- else if(pag==='boleto'){html='📄 100% na entrega ('+fmtD(prazo)+'): <strong>'+fmt(totalSel)+'</strong><br>→ Gera 1 conta a receber.';}
- else{html='💵 100% antecipado (hoje): <strong>'+fmt(totalSel)+'</strong><br>→ Gera 1 conta a receber (já paga).';}
- if(pag!=='boleto'){
-  if(recebido==='nao')html+='<br>⏳ Pagamento inicial fica <strong>Pendente</strong> — marque como Pago quando o dinheiro entrar.';
-  else if(recebido==='extrato'){const f=DB.financeiro.find(x=>x.id===$('aprv-lanc').value);
-   html+=f?'<br>🔗 Pagamento inicial já recebido: usa o lançamento de '+fmtD(f.data)+' ('+fmt(f.val)+'), sem criar outro.'
-        :'<br>🔗 Escolha o lançamento do extrato que corresponde ao pagamento inicial.';}
-  else html+='<br>✔ Pagamento inicial entra como <strong>Pago</strong> (recebido fora desta conta).';}
- if(itensSel.length<itensOrc(o).length)html+='<br>⚠️ '+(itensOrc(o).length-itensSel.length)+' item(ns) não aprovado(s) — ficarão fora do pedido.';
+ if(!lancs.length)html='<span style="color:var(--danger)">Informe o valor de ao menos uma forma de pagamento.</span>';
+ else{
+  const totalLanc=Math.round(lancs.reduce((s2,l)=>s2+l.val,0)*100)/100;
+  html=lancs.map(l=>(l.status==='Pago'?'✔':'⏳')+' '+fmtD(l.data)+' · <strong>'+fmt(l.val)+'</strong> · '+esc(l.desc.replace('Pedido — ',''))+(l.status==='Pago'?' <span style="color:var(--success)">(já recebido)</span>':'')).join('<br>');
+  html+='<br>→ Gera <strong>'+lancs.length+'</strong> conta(s) a receber, somando <strong>'+fmt(totalLanc)+'</strong>';
+  html+=totalLanc>totalSel+0.005?' (os '+fmt(totalLanc-totalSel)+' a mais são os juros do cartão).':'.';
+  if(recebido==='extrato'){const f=DB.financeiro.find(x=>x.id===$('aprv-lanc').value);
+   html+=f?'<br>🔗 O primeiro lançamento não será criado: usa o do extrato de '+fmtD(f.data)+' ('+fmt(f.val)+').'
+        :'<br>🔗 Escolha o lançamento do extrato que corresponde ao primeiro pagamento.';}}
+ if(itensSel.length<itensOrc(o).length)html+='<br>⚠️ '+(itensOrc(o).length-itensSel.length)+' item(ns) não aprovado(s) — ficarão fora do pedido e <strong>serão removidos do orçamento</strong>.';
  $('aprv-preview').innerHTML=html;}
 async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  const veioDaDetalhe=$('orc-detalhe-view').style.display!=='none';
- const pagKey=$('aprv-pag').value,pagLabel=PAG_LABELS[pagKey]||pagKey;
  const prazoEntrega=$('aprv-prazo').value;
  if(!prazoEntrega){toast('Informe a data de entrega combinada.','error');return;}
  const itensSel=itensSelecionadosAprov(o);
  if(!itensSel.length){toast('Selecione ao menos um item aprovado para gerar o pedido.','error');return;}
+ const formasPag=formasPagamentoAprov().filter(f=>f.valor>0);
+ if(!formasPag.length){toast('Informe o valor de ao menos uma forma de pagamento.','error');return;}
+ const totalFormas=Math.round(formasPag.reduce((s2,f)=>s2+f.valor,0)*100)/100;
+ const totalItens=Math.round(itensSel.reduce((s2,it)=>s2+Number(it.preco||0),0)*100)/100;
+ if(Math.abs(totalFormas-totalItens)>0.005){
+  toast('As formas de pagamento somam '+fmt(totalFormas)+' e os itens aprovados somam '+fmt(totalItens)+'. Ajuste os valores antes de aprovar.','error',8000);return;}
+ const pagLabel=rotuloPagamento(formasPag);
  const itensNaoAprovados=itensOrc(o).length-itensSel.length;
  /* aprovar grava o orçamento antes de criar o pedido: sem rede, pararia no meio */
  if(!await exigeConexao('aprovar o orçamento'))return;
@@ -4339,32 +4422,14 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
  if(itens.some(it=>it.tipo==='catalogo')){novaVenda.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',novaVenda.id);}
  DB.vendas.unshift(novaVenda);syncSheets('vendas','upsert',novaVenda);
 
- // 2) Gerar contas a receber conforme a forma de pagamento
+ // 2) Gerar contas a receber: uma sequência por forma de pagamento informada
  const baseDesc='Pedido V-'+pad(novaVenda.num)+' — '+cliName(o.cliId);
- const finEntries=[];
- if(pagKey==='pix'){
-  const pct=Number(cf.pixAntecipado)||50;
-  const p1=Math.round(totalAprovado*pct/100*100)/100,p2=Math.round((totalAprovado-p1)*100)/100;
-  finEntries.push({tipo:'Entrada',data:today(),desc:baseDesc+' — PIX '+pct+'% antecipado',cat:'Pedidos',val:p1,status:'Pago'});
-  finEntries.push({tipo:'Entrada',data:prazoEntrega,desc:baseDesc+' — PIX '+(100-pct)+'% na entrega',cat:'Pedidos',val:p2,status:'Pendente'});
- } else if(pagKey==='cartao'){
-  const n=Math.max(1,Number($('aprv-parcelas').value)||1);
-  const taxa=taxaParcela(n);
-  const total=Math.round(totalAprovado*(1+taxa/100)*100)/100;
-  const parcela=Math.round((total/n)*100)/100;
-  for(let i=0;i<n;i++){const ultima=i===n-1;const val=ultima?Math.round((total-parcela*(n-1))*100)/100:parcela;
-   finEntries.push({tipo:'Entrada',data:i===0?today():addMonths(today(),i),desc:baseDesc+' — Cartão de Crédito '+(n>1?'Parcela '+(i+1)+'/'+n:'à vista')+(taxa?' (taxa '+fmtN(taxa,1)+'%)':''),cat:'Pedidos',val,status:i===0?'Pago':'Pendente'});}
- } else if(pagKey==='boleto'){
-  finEntries.push({tipo:'Entrada',data:prazoEntrega,desc:baseDesc+' — Boleto na entrega',cat:'Pedidos',val:totalAprovado,status:'Pendente'});
- } else {
-  finEntries.push({tipo:'Entrada',data:today(),desc:baseDesc+' — '+pagLabel+' (antecipado)',cat:'Pedidos',val:totalAprovado,status:'Pago'});
- }
- /* pagamento inicial: Pendente, Pago, ou já existente no extrato (aí não cria nada e só classifica) */
- const recebido=(pagKey==='boleto')?'nao':$('aprv-recebido').value;
+ const finEntries=lancamentosDasFormas(formasPag,baseDesc);
+ /* o primeiro pagamento pode já estar no extrato: aí não cria outro, só classifica aquele */
+ const recebido=$('aprv-recebido').value;
  const idLanc=recebido==='extrato'?$('aprv-lanc').value:'';
  if(finEntries.length){
-  if(recebido==='nao')finEntries[0].status='Pendente';
-  else if(recebido==='extrato'&&idLanc){
+  if(recebido==='extrato'&&idLanc){
    const f=DB.financeiro.find(x=>x.id===idLanc);
    if(f){const rotulo=pedidoLabel(novaVenda);
     const obsNova='Pagamento inicial do pedido '+rotulo+', recebido antes de o pedido ser lançado.';
@@ -7921,7 +7986,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-28.3';
+const APP_VERSAO='2026-09-28.4';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
