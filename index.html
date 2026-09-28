@@ -620,7 +620,13 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <h2 style="font-size:16px;font-weight:700" id="mv-title">Novo Pedido</h2>
           <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" id="vnd-btn-imprimir" style="display:none" onclick="imprimirPedido('pedido')">🖨️ Imprimir pedido (PCP)</button><button class="btn btn-ghost btn-sm" id="vnd-btn-recibo" style="display:none" onclick="imprimirPedido('recibo')">🧾 Imprimir recibo</button><button class="btn btn-primary btn-sm" onclick="saveVenda()">💾 Salvar Pedido</button></div>
         </div>
-        <div class="config-card" style="margin:0"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pagamento</label><select class="form-control" id="vnd-pag"><option>Dinheiro</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>PIX</option><option>Boleto</option><option>Transferência</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div></div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div></div></div>
+        <div class="config-card" style="margin:0"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div>
+<div class="form-group"><label class="form-label">Pagamento</label>
+<div id="vnd-pags" data-recalc="atualizarPagamentosVenda" style="display:flex;flex-direction:column;gap:8px"></div>
+<button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento({data:$('vnd-data').value||today()},'vnd-pags')">+ Adicionar forma de pagamento</button>
+<div id="vnd-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
+<div id="vnd-pags-aviso" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
+</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div></div></div>
         <div class="config-card orc-anexos-zona" id="vnd-anexos-zona" style="margin-top:14px" ondragenter="anexoPedidoArrastando(event,true)" ondragover="anexoPedidoArrastando(event,true)" ondragleave="anexoPedidoArrastando(event,false)" ondrop="anexoPedidoSolto(event)">
           <div class="orc-anexos-aviso">Solte os arquivos para anexar</div>
           <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência<span class="orc-anexos-dica"> — ou arraste os arquivos para cá</span></div><button class="btn btn-ghost btn-sm" id="vnd-anexo-btn" onclick="document.getElementById('vnd-anexo-input').click()">+ Anexar Arquivo</button></div>
@@ -1127,7 +1133,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px" id="aprv-orc-desc"></p>
 <div class="form-group"><label class="form-label">Quais itens foram aprovados pelo cliente? *</label><div id="aprv-itens-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px"></div></div>
 <div class="form-group"><label class="form-label">Como o cliente vai pagar? *</label>
-<div id="aprv-pags" style="display:flex;flex-direction:column;gap:8px"></div>
+<div id="aprv-pags" data-recalc="atualizarPreviewAprov" style="display:flex;flex-direction:column;gap:8px"></div>
 <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento()">+ Adicionar forma de pagamento</button>
 <div id="aprv-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
 </div>
@@ -3311,25 +3317,49 @@ function addItemLivreVenda(it){const row=linhaItemVenda();row.dataset.tipo='livr
  $('vnd-itens').appendChild(row);calcVenda();}
 function addItemPedido(it){if(it&&it.prodId)addItemVenda(it);else addItemLivreVenda(it);}
 function viProd(sel){const opt=sel.selectedOptions[0];const row=sel.parentElement;row.querySelector('.vi-preco').value=opt?opt.dataset.preco||0:0;calcVenda();}
-function calcVenda(){let t=0;document.querySelectorAll('#vnd-itens > div').forEach(r=>{const s=(parseFloat(r.querySelector('.vi-qty').value)||0)*(parseFloat(r.querySelector('.vi-preco').value)||0);r.querySelector('.vi-sub').textContent=fmt(s);t+=s;});$('vnd-total').textContent=fmt(t);return t;}
+/* na ficha do pedido a soma é conferida contra os itens, e as contas a receber
+   só nascem quando o pedido é novo — num pedido já salvo, o Financeiro manda */
+function atualizarPagamentosVenda(){
+ const soma=$('vnd-pags-soma');if(!soma)return;
+ const total=Math.round(calcVendaTotal()*100)/100;
+ const formas=formasPagamentoDe('vnd-pags');
+ formas.forEach(f=>{if(f.forma==='cartao'){const sel=f.linha.querySelector('.ap-parcelas');const n=sel.value;sel.innerHTML=opcoesParcelas(f.valor,n);}});
+ const somado=Math.round(formas.reduce((s2,f)=>s2+f.valor,0)*100)/100;
+ const falta=Math.round((total-somado)*100)/100;
+ if(!total)soma.innerHTML='<span style="color:var(--text-muted)">Adicione os itens para conferir a soma.</span>';
+ else if(Math.abs(falta)<0.005)soma.innerHTML='<span style="color:var(--success)">✔ As formas somam '+fmt(somado)+', igual ao total do pedido.</span>';
+ else if(falta>0)soma.innerHTML='<span style="color:var(--danger)">Somam '+fmt(somado)+' de '+fmt(total)+' — faltam '+fmt(falta)+'.</span>';
+ else soma.innerHTML='<span style="color:var(--danger)">Somam '+fmt(somado)+', que passa '+fmt(-falta)+' do total do pedido.</span>';
+ const aviso=$('vnd-pags-aviso');
+ if(aviso){const lancs=lancamentosDasFormas(formas,'Pedido');
+  aviso.textContent=$('vnd-id').value
+   ?'Pedido já salvo: mudar as formas aqui troca só o texto do pagamento — as contas a receber ficam como estão no Financeiro.'
+   :(lancs.length?'Ao salvar, gera '+lancs.length+' conta(s) a receber no Financeiro.':'');}}
+/* o total dos itens sem redesenhar a tela */
+function calcVendaTotal(){let t=0;document.querySelectorAll('#vnd-itens > div').forEach(r=>{
+ t+=(parseFloat(r.querySelector('.vi-qty').value)||0)*(parseFloat(r.querySelector('.vi-preco').value)||0);});return t;}
+function calcVenda(){let t=0;document.querySelectorAll('#vnd-itens > div').forEach(r=>{const s=(parseFloat(r.querySelector('.vi-qty').value)||0)*(parseFloat(r.querySelector('.vi-preco').value)||0);r.querySelector('.vi-sub').textContent=fmt(s);t+=s;});$('vnd-total').textContent=fmt(t);if($('vnd-pags-soma'))atualizarPagamentosVenda();return t;}
 /* O pedido virou página (era uma janela): lista e ficha dividem a seção Pedidos. */
 function vndShow(view){['lista','form'].forEach(v=>{const el=$('vendas-'+v+'-view');if(el)el.style.display=v===view?'block':'none';});}
 function cancelarPedido(){vndShow('lista');renderVendas();}
-function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-pag').value='PIX';$('vnd-origem').value='';$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
+function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-origem').value='';
+ $('vnd-pags').innerHTML='';addFormaPagamento({forma:'pix',data:today()},'vnd-pags');$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
- $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-pag').value=v.pag;$('vnd-origem').value=v.origem||'';$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';
+ $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-origem').value=v.origem||'';$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';preencherPagamentosVenda(v);
  $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 let ITEM_PARA_PEDIDO=null;
 function capturarPedido(){const itens=[];
  document.querySelectorAll('#vnd-itens > div').forEach(r=>{const sel=r.querySelector('.vi-prod'),desc=r.querySelector('.vi-desc');
   itens.push({tipo:r.dataset.tipo,prodId:sel?sel.value:'',desc:desc?desc.value:'',qty:parseFloat(r.querySelector('.vi-qty').value)||1,preco:parseFloat(r.querySelector('.vi-preco').value)||0});});
- return {id:$('vnd-id').value,cliId:$('vnd-cli').value,data:$('vnd-data').value,pag:$('vnd-pag').value,status:$('vnd-status').value,
+ return {id:$('vnd-id').value,cliId:$('vnd-cli').value,data:$('vnd-data').value,pag:rotuloPagamento(formasPagamentoDe('vnd-pags')),
+  pags:formasPagamentoDe('vnd-pags').map(f=>({forma:f.forma,valor:f.valor,parcelas:f.parcelas,data:f.data,status:f.status})),status:$('vnd-status').value,
   obs:$('vnd-obs').value,titulo:$('mv-title').textContent,visaoGeral:$('vnd-visao-geral-corpo').innerHTML,
   visaoGeralVisivel:$('vnd-visao-geral').style.display,
   visaoGeralValores:[...document.querySelectorAll('#vnd-visao-geral-corpo input')].map(i=>[i.id,i.value]),itens};}
 function restaurarPedido(r){
  $('vnd-id').value=r.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,r.cliId,'— Selecionar —');
- $('vnd-data').value=r.data;$('vnd-pag').value=r.pag;$('vnd-status').value=r.status;$('vnd-obs').value=r.obs;
+ $('vnd-data').value=r.data;$('vnd-status').value=r.status;$('vnd-obs').value=r.obs;
+ $('vnd-pags').innerHTML='';(r.pags&&r.pags.length?r.pags:[{forma:formaDoTexto(r.pag),data:r.data}]).forEach(f=>addFormaPagamento(f,'vnd-pags'));
  $('mv-title').textContent=r.titulo;
  $('vnd-visao-geral-corpo').innerHTML=r.visaoGeral;$('vnd-visao-geral').style.display=r.visaoGeralVisivel;
  r.visaoGeralValores.forEach(([id,valor])=>{if($(id))$(id).value=valor;});
@@ -3388,7 +3418,16 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
  const statusForm=$('vnd-status').value;
  let obsForm=$('vnd-obs').value.trim();
  obsForm=marcasVisaoGeral(obsForm,statusForm,statusAnterior);
- const o={cliId,origem:$('vnd-origem').value,data:$('vnd-data').value||today(),pag:$('vnd-pag').value,status:statusForm,obs:obsForm,itens,total};
+ const formasPag=formasPagamentoDe('vnd-pags').filter(f=>f.valor>0);
+ const ehNovo=!$('vnd-id').value;
+ /* num pedido novo as formas viram as contas a receber, então precisam fechar com os itens */
+ if(ehNovo&&formasPag.length){
+  const somaPag=Math.round(formasPag.reduce((s2,f)=>s2+f.valor,0)*100)/100;
+  if(Math.abs(somaPag-Math.round(total*100)/100)>0.005){
+   toast('As formas de pagamento somam '+fmt(somaPag)+' e os itens somam '+fmt(total)+'. Ajuste antes de salvar.','error',8000);return;}}
+ const o={cliId,origem:$('vnd-origem').value,data:$('vnd-data').value||today(),
+  pag:formasPag.length?rotuloPagamento(formasPag):$('vnd-pags').querySelector('.ap-forma')?PAG_LABELS[$('vnd-pags').querySelector('.ap-forma').value]:'PIX',
+  status:statusForm,obs:obsForm,itens,total};
  if(id){
   const v2=Object.assign(DB.vendas.find(x=>x.id===id),o);
   const {error}=await supa.from('vendas').update(vendaParaSupabase(v2)).eq('id',id);
@@ -3404,9 +3443,13 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
   let opCriada=false;
   if(nova.status!=='Cancelado'){for(const it of nova.itens){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Math.max(0,Number(p.est)-it.qty);await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
    nova.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',nova.id);
-   const finReg={id:uid(),tipo:'Entrada',data:nova.data,desc:'Pedido V-'+pad(nova.num)+' — '+cliName(cliId),cat:'Pedidos',val:total,status:nova.status==='Entregue'?'Pago':'Pendente'};
-   await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
-   DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);
+   /* uma conta a receber por forma informada; sem formas, cai no lançamento único de sempre */
+   const baseDescV='Pedido V-'+pad(nova.num)+' — '+cliName(cliId);
+   const lancs=formasPag.length?lancamentosDasFormas(formasPag,baseDescV)
+    :[{tipo:'Entrada',data:nova.data,desc:baseDescV,cat:'Pedidos',val:total,status:nova.status==='Entregue'?'Pago':'Pendente'}];
+   for(const l of lancs){const finReg=Object.assign({id:uid()},l);
+    await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
+    DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);}
    // Gera automaticamente uma Ordem de Produção (PCP) em Planejamento pra este pedido
    const op={id:uid(),titulo:'Pedido V-'+pad(nova.num)+' — '+cliName(cliId),cliId,prazo:addDays(nova.data||today(),15),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:nova.itens.map(it=>'• '+it.desc+' × '+it.qty).join('\n')+'\n(Gerado automaticamente do Pedido V-'+pad(nova.num)+')'};
    const {data:dop,error:erroOp}=await supa.from('producao').insert(opParaSupabase(op)).select().single();
@@ -4265,46 +4308,81 @@ function opcoesParcelas(valor,escolhida){let h='';
  return h;}
 /* Cada forma de pagamento é uma linha: o que o cliente paga, quanto, quando e se já entrou.
    Somadas, precisam fechar o total aprovado — os juros do cartão entram por cima depois. */
-function addFormaPagamento(dados){
+/* a mesma lista de formas serve a caixa de aprovação e a ficha do pedido:
+   quem chama diz o recipiente, e o recipiente diz qual recálculo rodar */
+function recalcularPagamentos(el){
+ const cont=el&&el.closest?el.closest('[data-recalc]'):null;
+ const fn=cont&&window[cont.dataset.recalc];
+ if(typeof fn==='function')fn();}
+function addFormaPagamento(dados,idAlvo){
  const d=dados||{};
- const alvo=$('aprv-pags');if(!alvo)return;
+ const alvo=$(idAlvo||'aprv-pags');if(!alvo)return;
  const forma=d.forma||'pix';
  const opts=[['pix','PIX'],['cartao','Cartão de Crédito'],['dinheiro','Dinheiro'],['transferencia','Transferência'],['boleto','Boleto']]
   .map(o=>'<option value="'+o[0]+'"'+(o[0]===forma?' selected':'')+'>'+o[1]+'</option>').join('');
  const div=document.createElement('div');
  div.className='pag-linha';
  div.innerHTML='<div><span class="rot">Forma</span><select class="form-control ap-forma" onchange="aoMudarFormaPag(this)">'+opts+'</select></div>'
-  +'<div><span class="rot">Valor (R$)</span><input type="number" class="form-control ap-valor" step="0.01" min="0" value="'+(d.valor!==undefined?d.valor:'')+'" oninput="atualizarPreviewAprov()"></div>'
-  +'<div class="ap-parc-wrap" style="display:'+(forma==='cartao'?'block':'none')+'"><span class="rot">Parcelas</span><select class="form-control ap-parcelas" onchange="atualizarPreviewAprov()">'+opcoesParcelas(d.valor||0,d.parcelas)+'</select></div>'
-  +'<div><span class="rot">Vencimento</span><input type="date" class="form-control ap-data" value="'+(d.data||today())+'" onchange="atualizarPreviewAprov()"></div>'
-  +'<div><span class="rot">Situação</span><select class="form-control ap-situacao" onchange="atualizarPreviewAprov()"><option value="Pendente"'+(d.status==='Pago'?'':' selected')+'>A receber</option><option value="Pago"'+(d.status==='Pago'?' selected':'')+'>Já recebido</option></select></div>'
+  +'<div><span class="rot">Valor (R$)</span><input type="number" class="form-control ap-valor" step="0.01" min="0" value="'+(d.valor!==undefined?d.valor:'')+'" oninput="recalcularPagamentos(this)"></div>'
+  +'<div class="ap-parc-wrap" style="display:'+(forma==='cartao'?'block':'none')+'"><span class="rot">Parcelas</span><select class="form-control ap-parcelas" onchange="recalcularPagamentos(this)">'+opcoesParcelas(d.valor||0,d.parcelas)+'</select></div>'
+  +'<div><span class="rot">Vencimento</span><input type="date" class="form-control ap-data" value="'+(d.data||today())+'" onchange="recalcularPagamentos(this)"></div>'
+  +'<div><span class="rot">Situação</span><select class="form-control ap-situacao" onchange="recalcularPagamentos(this)"><option value="Pendente"'+(d.status==='Pago'?'':' selected')+'>A receber</option><option value="Pago"'+(d.status==='Pago'?' selected':'')+'>Já recebido</option></select></div>'
   +'<button class="btn btn-danger btn-sm tirar" title="Tirar esta forma" onclick="removerFormaPagamento(this)">✕</button>';
  alvo.appendChild(div);
- atualizarPreviewAprov();}
+ recalcularPagamentos(div);}
 function removerFormaPagamento(btn){
- const alvo=$('aprv-pags');
+ const alvo=btn.closest('[data-recalc]');
  if(alvo.querySelectorAll('.pag-linha').length<=1){toast('O pedido precisa de ao menos uma forma de pagamento.','info');return;}
- btn.closest('.pag-linha').remove();atualizarPreviewAprov();}
+ const irmao=alvo;btn.closest('.pag-linha').remove();recalcularPagamentos(irmao.firstElementChild||irmao);}
 function aoMudarFormaPag(sel){
  const linha=sel.closest('.pag-linha');
  const ehCartao=sel.value==='cartao';
  linha.querySelector('.ap-parc-wrap').style.display=ehCartao?'block':'none';
  /* boleto é o que se paga na entrega; o resto, por padrão, é do dia */
  const data=linha.querySelector('.ap-data');
- if(sel.value==='boleto')data.value=$('aprv-prazo').value||data.value;
- atualizarPreviewAprov();}
+ if(sel.value==='boleto'&&$('aprv-prazo')&&$('aprv-prazo').value&&linha.closest('#aprv-pags'))data.value=$('aprv-prazo').value;
+ recalcularPagamentos(sel);}
 function aoMudarPrazoAprov(){
  document.querySelectorAll('#aprv-pags .pag-linha').forEach(l=>{
   if(l.querySelector('.ap-forma').value==='boleto')l.querySelector('.ap-data').value=$('aprv-prazo').value;});
  atualizarPreviewAprov();}
-function formasPagamentoAprov(){
- return [...document.querySelectorAll('#aprv-pags .pag-linha')].map(l=>({
+function formasPagamentoDe(idAlvo){
+ return [...document.querySelectorAll('#'+idAlvo+' .pag-linha')].map(l=>({
   forma:l.querySelector('.ap-forma').value,
   valor:Math.max(0,parseFloat(l.querySelector('.ap-valor').value)||0),
   parcelas:Math.max(1,Number(l.querySelector('.ap-parcelas').value)||1),
   data:l.querySelector('.ap-data').value||today(),
   status:l.querySelector('.ap-situacao').value,
   linha:l}));}
+const formasPagamentoAprov=()=>formasPagamentoDe('aprv-pags');
+/* pedido antigo guarda a forma como texto ("PIX", "Cartão Crédito"): vira uma linha só */
+function formaDoTexto(txt){
+ const t=String(txt||'').toLowerCase();
+ if(t.includes('pix'))return 'pix';
+ if(t.includes('cart'))return 'cartao';
+ if(t.includes('boleto'))return 'boleto';
+ if(t.includes('transf'))return 'transferencia';
+ if(t.includes('dinheiro'))return 'dinheiro';
+ return 'pix';}
+/* preenche a lista de formas da ficha do pedido a partir de um pedido salvo */
+function preencherPagamentosVenda(v){
+ const alvo=$('vnd-pags');if(!alvo)return;
+ alvo.innerHTML='';
+ if(!v){addFormaPagamento({forma:'pix',data:today()},'vnd-pags');return;}
+ const partes=String(v.pag||'').split('+').map(x=>x.trim()).filter(Boolean);
+ const total=Number(v.total)||0;
+ if(partes.length<=1){
+  addFormaPagamento({forma:formaDoTexto(v.pag),valor:total||'',data:v.data||today(),
+   status:v.status==='Entregue'?'Pago':'Pendente'},'vnd-pags');
+ }else{
+  /* mais de uma forma no texto: divide o total em partes iguais como ponto de partida */
+  const fatia=Math.round((total/partes.length)*100)/100;
+  partes.forEach((parte,i)=>{
+   const m=parte.match(/(\d+)x/);
+   addFormaPagamento({forma:formaDoTexto(parte),parcelas:m?Number(m[1]):1,
+    valor:i===partes.length-1?Math.round((total-fatia*(partes.length-1))*100)/100:fatia,
+    data:v.data||today(),status:v.status==='Entregue'?'Pago':'Pendente'},'vnd-pags');});}
+ atualizarPagamentosVenda();}
 /* o pedido guarda a forma em texto: com mais de uma, junta as duas */
 function rotuloPagamento(formas){
  return formas.map(f=>PAG_LABELS[f.forma]+(f.forma==='cartao'&&f.parcelas>1?' '+f.parcelas+'x':'')).join(' + ');}
@@ -7986,7 +8064,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-28.4';
+const APP_VERSAO='2026-09-28.5';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
