@@ -1141,7 +1141,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this)"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title" id="imp-titulo">🖨️ Imprimir pedido (PCP)</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div id="imp-explicacao" style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O pedido sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><label style="display:flex;align-items:center;gap:9px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;cursor:pointer"><input type="checkbox" id="imp-sem-valores" style="width:17px;height:17px;flex-shrink:0">Ocultar valores nesta impressão<span style="font-size:11px;color:var(--text-muted)">— para mandar à oficina</span></label><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
-<div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-link-wrap"><label class="form-label">Link do material</label><input type="url" class="form-control" id="prod-link" placeholder="https://site-do-fornecedor.com/produto" inputmode="url" autocomplete="off"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Página do produto no site do fornecedor — abre pelo 🔗 na lista</div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0" oninput="atualizarCustoFinalProduto()"></div><div class="form-group" id="prod-frete-wrap"><label class="form-label">Frete (R$)</label><input type="number" class="form-control" id="prod-frete" step="0.01" min="0" placeholder="0,00" oninput="atualizarCustoFinalProduto()"></div></div><div id="prod-custo-final" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:-6px"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-link-wrap"><label class="form-label">Link do material</label><input type="url" class="form-control" id="prod-link" placeholder="https://site-do-fornecedor.com/produto" inputmode="url" autocomplete="off"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Página do produto no site do fornecedor — abre pelo 🔗 na lista</div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
   <div class="modal-header"><div class="modal-title">📋 Nota Fiscal Eletrônica</div><button class="modal-close" onclick="closeModal('modal-nfe-info')">✕</button></div>
   <div class="modal-body" style="font-size:13px;line-height:1.7;color:var(--text)">
@@ -1378,6 +1378,7 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  if(!Array.isArray(DB.config.comissionados))DB.config.comissionados=[];
  if(!DB.config.fichasProdutos||typeof DB.config.fichasProdutos!=='object')DB.config.fichasProdutos={};
  if(!DB.config.linksProdutos||typeof DB.config.linksProdutos!=='object')DB.config.linksProdutos={};
+ if(!DB.config.fretesProdutos||typeof DB.config.fretesProdutos!=='object')DB.config.fretesProdutos={};
  if(!DB.config.mdoTipos||!DB.config.mdoTipos.length)DB.config.mdoTipos=[{id:'socio',nome:'Sócio',valorHora:DB.config.cf.hsocio||0},{id:'auxiliar',nome:'Auxiliar',valorHora:DB.config.cf.haux||0}];
  if(!DB.config.custosFixosExtras)DB.config.custosFixosExtras=[];
  if(!DB.config.temposProducao)DB.config.temposProducao={};
@@ -2442,7 +2443,16 @@ function renderProdutoCards(lista,alvoId,isPortfolio){
    +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
    +'</div>';}).join('');}
 let PROD_MATERIAIS=[];
+/* o frete é do material comprado: produto do portfólio tem a ficha de preço para isso */
+function atualizarCustoFinalProduto(){
+ const ehPortfolio=$('prod-tipo').value==='Portfólio';
+ const aviso=$('prod-custo-final');if(!aviso)return;
+ const frete=ehPortfolio?0:num('prod-frete');
+ if(ehPortfolio||!frete){aviso.style.display='none';return;}
+ aviso.style.display='block';
+ aviso.innerHTML='Custo final do material: <strong>'+fmt(num('prod-custo')+frete)+'</strong> — é este valor que vai para os orçamentos e para o estoque.';}
 function toggleProdMateriaisVisibility(){const ehPortfolio=$('prod-tipo').value==='Portfólio';
+ const fw=$('prod-frete-wrap');if(fw)fw.style.display=ehPortfolio?'none':'';
  $('prod-materiais-wrap').style.display=ehPortfolio?'block':'none';
  $('prod-tempo-wrap').style.display=ehPortfolio?'block':'none';
  /* insumo não é vendido: o preço de venda só duplicava o custo */
@@ -2453,6 +2463,7 @@ function toggleProdMateriaisVisibility(){const ehPortfolio=$('prod-tipo').value=
  const comFicha=ehPortfolio&&id&&temFicha(id);
  const btnFicha=$('prod-btn-ficha');if(btnFicha)btnFicha.style.display=(ehPortfolio&&id)?'inline-flex':'none';
  /* com ficha, quem manda no preço e no custo é ela: aqui os campos ficam só para leitura */
+ atualizarCustoFinalProduto();
  ['prod-preco','prod-custo'].forEach(campo=>{const el=$(campo);if(!el)return;
   el.readOnly=!!comFicha;el.style.opacity=comFicha?'.6':'';
   el.title=comFicha?'Calculado na ficha de preço':'';});
@@ -2471,23 +2482,37 @@ function resolverMaterialEstoque(ref){if(!ref)return null;const tipo=ref.slice(0
  if(tipo==='m'){const m=DB.madeiras.find(x=>x.id===mid);if(!m)return null;return{nome:m.especie+(m.tipo?' '+m.tipo:''),estoque:madM3(m),un:'m³'};}
  if(tipo==='p'){const pr=DB.produtos.find(x=>x.id===mid);if(!pr)return null;return{nome:pr.nome,estoque:Number(pr.est||0),un:pr.un||'un'};}
  return null;}
-function openProduto(tipoPadrao){if(!guardValores())return;PRODUTO_RAPIDO_ORC=false;['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-tempo').value='';$('prod-link').value='';$('prod-un').value='un';$('prod-tipo').value=tipoPadrao||'Portfólio';$('mp-title').textContent='Novo '+(tipoPadrao==='Insumo'?'Material/Insumo':'Produto');
+function openProduto(tipoPadrao){if(!guardValores())return;PRODUTO_RAPIDO_ORC=false;['prod-id','prod-nome','prod-cat'].forEach(i=>$(i).value='');['prod-preco','prod-custo','prod-est','prod-min'].forEach(i=>$(i).value='0');$('prod-tempo').value='';$('prod-link').value='';$('prod-frete').value='';$('prod-un').value='un';$('prod-tipo').value=tipoPadrao||'Portfólio';$('mp-title').textContent='Novo '+(tipoPadrao==='Insumo'?'Material/Insumo':'Produto');
  PROD_MATERIAIS=[];renderProdMateriais();toggleProdMateriaisVisibility();openModal('modal-produtos');}
 function editProduto(id){if(!guard()||!guardValores())return;const p=DB.produtos.find(x=>x.id===id);if(!p)return;
- $('prod-id').value=p.id;$('prod-nome').value=p.nome;$('prod-tipo').value=p.tipo||'Portfólio';$('prod-cat').value=p.cat||'';$('prod-un').value=p.un||'un';$('prod-preco').value=p.preco;$('prod-custo').value=p.custo;$('prod-est').value=p.est;$('prod-min').value=p.min;$('prod-tempo').value=(DB.config.temposProducao||{})[p.id]||'';$('prod-link').value=linkDoProduto(p.id);$('mp-title').textContent='Editar '+(p.tipo==='Insumo'?'Material/Insumo':'Produto');
+ const freteProd=(p.tipo==='Insumo')?freteDoProduto(p.id,p.custo):0;
+ $('prod-id').value=p.id;$('prod-nome').value=p.nome;$('prod-tipo').value=p.tipo||'Portfólio';$('prod-cat').value=p.cat||'';$('prod-un').value=p.un||'un';$('prod-preco').value=p.preco;
+ $('prod-custo').value=Math.round(((Number(p.custo)||0)-freteProd)*100)/100;$('prod-frete').value=freteProd||'';$('prod-est').value=p.est;$('prod-min').value=p.min;$('prod-tempo').value=(DB.config.temposProducao||{})[p.id]||'';$('prod-link').value=linkDoProduto(p.id);$('mp-title').textContent='Editar '+(p.tipo==='Insumo'?'Material/Insumo':'Produto');
  PROD_MATERIAIS=(p.materiais||[]).slice();renderProdMateriais();toggleProdMateriaisVisibility();openModal('modal-produtos');}
 async function saveProduto(){if(!guard())return;const nome=$('prod-nome').value.trim();if(!nome){toast('Informe o nome do produto.','error');return;}
  const id=$('prod-id').value;const ehPortfolio=$('prod-tipo').value==='Portfólio';
  const fichaAtual=ehPortfolio&&id?fichaDoProduto(id):null;
+ /* material/insumo: o que o resto do ERP enxerga como custo é preço de compra + frete */
+ const freteProd=ehPortfolio?0:Math.max(0,num('prod-frete'));
+ const custoComFrete=num('prod-custo')+freteProd;
  const o={nome,tipo:$('prod-tipo').value,cat:$('prod-cat').value.trim(),un:$('prod-un').value,
-  preco:fichaAtual?fichaAtual.preco:(ehPortfolio?num('prod-preco'):num('prod-custo')),
-  custo:fichaAtual?fichaAtual.custo:num('prod-custo'),
+  preco:fichaAtual?fichaAtual.preco:(ehPortfolio?num('prod-preco'):custoComFrete),
+  custo:fichaAtual?fichaAtual.custo:(ehPortfolio?num('prod-custo'):custoComFrete),
   est:num('prod-est'),min:num('prod-min'),materiais:$('prod-tipo').value==='Portfólio'?PROD_MATERIAIS:[]};
  const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
  const {error}=await supa.from('produtos').upsert(registro);
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
  if(!DB.config.temposProducao)DB.config.temposProducao={};
  if(o.tipo==='Portfólio'&&num('prod-tempo')>0)DB.config.temposProducao[registro.id]=num('prod-tempo');else delete DB.config.temposProducao[registro.id];
+ /* frete do material: guarda a divisão para o formulário saber separar de novo */
+ const mapaFretes=fretesProdutos();
+ const freteAntes=JSON.stringify(mapaFretes[registro.id]||null);
+ if(freteProd>0)mapaFretes[registro.id]={frete:freteProd,total:Math.round(custoComFrete*100)/100};
+ else delete mapaFretes[registro.id];
+ if(freteAntes!==JSON.stringify(mapaFretes[registro.id]||null)){
+  const {error:erroFrete}=await supa.from('config').upsert({campo:'fretesProdutos',valor:JSON.stringify(mapaFretes)});
+  if(erroFrete)toast('Produto salvo, mas houve erro ao salvar o frete: '+erroFrete.message,'error');
+  else syncSheets('config','upsert',{campo:'fretesProdutos',valor:JSON.stringify(mapaFretes)});}
  /* link do material: entra e sai do mapa em config, junto com o produto */
  const linkNovo=normalizarLink($('prod-link').value);
  const mapaLinks=linksProdutos();
@@ -2511,6 +2536,8 @@ async function delProduto(id){if(!guard()||!guardValores())return;const p=DB.pro
  DB.produtos=DB.produtos.filter(x=>x.id!==id);
  if(DB.config.linksProdutos&&DB.config.linksProdutos[id]){delete DB.config.linksProdutos[id];
   supa.from('config').upsert({campo:'linksProdutos',valor:JSON.stringify(DB.config.linksProdutos)});}
+ if(DB.config.fretesProdutos&&DB.config.fretesProdutos[id]){delete DB.config.fretesProdutos[id];
+  supa.from('config').upsert({campo:'fretesProdutos',valor:JSON.stringify(DB.config.fretesProdutos)});}
  if(DB.config.temposProducao&&DB.config.temposProducao[id]){delete DB.config.temposProducao[id];
   supa.from('config').upsert({campo:'temposProducao',valor:JSON.stringify(DB.config.temposProducao)}).then(({error})=>{if(!error)syncSheets('config','upsert',{campo:'temposProducao',valor:JSON.stringify(DB.config.temposProducao)});});}
  commit('excluir','Produtos',p.nome);syncSheets('produtos','delete',{id});toast('Produto excluído.','info');}
@@ -4072,6 +4099,18 @@ const fichasProdutos=()=>DB.config.fichasProdutos||(DB.config.fichasProdutos={})
    como o tempo de produção — sem coluna nova na tabela de produtos */
 const linksProdutos=()=>DB.config.linksProdutos||(DB.config.linksProdutos={});
 const linkDoProduto=id=>linksProdutos()[id]||'';
+/* frete do material, guardado em config ("fretesProdutos"). O custo do produto continua
+   sendo um número só — preço de compra + frete —, porque é ele que o orçamento, o
+   estoque e os relatórios leem. Aqui fica só a memória da divisão, para o formulário
+   saber separar de novo na hora de editar. Guarda o total junto: se o custo mudou por
+   fora (importação de NF-e, por exemplo), a divisão está velha e é descartada. */
+const fretesProdutos=()=>DB.config.fretesProdutos||(DB.config.fretesProdutos={});
+function freteDoProduto(id,custoAtual){
+ const r=fretesProdutos()[id];
+ if(!r||typeof r!=='object')return 0;
+ const frete=Number(r.frete)||0,total=Number(r.total)||0;
+ if(custoAtual!==undefined&&Math.abs(total-(Number(custoAtual)||0))>0.005)return 0;
+ return frete;}
 /* aceita "site.com/produto" digitado sem o https:// */
 function normalizarLink(v){v=String(v||'').trim();if(!v)return '';
  return /^https?:\/\//i.test(v)?v:'https://'+v;}
@@ -6481,7 +6520,9 @@ async function carregarConfigSupabase(){
  const {data,error}=await supa.from('config').select('*');
  if(error){erroDeCarga('configurações',error);return;}
  (data||[]).forEach(({campo,valor})=>{
-  if(campo==='linksProdutos'){try{const m=JSON.parse(valor);if(m&&typeof m==='object'&&!Array.isArray(m))DB.config.linksProdutos=m;}catch(e){}
+  if(campo==='fretesProdutos'){try{const m=JSON.parse(valor);if(m&&typeof m==='object'&&!Array.isArray(m))DB.config.fretesProdutos=m;}catch(e){}
+   if(CUR==='insumos')renderInsumos();}
+  else if(campo==='linksProdutos'){try{const m=JSON.parse(valor);if(m&&typeof m==='object'&&!Array.isArray(m))DB.config.linksProdutos=m;}catch(e){}
    if(CUR==='insumos')renderInsumos();else if(CUR==='portfolio')renderPortfolio();}
   else if(campo==='fichasProdutos'){try{const m=JSON.parse(valor);if(m&&typeof m==='object'&&!Array.isArray(m))DB.config.fichasProdutos=m;}catch(e){}
    if(CUR==='portfolio')renderPortfolio();}
@@ -6727,6 +6768,8 @@ function montarPlanilhaBackup(){
 
  criarAba('Insumos','MATERIAIS / INSUMOS',[
   {t:'Material / Insumo',w:36,v:p=>txt(p.nome)},{t:'Categoria',w:22,v:p=>txt(p.cat)},
+  {t:'Preço de compra',w:15,fmt:FMT_MOEDA,al:'right',v:p=>(Number(p.custo)||0)-freteDoProduto(p.id,p.custo)},
+  {t:'Frete',w:12,fmt:FMT_MOEDA,al:'right',v:p=>freteDoProduto(p.id,p.custo)},
   {t:'Custo',w:14,fmt:FMT_MOEDA,al:'right',v:p=>Number(p.custo)||0},
   {t:'Estoque',w:11,fmt:FMT_INT,al:'right',v:p=>Number(p.est)||0},
   {t:'Estoque mínimo',w:15,fmt:FMT_INT,al:'right',v:p=>Number(p.min)||0},
@@ -7738,6 +7781,7 @@ function linhasConfigDoBackup(cfg){
  põe('temposProducao',JSON.stringify(cfg.temposProducao||{}));
  põe('fichasProdutos',JSON.stringify(cfg.fichasProdutos||{}));
  põe('linksProdutos',JSON.stringify(cfg.linksProdutos||{}));
+ põe('fretesProdutos',JSON.stringify(cfg.fretesProdutos||{}));
  if(cfg.ultimaImportacaoOfx)põe('ultimaImportacaoOfx',cfg.ultimaImportacaoOfx);
  return linhas;}
 async function restaurarBackupJson(ev){
@@ -7875,7 +7919,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-28.1';
+const APP_VERSAO='2026-09-28.2';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
