@@ -3810,7 +3810,7 @@ function selecionarTipoOrc(tipo){if(tipo==='catalogo'){resetOrcCatalogo();orcSho
  resetOrcForm(tipo);orcShow('form');}
 function resetOrcForm(tipo){const cf=DB.config.cf;
  PRECO_MANUAL=false;MARGEM_SUGERIDA=null;$('preco-manual-hint').style.display='none';
- aplicarHorasCf(null,null);$('orc-frete').value='';
+ aplicarHorasCf(null,null);$('orc-frete').value=FRETE_PADRAO;
  atualizarDatalistMateriais();
  $('orc-id').value='';$('orc-tipo').value=tipo;$('orc-desc').value='';$('orc-qty').value=1;$('orc-obs').value='';
  $('orc-mdo').innerHTML='';
@@ -4117,8 +4117,10 @@ function normalizarLink(v){v=String(v||'').trim();if(!v)return '';
 const fichaDoProduto=id=>fichasProdutos()[id]||null;
 const temFicha=id=>!!fichaDoProduto(id);
 /* produto antigo, sem ficha: começa com os materiais que já estão cadastrados nele e os percentuais padrão */
+/* frete que a maioria dos itens leva: vem preenchido e pode ser trocado em cada item */
+const FRETE_PADRAO=250;
 function fichaInicialDoProduto(prod){const cf=DB.config.cf;
- return{mdo:[],servicos:[],
+ return{frete:FRETE_PADRAO,mdo:[],servicos:[],
   materiais:(prod.materiais||[]).map(m=>({mode:m.ref?'catalogo':'livre',ref:m.ref||'',desc:m.desc||'',qty:Number(m.qty)||0,custo:Number(m.custo)||0})),
   imposto:cf.imposto||0,maquina:cf.taxaMaquina||0,
   comissao:0,comissaoNome:'',markup:cf.markup||0,precoManual:false};}
@@ -7919,7 +7921,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-28.2';
+const APP_VERSAO='2026-09-28.3';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
