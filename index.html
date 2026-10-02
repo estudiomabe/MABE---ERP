@@ -188,6 +188,8 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 @keyframes slideIn { from { opacity:0;transform:translateX(20px); } to { opacity:1;transform:translateX(0); } }
 .table-wrapper { overflow-x:auto; }
 #vnd-itens, #orc-materiais, #orc-servicos, #orc-mdo { overflow-x:auto; }
+.om-tabela { overflow-x:auto; }
+.om-tabela #orc-materiais { overflow-x:visible; }
 #sidebar-backdrop { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:150; }
 @media (max-width:860px) {
   #btn-menu { display:inline-flex !important; }
@@ -232,10 +234,17 @@ body.sem-anexos-pedido #vnd-anexos-zona { display:none; }
 .nome-link { color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;text-decoration-color:var(--accent);cursor:pointer; }
 .nome-link:hover { color:var(--accent); }
 /* o link do material fica na frente do nome, dentro da propria celula da descricao */
-.om-nome { display:flex;align-items:center;gap:5px;min-width:0; }
+.om-nome { display:flex;align-items:center;gap:5px;min-width:160px; }
 .om-nome > input { flex:1;min-width:0; }
 .om-nome .om-link { flex-shrink:0;padding:5px 7px;line-height:1;font-size:13px; }
 .om-nome .om-link-vazio { flex-shrink:0;width:27px;height:1px; }
+/* titulos das colunas da lista de materiais, na mesma grade das linhas.
+   No celular cada linha ja traz o seu rotulo (.rot-cel), entao a faixa sai. */
+.om-cab { display:grid;grid-template-columns:2fr 65px 85px 85px 28px;gap:6px;align-items:end;margin-bottom:5px;
+ font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
+.om-cab .om-nome { gap:5px; }
+.om-cab .om-cab-link { flex-shrink:0;width:27px;text-align:center; }
+@media (max-width:860px){ .om-cab { display:none; } }
 .nivel-sel { font-family:inherit;font-size:11px;font-weight:700;padding:3px 20px 3px 8px;border-radius:20px;border:1px solid var(--border);background-color:var(--surface2);color:var(--text);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6f62' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:9px; }
 .nivel-sel:hover:not(:disabled) { border-color:var(--accent); }
 .nivel-sel:disabled { cursor:not-allowed;opacity:.65;background-image:none;padding-right:8px; }
@@ -431,7 +440,7 @@ body.sem-fin-obs .fin-obs { display:none; }
   #vnd-itens>div>:first-child, #orc-materiais>div>:first-child, #orc-mdo>div>:first-child,
   #orc-servicos>div>:first-child, #orc-servicos>div>:nth-child(2) { grid-column:1 / -1; }
   #vnd-itens>div .btn-danger, #orc-materiais>div .btn-danger, #orc-mdo>div .btn-danger, #orc-servicos>div .btn-danger { min-height:40px;padding:0; }
-  #vnd-itens, #orc-materiais, #orc-servicos, #orc-mdo { overflow-x:visible; }
+  #vnd-itens, #orc-materiais, #orc-servicos, #orc-mdo, .om-tabela { overflow-x:visible; }
 
   /* itens da nota fiscal: a tabela de 6 colunas vira um cartão por item */
   #modal-nf table, #modal-nf tbody { display:block; }
@@ -923,7 +932,8 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <div style="display:flex;flex-direction:column;gap:14px">
             <div class="config-card" style="margin:0;flex:1">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="config-title" style="margin:0">🪵 Materiais / Insumos</div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="addMaterial('catalogo')">📦 Adicionar</button><button class="btn btn-primary btn-sm" onclick="abrirNovoProdutoRapido()">+ Cadastrar Material/Insumo</button></div></div>
-              <div id="orc-materiais" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+              <div class="om-tabela"><div class="om-cab" id="orc-materiais-cab"><div class="om-nome"><span class="om-cab-link">Link</span><span>Material / Insumo</span></div><span>Qtd</span><span>Custo unit.</span><span style="text-align:right">Subtotal</span><span></span></div>
+              <div id="orc-materiais" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div></div>
               <datalist id="dl-materiais"></datalist>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Materiais</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-mat">R$ 0,00</span></div>
             </div>
@@ -3953,6 +3963,10 @@ function atualizarLinkMaterial(row){
  const antigo=cel.firstElementChild;if(!antigo)return;
  const molde=document.createElement('div');molde.innerHTML=htmlLinkMaterial(row.dataset.ref);
  cel.replaceChild(molde.firstElementChild,antigo);}
+/* sem material nenhum, os títulos sozinhos só confundem */
+function atualizarCabecalhoMateriais(){
+ const cab=$('orc-materiais-cab'),wrap=$('orc-materiais');
+ if(cab&&wrap)cab.style.display=wrap.querySelector('div')?'':'none';}
 function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.createElement('div');row.dataset.mode=mode;if(it&&it.ref)row.dataset.ref=it.ref;
  row.style.cssText='display:grid;grid-template-columns:2fr 65px 85px 85px 28px;gap:6px;align-items:center';
  const campo=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
@@ -4064,6 +4078,7 @@ function comissaoPorPessoa(o){const m={};
 /* a tela de precificação calcula 1 unidade; o item guarda os valores já multiplicados pela quantidade */
 function qtdItemOrc(){const el=$('orc-qty');return Math.max(1,el?(parseFloat(el.value)||1):1);}
 function calcOrc(){const t=computeOrc();
+ atualizarCabecalhoMateriais();
  const hint=$('orc-cf-hint');
  if(hint){
   const h=n=>fmtN(n,n%1?1:0)+' h';
@@ -8092,7 +8107,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-01.1';
+const APP_VERSAO='2026-10-01.2';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
