@@ -231,6 +231,11 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
 body.sem-anexos-pedido #vnd-anexos-zona { display:none; }
 .nome-link { color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;text-decoration-color:var(--accent);cursor:pointer; }
 .nome-link:hover { color:var(--accent); }
+/* o link do material fica na frente do nome, dentro da propria celula da descricao */
+.om-nome { display:flex;align-items:center;gap:5px;min-width:0; }
+.om-nome > input { flex:1;min-width:0; }
+.om-nome .om-link { flex-shrink:0;padding:5px 7px;line-height:1;font-size:13px; }
+.om-nome .om-link-vazio { flex-shrink:0;width:27px;height:1px; }
 .nivel-sel { font-family:inherit;font-size:11px;font-weight:700;padding:3px 20px 3px 8px;border-radius:20px;border:1px solid var(--border);background-color:var(--surface2);color:var(--text);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6f62' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:9px; }
 .nivel-sel:hover:not(:disabled) { border-color:var(--accent); }
 .nivel-sel:disabled { cursor:not-allowed;opacity:.65;background-image:none;padding-right:8px; }
@@ -3918,17 +3923,40 @@ function buscarMaterialPorNome(nome){
  const p=DB.produtos.find(x=>x.nome===nome);
  if(p)return{ref:'p:'+p.id,custo:p.custo||0};
  return null;}
-function omBusca(input){const nome=input.value.trim();const found=buscarMaterialPorNome(nome);const row=input.closest('div');
+function omBusca(input){const nome=input.value.trim();const found=buscarMaterialPorNome(nome);const row=input.closest('[data-mode]');
  if(found){row.dataset.ref=found.ref;row.querySelector('.om-custo').value=found.custo;row.classList.remove('om-nao-encontrado');}
  else{delete row.dataset.ref;row.classList.toggle('om-nao-encontrado',nome.length>0);}
+ atualizarLinkMaterial(row);
  calcOrc();}
 let LINHA_MATERIAL_PENDENTE=null,PRODUTO_RAPIDO_ORC=false;
 function abrirNovoProdutoRapido(){openProduto('Insumo');PRODUTO_RAPIDO_ORC=true;}
 let FORNECEDOR_RAPIDO_ORC=false,FORNECEDOR_RAPIDO_SERVICO=false;
 function abrirNovoPrestadorRapido(){openFornecedor();FORNECEDOR_RAPIDO_ORC=true;}
+/* so material vindo do cadastro tem link, e o cadastro guarda link so de produto/insumo:
+   a referencia da linha e "p:<id>" para produto e "m:<id>" para madeira */
+function linkDoRefMaterial(ref){
+ ref=String(ref||'');
+ if(ref.slice(0,2)!=='p:')return '';
+ return linkDoProduto(ref.slice(2));}
+function htmlLinkMaterial(ref){
+ return linkDoRefMaterial(ref)
+  ?'<button type="button" class="btn btn-ghost btn-sm om-link" title="Abrir a página deste material no site do fornecedor" onclick="abrirLinkMaterial(this)">🔗</button>'
+  :'<span class="om-link-vazio"></span>';}
+function abrirLinkMaterial(btn){
+ const row=btn.closest('[data-mode]');
+ const url=linkDoRefMaterial(row&&row.dataset.ref);
+ if(!url){toast('Este material não tem link cadastrado.','info');return;}
+ window.open(url,'_blank','noopener');}
+/* trocar o material troca o link junto */
+function atualizarLinkMaterial(row){
+ const cel=row&&row.querySelector('.om-nome');if(!cel)return;
+ const antigo=cel.firstElementChild;if(!antigo)return;
+ const molde=document.createElement('div');molde.innerHTML=htmlLinkMaterial(row.dataset.ref);
+ cel.replaceChild(molde.firstElementChild,antigo);}
 function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.createElement('div');row.dataset.mode=mode;if(it&&it.ref)row.dataset.ref=it.ref;
  row.style.cssText='display:grid;grid-template-columns:2fr 65px 85px 85px 28px;gap:6px;align-items:center';
- const desc=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
+ const campo=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
+ const desc='<div class="om-nome">'+htmlLinkMaterial(it?it.ref:'')+campo+'</div>';
  row.innerHTML=desc+'<span class="rot-cel">Qtd</span><span class="rot-cel">Custo unit.</span><span class="rot-cel">Subtotal</span><span class="rot-cel"></span><input type="number" class="form-control om-qty" value="'+(it?it.qty:1)+'" min="0" step="0.001" oninput="calcOrc()" title="Quantidade"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control om-custo" value="'+(it?it.custo:0)+'" step="0.01" min="0" oninput="calcOrc()" title="Custo unitário" style="border:none;background:transparent;padding-left:2px"></div><div class="mono om-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
  wrap.appendChild(row);calcOrc();return row;}
 function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
@@ -8064,7 +8092,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-09-28.5';
+const APP_VERSAO='2026-10-01.1';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
