@@ -1152,7 +1152,10 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento()">+ Adicionar forma de pagamento</button>
 <div id="aprv-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
 </div>
+<div class="form-grid form-2">
+<div class="form-group"><label class="form-label">Data da aprovação *</label><input type="date" class="form-control" id="aprv-data" onchange="aoMudarDataAprov()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">O dia em que o cliente fechou — é a data que o pedido vai levar</div></div>
 <div class="form-group"><label class="form-label">Data de Entrega combinada com o cliente *</label><input type="date" class="form-control" id="aprv-prazo" onchange="aoMudarPrazoAprov()"></div>
+</div>
 <div class="form-group" id="aprv-receb-wrap"><label class="form-label">O primeiro pagamento já está no extrato do banco?</label><select class="form-control" id="aprv-recebido" onchange="atualizarPreviewAprov()">
 <option value="nao">Não — lançar conforme a situação escolhida em cada forma</option>
 <option value="extrato">Sim — usar um lançamento que já está no extrato</option>
@@ -4385,9 +4388,24 @@ function aoMudarFormaPag(sel){
  const data=linha.querySelector('.ap-data');
  if(sel.value==='boleto'&&$('aprv-prazo')&&$('aprv-prazo').value&&linha.closest('#aprv-pags'))data.value=$('aprv-prazo').value;
  recalcularPagamentos(sel);}
-function aoMudarPrazoAprov(){
+/* trocar a data da aprovação arrasta as formas que ainda estavam na data antiga:
+   quem já tinha escolhido outro vencimento à mão fica onde está */
+let DATA_APROV_ANTERIOR='';
+function aoMudarDataAprov(){
+ const nova=$('aprv-data').value;
  document.querySelectorAll('#aprv-pags .pag-linha').forEach(l=>{
-  if(l.querySelector('.ap-forma').value==='boleto')l.querySelector('.ap-data').value=$('aprv-prazo').value;});
+  const campo=l.querySelector('.ap-data');
+  if(DATA_APROV_ANTERIOR&&campo.value===DATA_APROV_ANTERIOR)campo.value=nova;});
+ DATA_APROV_ANTERIOR=nova;
+ atualizarPreviewAprov();}
+let PRAZO_APROV_ANTERIOR='';
+function aoMudarPrazoAprov(){
+ const novo=$('aprv-prazo').value;
+ document.querySelectorAll('#aprv-pags .pag-linha').forEach(l=>{
+  const campo=l.querySelector('.ap-data');
+  const ehBoleto=l.querySelector('.ap-forma').value==='boleto';
+  if(ehBoleto||(PRAZO_APROV_ANTERIOR&&campo.value===PRAZO_APROV_ANTERIOR))campo.value=novo;});
+ PRAZO_APROV_ANTERIOR=novo;
  atualizarPreviewAprov();}
 function formasPagamentoDe(idAlvo){
  return [...document.querySelectorAll('#'+idAlvo+' .pag-linha')].map(l=>({
@@ -4451,14 +4469,15 @@ function abrirAprovarOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.
  if(!itensOrc(o).length){toast('Adicione ao menos um item antes de aprovar.','error');return;}
  $('aprv-orc-id').value=id;$('aprv-orc-desc').textContent=resumoOrc(o)+' — '+cliName(o.cliId)+' — '+fmt(o.preco);
  $('aprv-itens-lista').innerHTML=aprvItensChecklistHtml(itensOrc(o));
- $('aprv-prazo').value=o.validade||addDays(today(),30);$('aprv-recebido').value='nao';$('aprv-lanc').innerHTML='';
+ $('aprv-data').value=today();$('aprv-prazo').value=o.validade||addDays(today(),30);$('aprv-recebido').value='nao';$('aprv-lanc').innerHTML='';
  /* começa como o estúdio combina na maioria das vezes: PIX em duas partes.
     Trocar a forma da primeira linha e tirar a segunda dá o caso de pagamento único. */
  $('aprv-pags').innerHTML='';
  const pct=Number(DB.config.cf.pixAntecipado)||50;
  const entrada=Math.round(o.preco*pct/100*100)/100;
- addFormaPagamento({forma:'pix',valor:entrada,data:today(),status:'Pendente'});
+ addFormaPagamento({forma:'pix',valor:entrada,data:$('aprv-data').value,status:'Pendente'});
  if(o.preco-entrada>0.004)addFormaPagamento({forma:'pix',valor:Math.round((o.preco-entrada)*100)/100,data:$('aprv-prazo').value,status:'Pendente'});
+ DATA_APROV_ANTERIOR=$('aprv-data').value;PRAZO_APROV_ANTERIOR=$('aprv-prazo').value;
  atualizarPreviewAprov();
  openModal('modal-aprovar-orc');}
 function aprvItensChecklistHtml(itens){return itens.map((it,i)=>'<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" class="aprv-item-chk" data-idx="'+i+'" checked onchange="atualizarPreviewAprov()"><span style="flex:1">'+esc(it.desc)+'</span><span class="mono" style="font-weight:700">'+fmt(it.preco)+'</span></label>').join('');}
@@ -4500,6 +4519,8 @@ function atualizarPreviewAprov(){const o=DB.orcamentos.find(x=>x.id===$('aprv-or
   html=lancs.map(l=>(l.status==='Pago'?'✔':'⏳')+' '+fmtD(l.data)+' · <strong>'+fmt(l.val)+'</strong> · '+esc(l.desc.replace('Pedido — ',''))+(l.status==='Pago'?' <span style="color:var(--success)">(já recebido)</span>':'')).join('<br>');
   html+='<br>→ Gera <strong>'+lancs.length+'</strong> conta(s) a receber, somando <strong>'+fmt(totalLanc)+'</strong>';
   html+=totalLanc>totalSel+0.005?' (os '+fmt(totalLanc-totalSel)+' a mais são os juros do cartão).':'.';
+  const dAp=$('aprv-data')?$('aprv-data').value:'';
+  if(dAp)html+='<br>📄 O pedido será criado com a data de <strong>'+fmtD(dAp)+'</strong>.';
   if(recebido==='extrato'){const f=DB.financeiro.find(x=>x.id===$('aprv-lanc').value);
    html+=f?'<br>🔗 O primeiro lançamento não será criado: usa o do extrato de '+fmtD(f.data)+' ('+fmt(f.val)+').'
         :'<br>🔗 Escolha o lançamento do extrato que corresponde ao primeiro pagamento.';}}
@@ -4509,6 +4530,9 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
  const veioDaDetalhe=$('orc-detalhe-view').style.display!=='none';
  const prazoEntrega=$('aprv-prazo').value;
  if(!prazoEntrega){toast('Informe a data de entrega combinada.','error');return;}
+ const dataAprovacao=$('aprv-data').value;
+ if(!dataAprovacao){toast('Informe a data da aprovação.','error');return;}
+ if(dataAprovacao>prazoEntrega){toast('A entrega combinada é anterior à aprovação. Confira as duas datas.','error',7000);return;}
  const itensSel=itensSelecionadosAprov(o);
  if(!itensSel.length){toast('Selecione ao menos um item aprovado para gerar o pedido.','error');return;}
  const formasPag=formasPagamentoAprov().filter(f=>f.valor>0);
@@ -4534,7 +4558,7 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
  const itensVenda=itens.map(it=>({prodId:it.prodId||null,desc:it.desc,qty:it.qty||1,preco:(it.qty||1)?Math.round((it.preco/(it.qty||1))*100)/100:it.preco}));
  /* as fotos de referência seguem para o pedido: mesmos arquivos, sem cópia no servidor */
  const anexosDoOrc=(o.anexos||[]).map(a=>({path:a.path,nome:a.nome,url:a.url}));
- const vendaObj={cliId:o.cliId||'',origem:o.origem||'',anexos:anexosDoOrc,data:today(),pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':''),itens:itensVenda,total:totalAprovado};
+ const vendaObj={cliId:o.cliId||'',origem:o.origem||'',anexos:anexosDoOrc,data:dataAprovacao,pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':''),itens:itensVenda,total:totalAprovado};
  const novaVenda=Object.assign({id:uid(),baixa:false},vendaObj);
  const {data:dv,error:erroVenda}=await supa.from('vendas').insert(vendaParaSupabase(novaVenda)).select().single();
  if(erroVenda){toast('Erro ao gerar pedido no Supabase: '+erroVenda.message,'error');return;}
@@ -8107,7 +8131,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-02.1';
+const APP_VERSAO='2026-10-03.1';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
