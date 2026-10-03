@@ -1,9 +1,17 @@
 /**
- * BACKUP DIÁRIO DO ERP — Estúdio MABE
+ * BACKUP DO ERP — Estúdio MABE
  *
- * Toda noite este script lê as tabelas do Supabase e manda o arquivo de
- * backup por e-mail (e, se você quiser, guarda uma cópia no Drive). Às 22h,
- * depois do expediente: o backup pega o dia de trabalho inteiro.
+ * Duas tarefas, uma diária e uma semanal:
+ *
+ *  DIÁRIA, às 22h — lê as tabelas do Supabase e manda o arquivo de backup
+ *  por e-mail (e guarda uma cópia no Drive). Depois do expediente, para o
+ *  backup pegar o dia de trabalho inteiro.
+ *
+ *  SEMANAL, domingo às 22h — guarda no Drive as fotos e PDFs anexados aos
+ *  orçamentos e pedidos, que ficam no Storage do Supabase e NÃO cabem no
+ *  .json. Baixa só o que ainda não tem, então a partir da segunda semana
+ *  costuma ser rápido. Nada é apagado da pasta: anexo removido do ERP
+ *  continua guardado aqui.
  *
  * POR QUE ASSIM
  * O ERP é um site estático: não existe servidor nosso para rodar uma tarefa
@@ -25,12 +33,14 @@
  *    Permitir. Esse aviso é o normal para script próprio, sem verificação.
  *    Em um minuto o e-mail chega. Se não chegar, veja "Execuções" no menu
  *    da esquerda: o erro aparece lá.
- * 6. Escolha a função "instalarGatilhoDiario" e Executar. Pronto: todo dia
- *    entre 22h e 23h o backup é enviado sozinho.
+ * 6. Escolha a função "instalarGatilhos" e Executar. Pronto: o backup diário
+ *    sai entre 22h e 23h, e o dos anexos no domingo, no mesmo horário.
+ * 7. (opcional) Rode "testarAnexosAgora" uma vez para a primeira carga de
+ *    anexos já ficar guardada, sem esperar o domingo.
  *
- * Para desligar depois: rode "removerGatilhoDiario".
- * Para mudar o horário, o destinatário ou a pasta: mexa nos ajustes abaixo
- * e rode "instalarGatilhoDiario" de novo (ele troca o gatilho antigo).
+ * Para desligar depois: rode "removerGatilhos".
+ * Para mudar horário, destinatário ou pasta: mexa nos ajustes abaixo e rode
+ * "instalarGatilhos" de novo (ele troca os gatilhos antigos pelos novos).
  *
  * ---------------------------------------------------------------------
  * ATENÇÃO — O ARQUIVO É CONFIDENCIAL
@@ -44,9 +54,10 @@
  * Entra: todas as tabelas do banco, inclusive o histórico inteiro e as
  * configurações. Esse arquivo restaura o ERP pela tela
  * Configurações > Restaurar backup (.json).
- * NÃO entra: as fotos e PDFs anexados aos orçamentos e pedidos, que ficam
- * no Storage do Supabase. O backup guarda o endereço de cada anexo, não o
- * arquivo. (O backup manual que você baixa no ERP também não leva.)
+ * NÃO entra no .json: as fotos e PDFs anexados aos orçamentos e pedidos,
+ * que ficam no Storage do Supabase — o .json guarda o endereço de cada
+ * anexo, não o arquivo. É por isso que existe a tarefa semanal, que baixa
+ * esses arquivos para uma pasta do Drive.
  */
 
 // ===================== AJUSTES =====================
@@ -70,6 +81,19 @@ var DIAS_NO_DRIVE = 0;
 /** Hora do envio (0 a 23). O Google roda em algum momento dentro da hora
  *  escolhida — 22 significa entre 22h e 23h, não 22h em ponto. */
 var HORA_DO_ENVIO = 22;
+
+/** --- anexos (tarefa semanal) --- */
+
+/** Subpasta, dentro de PASTA_DRIVE, onde os anexos ficam guardados. */
+var PASTA_ANEXOS = 'Anexos';
+
+/** Dia da semana da carga de anexos. */
+var DIA_DOS_ANEXOS = 'DOMINGO';
+
+/** Se a pasta inteira couber neste tamanho, o .zip com todos os anexos vai
+ *  junto no e-mail. Acima disso, o e-mail leva só o resumo e o link — o
+ *  Gmail recusa anexo acima de 25 MB. */
+var LIMITE_ZIP_EMAIL_MB = 15;
 
 var FUSO = 'America/Sao_Paulo';
 
@@ -204,30 +228,204 @@ function formatarDiaBR(dia) {
   return p.length === 3 ? (p[2] + '/' + p[1] + '/' + p[0]) : dia;
 }
 
+// ===================== ANEXOS (SEMANAL) =====================
+
+/**
+ * Guarda no Drive os anexos dos orçamentos e pedidos.
+ *
+ * A lista sai dos próprios dados, não do Storage: cada orçamento e cada
+ * pedido carrega os seus anexos com nome, caminho e endereço. Assim o que
+ * é guardado é exatamente o que o ERP usa — e arquivo solto no bucket, que
+ * nenhum registro aponta, fica de fora de propósito.
+ */
+function backupAnexosSemanal() {
+  var comeco = new Date().getTime();
+  var dia = Utilities.formatDate(new Date(), FUSO, 'yyyy-MM-dd');
+  try {
+    var lista = listarAnexos();
+    var pasta = pastaDeAnexos();
+    var jaTem = {};
+    var arquivos = pasta.getFiles();
+    while (arquivos.hasNext()) jaTem[arquivos.next().getName()] = true;
+
+    var novos = 0, bytes = 0, sumidos = [], faltou = 0;
+    for (var i = 0; i < lista.length; i++) {
+      var a = lista[i];
+      if (jaTem[a.local]) continue;
+      /* o Apps Script derruba a execução aos 6 minutos: para antes e
+         continua na semana que vem, em vez de morrer no meio */
+      if (new Date().getTime() - comeco > 4.5 * 60 * 1000) { faltou = lista.length - i; break; }
+      var resposta = UrlFetchApp.fetch(a.url, { muteHttpExceptions: true });
+      if (resposta.getResponseCode() >= 300) { sumidos.push(a.de + ' — ' + a.nome); continue; }
+      var blob = resposta.getBlob().setName(a.local);
+      pasta.createFile(blob);
+      jaTem[a.local] = true;
+      novos++;
+      bytes += blob.getBytes().length;
+    }
+
+    /* o índice diz de qual orçamento veio cada arquivo e com que caminho
+       ele precisa voltar para o Storage, se um dia for preciso repor */
+    gravarIndice(pasta, lista, dia);
+
+    var totalPasta = tamanhoDaPasta(pasta);
+    var mb = totalPasta / 1048576;
+    var anexo = [];
+    if (mb > 0 && mb <= LIMITE_ZIP_EMAIL_MB) {
+      anexo = [zipDaPasta(pasta, 'Anexos-ERP-Mabe-' + dia + '.zip')];
+    }
+
+    MailApp.sendEmail({
+      to: DESTINATARIOS,
+      subject: 'Backup dos anexos do ERP — ' + formatarDiaBR(dia)
+        + ' (' + novos + ' novo(s), ' + lista.length + ' no total)',
+      body: 'Backup semanal dos anexos (fotos e PDFs dos orçamentos e pedidos).\n\n'
+        + '   Anexos usados pelo ERP: ' + lista.length + '\n'
+        + '   Baixados agora: ' + novos + ' (' + Math.round(bytes / 1048576 * 10) / 10 + ' MB)\n'
+        + '   Guardados na pasta: ' + contarArquivos(pasta) + ' (' + Math.round(mb * 10) / 10 + ' MB)\n'
+        + (faltou ? '   Ficaram para a semana que vem: ' + faltou + ' (a execução tem limite de tempo)\n' : '')
+        + (sumidos.length ? '\nNão consegui baixar ' + sumidos.length + ':\n   ' + sumidos.join('\n   ')
+            + '\n(provavelmente foram apagados do Storage)\n' : '')
+        + '\nPasta no Drive: ' + PASTA_DRIVE + ' > ' + PASTA_ANEXOS + '\n'
+        + (anexo.length ? '\nO .zip com todos vai anexado aqui.\n'
+            : '\nA pasta já passou de ' + LIMITE_ZIP_EMAIL_MB + ' MB, então o .zip não vai por e-mail — abra pelo Drive.\n')
+        + '\nNada é apagado desta pasta: anexo removido do ERP continua guardado.\n'
+        + 'O arquivo _indice-anexos.json diz de qual orçamento veio cada um e\n'
+        + 'com que caminho ele precisa voltar, se um dia for preciso repor.\n',
+      attachments: anexo
+    });
+  } catch (erro) {
+    avisarFalhaAnexos(dia, erro);
+    throw erro;
+  }
+}
+
+/** Os anexos citados pelos orçamentos e pedidos, sem repetir. */
+function listarAnexos() {
+  var lista = [], vistos = {};
+  var junta = function (linhas, prefixo) {
+    for (var i = 0; i < linhas.length; i++) {
+      var r = linhas[i];
+      var anexos = r.anexos || [];
+      for (var j = 0; j < anexos.length; j++) {
+        var a = anexos[j];
+        if (!a || !a.url || vistos[a.url]) continue;
+        vistos[a.url] = true;
+        var caminho = a.path || String(a.url).split('/orcamentos-anexos/').pop();
+        lista.push({
+          de: prefixo + pad4(r.num),
+          nome: a.nome || caminho,
+          url: a.url,
+          path: caminho,
+          /* a pasta do Drive é plana: a barra vira __ para não haver dois
+             arquivos com o mesmo nome vindos de orçamentos diferentes */
+          local: String(caminho).replace(/\//g, '__')
+        });
+      }
+    }
+  };
+  junta(lerTabela('orcamentos'), 'ORC-');
+  junta(lerTabela('vendas'), 'V-');
+  return lista;
+}
+
+function pad4(n) { var s = String(n == null ? '' : n); while (s.length < 4) s = '0' + s; return s; }
+
+function pastaDeAnexos() {
+  var nomePai = PASTA_DRIVE || 'Backups ERP Mabe';
+  var pais = DriveApp.getFoldersByName(nomePai);
+  var pai = pais.hasNext() ? pais.next() : DriveApp.createFolder(nomePai);
+  var filhas = pai.getFoldersByName(PASTA_ANEXOS);
+  return filhas.hasNext() ? filhas.next() : pai.createFolder(PASTA_ANEXOS);
+}
+
+function gravarIndice(pasta, lista, dia) {
+  var conteudo = JSON.stringify({
+    geradoEm: new Date().toISOString(),
+    bucket: 'orcamentos-anexos',
+    comoRepor: 'Subir cada arquivo no bucket com o caminho em "path". O nome na pasta do Drive é o "path" com / trocado por __.',
+    anexos: lista
+  }, null, 1);
+  var antigos = pasta.getFilesByName('_indice-anexos.json');
+  while (antigos.hasNext()) antigos.next().setTrashed(true);
+  pasta.createFile(Utilities.newBlob(conteudo, 'application/json', '_indice-anexos.json'));
+}
+
+function contarArquivos(pasta) {
+  var n = 0, f = pasta.getFiles();
+  while (f.hasNext()) { f.next(); n++; }
+  return n;
+}
+
+function tamanhoDaPasta(pasta) {
+  var total = 0, f = pasta.getFiles();
+  while (f.hasNext()) total += f.next().getSize();
+  return total;
+}
+
+function zipDaPasta(pasta, nomeZip) {
+  var blobs = [], f = pasta.getFiles();
+  while (f.hasNext()) blobs.push(f.next().getBlob());
+  return Utilities.zip(blobs, nomeZip);
+}
+
+function avisarFalhaAnexos(dia, erro) {
+  try {
+    MailApp.sendEmail({
+      to: DESTINATARIOS,
+      subject: 'ATENÇÃO: o backup dos anexos falhou — ' + formatarDiaBR(dia),
+      body: 'A carga semanal de anexos não terminou.\n\n'
+        + 'Erro: ' + (erro && erro.message ? erro.message : erro) + '\n\n'
+        + 'O backup diário dos dados não depende desta tarefa e continua\n'
+        + 'funcionando. Dá para rodar esta na mão: no script, função\n'
+        + '"testarAnexosAgora".\n'
+    });
+  } catch (e) { }
+}
+
 // ===================== LIGAR E DESLIGAR =====================
 
-/** Roda o backup agora, para conferir. Use esta na primeira vez. */
+/** Roda o backup dos dados agora, para conferir. Use esta na primeira vez. */
 function testarAgora() {
   backupDiario();
 }
 
-/** Liga o envio diário. Rodar de novo troca o gatilho, não duplica. */
-function instalarGatilhoDiario() {
-  removerGatilhoDiario();
+/** Roda a carga de anexos agora. A primeira vez é a demorada. */
+function testarAnexosAgora() {
+  backupAnexosSemanal();
+}
+
+/** Liga as duas tarefas. Rodar de novo troca os gatilhos, não duplica. */
+function instalarGatilhos() {
+  removerGatilhos();
   ScriptApp.newTrigger('backupDiario')
     .timeBased()
     .atHour(HORA_DO_ENVIO)
     .everyDays(1)
     .inTimezone(FUSO)
     .create();
+  ScriptApp.newTrigger('backupAnexosSemanal')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay[DIA_DOS_ANEXOS === 'DOMINGO' ? 'SUNDAY'
+      : DIA_DOS_ANEXOS === 'SEGUNDA' ? 'MONDAY'
+      : DIA_DOS_ANEXOS === 'TERCA' ? 'TUESDAY'
+      : DIA_DOS_ANEXOS === 'QUARTA' ? 'WEDNESDAY'
+      : DIA_DOS_ANEXOS === 'QUINTA' ? 'THURSDAY'
+      : DIA_DOS_ANEXOS === 'SEXTA' ? 'FRIDAY' : 'SATURDAY'])
+    .atHour(HORA_DO_ENVIO)
+    .inTimezone(FUSO)
+    .create();
 }
 
-/** Desliga o envio diário. */
-function removerGatilhoDiario() {
+/** Desliga as duas. */
+function removerGatilhos() {
+  var nossas = { backupDiario: true, backupAnexosSemanal: true };
   var gatilhos = ScriptApp.getProjectTriggers();
   for (var i = 0; i < gatilhos.length; i++) {
-    if (gatilhos[i].getHandlerFunction() === 'backupDiario') {
-      ScriptApp.deleteTrigger(gatilhos[i]);
-    }
+    if (nossas[gatilhos[i].getHandlerFunction()]) ScriptApp.deleteTrigger(gatilhos[i]);
   }
 }
+
+/** Nomes antigos, de quando só existia a tarefa diária. */
+function instalarGatilhoDiario() { instalarGatilhos(); }
+function removerGatilhoDiario() { removerGatilhos(); }
