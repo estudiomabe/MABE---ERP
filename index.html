@@ -8454,10 +8454,10 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.14';
+const APP_VERSAO='2026-10-03.15';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=259;
+const APP_ATUALIZACAO=260;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
@@ -8545,6 +8545,11 @@ instalarFilaDeEnvio();
    e não tem como recarregar. O vigia transforma isso numa tela que diz onde parou e oferece saída. */
 let BOOT_ETAPA='iniciando',BOOT_CONCLUIDO=false;
 const etapaBoot=t=>{BOOT_ETAPA=t;};
+/* a abertura terminou: se o vigia já tinha aparecido, ele sai de cena */
+function concluirBoot(){
+ BOOT_CONCLUIDO=true;
+ const el=$('tela-diagnostico');
+ if(el&&el.style.display==='block')el.style.display='none';}
 function mostrarDiagnostico(){
  if(BOOT_CONCLUIDO)return;
  const el=$('tela-diagnostico');if(!el)return;
@@ -8553,7 +8558,8 @@ function mostrarDiagnostico(){
   :'A conexão não respondeu a tempo. Toque em "Tentar de novo" — seus dados continuam guardados neste aparelho.';
  $('diag-detalhe').textContent='versão '+APP_VERSAO+' · parou em: '+BOOT_ETAPA+(ULTIMO_ERRO?' · '+ULTIMO_ERRO:'');
  el.style.display='block';}
-setTimeout(mostrarDiagnostico,9000);
+/* mais do que a abertura mais lenta que ainda é legítima (8s de espera + folga) */
+setTimeout(mostrarDiagnostico,14000);
 /* nenhuma etapa da abertura pode ficar pendurada esperando a rede */
 function comPrazo(promessa,ms,valorPadrao){
  return Promise.race([Promise.resolve(promessa).catch(()=>valorPadrao),new Promise(r=>setTimeout(()=>r(valorPadrao),ms))]);}
@@ -8561,21 +8567,23 @@ function comPrazo(promessa,ms,valorPadrao){
 etapaBoot('lendo os dados guardados no aparelho');
 loadDB();
 (async function(){
- etapaBoot('consultando usuários no servidor');
- await comPrazo(carregarUsuariosSupabase(true),8000,false);
- etapaBoot('verificando sua sessão');
+ etapaBoot('consultando usuários e verificando a sessão');
+ /* as duas ao mesmo tempo: uma não precisa do resultado da outra */
+ const [,sessao]=await Promise.all([
+  comPrazo(carregarUsuariosSupabase(true),8000,false),
+  comPrazo(supa.auth.getSession(),8000,{data:null})]);
  /* 1) sessão do Supabase Auth */
- try{const {data}=await comPrazo(supa.auth.getSession(),8000,{data:null});
+ try{const data=sessao&&sessao.data;
   if(data&&data.session&&data.session.user){
-   if(linkDeRecuperacao()){history.replaceState(null,'',location.pathname);abrirDefinirNovaSenha();$('login-user').focus();BOOT_CONCLUIDO=true;return;}
+   if(linkDeRecuperacao()){history.replaceState(null,'',location.pathname);abrirDefinirNovaSenha();$('login-user').focus();concluirBoot();return;}
    etapaBoot('entrando com sua conta');
-   if(await entrarComAuth(data.session.user)){BOOT_CONCLUIDO=true;return;}}
+   if(await entrarComAuth(data.session.user)){concluirBoot();return;}}
  }catch(e){}
  /* 2) sessão antiga, guardada no localStorage */
  const sid=localStorage.getItem(SKEY);
  if(sid){const u=DB.usuarios.find(x=>x.id===sid&&x.status==='Ativo');
-  if(u){etapaBoot('montando as telas');USER=u;$('login-screen').classList.add('hidden');afterLogin();BOOT_CONCLUIDO=true;return;}}
- BOOT_CONCLUIDO=true;
+  if(u){etapaBoot('montando as telas');USER=u;$('login-screen').classList.add('hidden');afterLogin();concluirBoot();return;}}
+ concluirBoot();
  $('login-user').focus();})();
 </script>
 </body>
