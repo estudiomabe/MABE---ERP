@@ -244,7 +244,9 @@ body.sem-anexos-pedido #vnd-anexos-zona { display:none; }
  font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
 .om-cab .om-nome { gap:5px; }
 .om-cab .om-cab-link { flex-shrink:0;width:34px;text-align:center; }
-@media (max-width:860px){ .om-cab { display:none; } }
+.sv-cab { display:grid;grid-template-columns:2fr 150px 100px 28px;gap:6px;align-items:end;margin-bottom:5px;
+ font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
+@media (max-width:860px){ .om-cab, .sv-cab { display:none; } }
 .nivel-sel { font-family:inherit;font-size:11px;font-weight:700;padding:3px 20px 3px 8px;border-radius:20px;border:1px solid var(--border);background-color:var(--surface2);color:var(--text);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6f62' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:9px; }
 .nivel-sel:hover:not(:disabled) { border-color:var(--accent); }
 .nivel-sel:disabled { cursor:not-allowed;opacity:.65;background-image:none;padding-right:8px; }
@@ -941,6 +943,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             </div>
             <div class="config-card" style="margin:0">
               <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button><button class="btn btn-primary btn-sm" onclick="abrirNovoPrestadorRapido()">+ Cadastrar Prestador</button></div></div>
+              <div class="sv-cab" id="orc-servicos-cab"><span>Serviço</span><span>Prestador</span><span>Valor</span><span></span></div>
               <div id="orc-servicos" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Serviços</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-serv">R$ 0,00</span></div>
             </div>
@@ -3998,6 +4001,9 @@ function atualizarLinkMaterial(row){
  const molde=document.createElement('div');molde.innerHTML=htmlLinkMaterial(row.dataset.ref);
  cel.replaceChild(molde.firstElementChild,antigo);}
 /* sem material nenhum, os títulos sozinhos só confundem */
+function atualizarCabecalhoServicos(){
+ const cab=$('orc-servicos-cab'),wrap=$('orc-servicos');
+ if(cab&&wrap)cab.style.display=wrap.querySelector('div')?'':'none';}
 function atualizarCabecalhoMateriais(){
  const cab=$('orc-materiais-cab'),wrap=$('orc-materiais');
  if(cab&&wrap)cab.style.display=wrap.querySelector('div')?'':'none';}
@@ -4112,7 +4118,7 @@ function comissaoPorPessoa(o){const m={};
 /* a tela de precificação calcula 1 unidade; o item guarda os valores já multiplicados pela quantidade */
 function qtdItemOrc(){const el=$('orc-qty');return Math.max(1,el?(parseFloat(el.value)||1):1);}
 function calcOrc(){const t=computeOrc();
- atualizarCabecalhoMateriais();
+ atualizarCabecalhoMateriais();atualizarCabecalhoServicos();
  const hint=$('orc-cf-hint');
  if(hint){
   const h=n=>fmtN(n,n%1?1:0)+' h';
@@ -8413,10 +8419,10 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.10';
+const APP_VERSAO='2026-10-03.11';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=255;
+const APP_ATUALIZACAO=256;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
