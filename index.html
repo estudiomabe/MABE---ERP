@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Estúdio MABE — ERP Marcenaria</title>
-<meta name="theme-color" content="#1a1714">
+<meta name="theme-color" content="#faf7f2">
 <meta name="description" content="Gestão do Estúdio MABE: orçamentos, pedidos, produção, estoque e financeiro.">
 <!-- icone na aba e na tela inicial: o PNG embutido serve o arquivo solto,
      o icon.png serve o iOS, que nao aceita data URI em apple-touch-icon -->
@@ -29,6 +29,16 @@
   --sidebar-w: 240px; --radius: 12px; --radius-sm: 8px;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
+/* Toque de aplicativo:
+   - sem o retângulo cinza que o Android pinta em cima de tudo que se toca;
+   - sem o atraso do duplo-toque para dar zoom, que faz cada botão parecer lento;
+   - sem seleção de texto ao segurar o dedo na moldura (o conteúdo continua
+     selecionável, para copiar telefone e endereço de cliente). */
+* { -webkit-tap-highlight-color:transparent; }
+body { touch-action:manipulation; }
+#sidebar, #topbar, .btn, .nav-item, .config-title, .stat-label, .om-cab, .sv-cab {
+ -webkit-user-select:none;user-select:none; }
+input, textarea, select, [contenteditable] { -webkit-user-select:text;user-select:text; }
 html,body { height:100%; overscroll-behavior:none; }
 body { font-family: var(--font); background: var(--bg); color: var(--text); height:100vh; height:100dvh; display:flex; overflow:hidden; }
 ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:2px; }
@@ -428,7 +438,21 @@ body.sem-fin-obs .fin-obs { display:none; }
 .conc-sub { font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:4px 0 8px; }
 .conc-item { display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:5px 0;border-top:1px solid var(--border);color:var(--text-muted); }
 .conc-link { background:none;border:0;padding:0;font:inherit;color:var(--text);text-align:left;cursor:pointer;text-decoration:underline; }
+@media (hover:none) {
+  .btn:active { transform:scale(0.97); }
+  .nav-item:active { background:rgba(255,255,255,0.08); }
+  .kpi-card:active, .config-card:active { transform:scale(0.995); }
+}
 @media (max-width:860px) {
+  /* com viewport-fit=cover a tela vai até as bordas: devolve a folga onde o
+     aparelho pede, senão o título fica embaixo do relógio e o último botão
+     embaixo da barra de gestos */
+  #topbar { padding-top:calc(10px + env(safe-area-inset-top));
+    padding-left:calc(14px + env(safe-area-inset-left));padding-right:calc(14px + env(safe-area-inset-right)); }
+  #sidebar { padding-top:env(safe-area-inset-top); }
+  #content { padding-bottom:calc(22px + env(safe-area-inset-bottom)); }
+  #aviso-atualizacao { bottom:calc(12px + env(safe-area-inset-bottom)); }
+
   /* abaixo de 16px o iPhone dá zoom sozinho ao tocar no campo e a tela fica desalinhada */
   input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea, .form-control { font-size:16px !important; }
   .form-control { padding:10px 11px; }
@@ -8482,10 +8506,10 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.17';
+const APP_VERSAO='2026-10-03.18';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=262;
+const APP_ATUALIZACAO=263;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
