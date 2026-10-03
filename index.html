@@ -147,7 +147,7 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .modal-close { width:30px;height:30px;border-radius:50%;border:none;background:var(--surface2);color:var(--text-muted);cursor:pointer;font-size:16px;transition:all 0.15s; }
 .modal-close:hover { background:var(--surface3);color:var(--text); }
 .modal-body { padding:22px; } .modal-footer { padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px; }
-.form-grid { display:grid;gap:14px;min-width:0;grid-template-columns:minmax(0,1fr); } .form-2 { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } .form-group { min-width:0; }
+.form-grid { display:grid;gap:14px;min-width:0;grid-template-columns:minmax(0,1fr); } .form-2 { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } .form-3 { grid-template-columns:minmax(0,1fr) 112px minmax(0,1fr); } .form-group { min-width:0; }
 .form-group { display:flex;flex-direction:column;gap:5px; }
 .form-label { font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px; }
 .form-control { background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color 0.15s;width:100%; }
@@ -205,7 +205,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   .search-box { order:3;flex:1 1 100%;width:100%; }
   #content { padding:14px; }
   .kpi-grid { grid-template-columns:repeat(2,1fr); }
-  .charts-grid, .bottom-grid, .form-2 { grid-template-columns:minmax(0,1fr); }
+  .charts-grid, .bottom-grid, .form-2, .form-3 { grid-template-columns:minmax(0,1fr); }
   .orc-tipo-grid, .orc-cols-2, .mad-dim-grid { grid-template-columns:minmax(0,1fr) !important; }
   /* Os contadores sao numeros pequenos: empilhados um por linha eles comiam
      quase uma tela inteira antes do primeiro card do PCP. Em duas colunas,
@@ -835,9 +835,10 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <input type="hidden" id="orch-id">
           <div class="form-grid">
             <div class="form-group"><label class="form-label">Cliente</label><div style="display:flex;gap:6px"><select class="form-control" id="orch-cli" style="flex:1"><option value="">— Sem cliente —</option></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapido()">+ Novo Cliente</button></div></div>
-            <div class="form-grid form-2">
-              <div class="form-group"><label class="form-label">Data do Orçamento</label><input type="date" class="form-control" id="orch-data"></div>
-              <div class="form-group"><label class="form-label">Data de Entrega</label><input type="date" class="form-control" id="orch-validade"></div>
+            <div class="form-grid form-3">
+              <div class="form-group"><label class="form-label">Data do Orçamento</label><input type="date" class="form-control" id="orch-data" onchange="aoMudarDatasOrc()"></div>
+              <div class="form-group"><label class="form-label">Prazo (dias)</label><input type="number" class="form-control" id="orch-dias" step="1" min="0" oninput="aoMudarDiasOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px" id="orch-dias-hint"></div></div>
+              <div class="form-group"><label class="form-label">Data de Entrega</label><input type="date" class="form-control" id="orch-validade" onchange="aoMudarDatasOrc()"></div>
             </div>
             <div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="orch-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div>
             <div class="form-group"><label class="form-label">Status</label><select class="form-control" id="orch-status"><option>Rascunho</option><option>Enviado</option><option>Aprovado</option><option>Reprovado</option><option>Concluído</option></select></div>
@@ -3653,7 +3654,7 @@ function embutirCabecalhoOrc(destino){
  if(card.parentElement!==alvo)alvo.appendChild(card);
  alvo.style.display='block';}
 function prepararCabecalhoNovo(){ORC_ATUAL_ID=null;$('orch-id').value='';$('orch-cli').innerHTML='';fillSel('orch-cli',DB.clientes,c=>c.nome,'','— Sem cliente —');
- $('orch-data').value=today();$('orch-validade').value=addDays(today(),15);$('orch-status').value='Rascunho';$('orch-obs').value='';$('orch-origem').value='';}
+ $('orch-data').value=today();$('orch-validade').value=addDays(today(),15);$('orch-status').value='Rascunho';$('orch-obs').value='';$('orch-origem').value='';aoMudarDatasOrc();}
 function novoOrcamento(){if(!guard())return;
  prepararCabecalhoNovo();
  ORC_NOVO_INLINE=true;ORC_ITEM_EDITANDO=null;ORC_VOLTAR='lista';
@@ -3684,9 +3685,31 @@ async function garantirOrcamentoDoCabecalho(){
 function editarCabecalhoOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  ORC_NOVO_INLINE=false;embutirCabecalhoOrc(null);
  ORC_ATUAL_ID=id;$('orch-id').value=o.id;fillSel('orch-cli',DB.clientes,c=>c.nome,o.cliId||'','— Sem cliente —');
- $('orch-data').value=o.data;$('orch-validade').value=o.validade||'';$('orch-status').value=o.status;$('orch-obs').value=o.obs||'';$('orch-origem').value=o.origem||'';
+ $('orch-data').value=o.data;$('orch-validade').value=o.validade||'';$('orch-status').value=o.status;$('orch-obs').value=o.obs||'';$('orch-origem').value=o.origem||'';aoMudarDatasOrc();
  $('orch-title').textContent='Editar Orçamento ORC-'+pad(o.num);orcShow('header');}
 function cancelarHeaderOrc(){const id=$('orch-id').value;if(id){abrirDetalheOrc(id);}else{orcShow('lista');renderOrcamentos();}}
+/* dias entre duas datas, contadas ao meio-dia para o horário de verão não tirar um dia */
+const diasEntre=(de,ate)=>{if(!de||!ate)return null;
+ return Math.round((new Date(ate+'T12:00:00')-new Date(de+'T12:00:00'))/86400000);};
+/* o prazo e a data de entrega são a mesma informação de dois jeitos: mexer num atualiza o outro */
+function aoMudarDatasOrc(){
+ const dias=diasEntre($('orch-data').value,$('orch-validade').value);
+ $('orch-dias').value=dias===null?'':dias;
+ atualizarHintPrazoOrc(dias);}
+function aoMudarDiasOrc(){
+ const base=$('orch-data').value;
+ const dias=parseInt($('orch-dias').value,10);
+ if(!base||isNaN(dias)){atualizarHintPrazoOrc(null);return;}
+ $('orch-validade').value=addDays(base,Math.max(0,dias));
+ atualizarHintPrazoOrc(Math.max(0,dias));}
+function atualizarHintPrazoOrc(dias){
+ const el=$('orch-dias-hint');if(!el)return;
+ if(dias===null||dias===undefined||isNaN(dias)){el.textContent='';el.style.color='var(--text-muted)';return;}
+ if(dias<0){el.textContent='A entrega está antes do orçamento.';el.style.color='var(--danger)';return;}
+ el.style.color='var(--text-muted)';
+ const semanas=dias/7;
+ el.textContent=dias===0?'Entrega no mesmo dia'
+  :(dias+(dias===1?' dia':' dias')+(dias>=7&&dias%7===0?'  ·  '+semanas+(semanas===1?' semana':' semanas'):''));}
 async function salvarHeaderOrc(irParaItem){if(!guard())return;
  const id=$('orch-id').value;
  const o={cliId:$('orch-cli').value,data:$('orch-data').value||today(),validade:$('orch-validade').value,status:$('orch-status').value,obs:$('orch-obs').value.trim(),origem:$('orch-origem').value};
@@ -8265,7 +8288,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.2';
+const APP_VERSAO='2026-10-03.3';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
