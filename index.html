@@ -1125,7 +1125,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
  </div>
 </div>
 <div id="aviso-atualizacao" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9500;background:var(--text);color:var(--surface);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,0.25);align-items:center;gap:12px;flex-wrap:wrap">
- <div style="flex:1;min-width:170px;font-size:13px;line-height:1.4"><strong>Nova versão disponível</strong><div style="opacity:.7;font-size:12px">Atualize para usar a versão mais recente do ERP.</div></div>
+ <div style="flex:1;min-width:170px;font-size:13px;line-height:1.4"><strong>Nova versão disponível</strong><div style="opacity:.7;font-size:12px" id="aviso-versoes">Atualize para usar a versão mais recente do ERP.</div></div>
  <button class="btn btn-primary btn-sm" style="background:var(--accent);color:var(--text);border-color:var(--accent)" onclick="aplicarAtualizacao()">Atualizar</button>
  <button class="btn btn-ghost btn-sm" style="background:transparent;color:var(--surface);border-color:rgba(250,247,242,0.35)" onclick="$('aviso-atualizacao').style.display='none'">Depois</button>
 </div>
@@ -8297,9 +8297,35 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.5';
+const APP_VERSAO='2026-10-03.6';
 let SW_REG=null;
-function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
+/* o aviso diz de qual versao para qual: sem isso nao da para saber se o aparelho ja recebeu a atualizacao */
+let VERSAO_NOVA='';
+const workerPendente=()=>SW_REG&&(SW_REG.waiting||SW_REG.installing)||null;
+function textoVersoesAviso(){
+ if(VERSAO_NOVA&&VERSAO_NOVA!==APP_VERSAO)return 'Você está na <strong>'+APP_VERSAO+'</strong> e a nova é a <strong>'+VERSAO_NOVA+'</strong>.';
+ return 'Você está na versão <strong>'+APP_VERSAO+'</strong>. Atualize para usar a mais recente.';}
+function escreverVersoesAviso(){const el=$('aviso-versoes');if(el)el.innerHTML=textoVersoesAviso();}
+/* pergunta ao worker novo qual versao ele e; se ele nao responder, le o numero direto do arquivo publicado */
+async function descobrirVersaoNova(){
+ if(VERSAO_NOVA)return VERSAO_NOVA;
+ const w=workerPendente();
+ if(w){
+  const resposta=await new Promise(res=>{
+   const fim=setTimeout(()=>{limpar();res('');},1500);
+   const ouvir=e=>{if(e.data&&e.data.tipo==='VERSAO'){clearTimeout(fim);limpar();res(e.data.versao||'');}};
+   const limpar=()=>navigator.serviceWorker.removeEventListener('message',ouvir);
+   navigator.serviceWorker.addEventListener('message',ouvir);
+   try{w.postMessage({tipo:'VERSAO'});}catch(err){clearTimeout(fim);limpar();res('');}});
+  if(resposta){VERSAO_NOVA=resposta;return VERSAO_NOVA;}}
+ try{const r=await fetch('sw.js?v='+Date.now(),{cache:'reload'});
+  const txt=await r.text();const marca="VERSAO = '";const i=txt.indexOf(marca);
+  if(i>=0){const fim=txt.indexOf("'",i+marca.length);
+   if(fim>i)VERSAO_NOVA=txt.slice(i+marca.length,fim);}}catch(e){}
+ return VERSAO_NOVA;}
+function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(!el)return;
+ escreverVersoesAviso();el.style.display='flex';
+ descobrirVersaoNova().then(escreverVersoesAviso);}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
  if(esperando){esperando.postMessage({tipo:'ATUALIZAR'});$('aviso-atualizacao').style.display='none';}
  else location.reload();}
@@ -8307,7 +8333,7 @@ async function procurarAtualizacao(){
  if(!SW_REG){toast('Este navegador não guarda o app para uso offline.','info');return;}
  toast('Procurando atualização…','info');
  try{await SW_REG.update();}catch(e){}
- setTimeout(()=>{if(SW_REG.waiting)mostrarAvisoAtualizacao();else toast('Você já está na versão mais recente.','success');},1200);}
+ setTimeout(()=>{if(SW_REG.waiting)mostrarAvisoAtualizacao();else toast('Você já está na versão mais recente ('+APP_VERSAO+').','success');},1200);}
 /* limpa só os arquivos do app: dados, login e configurações ficam no localStorage e não são tocados */
 async function limparCacheERecarregar(){
  try{if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()));}
