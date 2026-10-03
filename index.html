@@ -3794,7 +3794,7 @@ function anexoSolto(ev){ev.preventDefault();$('orc-anexos-zona').classList.remov
  enviarAnexosOrc(Array.from((ev.dataTransfer&&ev.dataTransfer.files)||[]));}
 /* arquivo solto fora da área abriria no lugar do ERP, perdendo o que estava na tela */
 ['dragover','drop'].forEach(t=>window.addEventListener(t,e=>{
- if(e.dataTransfer&&Array.from(e.dataTransfer.types||[]).includes('Files')&&!e.target.closest?.('#orc-anexos-zona')&&!e.target.closest?.('#vnd-anexos-zona')){e.preventDefault();e.dataTransfer.dropEffect='none';}}));
+ if(e.dataTransfer&&Array.from(e.dataTransfer.types||[]).includes('Files')&&!(e.target.closest&&e.target.closest('#orc-anexos-zona'))&&!(e.target.closest&&e.target.closest('#vnd-anexos-zona'))){e.preventDefault();e.dataTransfer.dropEffect='none';}}));
 let ENVIANDO_ANEXOS=false;
 async function enviarAnexosOrc(files){if(!files.length||!guard())return;
  if(ENVIANDO_ANEXOS){toast('Aguarde terminar o envio anterior.','info');return;}
@@ -8454,10 +8454,10 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.13';
+const APP_VERSAO='2026-10-03.14';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=258;
+const APP_ATUALIZACAO=259;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
@@ -8508,7 +8508,9 @@ async function descobrirVersaoNova(){
  return VERSAO_NOVA;}
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(!el)return;
  escreverVersoesAviso();el.style.display='flex';
- descobrirVersaoNova().then(escreverVersoesAviso);}
+ descobrirVersaoNova().then(v=>{
+  if(v&&v===APP_VERSAO){el.style.display='none';return;}
+  escreverVersoesAviso();});}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
  if(esperando){esperando.postMessage({tipo:'ATUALIZAR'});$('aviso-atualizacao').style.display='none';}
  else location.reload();}
