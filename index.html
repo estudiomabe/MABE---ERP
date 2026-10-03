@@ -7805,6 +7805,10 @@ prompt pronto na última seção).
 
 ## 5. Modelo de dados — tabelas no Supabase (Postgres)
 
+O CREATE TABLE de todas elas, pronto para rodar no SQL Editor de um
+projeto novo, está em "supabase/estrutura.sql" no repositório. A lista
+abaixo é o resumo em português.
+
 1. clientes — nome, email, tel, doc (CPF/CNPJ), cidade, endereco, status
 2. produtos — usada tanto para "Portfólio" (produtos prontos vendáveis)
    quanto para "Insumo" (matéria-prima); campos: nome, tipo, cat, preco,
@@ -7866,14 +7870,23 @@ ORC-0007, V-0014, OP-0009, OC-0003.
 
 ## 6. Autenticação e permissões
 
-- Login simples: usuário e senha em texto puro, conferidos contra a lista
-  local de usuários (sem hashing, sem OAuth, sem Supabase Auth).
-- 3 perfis: Admin (acesso total, único que vê o módulo "Usuários" e pode
-  resetar os dados), Operador (pode criar/editar registros), Visualizador
-  (somente leitura).
-- Funções centrais no código: canEdit() → true para Operador ou Admin;
-  isAdmin() → true só para Admin; guard() → bloqueia a ação e mostra um
-  aviso quando o perfil é Visualizador.
+- Login pelo próprio ERP, contra a tabela usuarios: a senha é guardada
+  como "sha256$sal$resumo" (SHA-256 com sal por usuário, via Web Crypto) e nunca
+  em texto puro. Não usa OAuth; o Supabase Auth está preparado no código
+  mas ainda não é a fonte do login.
+- Recuperação de senha por pergunta e resposta, com a resposta guardada
+  do mesmo jeito que a senha.
+- 4 níveis de acesso: Administrador (tudo, inclusive Usuários,
+  Configurações e Folha de Pagamento), Financeiro (tudo menos Usuários e
+  Configurações), Produção (Calendário, PCP, Máquinas, Estoque, Pedidos e
+  Clientes — sem Financeiro, sem Orçamentos e sem nenhum valor em R$) e
+  Consulta (as mesmas telas da Produção, somente leitura). Os perfis
+  antigos (Admin, Operador, Visualizador) são convertidos na carga.
+- Funções centrais no código: nivelDe(u) devolve o nível, já convertendo
+  os perfis antigos; canEdit() diz quem pode gravar; isAdmin() só o
+  Administrador; verValores() quem pode ver dinheiro; podeVer(secao)
+  quais telas aparecem; guard() e guardValores() bloqueiam a ação e
+  mostram o aviso.
 - Sessão: o id do usuário logado fica salvo no localStorage (chave
   "erp_mabe_session") para manter o login entre acessos.
 
@@ -8085,7 +8098,11 @@ o link de cada um.
   design, e isso não representa uma falha de segurança por si só; o
   controle de acesso real depende das regras (RLS — Row Level Security)
   configuradas no projeto Supabase.
-- Senhas de usuário nunca aparecem em nenhum backup ou exportação.
+- O backup .json leva a senha na forma em que ela é guardada
+  ("sha256$sal$resumo"), para o restauro devolver os acessos. Não dá para voltar
+  dela à senha digitada, mas o arquivo é confidencial: não deve ser
+  mandado por grupo nem deixado em pasta compartilhada. A planilha e o
+  PDF do backup não levam senha nenhuma.
 - Login e perfis de usuário são a única camada de controle de acesso
   dentro da própria aplicação.
 
@@ -8419,10 +8436,10 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.11';
+const APP_VERSAO='2026-10-03.12';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=256;
+const APP_ATUALIZACAO=257;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
