@@ -1098,6 +1098,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">O ERP funciona instalado no celular e guarda a última versão aberta, para funcionar mesmo sem sinal. Quando sai uma versão nova, aparece um aviso no rodapé.</div>
         <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;margin-bottom:12px">
           <div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px"><span style="color:var(--text-muted)">Versão em uso</span><span class="mono" id="cfg-versao">—</span></div>
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px"><span style="color:var(--text-muted)">Publicada em</span><span class="mono" id="cfg-versao-data">—</span></div>
           <div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px"><span style="color:var(--text-muted)">Modo offline</span><span class="mono" id="cfg-sw-estado">—</span></div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -6771,6 +6772,7 @@ function renderConfig(){CFG_EDITANDO=false;$('sheets-url').value=DB.config.sheet
  renderFolhaConfig();
  renderMdoTiposConfig();
  $('cfg-versao').textContent=APP_VERSAO;
+ $('cfg-versao-data').textContent=dataDaVersao(APP_VERSAO)||'—';
  $('cfg-sw-estado').textContent=('serviceWorker' in navigator)?(navigator.serviceWorker.controller?'ativo':'ativa no próximo acesso'):'não suportado';
  const emp=DB.config.empresa||{};$('cfg-emp-cnpj').value=emp.cnpj||'';$('cfg-emp-endereco').value=emp.endereco||'';$('cfg-emp-bairro').value=emp.bairro||'';
  $('cfg-emp-cep').value=emp.cep||'';$('cfg-emp-cidade').value=emp.cidade||'';$('cfg-emp-estado').value=emp.estado||'';
@@ -8297,7 +8299,17 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.6';
+const APP_VERSAO='2026-10-03.7';
+/* o numero da versao ja carrega a data: 2026-10-03.6 vira "03/10/2026 · há 2 dias" */
+function dataDaVersao(v){
+ const d=String(v||'').slice(0,10);
+ if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(d))return '';
+ const dias=diasEntre(d,today());
+ let quando='';
+ if(dias===0)quando=' · hoje';
+ else if(dias===1)quando=' · ontem';
+ else if(dias>1)quando=' · há '+dias+' dias';
+ return fmtD(d)+quando;}
 let SW_REG=null;
 /* o aviso diz de qual versao para qual: sem isso nao da para saber se o aparelho ja recebeu a atualizacao */
 let VERSAO_NOVA='';
