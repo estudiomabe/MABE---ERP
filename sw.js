@@ -8,8 +8,11 @@
    - Supabase e qualquer outro domínio: passam direto, nunca ficam em cache.
 
    VERSAO precisa mudar a cada publicação — é o que faz o navegador instalar o worker novo
-   e mostrar o aviso "Nova versão disponível" dentro do app. */
-const VERSAO = '2026-10-03.7';
+   e mostrar o aviso "Nova versão disponível" dentro do app.
+   ATUALIZACAO é o contador de publicações mostrado no aviso; sobe junto, e tem que bater
+   com APP_VERSAO e APP_ATUALIZACAO do index.html. */
+const VERSAO = '2026-10-03.8';
+const ATUALIZACAO = 253;
 const CACHE = 'mabe-erp-' + VERSAO;
 const ESSENCIAIS = [
   './',
@@ -39,7 +42,7 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('message', e => {
   if (e.data && e.data.tipo === 'ATUALIZAR') self.skipWaiting();
-  if (e.data && e.data.tipo === 'VERSAO') e.source.postMessage({ tipo: 'VERSAO', versao: VERSAO });
+  if (e.data && e.data.tipo === 'VERSAO') e.source.postMessage({ tipo: 'VERSAO', versao: VERSAO, atualizacao: ATUALIZACAO });
 });
 
 const ehDocumento = req => req.mode === 'navigate' || req.destination === 'document';
