@@ -1704,19 +1704,32 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
  if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
  verificarColunaOrigem();verificarColunaObsFin();verificarColunaAnexosVenda();
- carregarClientesSupabase();
- carregarFornecedoresSupabase();
- carregarProdutosSupabase();
- carregarMadeirasSupabase();
- carregarFerramentasSupabase();
- carregarVendasSupabase();
- carregarOrcamentosSupabase();
- carregarProducaoSupabase();
- carregarEntregasSupabase();
- carregarComprasSupabase();
- carregarFinanceiroSupabase();
- carregarConfigSupabase();
- carregarHistoricoSupabase();}
+ [carregarClientesSupabase(),
+  carregarFornecedoresSupabase(),
+  carregarProdutosSupabase(),
+  carregarMadeirasSupabase(),
+  carregarFerramentasSupabase(),
+  carregarVendasSupabase(),
+  carregarOrcamentosSupabase(),
+  carregarProducaoSupabase(),
+  carregarEntregasSupabase(),
+  carregarComprasSupabase(),
+  carregarFinanceiroSupabase(),
+  carregarConfigSupabase(),
+  carregarHistoricoSupabase()]
+  .forEach(p=>Promise.resolve(p).then(agendarRedesenho,agendarRedesenho));}
+/* As cargas chegam uma a uma, em ordem imprevisível. Em vez de redesenhar
+   treze vezes, junta as que chegarem na mesma janela e redesenha uma vez só.
+   Sem isto, quem não tem dados guardados vê a tela parada no que havia antes
+   da carga — e no Dashboard, que nenhuma carga redesenha, para sempre. */
+let REDESENHO_TIMER=null;
+function agendarRedesenho(){
+ clearTimeout(REDESENHO_TIMER);
+ REDESENHO_TIMER=setTimeout(()=>{
+  if(!USER)return;
+  /* não arranca o texto de baixo de quem está digitando nas Configurações */
+  if(CUR==='configuracoes'&&CFG_EDITANDO)return;
+  renderSection(CUR);updateBadges();},250);}
 
 /* ================= ORDENAÇÃO DAS TABELAS =================
    Ordena no DOM, então funciona em qualquer tabela sem mexer nos renders.
@@ -8454,10 +8467,10 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.15';
+const APP_VERSAO='2026-10-03.16';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=260;
+const APP_ATUALIZACAO=261;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
