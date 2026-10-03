@@ -3734,11 +3734,17 @@ async function salvarHeaderOrc(irParaItem){if(!guard())return;
  if(irParaItem){ORC_VOLTAR='detalhe';ORC_ITEM_EDITANDO=null;orcShow('tipo');}
  else{orcShow('lista');renderOrcamentos();}}
 function abrirDetalheOrc(id){ORC_ATUAL_ID=id;orcShow('detalhe');renderOrcDetalhe();}
+/* "Prazo: 15 dias" entre a data do orcamento e a entrega, do mesmo jeito do cabecalho */
+function textoPrazoOrc(o){
+ const dias=diasEntre(o.data,o.validade);
+ if(dias===null||isNaN(dias))return '';
+ if(dias<0)return ' · <strong>Prazo:</strong> <span style="color:var(--danger)">entrega antes do orçamento</span>';
+ return ' · <strong>Prazo:</strong> '+(dias===0?'mesmo dia':dias+(dias===1?' dia':' dias'));}
 function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const itens=itensOrc(o);
  $('orcd-title').textContent='Orçamento ORC-'+pad(o.num);
  $('orcd-badge').innerHTML=statusOrcHtml(o);
- $('orcd-info').innerHTML='<strong>Cliente:</strong> '+esc(cliName(o.cliId))+(o.origem?' · <strong>Origem:</strong> '+esc(o.origem):'')+'<br><strong>Data:</strong> '+fmtD(o.data)+' · <strong>Entrega:</strong> '+fmtD(o.validade)+(o.obs?'<br><strong>Observações:</strong> '+esc(o.obs).replace(/\n/g,'<br>'):'');
+ $('orcd-info').innerHTML='<strong>Cliente:</strong> '+esc(cliName(o.cliId))+(o.origem?' · <strong>Origem:</strong> '+esc(o.origem):'')+'<br><strong>Data:</strong> '+fmtD(o.data)+' · <strong>Entrega:</strong> '+fmtD(o.validade)+textoPrazoOrc(o)+(o.obs?'<br><strong>Observações:</strong> '+esc(o.obs).replace(/\n/g,'<br>'):'');
  const podeDecidir=canEdit()&&itens.length>0&&o.status!=='Aprovado'&&o.status!=='Reprovado'&&o.status!=='Concluído';
  const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>':'';
  const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" onclick="rejeitarOrcamento(\''+o.id+'\')">✗ Reprovar</button>':'';
@@ -8291,7 +8297,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.4';
+const APP_VERSAO='2026-10-03.5';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
