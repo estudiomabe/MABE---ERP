@@ -1111,7 +1111,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:8px">"Limpar cache" apaga só os arquivos guardados do app — seus dados, senhas e login não são afetados.</div>
       </div>
-      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. <strong>Atenção:</strong> o arquivo <strong>.json</strong> leva as senhas embaralhadas dos usuários, para que o restauro devolva os acessos — trate esse arquivo como confidencial e não mande por grupo de WhatsApp nem deixe em pasta compartilhada. A planilha e o PDF não levam senha nenhuma.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio; O botão <strong>.zip</strong> baixa os quatro de uma vez, com um LEIA-ME explicando cada um. Se quiser só um deles, use os botões ao lado: use o <strong>Backup de Arquitetura</strong> se precisar recriar este sistema do zero um dia (não contém dados, só a descrição técnica de como o ERP foi construído — dá pra colar direto num Claude Code novo).<br><strong>Restaurar backup (.json)</strong> faz o caminho de volta: lê o arquivo, mostra quantos registros de cada módulo vão entrar e grava por cima dos que tiverem o mesmo código — nada é apagado. Os usuários voltam com a senha que tinham; o histórico não é restaurado.</div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn btn-primary btn-sm" id="btn-backup-zip" onclick="baixarBackupZip()">📦 Baixar backup completo (.zip)</button><span style="font-size:12px;color:var(--text-muted)">ou baixe separado:</span><button class="btn btn-ghost btn-sm" onclick="exportData()">📥 JSON</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Excel</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 PDF</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupArquitetura()">🏛️ Arquitetura</button><button class="btn btn-ghost btn-sm" id="btn-restaurar-backup" onclick="document.getElementById('backup-json-input').click()">📤 Restaurar backup (.json)</button><input type="file" id="backup-json-input" accept=".json,application/json" style="display:none" onchange="restaurarBackupJson(event)"><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
+      <div class="config-card"><div class="config-title">⚙️ Dados & Backup</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Baixa um arquivo único com todos os dados do ERP (clientes, orçamentos, pedidos, financeiro, produção, etc.) direto do banco de dados. Guarde esse arquivo num lugar seguro (Google Drive, e-mail, HD externo) periodicamente. <strong>Atenção:</strong> o arquivo <strong>.json</strong> leva as senhas embaralhadas dos usuários, para que o restauro devolva os acessos — trate esse arquivo como confidencial e não mande por grupo de WhatsApp nem deixe em pasta compartilhada. A planilha e o PDF não levam senha nenhuma.<br>Use o <strong>JSON</strong> pra guardar/restaurar os dados; use a <strong>Planilha (Excel)</strong> se quiser abrir e conferir os dados numa planilha comum, com uma aba por módulo; use o <strong>PDF</strong> se quiser um documento pra ler ou imprimir, organizado e com a identidade visual do estúdio; O botão <strong>.zip</strong> baixa os quatro de uma vez, com um LEIA-ME explicando cada um. Se quiser só um deles, use os botões ao lado: use o <strong>Backup de Arquitetura</strong> se precisar recriar este sistema do zero um dia (não contém dados, só a descrição técnica de como o ERP foi construído — dá pra colar direto num Claude Code novo).<br><strong>Restaurar backup (.json)</strong> faz o caminho de volta: lê o arquivo, mostra quantos registros de cada módulo vão entrar e grava por cima dos que tiverem o mesmo código — nada é apagado. Os usuários voltam com a senha que tinham; o histórico não é restaurado. Aceita os dois arquivos: o <strong>.json</strong> baixado aqui e o que chega por e-mail no backup automático diário.</div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn btn-primary btn-sm" id="btn-backup-zip" onclick="baixarBackupZip()">📦 Baixar backup completo (.zip)</button><span style="font-size:12px;color:var(--text-muted)">ou baixe separado:</span><button class="btn btn-ghost btn-sm" onclick="exportData()">📥 JSON</button><button class="btn btn-ghost btn-sm" onclick="exportDataExcel()">📊 Excel</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupCompletoPdf()">📄 PDF</button><button class="btn btn-ghost btn-sm" onclick="gerarBackupArquitetura()">🏛️ Arquitetura</button><button class="btn btn-ghost btn-sm" id="btn-restaurar-backup" onclick="document.getElementById('backup-json-input').click()">📤 Restaurar backup (.json)</button><input type="file" id="backup-json-input" accept=".json,application/json" style="display:none" onchange="restaurarBackupJson(event)"><button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Resetar Dados</button></div></div>
     </div>
 
   </div>
@@ -8301,6 +8301,23 @@ function linhasConfigDoBackup(cfg){
  põe('fretesProdutos',JSON.stringify(cfg.fretesProdutos||{}));
  if(cfg.ultimaImportacaoOfx)põe('ultimaImportacaoOfx',cfg.ultimaImportacaoOfx);
  return linhas;}
+/* Dois arquivos diferentes entram por aqui:
+   - o .json que o próprio ERP baixa, com os dados já no formato das telas;
+   - o do backup automático (Apps Script), que é a cópia crua das tabelas do
+     Supabase. Esse já está no formato de gravação, então não há o que converter.
+   Devolve null quando o arquivo não é nenhum dos dois. */
+function normalizarBackup(dados){
+ if(!dados||typeof dados!=='object')return null;
+ if(dados.formato==='supabase-bruto'&&dados.tabelas&&typeof dados.tabelas==='object'){
+  const t=dados.tabelas;
+  return {cru:true,quando:dados.geradoEm,
+   itensDe:x=>Array.isArray(t[x.tabela])?t[x.tabela]:[],
+   linhasConfig:(Array.isArray(t.config)?t.config:[]).filter(l=>l&&l.campo)
+    .map(l=>({campo:l.campo,valor:String(l.valor===undefined||l.valor===null?'':l.valor)}))};}
+ if(!Array.isArray(dados.clientes)||!dados.config)return null;
+ return {cru:false,quando:dados.geradoEm,
+  itensDe:x=>Array.isArray(dados[x.chave])?dados[x.chave]:[],
+  linhasConfig:linhasConfigDoBackup(dados.config||{})};}
 async function restaurarBackupJson(ev){
  const arquivo=ev.target.files&&ev.target.files[0];ev.target.value='';
  if(!arquivo)return;
@@ -8308,19 +8325,19 @@ async function restaurarBackupJson(ev){
  let dados;
  try{dados=JSON.parse(await arquivo.text());}
  catch(e){toast('Não consegui ler o arquivo: ele não parece um .json válido.','error',6000);return;}
- if(!dados||typeof dados!=='object'||!Array.isArray(dados.clientes)||!dados.config){
-  toast('Este arquivo não é um backup do ERP da Mabe.','error',6000);return;}
+ const forma=normalizarBackup(dados);
+ if(!forma){toast('Este arquivo não é um backup do ERP da Mabe.','error',6000);return;}
  /* o que vai entrar, contado antes de qualquer gravação */
- const plano=TABELAS_RESTAURO.map(t=>({t,itens:Array.isArray(dados[t.chave])?dados[t.chave].filter(x=>{
+ const plano=TABELAS_RESTAURO.map(t=>({t,itens:forma.itensDe(t).filter(x=>{
   if(!x||!x.id)return false;
   /* backup antigo não trazia senha: restaurar esses usuários criaria contas sem entrada */
   if(t.chave==='usuarios')return !!x.senha;
-  return true;}):[]})).filter(x=>x.itens.length);
+  return true;})})).filter(x=>x.itens.length);
  const totalRegistros=plano.reduce((s,x)=>s+x.itens.length,0);
- const quando=dados.geradoEm?new Date(dados.geradoEm).toLocaleString('pt-BR'):'data não informada';
+ const quando=forma.quando?new Date(forma.quando).toLocaleString('pt-BR'):'data não informada';
  const resumo=plano.map(x=>'   • '+x.t.rotulo+': '+x.itens.length).join('\n')||'   (nenhum registro)';
  if(!totalRegistros){toast('O arquivo não tem registros para restaurar.','info',6000);return;}
- if(!confirm('RESTAURAR BACKUP\n\nArquivo gerado em '+quando+'\n\nSerão gravados '+totalRegistros+' registro(s):\n'+resumo
+ if(!confirm('RESTAURAR BACKUP\n\nArquivo gerado em '+quando+(forma.cru?' (backup automático diário)':'')+'\n\nSerão gravados '+totalRegistros+' registro(s):\n'+resumo
   +'\n\nMais as configurações (custos fixos, markup, mão de obra, fichas de preço, serviços).'
   +'\n\nComo funciona: cada registro entra por cima do que tiver o mesmo código. Nada é apagado — o que existe hoje e não está no arquivo continua no lugar.'
   +'\n\nOs usuários voltam com a senha que tinham quando o backup foi gerado.'
@@ -8333,7 +8350,8 @@ async function restaurarBackupJson(ev){
  try{
   for(const {t,itens} of plano){
    if(btn)btn.textContent='⏳ '+t.rotulo+'...';
-   const linhas=itens.map(t.conv);
+   /* o arquivo cru já está no formato das tabelas; o do ERP precisa ser convertido */
+   const linhas=forma.cru?itens:itens.map(t.conv);
    /* em blocos: uma carga de 400 lançamentos de uma vez costuma estourar o pedido */
    for(let i=0;i<linhas.length;i+=100){
     const bloco=linhas.slice(i,i+100);
@@ -8341,7 +8359,7 @@ async function restaurarBackupJson(ev){
     if(error){erros.push(t.rotulo+': '+error.message);break;}
     gravados+=bloco.length;}}
   if(btn)btn.textContent='⏳ Configurações...';
-  const linhasCfg=linhasConfigDoBackup(dados.config||{});
+  const linhasCfg=forma.linhasConfig;
   if(linhasCfg.length){const {error}=await supa.from('config').upsert(linhasCfg);
    if(error)erros.push('Configurações: '+error.message);}
  }catch(e){erros.push(String(e&&e.message||e));}
@@ -8436,10 +8454,10 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.12';
+const APP_VERSAO='2026-10-03.13';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=257;
+const APP_ATUALIZACAO=258;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
