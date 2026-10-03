@@ -441,6 +441,7 @@ body.sem-fin-obs .fin-obs { display:none; }
   #orc-servicos>div>:first-child, #orc-servicos>div>:nth-child(2) { grid-column:1 / -1; }
   #vnd-itens>div .btn-danger, #orc-materiais>div .btn-danger, #orc-mdo>div .btn-danger, #orc-servicos>div .btn-danger { min-height:40px;padding:0; }
   #vnd-itens, #orc-materiais, #orc-servicos, #orc-mdo, .om-tabela { overflow-x:visible; }
+  .card-head { flex-wrap:wrap; } .card-head > .config-title { width:100%; } .card-head > div:last-child { width:100%;justify-content:flex-start !important; }
 
   /* itens da nota fiscal: a tabela de 6 colunas vira um cartão por item */
   #modal-nf table, #modal-nf tbody { display:block; }
@@ -932,14 +933,14 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
             <div class="config-card" style="margin:0;flex:1">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="config-title" style="margin:0">🪵 Materiais / Insumos</div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="addMaterial('catalogo')">📦 Adicionar</button><button class="btn btn-primary btn-sm" onclick="abrirNovoProdutoRapido()">+ Cadastrar Material/Insumo</button></div></div>
+              <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px"><div class="config-title" style="margin:0">🪵 Materiais / Insumos</div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="addMaterial('catalogo')">📦 Adicionar Material/Insumo</button><button class="btn btn-primary btn-sm" onclick="abrirNovoProdutoRapido()">+ Cadastrar Material/Insumo</button></div></div>
               <div class="om-tabela"><div class="om-cab" id="orc-materiais-cab"><div class="om-nome"><span class="om-cab-link">Link</span><span>Material / Insumo</span></div><span>Qtd</span><span>Custo unit.</span><span style="text-align:right">Subtotal</span><span></span></div>
               <div id="orc-materiais" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div></div>
               <datalist id="dl-materiais"></datalist>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Materiais</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-mat">R$ 0,00</span></div>
             </div>
             <div class="config-card" style="margin:0">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button><button class="btn btn-primary btn-sm" onclick="abrirNovoPrestadorRapido()">+ Cadastrar Prestador</button></div></div>
+              <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button><button class="btn btn-primary btn-sm" onclick="abrirNovoPrestadorRapido()">+ Cadastrar Prestador</button></div></div>
               <div id="orc-servicos" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Serviços</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-serv">R$ 0,00</span></div>
             </div>
@@ -8412,10 +8413,10 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.9';
+const APP_VERSAO='2026-10-03.10';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=254;
+const APP_ATUALIZACAO=255;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

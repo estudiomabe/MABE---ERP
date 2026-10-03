@@ -11,8 +11,8 @@
    e mostrar o aviso "Nova versão disponível" dentro do app.
    ATUALIZACAO é o contador de publicações mostrado no aviso; sobe junto, e tem que bater
    com APP_VERSAO e APP_ATUALIZACAO do index.html. */
-const VERSAO = '2026-10-03.9';
-const ATUALIZACAO = 254;
+const VERSAO = '2026-10-03.10';
+const ATUALIZACAO = 255;
 const CACHE = 'mabe-erp-' + VERSAO;
 const ESSENCIAIS = [
   './',
