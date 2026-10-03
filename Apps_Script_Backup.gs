@@ -1,8 +1,9 @@
 /**
  * BACKUP DIÁRIO DO ERP — Estúdio MABE
  *
- * Todo dia de manhã este script lê as tabelas do Supabase e manda o arquivo
- * de backup por e-mail (e, se você quiser, guarda uma cópia no Drive).
+ * Toda noite este script lê as tabelas do Supabase e manda o arquivo de
+ * backup por e-mail (e, se você quiser, guarda uma cópia no Drive). Às 22h,
+ * depois do expediente: o backup pega o dia de trabalho inteiro.
  *
  * POR QUE ASSIM
  * O ERP é um site estático: não existe servidor nosso para rodar uma tarefa
@@ -25,7 +26,7 @@
  *    Em um minuto o e-mail chega. Se não chegar, veja "Execuções" no menu
  *    da esquerda: o erro aparece lá.
  * 6. Escolha a função "instalarGatilhoDiario" e Executar. Pronto: todo dia
- *    entre 6h e 7h da manhã o backup é enviado sozinho.
+ *    entre 22h e 23h o backup é enviado sozinho.
  *
  * Para desligar depois: rode "removerGatilhoDiario".
  * Para mudar o horário, o destinatário ou a pasta: mexa nos ajustes abaixo
@@ -66,8 +67,9 @@ var PASTA_DRIVE = 'Backups ERP Mabe';
  *  (O e-mail nunca é apagado por este script.) */
 var DIAS_NO_DRIVE = 0;
 
-/** Hora do envio (0 a 23). O Google roda dentro da hora escolhida. */
-var HORA_DO_ENVIO = 6;
+/** Hora do envio (0 a 23). O Google roda em algum momento dentro da hora
+ *  escolhida — 22 significa entre 22h e 23h, não 22h em ponto. */
+var HORA_DO_ENVIO = 22;
 
 var FUSO = 'America/Sao_Paulo';
 
