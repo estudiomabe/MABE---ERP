@@ -183,6 +183,17 @@ select.form-control { cursor:pointer; } select.form-control option { background:
 .step-text { font-size:12.5px;line-height:1.6;color:var(--text-muted); } .step-text strong { color:var(--text); }
 code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding:1px 5px;border-radius:4px;color:#7a5c20;border:1px solid var(--border); }
 #toast-container { position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px; }
+/* puxar para atualizar: o anel desce junto com o dedo e gira enquanto busca */
+#puxar-aviso { position:fixed;left:50%;top:0;z-index:300;pointer-events:none;
+ width:34px;height:34px;margin-left:-17px;border-radius:50%;background:var(--surface);
+ border:1px solid var(--border);box-shadow:0 3px 12px rgba(0,0,0,0.12);
+ display:flex;align-items:center;justify-content:center;
+ opacity:0;transform:translateY(-44px); }
+#puxar-aviso.solto { transition:transform 0.25s, opacity 0.25s; }
+#puxar-roda { width:16px;height:16px;border-radius:50%;
+ border:2px solid var(--surface3);border-top-color:var(--accent); }
+#puxar-aviso.girando #puxar-roda { animation:puxar-gira 0.7s linear infinite; }
+@keyframes puxar-gira { to { transform:rotate(360deg); } }
 .toast { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 15px;min-width:260px;display:flex;align-items:center;gap:10px;font-size:13px;animation:slideIn 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.1); }
 .toast.success { border-left:3px solid var(--success); } .toast.error { border-left:3px solid var(--danger); } .toast.info { border-left:3px solid var(--primary); } .toast.warning { border-left:3px solid var(--warning); }
 @keyframes slideIn { from { opacity:0;transform:translateX(20px); } to { opacity:1;transform:translateX(0); } }
@@ -1134,6 +1145,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
  <button class="btn btn-primary btn-sm" style="background:var(--accent);color:var(--text);border-color:var(--accent)" onclick="aplicarAtualizacao()">Atualizar</button>
  <button class="btn btn-ghost btn-sm" style="background:transparent;color:var(--surface);border-color:rgba(250,247,242,0.35)" onclick="$('aviso-atualizacao').style.display='none'">Depois</button>
 </div>
+<div id="puxar-aviso" aria-hidden="true"><div id="puxar-roda"></div></div>
 <div id="toast-container"></div>
 
 <!-- MODALS -->
@@ -1704,7 +1716,11 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
  if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
  verificarColunaOrigem();verificarColunaObsFin();verificarColunaAnexosVenda();
- [carregarClientesSupabase(),
+ cargasDoBanco().forEach(p=>Promise.resolve(p).then(agendarRedesenho,agendarRedesenho));}
+/* as treze cargas do banco, numa lista só: o login dispara e o gesto de
+   puxar para atualizar repete */
+function cargasDoBanco(){
+ return [carregarClientesSupabase(),
   carregarFornecedoresSupabase(),
   carregarProdutosSupabase(),
   carregarMadeirasSupabase(),
@@ -1716,8 +1732,7 @@ function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).joi
   carregarComprasSupabase(),
   carregarFinanceiroSupabase(),
   carregarConfigSupabase(),
-  carregarHistoricoSupabase()]
-  .forEach(p=>Promise.resolve(p).then(agendarRedesenho,agendarRedesenho));}
+  carregarHistoricoSupabase()];}
 /* As cargas chegam uma a uma, em ordem imprevisível. Em vez de redesenhar
    treze vezes, junta as que chegarem na mesma janela e redesenha uma vez só.
    Sem isto, quem não tem dados guardados vê a tela parada no que havia antes
@@ -8467,10 +8482,10 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.16';
+const APP_VERSAO='2026-10-03.17';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=261;
+const APP_ATUALIZACAO=262;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
@@ -8552,6 +8567,51 @@ function registrarServiceWorker(){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregando)return;recarregando=true;location.reload();});}
 registrarServiceWorker();
 instalarFilaDeEnvio();
+
+/* ================= PUXAR PARA ATUALIZAR =================
+   O gesto nativo do navegador não funciona aqui: quem rola é o #content, não a
+   página, e a página ainda tem overscroll-behavior:none. Em vez de desmontar o
+   arranjo de barras fixas para ganhar um recarregamento de página inteira,
+   o gesto é refeito aqui — e atualiza os dados, que é o que interessa. */
+(function(){
+ const area=document.getElementById('content');
+ const aviso=document.getElementById('puxar-aviso');
+ if(!area||!aviso)return;
+ const LIMIAR=70;      /* o quanto é preciso puxar para valer */
+ const MAXIMO=110;     /* o anel não desce além disto */
+ let inicio=null,distancia=0,buscando=false;
+ const mostrar=d=>{
+  aviso.style.opacity=Math.min(1,d/LIMIAR);
+  aviso.style.transform='translateY('+(Math.min(d,MAXIMO)-44)+'px) rotate('+(d*2.2)+'deg)';};
+ const esconder=()=>{
+  aviso.classList.add('solto');
+  aviso.style.opacity='';aviso.style.transform='';
+  setTimeout(()=>aviso.classList.remove('solto','girando'),300);};
+ area.addEventListener('touchstart',e=>{
+  if(buscando||e.touches.length!==1||area.scrollTop>0){inicio=null;return;}
+  inicio=e.touches[0].clientY;distancia=0;
+  aviso.classList.remove('solto');},{passive:true});
+ area.addEventListener('touchmove',e=>{
+  if(inicio===null||buscando)return;
+  distancia=e.touches[0].clientY-inicio;
+  /* rolou para cima, ou o dedo subiu: desiste sem drama */
+  if(distancia<=0||area.scrollTop>0){inicio=null;esconder();return;}
+  mostrar(distancia);},{passive:true});
+ area.addEventListener('touchend',()=>{
+  if(inicio===null||buscando){inicio=null;return;}
+  const valeu=distancia>=LIMIAR;
+  inicio=null;distancia=0;
+  if(!valeu){esconder();return;}
+  buscando=true;
+  aviso.classList.add('girando');
+  aviso.style.opacity='1';
+  aviso.style.transform='translateY(16px)';
+  Promise.all(cargasDoBanco().map(p=>Promise.resolve(p).catch(()=>null)))
+   .then(()=>{if(USER){renderSection(CUR);updateBadges();}})
+   .catch(()=>{})
+   .then(()=>{buscando=false;esconder();});},{passive:true});
+ area.addEventListener('touchcancel',()=>{inicio=null;if(!buscando)esconder();},{passive:true});
+})();
 
 /* ================= ABERTURA VIGIADA =================
    No app instalado não há barra de endereço: se a abertura travar, a pessoa só vê tela branca
