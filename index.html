@@ -193,6 +193,10 @@ select.form-control { cursor:pointer; } select.form-control option { background:
 .step-text { font-size:12.5px;line-height:1.6;color:var(--text-muted); } .step-text strong { color:var(--text); }
 code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding:1px 5px;border-radius:4px;color:#7a5c20;border:1px solid var(--border); }
 #toast-container { position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px; }
+/* Barra de navegação de baixo: no computador o menu lateral está sempre à vista,
+   no celular ele vive escondido atrás do hambúrguer. As quatro telas do dia a dia
+   passam a ficar a um toque, e o resto continua no menu, pelo "Mais". */
+#barra-inferior { display:none; }
 /* puxar para atualizar: o anel desce junto com o dedo e gira enquanto busca */
 #puxar-aviso { position:fixed;left:50%;top:0;z-index:300;pointer-events:none;
  width:34px;height:34px;margin-left:-17px;border-radius:50%;background:var(--surface);
@@ -450,8 +454,28 @@ body.sem-fin-obs .fin-obs { display:none; }
   #topbar { padding-top:calc(10px + env(safe-area-inset-top));
     padding-left:calc(14px + env(safe-area-inset-left));padding-right:calc(14px + env(safe-area-inset-right)); }
   #sidebar { padding-top:env(safe-area-inset-top); }
-  #content { padding-bottom:calc(22px + env(safe-area-inset-bottom)); }
   #aviso-atualizacao { bottom:calc(12px + env(safe-area-inset-bottom)); }
+
+  #barra-inferior { display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
+    background:var(--surface);border-top:1px solid var(--border);
+    padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 12px rgba(0,0,0,0.07); }
+  .bi-item { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    min-height:54px;padding:7px 2px 6px;background:none;border:0;position:relative;cursor:pointer;
+    font-family:var(--font);font-size:10px;font-weight:600;color:var(--text-muted);
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent; }
+  .bi-item svg { width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2; }
+  .bi-item.ativo { color:var(--text); }
+  /* o traço dourado no topo diz onde você está sem precisar ler */
+  .bi-item.ativo::before { content:'';position:absolute;top:0;left:24%;right:24%;height:3px;
+    background:var(--accent);border-radius:0 0 3px 3px; }
+  .bi-item:active { background:var(--surface2); }
+  .bi-badge { position:absolute;top:6px;left:calc(50% + 7px);width:8px;height:8px;border-radius:50%;
+    background:var(--danger);display:none;border:1.5px solid var(--surface); }
+
+  /* nada pode terminar embaixo da barra */
+  #content { padding-bottom:calc(78px + env(safe-area-inset-bottom)); }
+  #aviso-atualizacao { bottom:calc(68px + env(safe-area-inset-bottom)); }
+  #toast-container { bottom:calc(74px + env(safe-area-inset-bottom));right:12px;left:12px; }
 
   /* abaixo de 16px o iPhone dá zoom sozinho ao tocar no campo e a tela fica desalinhada */
   input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea, .form-control { font-size:16px !important; }
@@ -1169,6 +1193,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
  <button class="btn btn-primary btn-sm" style="background:var(--accent);color:var(--text);border-color:var(--accent)" onclick="aplicarAtualizacao()">Atualizar</button>
  <button class="btn btn-ghost btn-sm" style="background:transparent;color:var(--surface);border-color:rgba(250,247,242,0.35)" onclick="$('aviso-atualizacao').style.display='none'">Depois</button>
 </div>
+<nav id="barra-inferior" aria-label="Navegação principal"></nav>
 <div id="puxar-aviso" aria-hidden="true"><div id="puxar-roda"></div></div>
 <div id="toast-container"></div>
 
@@ -1534,7 +1559,34 @@ function guard(){if(!canEdit()){toast('Nível '+nivelDe(USER)+': sem permissão 
 /* telas e modais que expõem preço/custo: bloqueados para os níveis sem acesso a valores */
 function guardValores(){if(!verValores()){toast('Nível '+nivelDe(USER)+': sem acesso a valores em R$.','error');return false;}return true;}
 /* esconde da sidebar o que o nível não alcança e some com os grupos que ficaram vazios */
+/* As quatro do dia a dia. Quem não enxerga uma delas (nível Produção não vê
+   Orçamentos, por exemplo) simplesmente não recebe o botão. */
+const BARRA_INFERIOR=[
+ {sec:'dashboard',rotulo:'Início',svg:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'},
+ {sec:'orcamentos',rotulo:'Orçamentos',svg:'<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'},
+ {sec:'vendas',rotulo:'Pedidos',svg:'<svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'},
+ {sec:'pcp',rotulo:'Produção',badge:'badge-pcp-bi',svg:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="11"/><rect x="17" y="3" width="5" height="15"/></svg>'}];
+const SVG_MAIS='<svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+function montarBarraInferior(){
+ const bar=$('barra-inferior');if(!bar)return;
+ const itens=BARRA_INFERIOR.filter(i=>podeVer(i.sec));
+ bar.innerHTML=itens.map(i=>'<button class="bi-item" data-sec="'+i.sec+'">'+i.svg
+   +(i.badge?'<span class="bi-badge" id="'+i.badge+'"></span>':'')+'<span>'+i.rotulo+'</span></button>').join('')
+  +'<button class="bi-item" data-sec="__mais">'+SVG_MAIS+'<span>Mais</span></button>';
+ bar.querySelectorAll('.bi-item').forEach(b=>b.addEventListener('click',()=>{
+  const sec=b.dataset.sec;
+  if(sec==='__mais'){toggleSidebar();return;}
+  navigate(sec);}));
+ marcarBarraInferior(CUR);
+ updateBadges();}
+/* o "Mais" fica aceso quando a tela aberta não é nenhuma das quatro */
+function marcarBarraInferior(sec){
+ const itens=[...document.querySelectorAll('#barra-inferior .bi-item')];
+ if(!itens.length)return;
+ const conhecida=itens.some(b=>b.dataset.sec===sec);
+ itens.forEach(b=>b.classList.toggle('ativo',b.dataset.sec===sec||(!conhecida&&b.dataset.sec==='__mais')));}
 function aplicarPermissoes(){
+ montarBarraInferior();
  document.body.classList.toggle('sem-valores',!verValores());
  const filhos=[...document.querySelectorAll('#sidebar .nav-item, #sidebar .nav-label')];
  let grupo=null,visiveis=0;
@@ -1853,6 +1905,7 @@ function navigate(sec){
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
  const el=$('section-'+sec); if(el)el.classList.add('active');
  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',(n.getAttribute('onclick')||'').indexOf("'"+sec+"'")>-1));
+ marcarBarraInferior(sec);
  document.querySelector('#page-title .titulo-longo').textContent=TITLES[sec]||sec;
  document.querySelector('#page-title .titulo-curto').textContent=TITULOS_CURTOS[sec]||TITLES[sec]||sec;
  $('btn-new').style.display=(NEWABLE.includes(sec)&&canEdit())?'inline-flex':'none';
@@ -1978,7 +2031,8 @@ function updateBadges(){
  const critPortfolio=DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio'&&estoqueCritico(p)).length;
  const madB=DB.madeiras.filter(m=>madM3(m)<Number(m.min||0)).length;
  const manut=DB.ferramentas.filter(f=>ferProx(f)&&ferProx(f)<t).length;
- setBadge('badge-pcp',atras);setBadge('badge-insumos',critInsumos);setBadge('badge-portfolio',critPortfolio);setBadge('badge-madeira',madB);setBadge('badge-manut',manut);}
+ setBadge('badge-pcp',atras);setBadge('badge-insumos',critInsumos);setBadge('badge-portfolio',critPortfolio);setBadge('badge-madeira',madB);setBadge('badge-manut',manut);
+ const pontoPcp=$('badge-pcp-bi');if(pontoPcp)pontoPcp.style.display=atras>0?'block':'none';}
 function setBadge(id,n){const b=$(id);if(!b)return;b.style.display=n>0?'inline-flex':'none';b.textContent=n;}
 function actionBtns(fnE,fnD){if(!canEdit())return '';return '<div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="'+fnE+'">✏️</button><button class="btn btn-danger btn-sm" onclick="'+fnD+'">🗑️</button></div>';}
 
@@ -8506,10 +8560,10 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.18';
+const APP_VERSAO='2026-10-03.19';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=263;
+const APP_ATUALIZACAO=264;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
