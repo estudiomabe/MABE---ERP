@@ -893,7 +893,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
           <button class="btn btn-ghost btn-sm" onclick="voltarDeItem()">← Voltar</button>
           <div><h2 style="font-size:16px;font-weight:700" id="orc-form-title">Novo Item</h2><div id="orc-tipo-badge" style="font-size:11px;color:var(--text-muted);margin-top:2px"></div></div>
-          <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="gerarPdfFichaCalculo()">🧮 Gerar PDF Detalhamento de Cálculo</button><button class="btn btn-ghost btn-sm" id="btn-ficha-tecnica" style="display:none" onclick="gerarFichaTecnicaProduto()">📐 Ficha técnica</button><button class="btn btn-ghost btn-sm" id="btn-cadastro-prod" style="display:none" onclick="editarCadastroDaFicha()">✏️ Dados do cadastro</button><button class="btn btn-primary btn-sm" id="btn-salvar-orc" onclick="salvarItemOrc()">💾 Salvar Item</button></div>
+          <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" id="btn-ficha-tecnica" style="display:none" onclick="gerarFichaTecnicaProduto()">📐 Ficha técnica</button><button class="btn btn-ghost btn-sm" id="btn-cadastro-prod" style="display:none" onclick="editarCadastroDaFicha()">✏️ Dados do cadastro</button><button class="btn btn-primary btn-sm" id="btn-salvar-orc" onclick="salvarItemOrc()">💾 Salvar Item</button></div>
         </div>
         <div id="orc-tipo-inline" style="display:none;gap:8px;margin-bottom:14px;flex-wrap:wrap">
           <span style="font-size:12px;color:var(--text-muted);align-self:center">Tipo do item:</span>
@@ -3742,7 +3742,7 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
  const podeDecidir=canEdit()&&itens.length>0&&o.status!=='Aprovado'&&o.status!=='Reprovado'&&o.status!=='Concluído';
  const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>':'';
  const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" onclick="rejeitarOrcamento(\''+o.id+'\')">✗ Reprovar</button>':'';
- $('orcd-acoes').innerHTML=aprovarBtn+reprovarBtn+'<button class="btn btn-ghost btn-sm" onclick="abrirPdfOrcamento()">📄 Gerar PDF</button><button class="btn btn-ghost btn-sm" onclick="gerarContratoOrcamento()">📝 Gerar contrato</button><button class="btn btn-ghost btn-sm" onclick="imprimirOrcamento()">🖨️ Imprimir</button>';
+ $('orcd-acoes').innerHTML=aprovarBtn+reprovarBtn+'<button class="btn btn-ghost btn-sm" onclick="abrirPdfOrcamento()">📄 Gerar PDF</button><button class="btn btn-ghost btn-sm" onclick="gerarPdfDetalhamentoOrc()">🧮 Gerar PDF Detalhamento de Cálculo</button><button class="btn btn-ghost btn-sm" onclick="gerarContratoOrcamento()">📝 Gerar contrato</button><button class="btn btn-ghost btn-sm" onclick="imprimirOrcamento()">🖨️ Imprimir</button>';
  const tipoL={'sob_medida':'🔨 Sob medida','catalogo':'📦 Catálogo','novo_produto':'🆕 Novo produto'};
  $('tb-orc-itens').innerHTML=itens.map(it=>{
   let precoCell='<span style="font-weight:700">'+fmt(it.preco)+'</span>';
@@ -5454,17 +5454,39 @@ async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.i
  commit('editar','Produção','Concluída: '+o.titulo);syncSheets('pcp','upsert',o);}
 
 /* ================= DETALHAMENTO DE CÁLCULO EM PDF =================
-   A ficha de preço como está na tela, em uma folha: de onde veio cada real do custo
-   e como ele virou preço. É documento de dentro de casa — mostra custo e margem —,
-   então vai com o aviso no rodapé para não ser confundido com a proposta do cliente. */
-function montarPdfFichaCalculo(){
+   A composição de preço de um orçamento inteiro, item por item: de onde veio cada real
+   do custo e como ele virou preço. É documento de dentro de casa — mostra custo e
+   margem —, então vai com o aviso no rodapé para não ser confundido com a proposta.
+   Lê o que está gravado no item, inclusive os custos fixos do dia em que foi salvo. */
+function composicaoDoItem(it){
+ const cf=it.cf||{};
+ const cfT=['aluguel','iptu','agua','energia','contador','outros'].reduce((s2,k)=>s2+(Number(cf[k])||0),0)
+  +(cf.extras||[]).reduce((s2,c)=>s2+(Number(c.valor)||0),0);
+ const hmes=Number(cf.hmes)||1;
+ const cfHora=cfT/hmes;
+ const mdoLinhas=Array.isArray(it.mdo)?it.mdo:[];
+ const horasMdo=mdoLinhas.reduce((s2,m)=>s2+(Number(m.horas)||0),0);
+ /* item salvo antes do campo de horas do rateio usava as horas de mão de obra */
+ const horasCf=(it.cfHoras===undefined||it.cfHoras===null||it.cfHoras==='')?horasMdo:Number(it.cfHoras)||0;
+ const qty=Number(it.qty)||1;
+ const mdo=mdoLinhas.reduce((s2,m)=>s2+(Number(m.horas)||0)*(Number(m.valorHora)||0),0);
+ const mat=(it.materiais||[]).reduce((s2,m)=>s2+(Number(m.qty)||0)*(Number(m.custo)||0),0);
+ const serv=(it.servicos||[]).reduce((s2,x)=>s2+(Number(x.valor)||0),0);
+ const frete=Number(it.frete)||0;
+ const cfRat=cfHora*horasCf;
+ const custoUnit=cfRat+mdo+mat+serv+frete;
+ const precoUnit=qty?Number(it.preco||0)/qty:Number(it.preco||0);
+ return {cf,cfT,hmes,cfHora,horasCf,horasMdo,mdoLinhas,mdo,mat,serv,frete,cfRat,qty,
+  custoUnit,precoUnit,lucroUnit:precoUnit-custoUnit,
+  imposto:Number(it.imposto)||0,maquina:Number(it.maquina)||0,
+  comissao:Number(it.comissao)||0,comissaoNome:it.comissaoNome||'',
+  markup:Number(it.markup)||0,precoManual:!!it.precoManual};}
+function montarPdfDetalhamentoOrc(o){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
  const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],WHITE=[255,255,255],BORDA=[206,197,183],VERDE=[61,107,79],VERMELHO=[176,58,46];
  const M=16,R=194,RODAPE_Y=280;
- const emp=DB.config.empresa||{};
- const t=computeOrc();
- const qty=qtdItemOrc();
+ const itens=itensOrc(o);
  /* jsPDF usa fonte Latin-1: emoji e setas estragam a linha inteira */
  const lp=v=>String(v===undefined||v===null?'':v).replace(/[\u2190-\u21FF\u2600-\u27BF]/g,'').replace(/[\u{1F000}-\u{1FAFF}]/gu,'').replace(/\uFE0F/g,'').trim();
  const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
@@ -5475,100 +5497,83 @@ function montarPdfFichaCalculo(){
   doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...DARK);
   doc.text('DETALHAMENTO DE CÁLCULO',R,16.5,{align:'right'});
   doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...MUTED);
-  doc.text(fmtD(today()),R,21.5,{align:'right'});
+  doc.text('ORC-'+pad(o.num)+'  ·  '+fmtD(today()),R,21.5,{align:'right'});
   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.7);doc.line(M,26,R,26);};
  const addPaginaOriginal=doc.addPage.bind(doc);
  doc.addPage=function(...a){const r=addPaginaOriginal(...a);cabecalho();return r;};
  cabecalho();
 
- /* ---- de quem é esta ficha ---- */
  let y=36;
- const desc=lp($('orc-desc').value)||'(item sem descrição)';
  doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(...DARK);
- doc.splitTextToSize(desc,R-M).slice(0,2).forEach(linha=>{doc.text(linha,M,y);y+=7;});
- const orc=ORC_ATUAL_ID?DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID):null;
- const prodFicha=FICHA_PROD_ID?DB.produtos.find(x=>x.id===FICHA_PROD_ID):null;
- const contexto=[];
- if(prodFicha)contexto.push('Ficha de preço do portfólio');
- else if(orc)contexto.push('Orçamento ORC-'+pad(orc.num)+'  ·  '+lp(cliName(orc.cliId)));
- if(qty>1)contexto.push(fmtN(qty,qty%1?2:0)+' unidade(s)');
- if(contexto.length){doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...MUTED);
-  doc.text(contexto.join('   ·   '),M,y);y+=4;}
- y+=5;
+ doc.text('Orçamento ORC-'+pad(o.num),M,y);y+=7;
+ doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...MUTED);
+ const linhaTopo=[lp(cliName(o.cliId)),'Orçamento de '+fmtD(o.data),o.validade?'Entrega '+fmtD(o.validade):'',itens.length+(itens.length===1?' item':' itens')].filter(Boolean);
+ doc.text(linhaTopo.join('   ·   '),M,y);y+=9;
 
- const tabela=(titulo,head,body,larguras,opcoes,alturaMinima)=>{
-  if(!body.length)return;
+ const dir={halign:'right'};
+ const secao=(titulo,alturaMinima)=>{
   if(y>RODAPE_Y-(alturaMinima||34)){doc.addPage();y=36;}
   doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...DARK);
-  doc.text(titulo,M,y,{charSpace:0.3});
-  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.6);doc.line(M,y+1.8,M+doc.getTextWidth(titulo)+3,y+1.8);
-  y+=5.5;
+  doc.splitTextToSize(titulo,R-M).slice(0,1).forEach(t2=>{doc.text(t2,M,y,{charSpace:0.3});
+   doc.setDrawColor(...ACCENT);doc.setLineWidth(0.6);doc.line(M,y+1.8,M+Math.min(doc.getTextWidth(t2)+3,R-M),y+1.8);});
+  y+=5.5;};
+ const tabela=(head,body,larguras,opcoes)=>{
   doc.autoTable(Object.assign({startY:y,margin:{left:M,right:210-R,top:34,bottom:297-RODAPE_Y+4},
    head:[head],body,theme:'grid',
-   styles:{lineColor:BORDA,lineWidth:0.2,fillColor:WHITE,fontSize:8.5,textColor:DARK,cellPadding:{top:2.4,bottom:2.4,left:2.6,right:2.6}},
+   styles:{lineColor:BORDA,lineWidth:0.2,fillColor:WHITE,fontSize:8.5,textColor:DARK,cellPadding:{top:2.3,bottom:2.3,left:2.6,right:2.6}},
    headStyles:{fillColor:DARK,textColor:WHITE,fontSize:7.5,fontStyle:'bold'},
    columnStyles:larguras},opcoes||{}));
   y=doc.lastAutoTable.finalY+9;};
- const dir={halign:'right'};
- const negritoUltima=d=>{if(d.section==='body'&&d.row.index===d.table.body.length-1&&String(d.row.cells[0].raw).indexOf('Total')===0)d.cell.styles.fontStyle='bold';};
 
- /* ---- custos fixos ---- */
- tabela('CUSTO FIXO (RATEIO)',['Item','Valor'],
-  [['Custo fixo da oficina por hora',fmt(t.cfHora)],
-   ['Horas informadas para o rateio',fmtN(t.horasCf,t.horasCf%1?1:0)+' h'],
-   ['Total rateado neste item',fmt(t.cfRat)]],
-  {0:{cellWidth:120},1:Object.assign({cellWidth:58},dir)},{didParseCell:d=>{if(d.section==='body'&&d.row.index===2)d.cell.styles.fontStyle='bold';}});
+ /* ---- um bloco por item ---- */
+ itens.forEach((it,i)=>{
+  const c=composicaoDoItem(it);
+  const titulo='ITEM '+(i+1)+' — '+(lp(it.desc)||'(sem descrição)')+(c.qty>1?'   ('+fmtN(c.qty,c.qty%1?2:0)+' un)':'');
+  secao(titulo.toUpperCase(),46);
+  const linhas=[];
+  const grupo=(nome,detalhe,medida,unitario,valor)=>linhas.push([nome,detalhe,medida,unitario,valor]);
+  grupo('Custo fixo','Rateio da oficina',fmtN(c.horasCf,c.horasCf%1?1:0)+' h',fmt(c.cfHora)+'/h',fmt(c.cfRat));
+  c.mdoLinhas.filter(m=>m.horas||m.valorHora).forEach((m,k)=>
+   grupo(k?'':'Mão de obra',lp(m.tipoNome)||'—',fmtN(m.horas,m.horas%1?1:0)+' h',fmt(m.valorHora)+'/h',fmt((Number(m.horas)||0)*(Number(m.valorHora)||0))));
+  (it.materiais||[]).filter(m=>m.desc||m.qty||m.custo).forEach((m,k)=>
+   grupo(k?'':'Materiais',lp(m.desc)||'—',fmtN(m.qty,m.qty%1?3:0),fmt(m.custo),fmt((Number(m.qty)||0)*(Number(m.custo)||0))));
+  (it.servicos||[]).filter(x=>x.desc||x.valor).forEach((x,k)=>
+   grupo(k?'':'Serviços',lp(x.desc)||'—',x.fornId?lp(fornName(x.fornId)):'—','',fmt(x.valor)));
+  if(c.frete)grupo('Frete','Entrega deste item','','',fmt(c.frete));
+  linhas.push([{content:'CUSTO DO ITEM'+(c.qty>1?' (por unidade)':''),colSpan:4,styles:{fontStyle:'bold',fillColor:CREAM}},
+   {content:fmt(c.custoUnit),styles:{fontStyle:'bold',fillColor:CREAM,halign:'right'}}]);
+  const sobre=[];
+  if(c.imposto)sobre.push('imposto '+fmtN(c.imposto,1)+'%');
+  if(c.maquina)sobre.push('máquina '+fmtN(c.maquina,1)+'%');
+  if(c.comissao)sobre.push('comissão '+fmtN(c.comissao,1)+'%'+(c.comissaoNome?' ('+lp(c.comissaoNome)+')':''));
+  sobre.push('margem '+fmtN(c.markup,1)+'%');
+  linhas.push([{content:'Sobre o preço: '+sobre.join('  ·  ')+(c.precoManual?'   — preço ajustado à mão':''),colSpan:5,styles:{fontSize:7.5,textColor:MUTED}}]);
+  linhas.push([{content:'PREÇO'+(c.qty>1?' (por unidade)':''),colSpan:4,styles:{fontStyle:'bold',fillColor:CREAM}},
+   {content:fmt(c.precoUnit),styles:{fontStyle:'bold',fillColor:CREAM,halign:'right'}}]);
+  linhas.push([{content:'Lucro'+(c.qty>1?' (por unidade)':''),colSpan:4,styles:{textColor:c.lucroUnit<0?VERMELHO:VERDE}},
+   {content:fmt(c.lucroUnit),styles:{textColor:c.lucroUnit<0?VERMELHO:VERDE,halign:'right'}}]);
+  if(c.qty>1)linhas.push([{content:'TOTAL DO ITEM ('+fmtN(c.qty,c.qty%1?2:0)+' un)',colSpan:4,styles:{fontStyle:'bold'}},
+   {content:fmt(Number(it.preco)||0),styles:{fontStyle:'bold',halign:'right'}}]);
+  tabela(['Grupo','Detalhe','Qtd / horas','Unitário','Valor'],linhas,
+   {0:{cellWidth:26},1:{cellWidth:66},2:Object.assign({cellWidth:26},dir),3:Object.assign({cellWidth:28},dir),4:Object.assign({cellWidth:32},dir)});});
 
- /* ---- mão de obra ---- */
- const linhasMdo=(t.mdoLinhas||[]).filter(m=>m.horas||m.valorHora)
-  .map(m=>[lp(m.tipoNome)||'—',fmtN(m.horas,m.horas%1?1:0)+' h',fmt(m.valorHora),fmt(m.horas*m.valorHora)]);
- if(linhasMdo.length)linhasMdo.push(['Total','','',fmt(t.mdo)]);
- tabela('MÃO DE OBRA',['Tipo','Horas','Valor por hora','Subtotal'],linhasMdo,
-  {0:{cellWidth:76},1:Object.assign({cellWidth:28},dir),2:Object.assign({cellWidth:36},dir),3:Object.assign({cellWidth:38},dir)},
-  {didParseCell:negritoUltima});
-
- /* ---- materiais ---- */
- const linhasMat=(t.materiais||[]).filter(m=>m.desc||m.qty||m.custo)
-  .map(m=>[lp(m.desc)||'—',fmtN(m.qty,m.qty%1?3:0),fmt(m.custo),fmt(m.qty*m.custo)]);
- if(linhasMat.length)linhasMat.push(['Total','','',fmt(t.mat)]);
- tabela('MATERIAIS / INSUMOS',['Material / insumo','Qtd','Custo unit.','Subtotal'],linhasMat,
-  {0:{cellWidth:76},1:Object.assign({cellWidth:28},dir),2:Object.assign({cellWidth:36},dir),3:Object.assign({cellWidth:38},dir)},
-  {didParseCell:negritoUltima});
-
- /* ---- serviços ---- */
- const linhasServ=(t.servicos||[]).filter(sv=>sv.desc||sv.valor)
-  .map(sv=>[lp(sv.desc)||'—',sv.fornId?lp(fornName(sv.fornId)):'—',fmt(sv.valor)]);
- if(linhasServ.length)linhasServ.push(['Total','',fmt(t.serv)]);
- tabela('SERVIÇOS TERCEIRIZADOS',['Serviço','Prestador','Valor'],linhasServ,
-  {0:{cellWidth:86},1:{cellWidth:54},2:Object.assign({cellWidth:38},dir)},
-  {didParseCell:negritoUltima});
-
- /* ---- o fechamento ---- */
- const resumo=[['Custo fixo (rateio)',fmt(t.cfRat)],['Materiais / insumos',fmt(t.mat)],
-  ['Mão de obra',fmt(t.mdo)],['Serviços terceirizados',fmt(t.serv)]];
- if(t.frete)resumo.push(['Frete',fmt(t.frete)]);
- resumo.push(['CUSTO TOTAL',fmt(t.custo)]);
- resumo.push(['Imposto ('+fmtN(num('orc-imposto'),1)+'%)',fmt(t.impostoVal)]);
- if(t.maquinaPct)resumo.push(['Taxa da máquina ('+fmtN(t.maquinaPct,1)+'%)',fmt(t.maquinaVal)]);
- if(t.comissaoPct)resumo.push(['Comissão ('+fmtN(t.comissaoPct,1)+'%)'+(t.comissaoNome?' — '+lp(t.comissaoNome):''),fmt(t.comissaoVal)]);
- resumo.push(['Margem de lucro aplicada',fmtN(num('orc-markup'),1)+'%']);
- resumo.push(['PREÇO FINAL'+(qty>1?' (por unidade)':''),fmt(t.preco)]);
- resumo.push(['Lucro estimado'+(qty>1?' (por unidade)':''),fmt(t.lucro)]);
- if(qty>1){resumo.push(['TOTAL DO ITEM ('+fmtN(qty,qty%1?2:0)+' un)',fmt(Math.round(t.preco*100)*qty/100)]);
-  resumo.push(['Lucro total',fmt(t.lucro*qty)]);}
- tabela('COMO O PREÇO SE FORMA',['Composição','Valor'],resumo,
-  {0:{cellWidth:120},1:Object.assign({cellWidth:58},dir)},
-  {didParseCell:d=>{if(d.section!=='body')return;
-   const rotulo=String(d.row.cells[0].raw||'');
-   if(/^(CUSTO TOTAL|PREÇO FINAL|TOTAL DO ITEM)/.test(rotulo)){d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=CREAM;}
-   if(rotulo.indexOf('Lucro')===0&&t.lucro<0)d.cell.styles.textColor=VERMELHO;
-   else if(rotulo.indexOf('Lucro')===0)d.cell.styles.textColor=VERDE;}},
-  Math.min(150,18+resumo.length*9));
-
- if(PRECO_MANUAL){
-  if(y>RODAPE_Y-14){doc.addPage();y=36;}
-  doc.setFont('helvetica','italic');doc.setFontSize(8.5);doc.setTextColor(...MUTED);
-  doc.text('O preço deste item foi ajustado à mão — a margem acima é a que o preço escolhido devolve.',M,y);}
+ /* ---- fechamento do orçamento ---- */
+ if(itens.length>1){
+  const totalCusto=itens.reduce((s2,it)=>s2+(Number(it.custo)||0),0);
+  const totalPreco=itens.reduce((s2,it)=>s2+(Number(it.preco)||0),0);
+  const totalLucro=totalPreco-totalCusto;
+  secao('RESUMO DO ORÇAMENTO',20+itens.length*8);
+  const linhas=itens.map((it,i)=>{const margem=Number(it.preco)?((Number(it.preco)-Number(it.custo))/Number(it.preco)*100):0;
+   return [(i+1)+'. '+(lp(it.desc)||'—'),fmt(it.custo),fmt(it.preco),fmt((Number(it.preco)||0)-(Number(it.custo)||0)),fmtN(margem,1)+'%'];});
+  linhas.push([{content:'TOTAL',styles:{fontStyle:'bold',fillColor:CREAM}},
+   {content:fmt(totalCusto),styles:{fontStyle:'bold',fillColor:CREAM,halign:'right'}},
+   {content:fmt(totalPreco),styles:{fontStyle:'bold',fillColor:CREAM,halign:'right'}},
+   {content:fmt(totalLucro),styles:{fontStyle:'bold',fillColor:CREAM,halign:'right'}},
+   {content:totalPreco?fmtN(totalLucro/totalPreco*100,1)+'%':'—',styles:{fontStyle:'bold',fillColor:CREAM,halign:'right'}}]);
+  tabela(['Item','Custo','Preço','Lucro','Margem'],linhas,
+   {0:{cellWidth:70},1:Object.assign({cellWidth:27},dir),2:Object.assign({cellWidth:27},dir),3:Object.assign({cellWidth:27},dir),4:Object.assign({cellWidth:27},dir)},
+   {didParseCell:d=>{if(d.section==='body'&&d.column.index===3){const v=String(d.cell.raw&&d.cell.raw.content||d.cell.raw||'');
+     if(v.indexOf('-')>=0)d.cell.styles.textColor=VERMELHO;}}});}
 
  /* ---- rodapé ---- */
  const n=doc.internal.getNumberOfPages();
@@ -5579,13 +5584,11 @@ function montarPdfFichaCalculo(){
   doc.setFont('helvetica','normal');
   doc.text('Página '+pg+' de '+n,R,RODAPE_Y+5.5,{align:'right'});}
  return doc;}
-async function gerarPdfFichaCalculo(){
+async function gerarPdfDetalhamentoOrc(){
+ const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ if(!itensOrc(o).length){toast('Este orçamento ainda não tem itens.','info');return;}
  if(!await libPronta('jspdf'))return;
- const doc=montarPdfFichaCalculo();
- const orc=ORC_ATUAL_ID?DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID):null;
- const alvo=textoParaArquivo($('orc-desc').value||'item');
- const nome='Detalhamento-'+(orc&&!FICHA_PROD_ID?'ORC-'+pad(orc.num)+'-':'')+alvo+'.pdf';
- doc.save(nome);
+ montarPdfDetalhamentoOrc(o).save('Detalhamento-ORC-'+pad(o.num)+'-'+textoParaArquivo(cliName(o.cliId))+'.pdf');
  toast('PDF do detalhamento gerado — é documento interno, com custo e margem.','success',6000);}
 /* ================= PRODUÇÃO EM PDF =================
    O quadro do PCP não cabe no papel: são sete colunas lado a lado, que a folha corta.
@@ -8288,7 +8291,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.3';
+const APP_VERSAO='2026-10-03.4';
 let SW_REG=null;
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='flex';}
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
