@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico — ERP Mabe</title>
+<style>
+ *{margin:0;padding:0;box-sizing:border-box}
+ body{font-family:system-ui,-apple-system,sans-serif;background:#f5f0e8;color:#1a1714;padding:14px;line-height:1.45}
+ h1{font-size:17px;margin-bottom:4px}
+ p.sub{font-size:12px;color:#7a6f62;margin-bottom:14px}
+ /* o quadriculado mostra se a pintura simples funciona neste aparelho */
+ .teste{height:70px;margin-bottom:14px;border:1px solid #cec5b7;border-radius:8px;overflow:hidden;display:flex}
+ .teste div{flex:1}
+ table{width:100%;border-collapse:collapse;font-size:13px;background:#faf7f2;border:1px solid #cec5b7;border-radius:8px;overflow:hidden}
+ td{padding:6px 8px;border-bottom:1px solid #ece5d9;vertical-align:top}
+ td:first-child{color:#7a6f62;white-space:nowrap;width:46%}
+ td:last-child{font-family:ui-monospace,monospace;font-weight:600;word-break:break-word}
+ tr:last-child td{border-bottom:0}
+ .destaque td{background:#f0e6d2}
+ button{width:100%;margin-top:14px;padding:13px;border:0;border-radius:10px;background:#1a1714;color:#faf7f2;font-size:14px;font-weight:700}
+ .obs{font-size:11.5px;color:#7a6f62;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>Diagnóstico do aparelho</h1>
+<p class="sub">Mande um print desta tela inteira. Nada aqui é guardado nem enviado.</p>
+
+<div class="teste">
+ <div style="background:#1a1714"></div><div style="background:#c8a96e"></div>
+ <div style="background:#3d6b4f"></div><div style="background:#b03a2e"></div>
+ <div style="background:#faf7f2"></div>
+</div>
+
+<table id="dados"></table>
+<button onclick="limpar()">Limpar tudo deste site e recarregar</button>
+<p class="obs">As cinco faixas acima têm que aparecer inteiras, da esquerda à direita. Se alguma faltar, o problema é de pintura do navegador, não do ERP.</p>
+
+<script>
+var vv = window.visualViewport || {};
+var linhas = [
+ ['janela (innerWidth × innerHeight)', window.innerWidth + ' × ' + window.innerHeight, true],
+ ['viewport visual', Math.round(vv.width || 0) + ' × ' + Math.round(vv.height || 0), true],
+ ['zoom da página (visual scale)', (vv.scale !== undefined ? vv.scale : '—'), true],
+ ['deslocamento do visual (top/left)', Math.round(vv.offsetTop || 0) + ' / ' + Math.round(vv.offsetLeft || 0), false],
+ ['documento (clientWidth × scrollWidth)', document.documentElement.clientWidth + ' × ' + document.documentElement.scrollWidth, true],
+ ['densidade de pixels', window.devicePixelRatio, false],
+ ['tela do aparelho', screen.width + ' × ' + screen.height, false],
+ ['orientação', (screen.orientation && screen.orientation.type) || '—', false],
+ ['toque / mouse', (matchMedia('(hover:hover)').matches ? 'tem mouse' : 'só toque'), false],
+ ['prefere movimento reduzido', matchMedia('(prefers-reduced-motion:reduce)').matches ? 'sim' : 'não', false],
+ ['tema escuro do sistema', matchMedia('(prefers-color-scheme:dark)').matches ? 'sim' : 'não', true],
+ ['economia de dados', (navigator.connection && navigator.connection.saveData) ? 'LIGADA' : 'não', true],
+ ['tipo de conexão', (navigator.connection && navigator.connection.effectiveType) || '—', false],
+ ['service worker no controle', (navigator.serviceWorker && navigator.serviceWorker.controller) ? 'sim' : 'não', false],
+ ['modo de exibição', matchMedia('(display-mode:standalone)').matches ? 'aplicativo instalado' : 'navegador', false],
+ ['navegador', navigator.userAgent, false]
+];
+var html = '';
+for (var i = 0; i < linhas.length; i++) {
+ html += '<tr' + (linhas[i][2] ? ' class="destaque"' : '') + '><td>' + linhas[i][0] + '</td><td>' + String(linhas[i][1]) + '</td></tr>';
+}
+/* a versão que o ERP guardou neste aparelho, lida sem precisar abrir o ERP */
+fetch('sw.js?v=' + Date.now(), { cache: 'reload' }).then(function (r) { return r.text(); }).then(function (t) {
+ var m = t.indexOf("ATUALIZACAO = ");
+ var n = m >= 0 ? parseInt(t.slice(m + 14, m + 22), 10) : '—';
+ var tr = document.createElement('tr');
+ tr.className = 'destaque';
+ tr.innerHTML = '<td>versão publicada agora</td><td>' + n + '</td>';
+ document.getElementById('dados').appendChild(tr);
+}).catch(function () {});
+document.getElementById('dados').innerHTML = html;
+
+function limpar() {
+ var fim = function () { location.replace('index.html?limpo=' + Date.now()); };
+ var tarefas = [];
+ try {
+  if ('serviceWorker' in navigator) {
+   tarefas.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+    return Promise.all(rs.map(function (r) { return r.unregister(); }));
+   }));
+  }
+  if (window.caches) {
+   tarefas.push(caches.keys().then(function (ns) {
+    return Promise.all(ns.map(function (n) { return caches.delete(n); }));
+   }));
+  }
+ } catch (e) {}
+ Promise.all(tarefas).then(fim, fim);
+}
+</script>
+</body>
+</html>
