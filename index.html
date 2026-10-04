@@ -106,12 +106,15 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .badge-danger  { background:rgba(181,64,64,0.1);color:var(--danger); }
 .badge-info    { background:rgba(26,23,20,0.08);color:var(--text); }
 .badge-muted   { background:var(--surface3);color:var(--text-muted); }
-#login-screen { position:fixed;inset:0;background:var(--bg);z-index:9000;
+#login-screen { flex:1 1 auto;min-width:0;background:var(--bg);
  display:flex;align-items:flex-start;justify-content:center;
- overflow-y:auto;overscroll-behavior:contain;
- padding:20px 14px calc(20px + env(safe-area-inset-bottom)); }
+ overflow-y:auto;
+ padding:calc(20px + env(safe-area-inset-top)) 14px calc(20px + env(safe-area-inset-bottom)); }
 #login-screen > * { margin:auto;flex-shrink:0; }
 #login-screen.hidden { display:none; }
+/* enquanto ninguém entrou, a moldura do app não é desenhada */
+body:not(.logado) #sidebar, body:not(.logado) #main { display:none; }
+.login-versao { margin-top:14px;font-size:10.5px;color:var(--text-muted);font-family:var(--mono);text-align:center; }
 .login-box { background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;width:380px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.08); }
 .login-logo { width:54px;height:54px;background:#1a1714;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:var(--accent);margin:0 auto 18px; }
 .login-title { font-size:22px;font-weight:800;margin-bottom:4px; } .login-sub { font-size:13px;color:var(--text-muted);margin-bottom:28px; }
@@ -631,6 +634,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;padding:11px" onclick="doLogin()">Entrar</button>
       <p style="text-align:center;margin-top:2px"><a href="#" onclick="event.preventDefault();openRecSenha()" style="font-size:12px;color:var(--text-muted);text-decoration:underline">Esqueci minha senha</a></p>
       <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:6px">Logins antigos (sem e-mail) continuam funcionando durante a migração.</p>
+      <div class="login-versao" id="login-versao">—</div>
     </div>
   </div>
 </div>
@@ -1789,7 +1793,8 @@ function atualizarRotuloSessao(){const el=$('sidebar-role');if(!el||!USER)return
  el.innerHTML=esc(nivelDe(USER))+(AUTH_USER
   ?' <span title="Sessao autenticada pelo Supabase Auth" style="color:#6fcf97">&#128274;</span>'
   :' <span title="Voce entrou pelo login antigo, direto na tabela. A conta do Supabase Auth deste usuario ainda nao esta ativa — resolva isso antes de ligar o RLS." style="color:#d9a441">&#9888; login antigo</span>');}
-function afterLogin(){const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+function afterLogin(){document.body.classList.add('logado');
+ const ini=USER.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
  $('sidebar-avatar').textContent=ini;$('sidebar-username').textContent=USER.nome;atualizarRotuloSessao();
  aplicarPermissoes();
  navigate(secaoInicial());updateBadges();
@@ -8564,10 +8569,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-03.20';
+const APP_VERSAO='2026-10-04.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
-const APP_ATUALIZACAO=265;
+/* escrito aqui embaixo porque o número só existe depois das constantes */
+function escreverVersaoNoLogin(){const el=$('login-versao');
+ if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
+const APP_ATUALIZACAO=266;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
@@ -8649,6 +8657,7 @@ function registrarServiceWorker(){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregando)return;recarregando=true;location.reload();});}
 registrarServiceWorker();
 instalarFilaDeEnvio();
+escreverVersaoNoLogin();
 
 /* ================= PUXAR PARA ATUALIZAR =================
    O gesto nativo do navegador não funciona aqui: quem rola é o #content, não a
