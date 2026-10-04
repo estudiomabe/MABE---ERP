@@ -8567,13 +8567,37 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-04.4';
+const APP_VERSAO='2026-10-04.5';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=269;
+function sondarLogin(){
+ const base=$('login-versao');if(!base||base.parentNode.querySelector('.login-sonda'))return;
+ const alvos=[['txt',document.querySelector('#login-screen .login-box p')],['eml',$('login-user')],['snh',$('login-pass')]];
+ const partes=alvos.map(function(par){
+  const nome=par[0],n=par[1];
+  if(!n)return nome+':ausente';
+  const r=n.getBoundingClientRect();
+  if(!r.width&&!r.height)return nome+':0x0';
+  const x=Math.round(r.left+r.width/2),y=Math.round(r.top+r.height/2);
+  const topo=document.elementFromPoint(x,y);
+  let quem='nada';
+  if(topo){quem=topo.tagName.toLowerCase()+(topo.id?'#'+topo.id:(typeof topo.className==='string'&&topo.className?'.'+topo.className.split(' ')[0]:''));
+   if(topo===n)quem='ok';}
+  return nome+'@'+Math.round(r.top)+'-'+Math.round(r.bottom)+':'+quem;});
+ const tela=$('login-screen');
+ const cx=document.querySelector('.login-box');
+ partes.push('tela:'+Math.round(tela.getBoundingClientRect().height)+'/'+tela.scrollHeight
+  +' cx:'+Math.round(cx.getBoundingClientRect().top)+'-'+Math.round(cx.getBoundingClientRect().bottom));
+ const linha=document.createElement('div');
+ linha.className='login-sonda';
+ linha.style.cssText='font-size:9px;line-height:1.5;color:var(--text-muted);margin-top:4px;word-break:break-all;font-family:var(--mono)';
+ linha.textContent=partes.join(' · ');
+ base.parentNode.appendChild(linha);}
+setTimeout(sondarLogin,2500);
+const APP_ATUALIZACAO=270;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
