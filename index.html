@@ -8569,13 +8569,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-04.2';
+const APP_VERSAO='2026-10-04.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=267;
+const APP_ATUALIZACAO=268;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
@@ -8711,6 +8711,12 @@ escreverVersaoNoLogin();
 /* ================= ABERTURA VIGIADA =================
    No app instalado não há barra de endereço: se a abertura travar, a pessoa só vê tela branca
    e não tem como recarregar. O vigia transforma isso numa tela que diz onde parou e oferece saída. */
+function focarLoginSePuder(){
+ try{
+  const temMouse=window.matchMedia&&window.matchMedia('(hover:hover)').matches;
+  if(!temMouse||window.innerWidth<=860)return;
+  const campo=$('login-user');if(campo)campo.focus();
+ }catch(e){}}
 let BOOT_ETAPA='iniciando',BOOT_CONCLUIDO=false;
 const etapaBoot=t=>{BOOT_ETAPA=t;};
 /* a abertura terminou: se o vigia já tinha aparecido, ele sai de cena */
@@ -8743,7 +8749,7 @@ loadDB();
  /* 1) sessão do Supabase Auth */
  try{const data=sessao&&sessao.data;
   if(data&&data.session&&data.session.user){
-   if(linkDeRecuperacao()){history.replaceState(null,'',location.pathname);abrirDefinirNovaSenha();$('login-user').focus();concluirBoot();return;}
+   if(linkDeRecuperacao()){history.replaceState(null,'',location.pathname);abrirDefinirNovaSenha();focarLoginSePuder();concluirBoot();return;}
    etapaBoot('entrando com sua conta');
    if(await entrarComAuth(data.session.user)){concluirBoot();return;}}
  }catch(e){}
@@ -8752,7 +8758,7 @@ loadDB();
  if(sid){const u=DB.usuarios.find(x=>x.id===sid&&x.status==='Ativo');
   if(u){etapaBoot('montando as telas');USER=u;$('login-screen').classList.add('hidden');afterLogin();concluirBoot();return;}}
  concluirBoot();
- $('login-user').focus();})();
+ focarLoginSePuder();})();
 </script>
 </body>
 </html>
