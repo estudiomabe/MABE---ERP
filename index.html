@@ -4395,6 +4395,9 @@ const fichaDoProduto=id=>fichasProdutos()[id]||null;
 const temFicha=id=>!!fichaDoProduto(id);
 /* produto antigo, sem ficha: começa com os materiais que já estão cadastrados nele e os percentuais padrão */
 /* frete que a maioria dos itens leva: vem preenchido e pode ser trocado em cada item */
+/* Quanto tempo a proposta continua valendo, contado da data do orçamento.
+   Fica no PDF que vai para o cliente, embaixo das formas de pagamento. */
+const VALIDADE_PROPOSTA_DIAS=7;
 const FRETE_PADRAO=250;
 function fichaInicialDoProduto(prod){const cf=DB.config.cf;
  return{frete:FRETE_PADRAO,mdo:[],servicos:[],
@@ -4988,7 +4991,12 @@ function montarPdfOrcamento(o,itens,refs){
  /* o % do PIX vem da mesma configuração usada ao aprovar o orçamento, para o PDF não prometer outra divisão */
  const pctPix=Number(DB.config.cf.pixAntecipado)||50;
  const formasPag=['PIX: '+fmtN(pctPix,pctPix%1?1:0)+'% inicial e '+fmtN(100-pctPix,pctPix%1?1:0)+'% na entrega.',emp.cnpj?'Chave PIX (CNPJ): '+emp.cnpj:'','Cartão de crédito em até 6x'].filter(Boolean);
- const pagAlt=boxH+9+formasPag.length*5.2+1;
+ /* a validade mora embaixo das formas de pagamento e ocupa duas linhas:
+    o título e o prazo com a data em que vence */
+ const validadeAte=o.data?addDays(o.data,VALIDADE_PROPOSTA_DIAS):'';
+ const validadeTxt=VALIDADE_PROPOSTA_DIAS+(VALIDADE_PROPOSTA_DIAS===1?' dia':' dias')
+  +(validadeAte?'  ·  até '+fmtD(validadeAte):'');
+ const pagAlt=boxH+9+formasPag.length*5.2+1+14;
  const blocoAlt=Math.max(obs?9.5+obsL.length*4.5:0,pagAlt);
  if(fy+blocoAlt>RODAPE_Y-6)fy=novaPagina();
  doc.setFillColor(...DARK);doc.roundedRect(boxX,fy,boxW,boxH,1.5,1.5,'F');
@@ -4998,6 +5006,12 @@ function montarPdfOrcamento(o,itens,refs){
  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text('FORMAS DE PAGAMENTO',boxX+1,py);
  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
  formasPag.forEach(t=>{py+=5.2;doc.text(t,boxX+1,py);});
+ py+=9;
+ doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);
+ doc.text('VALIDADE DA PROPOSTA',boxX+1,py);
+ py+=5.2;
+ doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);
+ doc.text(validadeTxt,boxX+1,py);
  if(obs){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...DARK);doc.text('OBSERVAÇÕES',M,fy+3);
   doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);doc.text(obsL,M,fy+9.5,{lineHeightFactor:1.5});}
 
@@ -8604,7 +8618,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-05.4';
+const APP_VERSAO='2026-10-05.5';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
@@ -8634,7 +8648,7 @@ function sondarLogin(){
  linha.textContent=partes.join(' · ');
  base.parentNode.appendChild(linha);}
 setTimeout(sondarLogin,2500);
-const APP_ATUALIZACAO=274;
+const APP_ATUALIZACAO=275;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
