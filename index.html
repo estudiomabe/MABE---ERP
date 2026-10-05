@@ -893,6 +893,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             <option value="">Todos os status</option>
             <option value="Rascunho">Rascunho</option>
             <option value="Enviado">Enviado</option>
+            <option value="Em ajuste">Em ajuste</option>
             <option value="Aprovado">Aprovado</option>
             <option value="Reprovado">Reprovado</option>
             <option value="Concluído">Concluído</option>
@@ -3658,14 +3659,14 @@ function resumoOrc(o){const itens=itensOrc(o);if(!itens.length)return '(sem iten
  if(itens.length===1)return itens[0].desc;
  const join=itens.map(i=>i.desc).join(', ');return itens.length+' itens: '+(join.length>60?join.slice(0,60)+'...':join);}
 function recomputeHeaderTotais(o){o.preco=(o.itens||[]).reduce((s,i)=>s+Number(i.preco||0),0);o.custo=(o.itens||[]).reduce((s,i)=>s+Number(i.custo||0),0);o.lucro=(o.itens||[]).reduce((s,i)=>s+Number(i.lucro||0),0);}
-function statusPillHtml(status){const map={'Rascunho':['var(--text-muted)','var(--surface3)'],'Enviado':['var(--primary)','rgba(26,23,20,0.06)'],'Aprovado':['var(--success)','rgba(61,107,79,0.1)'],'Reprovado':['var(--danger)','rgba(181,64,64,0.1)'],'Concluído':['var(--success)','rgba(61,107,79,0.1)']};
+function statusPillHtml(status){const map={'Rascunho':['var(--text-muted)','var(--surface3)'],'Enviado':['var(--primary)','rgba(26,23,20,0.06)'],'Em ajuste':['#9a6b13','rgba(200,169,110,0.22)'],'Aprovado':['var(--success)','rgba(61,107,79,0.1)'],'Reprovado':['var(--danger)','rgba(181,64,64,0.1)'],'Concluído':['var(--success)','rgba(61,107,79,0.1)']};
  const [color,bg]=map[status]||map['Rascunho'];
  return '<span class="status-pill" style="color:'+color+';background:'+bg+';border-color:'+color+'40"><span class="dot" style="background:'+color+'"></span>'+status+'</span>';}
-const ORC_STATUS=['Rascunho','Enviado','Aprovado','Reprovado','Concluído'];
+const ORC_STATUS=['Rascunho','Enviado','Em ajuste','Aprovado','Reprovado','Concluído'];
 /* a mesma etiqueta, agora clicavel: quem pode editar troca o status ali mesmo */
 function statusOrcHtml(o){
  if(!canEdit())return statusPillHtml(o.status);
- const map={'Rascunho':['var(--text-muted)','var(--surface3)'],'Enviado':['var(--primary)','rgba(26,23,20,0.06)'],'Aprovado':['var(--success)','rgba(61,107,79,0.1)'],'Reprovado':['var(--danger)','rgba(181,64,64,0.1)'],'Concluído':['var(--success)','rgba(61,107,79,0.1)']};
+ const map={'Rascunho':['var(--text-muted)','var(--surface3)'],'Enviado':['var(--primary)','rgba(26,23,20,0.06)'],'Em ajuste':['#9a6b13','rgba(200,169,110,0.22)'],'Aprovado':['var(--success)','rgba(61,107,79,0.1)'],'Reprovado':['var(--danger)','rgba(181,64,64,0.1)'],'Concluído':['var(--success)','rgba(61,107,79,0.1)']};
  const [color,bg]=map[o.status]||map['Rascunho'];
  return '<span class="status-drop" style="color:'+color+';background:'+bg+';border-color:'+color+'40" title="Alterar o status deste orçamento" onclick="event.stopPropagation()">'
   +'<span class="dot" style="background:'+color+'"></span>'
@@ -3704,7 +3705,7 @@ const orcEditandoItem=()=>['tipo','form','catalogo'].some(v=>$('orc-'+v+'-view')
 function renderOrcamentos(){if(!orcEditandoItem())orcShow('lista');syncPerBar('orc-per',PER_ORC);
  const filtroStatus=$('orc-status-filter')?$('orc-status-filter').value:'';
  const lista=DB.orcamentos.filter(o=>matchPer(o.data,PER_ORC)&&(!filtroStatus||o.status===filtroStatus));
- $('tb-orcamentos').innerHTML=lista.map(o=>{const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
+ $('tb-orcamentos').innerHTML=lista.map(o=>{const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Em ajuste':'badge-warning','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
   const itens=itensOrc(o);
   const cliObj=DB.clientes.find(c=>c.id===o.cliId);
   const waBtn=(cliObj&&cliObj.tel)?'<button class="btn btn-ghost btn-sm" title="Enviar no WhatsApp" onclick="abrirWhatsappOrc(\''+o.id+'\')">💬</button>':'';
@@ -6740,7 +6741,7 @@ async function delCompra(id){if(!guard())return;const c=DB.compras.find(x=>x.id=
 function renderRelatorios(){syncPerBar('rel-per',REL);
  const orcRealizados=DB.orcamentos.filter(o=>matchPer(o.data,REL)).slice().sort((a,b)=>b.num-a.num);
  $('rel-orc-real-count').textContent='— '+orcRealizados.length+' no período';
- const stBOrc={'Rascunho':'badge-muted','Enviado':'badge-info','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'};
+ const stBOrc={'Rascunho':'badge-muted','Enviado':'badge-info','Em ajuste':'badge-warning','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'};
  $('tb-rel-orc-realizados').innerHTML=orcRealizados.map(o=>'<tr><td class="mono">ORC-'+pad(o.num)+'</td><td>'+esc(cliName(o.cliId))+'</td><td class="mono">'+fmtD(o.data)+'</td><td><span class="badge '+(stBOrc[o.status]||'badge-muted')+'">'+o.status+'</span></td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td></tr>').join('')||emptyRow(5,'Nenhum orçamento no período');
  const orcAprovados=DB.orcamentos.filter(o=>(o.status==='Aprovado'||o.status==='Concluído')&&matchPer(o.data,REL)).slice().sort((a,b)=>b.num-a.num);
  $('rel-orc-aprov-count').textContent='— '+orcAprovados.length+' no período';
@@ -8603,7 +8604,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-05.3';
+const APP_VERSAO='2026-10-05.4';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
@@ -8633,7 +8634,7 @@ function sondarLogin(){
  linha.textContent=partes.join(' · ');
  base.parentNode.appendChild(linha);}
 setTimeout(sondarLogin,2500);
-const APP_ATUALIZACAO=273;
+const APP_ATUALIZACAO=274;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
