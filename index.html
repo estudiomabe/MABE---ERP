@@ -2066,6 +2066,22 @@ function mesesNoPeriodo(p){if(p.modo==='mes')return 1;if(p.modo==='ano')return 1
  if(!todasDatas.length)return 1;
  const d1=new Date(todasDatas[0]+'T12:00:00'),d2=new Date();
  return Math.max(1,(d2.getFullYear()-d1.getFullYear())*12+(d2.getMonth()-d1.getMonth())+1);}
+/* Quanto do período já passou, em meses. No mês fechado é 1, no ano fechado é
+   12 — mas no mês que ainda está correndo, jogar o custo fixo inteiro contra as
+   vendas de poucos dias faz o painel gritar prejuízo todo dia 1. Aqui o fixo é
+   rateado pelos dias já corridos, e o rótulo diz que foi. */
+function periodoCorrido(p){
+ const hoje=new Date();
+ const diasDoMes=(ano,mes)=>new Date(ano,mes+1,0).getDate();
+ if(p.modo==='mes'){
+  if(p.ano!==hoje.getFullYear()||p.mes!==hoje.getMonth())return {fracao:1,parcial:false};
+  return {fracao:hoje.getDate()/diasDoMes(p.ano,p.mes),parcial:true,
+   dias:hoje.getDate(),total:diasDoMes(p.ano,p.mes)};}
+ if(p.modo==='ano'){
+  if(p.ano!==hoje.getFullYear())return {fracao:12,parcial:false};
+  return {fracao:hoje.getMonth()+hoje.getDate()/diasDoMes(hoje.getFullYear(),hoje.getMonth()),parcial:true,
+   dias:hoje.getMonth()+1,total:12,unidade:'mês'};}
+ return {fracao:mesesNoPeriodo(p),parcial:false};}
 function syncPerBar(pre,p){
  $(pre+'-mes-sel').innerHTML=MESES.map((m,i)=>'<option value="'+i+'"'+(i===p.mes?' selected':'')+'>'+m+'</option>').join('');
  $(pre+'-ano-sel').innerHTML=perYears().map(y=>'<option value="'+y+'"'+(y===p.ano?' selected':'')+'>'+y+'</option>').join('');
@@ -2124,9 +2140,14 @@ function renderDashboard(){
  $('per-ano-sel').style.display=PER.modo==='tudo'?'none':'';
  $('per-label').textContent='📅 '+(PER.modo==='tudo'?'Todo o período':PER.modo==='ano'?('Ano '+PER.ano):(MESES[PER.mes]+'/'+PER.ano));
 
+ /* rascunho é orçamento que ainda não saiu da casa: entra na contagem como
+    nota de rodapé, não no número que a pessoa lê como trabalho feito */
  const oPer=DB.orcamentos.filter(o=>inPer(o.data)&&o.status!=='Reprovado');
- $('kpi-orcamentos').textContent=fmtK(oPer.reduce((s,o)=>s+Number(o.preco||0),0));
- $('kpi-osub').textContent=oPer.length+' orçamento(s)';
+ const oFeitos=oPer.filter(o=>o.status!=='Rascunho');
+ const oRasc=oPer.filter(o=>o.status==='Rascunho');
+ $('kpi-orcamentos').textContent=fmtK(oFeitos.reduce((s,o)=>s+Number(o.preco||0),0));
+ $('kpi-osub').textContent=oFeitos.length+' orçamento(s)'
+  +(oRasc.length?'  ·  +'+oRasc.length+' em rascunho ('+fmtK(oRasc.reduce((s,o)=>s+Number(o.preco||0),0))+')':'');
  const vPer=DB.vendas.filter(v=>inPer(v.data)&&v.status!=='Cancelado');
  const pagos=DB.financeiro.filter(f=>f.status==='Pago'&&inPer(f.data));
  const entradas=pagos.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
@@ -2144,14 +2165,16 @@ function renderDashboard(){
  const cfg=DB.config.cf;
  const custoFixoMensal=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
  const folhaMensal=(DB.config.folhaPagamento||[]).reduce((s,c)=>s+(Number(c.salario)||0),0);
- const mesesPer=mesesNoPeriodo(PER);
- const custoFixoPeriodo=custoFixoMensal*mesesPer,folhaPeriodo=folhaMensal*mesesPer;
+ const corrido=periodoCorrido(PER);
+ const custoFixoPeriodo=custoFixoMensal*corrido.fracao,folhaPeriodo=folhaMensal*corrido.fracao;
  $('kpi-despfixas').textContent=fmtK(custoFixoPeriodo+folhaPeriodo);
- $('kpi-dfsub').textContent='custo fixo '+fmtK(custoFixoPeriodo)+' + folha '+fmtK(folhaPeriodo);
+ $('kpi-dfsub').textContent='custo fixo '+fmtK(custoFixoPeriodo)+' + folha '+fmtK(folhaPeriodo)
+  +(corrido.parcial?'  ·  '+corrido.dias+' de '+corrido.total+(corrido.unidade==='mês'?' meses':' dias'):'');
  const lucro=faturamento-(custoFixoPeriodo+folhaPeriodo);
  $('kpi-lucro').textContent=fmtK(lucro);
  $('kpi-lucro').style.color=lucro>=0?'var(--success)':'var(--danger)';
- $('kpi-lucrosub').textContent=lucro>=0?'faturamento - despesas fixas':'prejuízo no período';
+ $('kpi-lucrosub').textContent=(lucro>=0?'faturamento - despesas fixas':'prejuízo no período')
+  +(corrido.parcial?' (até hoje)':'');
  const aReceber=DB.financeiro.filter(f=>f.tipo==='Entrada'&&f.status==='Pendente'&&inPer(f.data));
  const totReceber=aReceber.reduce((s,f)=>s+Number(f.val||0),0);
  $('kpi-areceber').textContent=fmtK(totReceber);
@@ -8567,7 +8590,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-04.5';
+const APP_VERSAO='2026-10-05.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
@@ -8597,7 +8620,7 @@ function sondarLogin(){
  linha.textContent=partes.join(' · ');
  base.parentNode.appendChild(linha);}
 setTimeout(sondarLogin,2500);
-const APP_ATUALIZACAO=270;
+const APP_ATUALIZACAO=271;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
