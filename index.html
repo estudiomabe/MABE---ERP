@@ -3677,9 +3677,15 @@ async function mudarStatusOrc(id,novo,el){
  if(!guard()){volta();return;}
  if(novo==='Aprovado'){volta();
   if(!itensOrc(o).length){toast('Adicione ao menos um item antes de aprovar.','error');return;}
+  toast('Aprovar ORC-'+pad(o.num)+' abre a caixa de aprovação — é lá que o pedido é gerado.','info',6000);
   abrirAprovarOrc(id);return;}
- if(novo==='Reprovado'){volta();rejeitarOrcamento(id);return;}
- if(anterior==='Aprovado'&&!confirm('ORC-'+pad(o.num)+' já foi aprovado. O pedido, os lançamentos no financeiro e a ordem de produção continuam existindo mesmo trocando o status para "'+novo+'".\n\nTrocar assim mesmo?')){volta();return;}
+ if(novo==='Reprovado'){volta();
+  toast('Reprovar ORC-'+pad(o.num)+' pede uma confirmação.','info',5000);
+  rejeitarOrcamento(id);return;}
+ if(anterior==='Aprovado'&&!confirm('ORC-'+pad(o.num)+' já foi aprovado. O pedido, os lançamentos no financeiro e a ordem de produção continuam existindo mesmo trocando o status para "'+novo+'".\n\nTrocar assim mesmo?')){
+  volta();
+  toast('ORC-'+pad(o.num)+' continua Aprovado — a troca não foi confirmada.','info',6000);
+  return;}
  const veioDaDetalhe=$('orc-detalhe-view').style.display!=='none';
  o.status=novo;
  const {error}=await supa.from('orcamentos').update({status:novo}).eq('id',id);
@@ -8590,7 +8596,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-05.1';
+const APP_VERSAO='2026-10-05.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
@@ -8620,7 +8626,7 @@ function sondarLogin(){
  linha.textContent=partes.join(' · ');
  base.parentNode.appendChild(linha);}
 setTimeout(sondarLogin,2500);
-const APP_ATUALIZACAO=271;
+const APP_ATUALIZACAO=272;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
