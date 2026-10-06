@@ -3159,10 +3159,11 @@ function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const itens=v.itens||[];
  const expandido=VND_EXPANDIDOS.has(v.id);
  const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(expandido?'Recolher itens':'Ver itens do pedido')+'" onclick="event.stopPropagation();toggleItensVenda(\''+v.id+'\')">'+(expandido?'▾':'▸')+'</button>':'<span style="display:inline-block;width:29px"></span>';
- const linhaHeader='<tr><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+(verValores()?'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button>':'')+'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Duplicar pedido" onclick="event.stopPropagation();duplicarVenda(\''+v.id+'\')">⧉</button>':'')+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
+ const abrirPedido='if(event.target.closest(\'button,select,label,a,input,.status-drop\'))return;editVenda(\''+v.id+'\')';
+ const linhaHeader='<tr style="cursor:pointer" onclick="'+abrirPedido+'"><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span></td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+(verValores()?'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button>':'')+'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Duplicar pedido" onclick="event.stopPropagation();duplicarVenda(\''+v.id+'\')">⧉</button>':'')+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
  let linhasItens='';
  if(expandido&&itens.length){
-  linhasItens=itens.map(it=>'<tr class="venda-item-row sub-row" style="background:var(--surface2)"><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
+  linhasItens=itens.map(it=>'<tr class="venda-item-row sub-row" style="background:var(--surface2);cursor:pointer" onclick="'+abrirPedido+'"><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
  }
  return linhaHeader+linhasItens;}).join('')||emptyRow(9,'Nenhum pedido no período selecionado');
  renderVendasCards(lista);}
@@ -3184,7 +3185,7 @@ function renderVendasCards(lista){
    +'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'
    +((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Duplicar pedido" onclick="duplicarVenda(\''+v.id+'\')">⧉</button>':'')
    +actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')");
-  return '<div class="pedido-card">'
+  return '<div class="pedido-card" style="cursor:pointer" onclick="if(event.target.closest(\'button,select,label,a,input,.status-drop\'))return;editVenda(\''+v.id+'\')">'
    +'<div class="pc-topo"><span class="pc-num">V-'+pad(v.num)+'</span><span class="pc-data">'+fmtD(v.data)+'</span></div>'
    +'<div class="pc-cliente">'+esc(cliName(v.cliId))+'</div>'
    +'<div class="pc-valor"><span class="pc-total">'+fmt(v.total)+'</span><span class="pc-pag">'+esc(v.pag||'—')+'</span></div>'
@@ -8616,7 +8617,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-05.6';
+const APP_VERSAO='2026-10-05.7';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
@@ -8646,7 +8647,7 @@ function sondarLogin(){
  linha.textContent=partes.join(' · ');
  base.parentNode.appendChild(linha);}
 setTimeout(sondarLogin,2500);
-const APP_ATUALIZACAO=276;
+const APP_ATUALIZACAO=277;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
