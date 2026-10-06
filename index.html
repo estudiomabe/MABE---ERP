@@ -64,6 +64,19 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 #main { margin-left:var(--sidebar-w); flex:1; display:flex;flex-direction:column; height:100vh; height:100dvh; overflow:hidden; }
 #topbar { height:58px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.04); }
 .topbar-title { font-size:17px;font-weight:700;flex:1;color:var(--text); }
+/* Sinal de conexão: verde quando o servidor respondeu, vermelho quando não.
+   Vermelho pisca porque a tela toda continua funcionando sem rede — sem o
+   movimento, a bolinha some no meio da interface e ninguém percebe. */
+.sinal-rede { order:0;flex:none;width:22px;height:22px;padding:0;border:0;background:none;cursor:pointer;
+ display:inline-flex;align-items:center;justify-content:center;border-radius:50%; }
+.sinal-rede:hover { background:var(--surface2); }
+.sinal-rede .sr-ponto { width:10px;height:10px;border-radius:50%;background:var(--success);
+ box-shadow:0 0 0 3px rgba(61,107,79,0.16);transition:background 0.2s, box-shadow 0.2s; }
+.sinal-rede.off .sr-ponto { background:var(--danger);box-shadow:0 0 0 3px rgba(181,64,64,0.18);
+ animation:sr-pisca 1.4s ease-in-out infinite; }
+.sinal-rede.checando .sr-ponto { background:var(--text-muted);box-shadow:0 0 0 3px rgba(122,111,98,0.15); }
+@keyframes sr-pisca { 50% { opacity:0.3; } }
+@media (prefers-reduced-motion:reduce) { .sinal-rede.off .sr-ponto { animation:none; } }
 .fila-aviso { order:5;flex:none;font:inherit;font-size:12px;font-weight:700;padding:6px 11px;border-radius:20px;border:1px solid rgba(160,120,48,0.45);background:rgba(160,120,48,0.12);color:#7a5c20;cursor:pointer;white-space:nowrap; }
 .fila-aviso .fl-c { display:none; }
 .fila-aviso.erro { border-color:rgba(181,64,64,0.45);background:rgba(181,64,64,0.1);color:var(--danger); }
@@ -233,6 +246,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   #sidebar.open ~ #sidebar-backdrop { display:block; }
   #main { margin-left:0; }
   #topbar { flex-wrap:wrap;height:auto;min-height:58px;padding:10px 14px;row-gap:8px; }
+  .sinal-rede { order:0; }
   .topbar-title { order:1;flex:1 1 auto; }
   .fila-aviso { order:2;padding:6px 10px;font-size:12px; }
   .fila-aviso .fl-l { display:none; } .fila-aviso .fl-c { display:inline; }
@@ -645,6 +659,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div id="main">
   <div id="topbar">
     <button id="btn-menu" class="btn btn-ghost" onclick="toggleSidebar()" style="display:none;padding:7px 10px" aria-label="Abrir menu">☰</button>
+    <button id="sinal-rede" class="sinal-rede" onclick="conferirConexao()" title="Conexão"><span class="sr-ponto"></span></button>
     <button id="fila-aviso" class="fila-aviso" onclick="abrirFilaEnvio()" style="display:none" title="Alterações guardadas neste aparelho"></button><div class="topbar-title" id="page-title"><span class="titulo-longo">Dashboard</span><span class="titulo-curto">Dashboard</span></div>
     <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Buscar em todo o ERP..." id="global-search" autocomplete="off" oninput="handleSearch(this.value)" onkeydown="buscaTecla(event)" onfocus="if(this.value)handleSearch(this.value)"><div id="busca-resultados" hidden></div></div>
     <button class="btn btn-primary" id="btn-new" onclick="openNew()" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span id="btn-new-label">Novo</span></button>
@@ -2403,7 +2418,43 @@ async function exigeConexao(acao){
  marcarSemRede();atualizarAvisoFila();
  toast('Sem conexão: '+acao+' precisa de internet, porque gera um número de documento. Tente de novo quando o sinal voltar — as outras alterações continuam funcionando.','error',9000);
  return false;}
-function atualizarAvisoFila(){const el=document.getElementById('fila-aviso');if(!el)return;
+/* A bolinha lê o mesmo estado da fila de envio: SEM_REDE é ligado quando uma
+   requisição falha por rede e desligado quando alguma volta a responder. Assim
+   o verde significa "o servidor respondeu", não "o wi-fi está conectado" — que
+   é a diferença que interessa quando a internet cai mas o rádio continua de pé. */
+function atualizarSinalRede(){
+ const el=document.getElementById('sinal-rede');if(!el)return;
+ const semRede=navigator.onLine===false||SEM_REDE;
+ el.classList.toggle('off',semRede);
+ el.title=semRede
+  ?'Sem conexão com o servidor. Você pode seguir usando: o que mudar fica guardado neste aparelho e sobe sozinho quando a internet voltar. Toque para testar agora.'
+  :'Conectado ao servidor. Toque para testar agora.';
+ el.setAttribute('aria-label',el.title);}
+/* toque na bolinha: testa na hora e diz o resultado */
+let CONFERINDO_CONEXAO=false;
+async function conferirConexao(){
+ if(CONFERINDO_CONEXAO)return;
+ const el=document.getElementById('sinal-rede');
+ CONFERINDO_CONEXAO=true;if(el)el.classList.add('checando');
+ try{
+  const ok=await servidorResponde();
+  if(ok){const voltou=SEM_REDE;SEM_REDE=false;
+   if(FILA.length)await enviarFila();
+   toast(voltou?'Conexão de volta.':'Conectado — o servidor respondeu.','success');}
+  else{marcarSemRede();
+   toast('Sem conexão com o servidor. O que você mudar fica guardado neste aparelho.','info',6000);}
+ }catch(e){marcarSemRede();}
+ finally{CONFERINDO_CONEXAO=false;if(el)el.classList.remove('checando');atualizarAvisoFila();}}
+/* confere sozinho de minuto em minuto e ao voltar para a tela: sem isso a
+   bolinha só mudaria na próxima vez que o ERP precisasse falar com o servidor */
+async function conferirConexaoEmSilencio(){
+ if(CONFERINDO_CONEXAO||document.hidden)return;
+ const ok=await servidorResponde();
+ if(ok){if(SEM_REDE){SEM_REDE=false;if(FILA.length)enviarFila();}}
+ else marcarSemRede();
+ atualizarAvisoFila();}
+function atualizarAvisoFila(){atualizarSinalRede();
+ const el=document.getElementById('fila-aviso');if(!el)return;
  const n=FILA.length,f=FILA_FALHAS.length;
  el.classList.toggle('erro',!!f);
  const txt=(longo,curto)=>'<span class="fl-l">'+longo+'</span><span class="fl-c">'+curto+'</span>';
@@ -2442,8 +2493,10 @@ function instalarFilaDeEnvio(){
   window[nome]=async function(...a){
    if(FILA.some(i=>i.tabela===tab)){await enviarFila();if(FILA.some(i=>i.tabela===tab))return;}
    return orig.apply(this,a);};});
- window.addEventListener('online',()=>{enviarFila();atualizarAvisoFila();});
+ window.addEventListener('online',()=>{enviarFila();atualizarAvisoFila();conferirConexaoEmSilencio();});
  window.addEventListener('offline',()=>{marcarSemRede();atualizarAvisoFila();});
+ setInterval(conferirConexaoEmSilencio,60000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)conferirConexaoEmSilencio();});
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&FILA.length)enviarFila();});
  setInterval(()=>{if(FILA.length)enviarFila();},20000);
  atualizarAvisoFila();
@@ -8617,7 +8670,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-05.7';
+const APP_VERSAO='2026-10-06.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
@@ -8647,7 +8700,7 @@ function sondarLogin(){
  linha.textContent=partes.join(' · ');
  base.parentNode.appendChild(linha);}
 setTimeout(sondarLogin,2500);
-const APP_ATUALIZACAO=277;
+const APP_ATUALIZACAO=278;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
