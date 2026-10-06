@@ -1286,7 +1286,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
   <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-nfe-info')">Entendi</button></div>
 </div></div>
 <div class="modal-overlay" id="modal-conciliacao"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🧾 Conferência com o extrato</div><button class="modal-close" onclick="closeModal('modal-conciliacao')">✕</button></div><div class="modal-body" id="conc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="conc-desfazer" onclick="desfazerAjusteSaldo()">↩ Desfazer ajuste do saldo</button><button class="btn btn-primary" onclick="closeModal('modal-conciliacao')">Entendi</button></div></div></div>
-<div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option><option>Marketing</option><option>Vendas</option><option>Pedidos</option><option>Folha de Pagamento</option><option>Administrativo</option><option>Manutenção</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-comissoes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mcom-title">Nova Pessoa com Comissão</div><button class="modal-close" onclick="closeModal('modal-comissoes')">✕</button></div><div class="modal-body">
 <input type="hidden" id="com-id">
 <div class="form-grid">
@@ -2128,7 +2128,7 @@ let CC={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function setCCModo(m){CC.modo=m;renderCentroCustos();}
 function onCCChange(){CC.mes=+$('cc-per-mes-sel').value;CC.ano=+$('cc-per-ano-sel').value;renderCentroCustos();}
 let chCC=null;
-const SETORES_FIXOS=['Marketing','Vendas','Pedidos','Folha de Pagamento','Administrativo','Manutenção'];
+const SETORES_FIXOS=['Marketing','Vendas','Pedidos','Insumo','Folha de Pagamento','Administrativo','Manutenção'];
 function renderCentroCustos(){syncPerBar('cc-per',CC);
  if(!window.Chart){carregarLib('chart').then(ok=>{if(ok&&CUR==='centrocustos')renderCentroCustos();});}
  const lancs=DB.financeiro.filter(f=>f.status!=='Cancelado'&&matchPer(f.data,CC));
@@ -6521,8 +6521,13 @@ async function setPedidoInline(id,valor){if(!guard())return;const f=DB.financeir
 function fillFinPedidoSelect(sel){const pedidos=pedidosOrdenados();const labels=pedidos.map(pedidoLabel);
  const legado=sel&&!labels.includes(sel)?'<option value="'+esc(sel)+'" selected>'+esc(sel)+'</option>':'';
  $('fin-cat').innerHTML='<option value="">— Nenhum —</option>'+legado+pedidos.map(v=>'<option value="'+esc(pedidoLabel(v))+'"'+(sel===pedidoLabel(v)?' selected':'')+'>'+esc(pedidoLabel(v))+'</option>').join('');}
-function openFin(){$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';fillFinPedidoSelect('');$('fin-cc').value='';$('fin-val').value='';$('fin-st').value='Pago';$('fin-obs').value='';$('mf-title').textContent='Novo Lançamento';openModal('modal-financeiro');}
-function editFin(id){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
+/* enche o select do modal com SETORES_FIXOS, guardando o que já estava escolhido */
+function encherSelectCC(){const el=$('fin-cc');if(!el)return;const atual=el.value;
+ el.innerHTML='<option value="">— Não classificado —</option>'
+  +SETORES_FIXOS.map(x=>'<option>'+esc(x)+'</option>').join('');
+ el.value=atual;}
+function openFin(){encherSelectCC();$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';fillFinPedidoSelect('');$('fin-cc').value='';$('fin-val').value='';$('fin-st').value='Pago';$('fin-obs').value='';$('mf-title').textContent='Novo Lançamento';openModal('modal-financeiro');}
+function editFin(id){encherSelectCC();if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
  $('fin-id').value=f.id;$('fin-tipo').value=f.tipo;$('fin-data').value=f.data;$('fin-desc').value=f.desc;fillFinPedidoSelect(f.cat||'');$('fin-cc').value=f.centroCusto||'';$('fin-val').value=f.val;$('fin-st').value=f.status;$('fin-obs').value=f.obs||'';$('mf-title').textContent='Editar Lançamento';openModal('modal-financeiro');}
 async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').value.trim();if(!desc||num('fin-val')<=0){toast('Informe descrição e valor.','error');return;}
  const id=$('fin-id').value;const o={tipo:$('fin-tipo').value,data:$('fin-data').value||today(),desc,cat:$('fin-cat').value.trim(),centroCusto:$('fin-cc').value,val:num('fin-val'),status:$('fin-st').value,obs:$('fin-obs').value.trim()};
@@ -8164,8 +8169,8 @@ ORC-0007, V-0014, OP-0009, OC-0003.
   importação de extrato bancário em OFX e conciliação com os lançamentos
   já existentes.
 - Centro de Custos — segmentação dos lançamentos financeiros por setor
-  fixo (Marketing, Vendas, Pedidos, Folha de Pagamento, Administrativo,
-  Manutenção).
+  fixo (Marketing, Vendas, Pedidos, Insumo, Folha de Pagamento,
+  Administrativo, Manutenção).
 - Relatórios — relatório financeiro detalhado por período.
 - Compras (Ordens de Compra) — pedidos a fornecedores, com importação da
   NF-e em XML, que atualiza os custos no cadastro de material/insumo.
@@ -8681,7 +8686,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-06.2';
+const APP_VERSAO='2026-10-06.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
@@ -8711,7 +8716,7 @@ function sondarLogin(){
  linha.textContent=partes.join(' · ');
  base.parentNode.appendChild(linha);}
 setTimeout(sondarLogin,2500);
-const APP_ATUALIZACAO=279;
+const APP_ATUALIZACAO=280;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
