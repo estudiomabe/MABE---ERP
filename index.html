@@ -457,6 +457,18 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 }
 /* parcelas da NF: 4 colunas; no celular a situação desce para a linha de baixo */
 .nf-parc { display:grid;grid-template-columns:34px minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center; }
+.orc-link-nova { display:grid;grid-template-columns:minmax(0,1fr) 200px auto;gap:8px;align-items:center; }
+.orc-link-linha { display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);
+ border-radius:8px;background:var(--surface2);margin-bottom:7px; }
+.orc-link-linha .ol-icone { flex:none;font-size:14px;line-height:1; }
+.orc-link-linha .ol-texto { min-width:0;flex:1; }
+.orc-link-linha .ol-nome { display:block;font-size:13px;font-weight:600;color:var(--text);
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.orc-link-linha .ol-url { display:block;font-size:11px;color:var(--text-muted);font-family:var(--mono);
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.orc-link-linha .btn-danger { flex:none; }
+.orc-link-linha a.ol-nome:hover { text-decoration:underline; }
+.orc-links-vazio { font-size:12px;color:var(--text-muted); }
 .rot-cel { display:none; }
 /* Apontamento de horas do pedido. O cabeçalho só aparece quando existe linha:
    uma fileira de rótulos sobre o vazio é ruído. */
@@ -546,6 +558,8 @@ body.sem-fin-obs .fin-obs { display:none; }
   #vnd-itens>div, #orc-materiais>div { grid-template-columns:64px minmax(0,1fr) minmax(0,1fr) 40px !important; }
   #orc-mdo>div { grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px !important; }
   #orc-servicos>div { grid-template-columns:minmax(0,1fr) 40px !important; }
+  .orc-link-nova { grid-template-columns:minmax(0,1fr); }
+  .orc-link-nova .btn { min-height:44px; }
   /* no celular a linha de horas vira um cartão: data e mão de obra em cima,
      horas e valor lado a lado com rótulo, observação e remover embaixo */
   .hp-cabecalho { display:none !important; }
@@ -995,6 +1009,16 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div class="table-wrapper" style="margin-top:14px">
           <div class="table-toolbar"><div class="table-toolbar-title">Itens do Orçamento</div><button class="btn btn-primary btn-sm" onclick="abrirAdicionarItem()">+ Adicionar Item</button></div>
           <table><thead><tr><th>Tipo</th><th>Descrição</th><th>Qtd</th><th>Preço</th><th>Lucro</th><th>Ações</th></tr></thead><tbody id="tb-orc-itens"></tbody></table>
+        </div>
+        <div class="config-card" id="orc-links-card" style="margin-top:14px">
+          <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">🔗 Links de Referência</div></div>
+          <div id="orc-links-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px">Para guardar os links, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.orcamentos add column if not exists links jsonb default '[]'::jsonb;</div></div>
+          <div class="orc-link-nova" id="orc-link-nova">
+            <input type="url" class="form-control" id="orc-link-url" placeholder="Cole o link (site, Pinterest, Drive, vídeo...)" onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarLinkOrc();}">
+            <input type="text" class="form-control" id="orc-link-nome" placeholder="Nome (opcional)" onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarLinkOrc();}">
+            <button class="btn btn-ghost btn-sm" id="orc-link-add" onclick="adicionarLinkOrc()">+ Adicionar Link</button>
+          </div>
+          <div id="orc-links-lista" style="margin-top:10px"></div>
         </div>
         <div class="config-card orc-anexos-zona" id="orc-anexos-zona" style="margin-top:14px" ondragenter="anexoArrastando(event,true)" ondragover="anexoArrastando(event,true)" ondragleave="anexoArrastando(event,false)" ondrop="anexoSolto(event)">
           <div class="orc-anexos-aviso">Solte os arquivos para anexar</div>
@@ -3885,12 +3909,15 @@ async function verificarColunaOrigem(){
  ORIGEM_NO_BANCO=!r.error;
  document.body.classList.toggle('sem-origem',!ORIGEM_NO_BANCO);}
 const comOrigem=(r,x)=>{if(ORIGEM_NO_BANCO)r.origem=x.origem||null;return r;};
-function orcParaSupabase(o){const r={id:o.id,cli_id:o.cliId||null,data:o.data||null,validade:o.validade||null,status:o.status||null,obs:o.obs||null,itens:o.itens||[],anexos:o.anexos||[],custo:o.custo||0,preco:o.preco||0,lucro:o.lucro||0,op_id:o.opId||null,tipo:null,cf:null,mdo:null,materiais:null,imposto:0,markup:0,prod_id:null,qty:null,desc_pct:0};if(o.num!==undefined&&o.num!==null)r.num=o.num;return comOrigem(r,o);}
-function orcDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,desc:row.descricao||''};}
+function orcParaSupabase(o){const r={id:o.id,cli_id:o.cliId||null,data:o.data||null,validade:o.validade||null,status:o.status||null,obs:o.obs||null,itens:o.itens||[],anexos:o.anexos||[],custo:o.custo||0,preco:o.preco||0,lucro:o.lucro||0,op_id:o.opId||null,links:undefined,tipo:null,cf:null,mdo:null,materiais:null,imposto:0,markup:0,prod_id:null,qty:null,desc_pct:0};if(o.num!==undefined&&o.num!==null)r.num=o.num;
+ if(COLUNA_LINKS)r.links=o.links||[];else delete r.links;
+ return comOrigem(r,o);}
+function orcDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,links:row.links||[],desc:row.descricao||''};}
 async function carregarOrcamentosSupabase(){
  const {data,error}=await supa.from('orcamentos').select('*').order('num',{ascending:false});
  if(error){erroDeCarga('orçamentos',error);return;}
  DB.orcamentos=(data||[]).map(orcDeSupabase);saveDB();
+ conferirColunaLinks();
  if(CUR==='orcamentos'&&$('orc-lista-view').style.display!=='none')renderOrcamentos();}
 function itensOrc(o){return (o.itens&&o.itens.length)?o.itens:(o.desc?[{id:'legacy',tipo:o.tipo||'sob_medida',desc:o.desc,qty:o.qty||1,preco:o.preco||0,custo:o.custo||0,lucro:o.lucro||0}]:[]);}
 function resumoOrc(o){const itens=itensOrc(o);if(!itens.length)return '(sem itens)';
@@ -4149,7 +4176,7 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
    precoCell+='<div style="font-size:10px;margin-top:2px" title="Sugerido: '+fmt(it.precoSugerido)+'"><span class="badge '+(desvioPct<0?'badge-danger':desvioPct>0?'badge-info':'badge-muted')+'" style="font-size:9px">✏️ manual '+(desvioPct>=0?'+':'')+fmtN(desvioPct,1)+'%</span></div>';}
   return '<tr><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong></td><td class="mono">'+(it.qty||1)+'</td><td class="mono">'+precoCell+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>';}).join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
  atualizarResumoComissaoOrc(o);$('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);
- renderAnexosOrc(o);}
+ renderLinksOrc(o);renderAnexosOrc(o);}
 const anexoEhImagem=a=>/\.(png|jpe?g)$/i.test(a.nome||'');
 /* a marca fica guardada no próprio anexo: vale para o Gerar PDF e para o Imprimir */
 function caixaAnexoNoOrc(a,extra){
@@ -4164,6 +4191,69 @@ async function marcarAnexoNoOrc(path,marcado){
  o.anexos=anexos;saveDB();
  /* a mesma marca aparece no cartão e na janela do PDF: mantém as duas iguais */
  document.querySelectorAll('.anexo-no-orc').forEach(c=>{if(c.dataset.path===path)c.checked=marcado;});}
+/* ================= LINKS DE REFERÊNCIA DO ORÇAMENTO =================
+   Guardados na coluna `links` do orçamento, do mesmo jeito que os anexos:
+   gravam na hora, sem depender de botão de salvar. Entram no backup junto. */
+let COLUNA_LINKS=false;
+function pintarAvisoLinks(){
+ const aviso=$('orc-links-aviso');if(aviso)aviso.style.display=COLUNA_LINKS?'none':'';
+ const zona=$('orc-link-nova');if(zona)zona.style.display=COLUNA_LINKS?'':'none';}
+async function conferirColunaLinks(){
+ try{const {error}=await supa.from('orcamentos').select('links').limit(1);COLUNA_LINKS=!error;}
+ catch(e){COLUNA_LINKS=false;}
+ pintarAvisoLinks();}
+/* Só http e https viram link clicável. Sem isso um "javascript:..." colado aqui
+   viraria código rodando no ERP de quem abrisse o orçamento. Endereço sem
+   esquema ganha https, que é o que se espera ao colar "site.com.br". */
+function linkDeReferenciaValido(bruto){
+ const t=String(bruto||'').trim();
+ if(!t)return null;
+ const comEsquema=/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(t)?t:'https://'+t;
+ let u;
+ try{u=new URL(comEsquema);}catch(e){return null;}
+ if(u.protocol!=='http:'&&u.protocol!=='https:')return null;
+ if(u.hostname.indexOf('.')<0||!/^[a-zA-Z0-9.-]+$/.test(u.hostname))return null;
+ return u.href;}
+function nomeCurtoDoLink(href){
+ try{const u=new URL(href);return u.hostname.replace(/^www\./,'')+(u.pathname!=='/'?u.pathname:'');}
+ catch(e){return href;}}
+async function adicionarLinkOrc(){
+ if(!guard())return;
+ const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ if(!COLUNA_LINKS){toast('Falta a coluna no banco — o SQL está aqui na própria seção.','error',8000);return;}
+ const campo=$('orc-link-url'),campoNome=$('orc-link-nome');
+ const href=linkDeReferenciaValido(campo.value);
+ if(!href){toast('Link inválido. Use um endereço que comece com http:// ou https://','error');campo.focus();return;}
+ const links=(o.links||[]).slice();
+ if(links.some(l=>l.url===href)){toast('Este link já está na lista.','info');campo.value='';campoNome.value='';return;}
+ links.push({url:href,nome:campoNome.value.trim()});
+ const {error}=await supa.from('orcamentos').update({links}).eq('id',o.id);
+ if(error){toast('Erro ao salvar o link: '+error.message,'error');return;}
+ o.links=links;saveDB();syncSheets('orcamentos','upsert',o);
+ campo.value='';campoNome.value='';campo.focus();
+ renderLinksOrc(o);toast('Link adicionado.','success');}
+async function removerLinkOrc(i){
+ if(!guard())return;
+ const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ const alvo=(o.links||[])[i];if(!alvo)return;
+ if(!confirm('Remover este link?\n\n'+(alvo.nome||alvo.url)))return;
+ const links=(o.links||[]).filter((l,j)=>j!==i);
+ const {error}=await supa.from('orcamentos').update({links}).eq('id',o.id);
+ if(error){toast('Erro ao remover o link: '+error.message,'error');return;}
+ o.links=links;saveDB();syncSheets('orcamentos','upsert',o);
+ renderLinksOrc(o);toast('Link removido.','info');}
+function renderLinksOrc(o){
+ const alvo=$('orc-links-lista');if(!alvo)return;
+ pintarAvisoLinks();
+ const links=o.links||[];
+ if(!links.length){alvo.innerHTML='<div class="orc-links-vazio">Nenhum link ainda.</div>';return;}
+ /* rel="noopener noreferrer": a página aberta não ganha controle sobre a aba do ERP */
+ alvo.innerHTML=links.map((l,i)=>'<div class="orc-link-linha"><span class="ol-icone">🔗</span>'
+  +'<div class="ol-texto"><a class="ol-nome" href="'+esc(l.url)+'" target="_blank" rel="noopener noreferrer">'
+  +esc(l.nome||nomeCurtoDoLink(l.url))+'</a>'
+  +'<div class="ol-url">'+esc(l.url)+'</div></div>'
+  +(canEdit()?'<button class="btn btn-danger btn-sm" title="Remover link" onclick="removerLinkOrc('+i+')">✕</button>':'')
+  +'</div>').join('');}
 function renderAnexosOrc(o){const anexos=o.anexos||[];
  $('orc-anexos-lista').innerHTML=anexos.map(a=>{
   const isImg=anexoEhImagem(a);
@@ -8859,13 +8949,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-08.3';
+const APP_VERSAO='2026-10-08.4';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=283;
+const APP_ATUALIZACAO=284;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
