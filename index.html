@@ -468,10 +468,18 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 .hp-dica.sujas { color:var(--danger);font-weight:700; }
 .hp-totais { margin-top:10px;border-top:1px solid var(--border);padding-top:8px; }
 .hp-tot-linha { display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 2px;font-size:12.5px; }
-.hp-tot-linha .hp-nome { color:var(--text-muted); }
-.hp-tot-linha .hp-nums { display:flex;gap:14px;font-family:var(--mono);font-weight:600; }
+.hp-tot-linha .hp-nome { color:var(--text-muted);min-width:0; }
+.hp-tot-linha .hp-nums { display:flex;gap:14px;flex:none;white-space:nowrap;
+ font-family:var(--mono);font-weight:600; }
 .hp-tot-geral { border-top:1px solid var(--border);margin-top:5px;padding-top:7px;font-weight:700;font-size:13.5px; }
 .hp-tot-geral .hp-nome { color:var(--text); }
+.hp-compara { margin-top:10px;border-top:1px solid var(--border);padding-top:8px; }
+.hp-compara-tit { font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+ color:var(--text-muted);margin-bottom:5px; }
+.hp-dif { font-weight:700;border-top:1px solid var(--border);margin-top:5px;padding-top:7px; }
+.hp-dif.acima .hp-nums { color:var(--danger); }
+.hp-dif.abaixo .hp-nums { color:var(--success); }
+.hp-vazio-cmp { font-size:11.5px;color:var(--text-muted); }
 body.sem-origem .campo-origem { display:none; }
 body.sem-fin-obs .fin-obs { display:none; }
 .fin-obs-campo { font-size:11.5px;padding:3px 6px;min-width:140px; }
@@ -3311,7 +3319,10 @@ function calcHorasPedido(){
  const cab=$('vnd-horas-cab');
  const linhas=horasDoPedidoForm();
  if(cab)cab.style.display=document.querySelectorAll('#vnd-horas-corpo > .hp-linha').length?'':'none';
- if(!linhas.length){alvo.innerHTML='';return;}
+ const orcado=horasOrcadasDoPedido(DB.vendas.find(x=>x.id===$('vnd-id').value));
+ /* sem nenhuma hora lançada o bloco de totais não existe, mas o comparativo
+    ainda interessa: mostra de quanto é o orçado antes de começar a apontar */
+ if(!linhas.length){alvo.innerHTML=orcado&&orcado.horas?comparativoHoras(0,0,orcado):'';return;}
  const ordem=[],porTipo={};
  let totH=0,totV=0;
  linhas.forEach(l=>{const nome=nomeMdo(l.tipoId);
@@ -3321,7 +3332,46 @@ function calcHorasPedido(){
   +ordem.map(nome=>'<div class="hp-tot-linha"><span class="hp-nome">'+esc(nome)+'</span>'
     +'<span class="hp-nums"><span>'+fmtHoras(porTipo[nome].h)+'</span><span>'+fmt(porTipo[nome].v)+'</span></span></div>').join('')
   +'<div class="hp-tot-linha hp-tot-geral"><span class="hp-nome">Total</span>'
-  +'<span class="hp-nums"><span>'+fmtHoras(totH)+'</span><span style="color:var(--accent)">'+fmt(totV)+'</span></span></div></div>';}
+  +'<span class="hp-nums"><span>'+fmtHoras(totH)+'</span><span style="color:var(--accent)">'+fmt(totV)+'</span></span></div></div>'
+  +comparativoHoras(totH,totV,orcado);}
+/* Orçado × trabalhado, com a diferença embaixo. */
+function comparativoHoras(totH,totV,orcado){
+ if(!orcado)return '<div class="hp-compara hp-vazio-cmp">Sem orçamento vinculado a este pedido — não há horas orçadas para comparar.</div>';
+ if(!orcado.horas)return '<div class="hp-compara hp-vazio-cmp">O orçamento ORC-'+pad(orcado.orc.num)+' não tem mão de obra lançada na ficha dos itens.</div>';
+ const linha=(rot,h,v,classe)=>'<div class="hp-tot-linha'+(classe?' '+classe:'')+'"><span class="hp-nome">'+rot+'</span>'
+  +'<span class="hp-nums"><span>'+fmtHoras(h)+'</span><span>'+fmt(v)+'</span></span></div>';
+ return '<div class="hp-compara">'
+  +'<div class="hp-compara-tit">Comparativo com o orçamento ORC-'+pad(orcado.orc.num)+'</div>'
+  +linha('Orçado',orcado.horas,orcado.valor)
+  +linha('Trabalhado',totH,totV)
+  +linhaDiferencaHoras(totH-orcado.horas,totV-orcado.valor)
+  +'</div>';}
+/* As horas previstas vivem na ficha de cada item do orçamento que gerou o
+   pedido (it.mdo). Lá elas são por unidade, então multiplicam pela quantidade —
+   um item de 3 peças com 4h cada previu 12h. */
+function horasOrcadasDoPedido(v){
+ const o=v?orcDoPedido(v):null;
+ if(!o)return null;
+ const porTipo={},ordem=[];let totH=0,totV=0;
+ itensOrc(o).forEach(it=>{
+  const qty=Number(it.qty)||1;
+  (Array.isArray(it.mdo)?it.mdo:[]).forEach(m=>{
+   const h=(Number(m.horas)||0)*qty;
+   if(!h)return;
+   const nome=m.tipoNome||nomeMdo(m.tipoId);
+   if(!porTipo[nome]){porTipo[nome]={h:0,v:0};ordem.push(nome);}
+   const vlr=h*(Number(m.valorHora)||0);
+   porTipo[nome].h+=h;porTipo[nome].v+=vlr;totH+=h;totV+=vlr;});});
+ return {orc:o,ordem,porTipo,horas:totH,valor:totV};}
+/* O sinal diz o que a cor diz, para quem não distingue verde de vermelho. */
+function linhaDiferencaHoras(dh,dv){
+ const sinal=n=>n>0.0001?'+':(n<-0.0001?'−':'');
+ const estado=dh>0.0001?'acima':(dh<-0.0001?'abaixo':'');
+ const rotulo=estado==='acima'?'Diferença (acima do orçado)'
+  :estado==='abaixo'?'Diferença (abaixo do orçado)':'Diferença (bateu com o orçado)';
+ return '<div class="hp-tot-linha hp-dif '+estado+'"><span class="hp-nome">'+rotulo+'</span>'
+  +'<span class="hp-nums"><span>'+sinal(dh)+fmtHoras(Math.abs(dh))+'</span>'
+  +'<span>'+sinal(dv)+fmt(Math.abs(dv))+'</span></span></div>';}
 function renderHorasPedido(v){
  const wrap=$('vnd-horas-corpo');if(!wrap)return;
  wrap.innerHTML='';
@@ -8809,13 +8859,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-08.2';
+const APP_VERSAO='2026-10-08.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=282;
+const APP_ATUALIZACAO=283;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
