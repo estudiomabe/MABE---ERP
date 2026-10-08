@@ -464,6 +464,8 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
  padding:0 2px 5px;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
 .hp-linha { display:grid;grid-template-columns:116px minmax(0,1.3fr) 72px 104px minmax(0,1.5fr) 30px;gap:6px;align-items:center; }
 .hp-linha .form-control { font-size:12.5px;padding:5px 7px; }
+.hp-dica { color:var(--text-muted); }
+.hp-dica.sujas { color:var(--danger);font-weight:700; }
 .hp-totais { margin-top:10px;border-top:1px solid var(--border);padding-top:8px; }
 .hp-tot-linha { display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 2px;font-size:12.5px; }
 .hp-tot-linha .hp-nome { color:var(--text-muted); }
@@ -758,7 +760,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento({data:$('vnd-data').value||today()},'vnd-pags')">+ Adicionar forma de pagamento</button>
 <div id="vnd-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
 <div id="vnd-pags-aviso" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
-</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div><div id="vnd-horas" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">⏱️ Horas trabalhadas neste projeto</div><button type="button" class="btn btn-ghost btn-sm" id="vnd-horas-add" onclick="addLinhaHoras()">+ Adicionar Horas</button></div><div id="vnd-horas-aviso" style="display:none;font-size:12px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--warning,#c9a227);border-radius:8px;padding:10px 12px;margin-bottom:8px">Para guardar as horas, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface2);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists horas jsonb default '[]'::jsonb;</div></div><div class="hp-cabecalho" id="vnd-horas-cab" style="display:none"><span>Data</span><span>Mão de obra</span><span>Horas</span><span>Valor (R$)</span><span>Observações</span><span></span></div><div id="vnd-horas-corpo" style="display:flex;flex-direction:column;gap:7px"></div><div id="vnd-horas-total"></div></div></div></div>
+</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div><div id="vnd-horas" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">⏱️ Horas trabalhadas neste projeto</div><button type="button" class="btn btn-ghost btn-sm" id="vnd-horas-add" onclick="addLinhaHoras()">+ Adicionar Horas</button></div><div id="vnd-horas-dica" style="font-size:11.5px;margin:-4px 0 8px"></div><div id="vnd-horas-aviso" style="display:none;font-size:12px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--warning,#c9a227);border-radius:8px;padding:10px 12px;margin-bottom:8px">Para guardar as horas, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface2);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists horas jsonb default '[]'::jsonb;</div></div><div class="hp-cabecalho" id="vnd-horas-cab" style="display:none"><span>Data</span><span>Mão de obra</span><span>Horas</span><span>Valor (R$)</span><span>Observações</span><span></span></div><div id="vnd-horas-corpo" style="display:flex;flex-direction:column;gap:7px"></div><div id="vnd-horas-total"></div></div></div></div>
         <div class="config-card orc-anexos-zona" id="vnd-anexos-zona" style="margin-top:14px" ondragenter="anexoPedidoArrastando(event,true)" ondragover="anexoPedidoArrastando(event,true)" ondragleave="anexoPedidoArrastando(event,false)" ondrop="anexoPedidoSolto(event)">
           <div class="orc-anexos-aviso">Solte os arquivos para anexar</div>
           <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência<span class="orc-anexos-dica"> — ou arraste os arquivos para cá</span></div><button class="btn btn-ghost btn-sm" id="vnd-anexo-btn" onclick="document.getElementById('vnd-anexo-input').click()">+ Anexar Arquivo</button></div>
@@ -3251,6 +3253,23 @@ async function conferirColunaHoras(){
  try{const {error}=await supa.from('vendas').select('horas').limit(1);COLUNA_HORAS=!error;}
  catch(e){COLUNA_HORAS=false;}
  pintarAvisoHoras();}
+/* As horas vão para o banco junto com o pedido, no botão Salvar Pedido — a
+   seção tem botão próprio e total ao vivo, então parece que se salva sozinha.
+   Aqui a dica diz isso antes, e grita depois que você mexe. */
+let HORAS_SUJAS=false;
+function pintarDicaHoras(){
+ const el=$('vnd-horas-dica');if(!el)return;
+ el.className='hp-dica'+(HORAS_SUJAS?' sujas':'');
+ el.textContent=HORAS_SUJAS
+  ?'⚠ Horas ainda não salvas — clique em Salvar Pedido para gravar.'
+  :'As horas são gravadas junto com o pedido, no botão Salvar Pedido.';}
+function marcarHorasSujas(){HORAS_SUJAS=true;pintarDicaHoras();}
+function limparHorasSujas(){HORAS_SUJAS=false;pintarDicaHoras();}
+/* um ouvinte só no container pega data, horas, valor e observação de toda linha,
+   inclusive as que ainda nem existem */
+(function(){const liga=()=>{const c=document.getElementById('vnd-horas-corpo');
+ if(!c)return;['input','change'].forEach(ev=>c.addEventListener(ev,marcarHorasSujas));};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',liga);else liga();})();
 function nomeMdo(id){const t=(DB.config.mdoTipos||[]).find(x=>x.id===id);
  return t?t.nome:'— sem mão de obra —';}
 function valorHoraMdo(id){const t=(DB.config.mdoTipos||[]).find(x=>x.id===id);
@@ -3265,8 +3284,9 @@ function addLinhaHoras(l){
   +'<input type="number" class="form-control hp-horas mono" step="0.5" min="0" placeholder="0" value="'+(l&&l.horas?esc(String(l.horas)):'')+'" oninput="recalcularLinhaHoras(this)">'
   +'<input type="number" class="form-control hp-valor mono" step="0.01" min="0" placeholder="0,00" value="'+(l&&l.valor?esc(String(l.valor)):'')+'" oninput="calcHorasPedido()">'
   +'<input type="text" class="form-control hp-obs" placeholder="O que foi feito" value="'+esc(l&&l.obs?l.obs:'')+'">'
-  +'<button type="button" class="btn btn-danger btn-sm" title="Remover esta linha" onclick="this.parentElement.remove();calcHorasPedido()">✕</button>';
- wrap.appendChild(row);calcHorasPedido();}
+  +'<button type="button" class="btn btn-danger btn-sm" title="Remover esta linha" onclick="this.parentElement.remove();calcHorasPedido();marcarHorasSujas()">✕</button>';
+ wrap.appendChild(row);calcHorasPedido();
+ if(!l)marcarHorasSujas();   /* com `l` é carregamento, não digitação */}
 /* mudou a mão de obra ou as horas: o valor volta a sair da tabela de preços.
    Um valor digitado à mão vale até você mexer de novo num destes dois. */
 function recalcularLinhaHoras(el){
@@ -3306,7 +3326,7 @@ function renderHorasPedido(v){
  const wrap=$('vnd-horas-corpo');if(!wrap)return;
  wrap.innerHTML='';
  ((v&&v.horas)||[]).forEach(l=>addLinhaHoras(l));
- pintarAvisoHoras();calcHorasPedido();}
+ pintarAvisoHoras();calcHorasPedido();limparHorasSujas();}
 function statusPcpCelula(v){const op=opDoPedido(v);
  if(!op)return '<span class="badge badge-muted" title="Nenhuma ordem de produção vinculada">—</span>';
  if(op.status==='Concluída')return '<span class="badge badge-success" title="OP-'+pad(op.num)+'">✅ Concluída</span>';
@@ -3667,7 +3687,9 @@ function calcVendaTotal(){let t=0;document.querySelectorAll('#vnd-itens > div').
 function calcVenda(){let t=0;document.querySelectorAll('#vnd-itens > div').forEach(r=>{const s=(parseFloat(r.querySelector('.vi-qty').value)||0)*(parseFloat(r.querySelector('.vi-preco').value)||0);r.querySelector('.vi-sub').textContent=fmt(s);t+=s;});$('vnd-total').textContent=fmt(t);if($('vnd-pags-soma'))atualizarPagamentosVenda();return t;}
 /* O pedido virou página (era uma janela): lista e ficha dividem a seção Pedidos. */
 function vndShow(view){['lista','form'].forEach(v=>{const el=$('vendas-'+v+'-view');if(el)el.style.display=v===view?'block':'none';});}
-function cancelarPedido(){vndShow('lista');renderVendas();}
+function cancelarPedido(){
+ if(HORAS_SUJAS&&!confirm('As horas que você lançou ainda não foram salvas e vão se perder. Sair mesmo assim?'))return;
+ limparHorasSujas();vndShow('lista');renderVendas();}
 function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-origem').value='';
  $('vnd-pags').innerHTML='';addFormaPagamento({forma:'pix',data:today()},'vnd-pags');$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderHorasPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
@@ -3682,7 +3704,7 @@ function capturarPedido(){const itens=[];
   obs:$('vnd-obs').value,titulo:$('mv-title').textContent,visaoGeral:$('vnd-visao-geral-corpo').innerHTML,
   visaoGeralVisivel:$('vnd-visao-geral').style.display,
   visaoGeralValores:[...document.querySelectorAll('#vnd-visao-geral-corpo input')].map(i=>[i.id,i.value]),
-  horas:horasDoPedidoForm(),itens};}
+  horas:horasDoPedidoForm(),horasSujas:HORAS_SUJAS,itens};}
 function restaurarPedido(r){
  $('vnd-id').value=r.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,r.cliId,'— Selecionar —');
  $('vnd-data').value=r.data;$('vnd-status').value=r.status;$('vnd-obs').value=r.obs;
@@ -3691,6 +3713,7 @@ function restaurarPedido(r){
  $('vnd-visao-geral-corpo').innerHTML=r.visaoGeral;$('vnd-visao-geral').style.display=r.visaoGeralVisivel;
  r.visaoGeralValores.forEach(([id,valor])=>{if($(id))$(id).value=valor;});
  $('vnd-horas-corpo').innerHTML='';(r.horas||[]).forEach(l=>addLinhaHoras(l));calcHorasPedido();
+ if(r.horasSujas)marcarHorasSujas();else limparHorasSujas();
  $('vnd-itens').innerHTML='';
  r.itens.forEach(it=>it.tipo==='livre'?addItemLivreVenda(it):addItemVenda(it));
  vndShow('form');}
@@ -3787,9 +3810,9 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
    if(erroOp){toast('Pedido salvo, mas houve erro ao criar a ordem de produção: '+erroOp.message,'error');}
    else{op.num=dop.num;DB.producao.push(op);syncSheets('pcp','upsert',op);opCriada=true;}}
   DB.vendas.unshift(nova);commit('criar','Pedidos','V-'+pad(nova.num)+' — '+fmt(total)+(opCriada?' + OP-'+pad(DB.producao[DB.producao.length-1].num)+' em Planejamento':''));syncSheets('vendas','upsert',nova);
-  vndShow('lista');renderVendas();toast('Pedido salvo!'+(opCriada?' Estoque, financeiro e produção (PCP) atualizados.':' Estoque e financeiro atualizados.'),'success');return;
+  limparHorasSujas();vndShow('lista');renderVendas();toast('Pedido salvo!'+(opCriada?' Estoque, financeiro e produção (PCP) atualizados.':' Estoque e financeiro atualizados.'),'success');return;
  }
- vndShow('lista');renderVendas();toast('Pedido atualizado!','success');}
+ limparHorasSujas();vndShow('lista');renderVendas();toast('Pedido atualizado!','success');}
 async function delVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!confirm('Excluir pedido V-'+pad(v.num)+'?'))return;
  if(v.baixa)for(const it of (v.itens||[])){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Number(p.est)+it.qty;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
  const {error}=await supa.from('vendas').delete().eq('id',id);
@@ -8786,37 +8809,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-08.1';
+const APP_VERSAO='2026-10-08.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-function sondarLogin(){
- const base=$('login-versao');if(!base||base.parentNode.querySelector('.login-sonda'))return;
- const alvos=[['txt',document.querySelector('#login-screen .login-box p')],['eml',$('login-user')],['snh',$('login-pass')]];
- const partes=alvos.map(function(par){
-  const nome=par[0],n=par[1];
-  if(!n)return nome+':ausente';
-  const r=n.getBoundingClientRect();
-  if(!r.width&&!r.height)return nome+':0x0';
-  const x=Math.round(r.left+r.width/2),y=Math.round(r.top+r.height/2);
-  const topo=document.elementFromPoint(x,y);
-  let quem='nada';
-  if(topo){quem=topo.tagName.toLowerCase()+(topo.id?'#'+topo.id:(typeof topo.className==='string'&&topo.className?'.'+topo.className.split(' ')[0]:''));
-   if(topo===n)quem='ok';}
-  return nome+'@'+Math.round(r.top)+'-'+Math.round(r.bottom)+':'+quem;});
- const tela=$('login-screen');
- const cx=document.querySelector('.login-box');
- partes.push('tela:'+Math.round(tela.getBoundingClientRect().height)+'/'+tela.scrollHeight
-  +' cx:'+Math.round(cx.getBoundingClientRect().top)+'-'+Math.round(cx.getBoundingClientRect().bottom));
- const linha=document.createElement('div');
- linha.className='login-sonda';
- linha.style.cssText='font-size:9px;line-height:1.5;color:var(--text-muted);margin-top:4px;word-break:break-all;font-family:var(--mono)';
- linha.textContent=partes.join(' · ');
- base.parentNode.appendChild(linha);}
-setTimeout(sondarLogin,2500);
-const APP_ATUALIZACAO=281;
+const APP_ATUALIZACAO=282;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
