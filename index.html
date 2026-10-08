@@ -1092,7 +1092,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Materiais</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-mat">R$ 0,00</span></div>
             </div>
             <div class="config-card" style="margin:0">
-              <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button><button class="btn btn-primary btn-sm" onclick="abrirNovoPrestadorRapido()">+ Cadastrar Prestador</button></div></div>
+              <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button><button class="btn btn-primary btn-sm" onclick="abrirNovoServicoRapido()">+ Cadastrar Serviço Terceirizado</button></div></div>
               <div class="sv-cab" id="orc-servicos-cab"><span>Serviço</span><span>Prestador</span><span>Valor</span><span></span></div>
               <div id="orc-servicos" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Serviços</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-serv">R$ 0,00</span></div>
@@ -4416,7 +4416,10 @@ function addMdoItem(m){const wrap=$('orc-mdo');const row=document.createElement(
  wrap.appendChild(row);calcOrc();}
 /* Lista os serviços cadastrados em Cadastros → Serviços Terceirizados.
    "Outro" libera o campo de texto, para um serviço que ainda não está no cadastro. */
-function servicoCatOptions(sel){return '<option value="">— Selecionar serviço —</option>'
+function servicoCatOptions(sel){
+ if(!listaServicos().length)return '<option value="">— nenhum serviço cadastrado —</option>'
+  +'<option value="__outro"'+(sel==='__outro'?' selected':'')+'>✏️ Outro (digitar)</option>';
+ return '<option value="">— Selecionar serviço —</option>'
  +listaServicos().slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'))
   .map(sv=>'<option value="'+sv.id+'"'+(sv.id===sel?' selected':'')+'>'+esc(sv.nome)+'</option>').join('')
  +'<option value="__outro"'+(sel==='__outro'?' selected':'')+'>✏️ Outro (digitar)</option>';}
@@ -4430,6 +4433,10 @@ function svEscolhido(select){const row=select.closest('div');const desc=row.quer
  desc.value=sv.nome;
  if(sv.fornId&&forn)forn.value=sv.fornId;
  if(valor&&Number(sv.valor)&&!Number(valor.value))valor.value=sv.valor;
+ /* a unidade do cadastro ("Por peça", "Por m²") muda o que o valor significa —
+    sem ela na tela, R$ 400 num serviço por peça parece o total do item */
+ select.title=sv.nome+(sv.unidade?' · '+sv.unidade:'')+(Number(sv.valor)?' · '+fmt(sv.valor):'')
+  +(sv.obs?'\n'+sv.obs:'');
  calcOrc();}
 function addServico(sv){const wrap=$('orc-servicos');const row=document.createElement('div');
  row.style.cssText='display:grid;grid-template-columns:2fr 150px 100px 28px;gap:6px;align-items:center';
@@ -4455,7 +4462,16 @@ function omBusca(input){const nome=input.value.trim();const found=buscarMaterial
  calcOrc();}
 let LINHA_MATERIAL_PENDENTE=null,PRODUTO_RAPIDO_ORC=false;
 function abrirNovoProdutoRapido(){openProduto('Insumo');PRODUTO_RAPIDO_ORC=true;}
-let FORNECEDOR_RAPIDO_ORC=false,FORNECEDOR_RAPIDO_SERVICO=false;
+let FORNECEDOR_RAPIDO_ORC=false,FORNECEDOR_RAPIDO_SERVICO=false,SERVICO_RAPIDO_ORC=false;
+/* Cadastrar um serviço sem sair do orçamento: salva, a lista das linhas já
+   abertas é refeita e o serviço novo entra numa linha já preenchido. */
+function abrirNovoServicoRapido(){if(!guard())return;openServico();SERVICO_RAPIDO_ORC=true;}
+function usarServicoNoOrcamento(id){
+ const selects=[...document.querySelectorAll('#orc-servicos .sv-cat')];
+ let alvo=selects.find(sel=>!sel.value);
+ if(!alvo){addServico();const todos=document.querySelectorAll('#orc-servicos .sv-cat');alvo=todos[todos.length-1];}
+ if(!alvo)return;
+ alvo.value=id;svEscolhido(alvo);}
 function abrirNovoPrestadorRapido(){openFornecedor();FORNECEDOR_RAPIDO_ORC=true;}
 /* so material vindo do cadastro tem link, e o cadastro guarda link so de produto/insumo:
    a referencia da linha e "p:<id>" para produto e "m:<id>" para madeira */
@@ -6952,11 +6968,11 @@ function renderServicos(){
  renderServicosCards(lista);
  $('tb-servicos').innerHTML=lista.map(sv=>'<tr><td><strong>'+esc(sv.nome)+'</strong></td><td>'+esc(sv.fornId?fornName(sv.fornId):'—')+'</td><td>'+esc(sv.unidade||'—')+'</td><td class="mono" style="font-weight:700">'+fmt(sv.valor)+'</td><td style="font-size:12px;color:var(--text-muted)">'+esc(sv.obs||'—')+'</td><td>'+actionBtns("editServico('"+sv.id+"')","delServico('"+sv.id+"')")+'</td></tr>').join('')||emptyRow(6,'Nenhum serviço terceirizado cadastrado');
  atualizarDatalistServicos();}
-function openServico(){if(!guard())return;
+function openServico(){if(!guard())return;SERVICO_RAPIDO_ORC=false;
  $('serv-id').value='';$('serv-nome').value='';$('serv-valor').value=0;$('serv-obs').value='';$('serv-unidade').value='Por peça';
  fillSel('serv-forn',DB.fornecedores,f=>f.nome,'','— Sem prestador —');
  $('mserv-title').textContent='Novo Serviço Terceirizado';openModal('modal-servicos');}
-function editServico(id){if(!guard())return;const sv=listaServicos().find(x=>x.id===id);if(!sv)return;
+function editServico(id){if(!guard())return;SERVICO_RAPIDO_ORC=false;const sv=listaServicos().find(x=>x.id===id);if(!sv)return;
  $('serv-id').value=sv.id;$('serv-nome').value=sv.nome||'';$('serv-valor').value=sv.valor||0;$('serv-obs').value=sv.obs||'';
  $('serv-unidade').value=SERV_UNIDADES.includes(sv.unidade)?sv.unidade:'Por peça';
  fillSel('serv-forn',DB.fornecedores,f=>f.nome,sv.fornId||'','— Sem prestador —');
@@ -6985,7 +7001,10 @@ async function saveServico(){if(!guard())return;
  if(id){const sv=lista.find(x=>x.id===id);if(!sv)return;Object.assign(sv,dados);}
  else lista.push(Object.assign({id:uid()},dados));
  if(!await gravarServicos(id?'editar':'criar',nome)){if(id&&antes)Object.assign(lista.find(x=>x.id===id),antes);else lista.pop();return;}
- closeModal('modal-servicos');toast('Serviço salvo!','success');}
+ closeModal('modal-servicos');toast('Serviço salvo!','success');
+ /* veio da ficha do orçamento: o serviço novo já entra numa linha, com
+    prestador e valor puxados do cadastro que acabou de ser feito */
+ if(SERVICO_RAPIDO_ORC&&!id){SERVICO_RAPIDO_ORC=false;usarServicoNoOrcamento(lista[lista.length-1].id);}}
 async function delServico(id){if(!guard())return;const lista=listaServicos();const sv=lista.find(x=>x.id===id);if(!sv)return;
  if(!confirm('Excluir o serviço "'+sv.nome+'"?\n\nOs orçamentos já feitos não mudam.'))return;
  const idx=lista.indexOf(sv);lista.splice(idx,1);
@@ -8949,13 +8968,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-08.4';
+const APP_VERSAO='2026-10-08.5';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=284;
+const APP_ATUALIZACAO=285;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
