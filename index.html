@@ -458,6 +458,18 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 /* parcelas da NF: 4 colunas; no celular a situação desce para a linha de baixo */
 .nf-parc { display:grid;grid-template-columns:34px minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center; }
 .rot-cel { display:none; }
+/* Apontamento de horas do pedido. O cabeçalho só aparece quando existe linha:
+   uma fileira de rótulos sobre o vazio é ruído. */
+.hp-cabecalho { display:grid;grid-template-columns:116px minmax(0,1.3fr) 72px 104px minmax(0,1.5fr) 30px;gap:6px;
+ padding:0 2px 5px;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
+.hp-linha { display:grid;grid-template-columns:116px minmax(0,1.3fr) 72px 104px minmax(0,1.5fr) 30px;gap:6px;align-items:center; }
+.hp-linha .form-control { font-size:12.5px;padding:5px 7px; }
+.hp-totais { margin-top:10px;border-top:1px solid var(--border);padding-top:8px; }
+.hp-tot-linha { display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 2px;font-size:12.5px; }
+.hp-tot-linha .hp-nome { color:var(--text-muted); }
+.hp-tot-linha .hp-nums { display:flex;gap:14px;font-family:var(--mono);font-weight:600; }
+.hp-tot-geral { border-top:1px solid var(--border);margin-top:5px;padding-top:7px;font-weight:700;font-size:13.5px; }
+.hp-tot-geral .hp-nome { color:var(--text); }
 body.sem-origem .campo-origem { display:none; }
 body.sem-fin-obs .fin-obs { display:none; }
 .fin-obs-campo { font-size:11.5px;padding:3px 6px;min-width:140px; }
@@ -524,6 +536,15 @@ body.sem-fin-obs .fin-obs { display:none; }
   #vnd-itens>div, #orc-materiais>div { grid-template-columns:64px minmax(0,1fr) minmax(0,1fr) 40px !important; }
   #orc-mdo>div { grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px !important; }
   #orc-servicos>div { grid-template-columns:minmax(0,1fr) 40px !important; }
+  /* no celular a linha de horas vira um cartão: data e mão de obra em cima,
+     horas e valor lado a lado com rótulo, observação e remover embaixo */
+  .hp-cabecalho { display:none !important; }
+  .hp-linha { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px;
+   row-gap:6px !important;column-gap:8px !important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important; }
+  .hp-linha>:nth-child(1), .hp-linha>:nth-child(2), .hp-linha>:nth-child(7) { grid-column:1 / -1; }
+  .hp-linha>:nth-child(8) { grid-column:2;justify-self:end;width:64px; }
+  .hp-linha .btn-danger { min-height:44px;padding:0; }
+  .hp-tot-linha .hp-nums { gap:10px; }
   #vnd-itens>div>:first-child, #orc-materiais>div>:first-child, #orc-mdo>div>:first-child,
   #orc-servicos>div>:first-child, #orc-servicos>div>:nth-child(2) { grid-column:1 / -1; }
   #vnd-itens>div .btn-danger, #orc-materiais>div .btn-danger, #orc-mdo>div .btn-danger, #orc-servicos>div .btn-danger { min-height:40px;padding:0; }
@@ -737,7 +758,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento({data:$('vnd-data').value||today()},'vnd-pags')">+ Adicionar forma de pagamento</button>
 <div id="vnd-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
 <div id="vnd-pags-aviso" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
-</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div></div></div>
+</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div><div id="vnd-horas" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">⏱️ Horas trabalhadas neste projeto</div><button type="button" class="btn btn-ghost btn-sm" id="vnd-horas-add" onclick="addLinhaHoras()">+ Adicionar Horas</button></div><div id="vnd-horas-aviso" style="display:none;font-size:12px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--warning,#c9a227);border-radius:8px;padding:10px 12px;margin-bottom:8px">Para guardar as horas, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface2);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists horas jsonb default '[]'::jsonb;</div></div><div class="hp-cabecalho" id="vnd-horas-cab" style="display:none"><span>Data</span><span>Mão de obra</span><span>Horas</span><span>Valor (R$)</span><span>Observações</span><span></span></div><div id="vnd-horas-corpo" style="display:flex;flex-direction:column;gap:7px"></div><div id="vnd-horas-total"></div></div></div></div>
         <div class="config-card orc-anexos-zona" id="vnd-anexos-zona" style="margin-top:14px" ondragenter="anexoPedidoArrastando(event,true)" ondragover="anexoPedidoArrastando(event,true)" ondragleave="anexoPedidoArrastando(event,false)" ondrop="anexoPedidoSolto(event)">
           <div class="orc-anexos-aviso">Solte os arquivos para anexar</div>
           <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência<span class="orc-anexos-dica"> — ou arraste os arquivos para cá</span></div><button class="btn btn-ghost btn-sm" id="vnd-anexo-btn" onclick="document.getElementById('vnd-anexo-input').click()">+ Anexar Arquivo</button></div>
@@ -3151,12 +3172,14 @@ async function confirmarImportNf(){
  }finally{btn.disabled=false;btn.textContent='Importar';}}
 
 /* ================= VENDAS ================= */
-function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data||null,pag:v.pag||null,status:v.status||null,obs:v.obs||null,itens:v.itens||[],total:v.total||0,baixa:!!v.baixa};if(v.num!==undefined&&v.num!==null)o.num=v.num;return comOrigem(comAnexosVenda(o,v),v);}
-function vendaDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],total:row.total,baixa:row.baixa};}
+function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data||null,pag:v.pag||null,status:v.status||null,obs:v.obs||null,itens:v.itens||[],total:v.total||0,baixa:!!v.baixa};
+ if(COLUNA_HORAS)o.horas=v.horas||[];if(v.num!==undefined&&v.num!==null)o.num=v.num;return comOrigem(comAnexosVenda(o,v),v);}
+function vendaDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],horas:row.horas||[],total:row.total,baixa:row.baixa};}
 async function carregarVendasSupabase(){
  const {data,error}=await supa.from('vendas').select('*').order('num',{ascending:false});
  if(error){erroDeCarga('pedidos',error);return;}
  DB.vendas=(data||[]).map(vendaDeSupabase);saveDB();
+ conferirColunaHoras();
  if(CUR==='vendas')renderVendas();
  if(CUR==='calendario')renderCalendario();}
 let VND_EXPANDIDOS=new Set();
@@ -3212,6 +3235,78 @@ function renderVisaoGeralPedido(v){const alvo=$('vnd-visao-geral');if(!alvo)retu
   item('Entregue em',campo('vnd-entregue-em',lerMarcaObs(v.obs,'Entregue em')))+
   item('Pagamento',pagHtml);
  alvo.style.display='block';}
+/* ================= HORAS TRABALHADAS NO PEDIDO =================
+   Um apontamento por linha: dia, qual mão de obra (as cadastradas em
+   Configurações), quantas horas, quanto custou e o que foi feito. Fica guardado
+   na coluna `horas` do pedido, então entra no backup junto com ele.
+
+   A coluna é nova no banco. Enquanto ela não existir, a seção mostra o SQL e
+   não deixa digitar — perder uma tarde de apontamento no primeiro salvar seria
+   bem pior do que esperar um minuto. */
+let COLUNA_HORAS=false;
+function pintarAvisoHoras(){
+ const aviso=$('vnd-horas-aviso');if(aviso)aviso.style.display=COLUNA_HORAS?'none':'';
+ const bt=$('vnd-horas-add');if(bt)bt.disabled=!COLUNA_HORAS;}
+async function conferirColunaHoras(){
+ try{const {error}=await supa.from('vendas').select('horas').limit(1);COLUNA_HORAS=!error;}
+ catch(e){COLUNA_HORAS=false;}
+ pintarAvisoHoras();}
+function nomeMdo(id){const t=(DB.config.mdoTipos||[]).find(x=>x.id===id);
+ return t?t.nome:'— sem mão de obra —';}
+function valorHoraMdo(id){const t=(DB.config.mdoTipos||[]).find(x=>x.id===id);
+ return t?Number(t.valorHora)||0:0;}
+const fmtHoras=n=>fmtN(n,n%1?1:0)+' h';
+function addLinhaHoras(l){
+ const wrap=$('vnd-horas-corpo');if(!wrap)return;
+ const row=document.createElement('div');row.className='hp-linha';
+ row.innerHTML='<input type="date" class="form-control hp-data" value="'+esc(l&&l.data?l.data:today())+'">'
+  +'<select class="form-control hp-tipo" onchange="recalcularLinhaHoras(this)">'+mdoTipoOptions(l?l.tipoId:'')+'</select>'
+  +'<span class="rot-cel">Horas</span><span class="rot-cel">Valor (R$)</span>'
+  +'<input type="number" class="form-control hp-horas mono" step="0.5" min="0" placeholder="0" value="'+(l&&l.horas?esc(String(l.horas)):'')+'" oninput="recalcularLinhaHoras(this)">'
+  +'<input type="number" class="form-control hp-valor mono" step="0.01" min="0" placeholder="0,00" value="'+(l&&l.valor?esc(String(l.valor)):'')+'" oninput="calcHorasPedido()">'
+  +'<input type="text" class="form-control hp-obs" placeholder="O que foi feito" value="'+esc(l&&l.obs?l.obs:'')+'">'
+  +'<button type="button" class="btn btn-danger btn-sm" title="Remover esta linha" onclick="this.parentElement.remove();calcHorasPedido()">✕</button>';
+ wrap.appendChild(row);calcHorasPedido();}
+/* mudou a mão de obra ou as horas: o valor volta a sair da tabela de preços.
+   Um valor digitado à mão vale até você mexer de novo num destes dois. */
+function recalcularLinhaHoras(el){
+ const row=el.closest('.hp-linha');if(!row)return;
+ const taxa=valorHoraMdo(row.querySelector('.hp-tipo').value);
+ if(taxa>0){const hs=parseFloat(row.querySelector('.hp-horas').value)||0;
+  row.querySelector('.hp-valor').value=hs?(Math.round(hs*taxa*100)/100):'';}
+ calcHorasPedido();}
+function horasDoPedidoForm(){
+ const linhas=[];
+ document.querySelectorAll('#vnd-horas-corpo > .hp-linha').forEach(r=>{
+  const horas=parseFloat(r.querySelector('.hp-horas').value)||0;
+  const valor=parseFloat(r.querySelector('.hp-valor').value)||0;
+  const tipoId=r.querySelector('.hp-tipo').value;
+  const obs=r.querySelector('.hp-obs').value.trim();
+  if(!horas&&!valor&&!tipoId&&!obs)return;
+  linhas.push({data:r.querySelector('.hp-data').value||'',tipoId,horas,valor,obs});});
+ return linhas;}
+/* soma por mão de obra e, embaixo, o total do pedido */
+function calcHorasPedido(){
+ const alvo=$('vnd-horas-total');if(!alvo)return;
+ const cab=$('vnd-horas-cab');
+ const linhas=horasDoPedidoForm();
+ if(cab)cab.style.display=document.querySelectorAll('#vnd-horas-corpo > .hp-linha').length?'':'none';
+ if(!linhas.length){alvo.innerHTML='';return;}
+ const ordem=[],porTipo={};
+ let totH=0,totV=0;
+ linhas.forEach(l=>{const nome=nomeMdo(l.tipoId);
+  if(!porTipo[nome]){porTipo[nome]={h:0,v:0};ordem.push(nome);}
+  porTipo[nome].h+=l.horas;porTipo[nome].v+=l.valor;totH+=l.horas;totV+=l.valor;});
+ alvo.innerHTML='<div class="hp-totais">'
+  +ordem.map(nome=>'<div class="hp-tot-linha"><span class="hp-nome">'+esc(nome)+'</span>'
+    +'<span class="hp-nums"><span>'+fmtHoras(porTipo[nome].h)+'</span><span>'+fmt(porTipo[nome].v)+'</span></span></div>').join('')
+  +'<div class="hp-tot-linha hp-tot-geral"><span class="hp-nome">Total</span>'
+  +'<span class="hp-nums"><span>'+fmtHoras(totH)+'</span><span style="color:var(--accent)">'+fmt(totV)+'</span></span></div></div>';}
+function renderHorasPedido(v){
+ const wrap=$('vnd-horas-corpo');if(!wrap)return;
+ wrap.innerHTML='';
+ ((v&&v.horas)||[]).forEach(l=>addLinhaHoras(l));
+ pintarAvisoHoras();calcHorasPedido();}
 function statusPcpCelula(v){const op=opDoPedido(v);
  if(!op)return '<span class="badge badge-muted" title="Nenhuma ordem de produção vinculada">—</span>';
  if(op.status==='Concluída')return '<span class="badge badge-success" title="OP-'+pad(op.num)+'">✅ Concluída</span>';
@@ -3574,10 +3669,10 @@ function calcVenda(){let t=0;document.querySelectorAll('#vnd-itens > div').forEa
 function vndShow(view){['lista','form'].forEach(v=>{const el=$('vendas-'+v+'-view');if(el)el.style.display=v===view?'block':'none';});}
 function cancelarPedido(){vndShow('lista');renderVendas();}
 function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-origem').value='';
- $('vnd-pags').innerHTML='';addFormaPagamento({forma:'pix',data:today()},'vnd-pags');$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
+ $('vnd-pags').innerHTML='';addFormaPagamento({forma:'pix',data:today()},'vnd-pags');$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderHorasPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-origem').value=v.origem||'';$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';preencherPagamentosVenda(v);
- $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
+ $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderHorasPedido(v);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 let ITEM_PARA_PEDIDO=null;
 function capturarPedido(){const itens=[];
  document.querySelectorAll('#vnd-itens > div').forEach(r=>{const sel=r.querySelector('.vi-prod'),desc=r.querySelector('.vi-desc');
@@ -3586,7 +3681,8 @@ function capturarPedido(){const itens=[];
   pags:formasPagamentoDe('vnd-pags').map(f=>({forma:f.forma,valor:f.valor,parcelas:f.parcelas,data:f.data,status:f.status})),status:$('vnd-status').value,
   obs:$('vnd-obs').value,titulo:$('mv-title').textContent,visaoGeral:$('vnd-visao-geral-corpo').innerHTML,
   visaoGeralVisivel:$('vnd-visao-geral').style.display,
-  visaoGeralValores:[...document.querySelectorAll('#vnd-visao-geral-corpo input')].map(i=>[i.id,i.value]),itens};}
+  visaoGeralValores:[...document.querySelectorAll('#vnd-visao-geral-corpo input')].map(i=>[i.id,i.value]),
+  horas:horasDoPedidoForm(),itens};}
 function restaurarPedido(r){
  $('vnd-id').value=r.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,r.cliId,'— Selecionar —');
  $('vnd-data').value=r.data;$('vnd-status').value=r.status;$('vnd-obs').value=r.obs;
@@ -3594,6 +3690,7 @@ function restaurarPedido(r){
  $('mv-title').textContent=r.titulo;
  $('vnd-visao-geral-corpo').innerHTML=r.visaoGeral;$('vnd-visao-geral').style.display=r.visaoGeralVisivel;
  r.visaoGeralValores.forEach(([id,valor])=>{if($(id))$(id).value=valor;});
+ $('vnd-horas-corpo').innerHTML='';(r.horas||[]).forEach(l=>addLinhaHoras(l));calcHorasPedido();
  $('vnd-itens').innerHTML='';
  r.itens.forEach(it=>it.tipo==='livre'?addItemLivreVenda(it):addItemVenda(it));
  vndShow('form');}
@@ -3656,7 +3753,10 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
   const somaPag=Math.round(formasPag.reduce((s2,f)=>s2+f.valor,0)*100)/100;
   if(Math.abs(somaPag-Math.round(total*100)/100)>0.005){
    toast('As formas de pagamento somam '+fmt(somaPag)+' e os itens somam '+fmt(total)+'. Ajuste antes de salvar.','error',8000);return;}}
- const o={cliId,origem:$('vnd-origem').value,data:$('vnd-data').value||today(),
+ const horas=horasDoPedidoForm();
+ if(horas.length&&!COLUNA_HORAS){
+  toast('As horas não foram salvas: falta a coluna no banco. O SQL está na própria seção de horas.','error',9000);}
+ const o={horas,cliId,origem:$('vnd-origem').value,data:$('vnd-data').value||today(),
   pag:formasPag.length?rotuloPagamento(formasPag):$('vnd-pags').querySelector('.ap-forma')?PAG_LABELS[$('vnd-pags').querySelector('.ap-forma').value]:'PIX',
   status:statusForm,obs:obsForm,itens,total};
  if(id){
@@ -8686,7 +8786,7 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-06.3';
+const APP_VERSAO='2026-10-08.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
@@ -8716,7 +8816,7 @@ function sondarLogin(){
  linha.textContent=partes.join(' · ');
  base.parentNode.appendChild(linha);}
 setTimeout(sondarLogin,2500);
-const APP_ATUALIZACAO=280;
+const APP_ATUALIZACAO=281;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
