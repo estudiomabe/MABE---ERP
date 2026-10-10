@@ -94,6 +94,37 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 #content { flex:1;overflow-y:auto;padding:22px; }
 .section { display:none; } .section.active { display:block; }
 .kpi-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px; }
+/* Quatro números herói em cima, o resto numa faixa menor embaixo: com nove
+   cartões do mesmo tamanho nada se destaca e a tela vira parede de números. */
+.kpi-hero { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:12px; }
+.kpi-hero .kpi-value { font-size:30px; }
+.kpi-hero .kpi-card { padding:20px 18px 16px; }
+.kpi-mini { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:20px; }
+.kpi-mini .kpi-card { padding:12px 13px;box-shadow:none; }
+.kpi-mini .kpi-value { font-size:17px;letter-spacing:-0.5px; }
+.kpi-mini .kpi-label { font-size:9px;letter-spacing:.7px;margin-bottom:3px; }
+.kpi-mini .kpi-sub { font-size:9.5px; }
+.kpi-mini .kpi-icon { display:none; }
+/* A variação contra o período anterior. A seta e o sinal repetem o que a cor
+   diz, para quem não distingue verde de vermelho. */
+.kpi-delta { display:flex;align-items:baseline;gap:5px;margin-top:7px;font-size:11px;font-weight:700;
+ font-family:var(--mono);color:var(--text-muted); }
+.kpi-delta.sobe { color:var(--success); }
+.kpi-delta.desce { color:var(--danger); }
+.kpi-delta .kd-nota { font-family:var(--font);font-weight:500;color:var(--text-muted);font-size:10px; }
+/* Legenda da rosca: sem ela a cor sozinha não diz quanto é cada fatia. */
+.grafico-moldura, .rosca-moldura { position:relative;height:208px;margin-top:10px; }
+.rosca-moldura { height:190px; }
+.dash-legenda { display:flex;flex-direction:column;gap:7px;margin-top:14px; }
+.dash-legenda .dl-item { display:flex;align-items:center;gap:8px;font-size:12px; }
+.dash-legenda .dl-cor { width:9px;height:9px;border-radius:2px;flex:none; }
+.dash-legenda .dl-nome { flex:1;min-width:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.dash-legenda .dl-num { font-family:var(--mono);font-weight:700;color:var(--text); }
+.dash-legenda .dl-pct { font-family:var(--mono);color:var(--text-muted);min-width:42px;text-align:right; }
+/* Ranking: a posição em círculo, como nas referências */
+.rank-pos { display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
+ border-radius:50%;background:var(--surface2);color:var(--text-muted);font-size:10px;font-weight:800;font-family:var(--mono); }
+.rank-pos.top { background:var(--accent);color:#1a1714; }
 .period-bar { display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap; }
 .per-tabs { display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px; }
 .per-tab { padding:6px 14px;border:none;background:none;border-radius:6px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all 0.15s; }
@@ -107,7 +138,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 .charts-grid { display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px; }
 .chart-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .chart-title { font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between; }
-.bottom-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+.bottom-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px; }
 .table-wrapper { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .table-toolbar { display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border); }
 .table-toolbar-title { font-size:14px;font-weight:700;flex:1; }
@@ -422,6 +453,12 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
   #cal-agenda { display:block;margin-top:4px; }
   #cal-grid, .cal-semana, .cal-legenda { display:none !important; }
   #section-calendario .period-bar { gap:6px; }
+  .kpi-hero { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+  .kpi-hero .kpi-value { font-size:21px; }
+  .kpi-mini { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  /* no cartao estreito a variacao e o "vs. mes anterior" nao cabem lado a
+     lado e quebravam no meio do numero: viram duas linhas limpas */
+  .kpi-delta { font-size:10px;flex-direction:column;align-items:flex-start;gap:1px; }
   #section-calendario .period-bar .btn { min-height:38px;min-width:40px; }
   #cal-label { min-width:0 !important;flex:1; }
   #entregas-tabela, #clientes-tabela, #compras-tabela, #fornecedores-tabela, #servicos-tabela, #comissoes-tabela, #ferramentas-tabela, #madeiras-tabela { display:none; }
@@ -628,6 +665,7 @@ body.sem-valores #section-insumos table th:nth-child(5), body.sem-valores #secti
 body.sem-valores #section-portfolio table th:nth-child(5), body.sem-valores #section-portfolio table td:nth-child(5),
 body.sem-valores #section-portfolio table th:nth-child(6), body.sem-valores #section-portfolio table td:nth-child(6),
 body.sem-valores #dash-valores, body.sem-valores #dash-chart-vendas, body.sem-valores #dash-transacoes,
+body.sem-valores #dash-top-clientes,
 body.sem-valores #dash-btn-pdf { display:none !important; }
 /* sem o gráfico de faturamento, o de status sobra sozinho e estica: limita a largura */
 body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
@@ -736,23 +774,28 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <span id="per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
         <button class="btn btn-primary btn-sm" id="dash-btn-pdf" onclick="gerarPdfDashboard()">📄 Gerar Relatório Dashboard em PDF</button>
       </div>
-      <div class="kpi-grid" id="dash-valores">
+      <div id="dash-valores">
+      <div class="kpi-hero">
+        <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Faturamento</div><div class="kpi-value" id="kpi-resultado">R$0</div><div class="kpi-delta" id="kpi-resultado-d"></div><div class="kpi-sub" id="kpi-rsub">soma dos pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Lucro</div><div class="kpi-value" id="kpi-lucro">R$0</div><div class="kpi-delta" id="kpi-lucro-d"></div><div class="kpi-sub" id="kpi-lucrosub">faturamento − despesas fixas</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Margem</div><div class="kpi-value" id="kpi-margem">0%</div><div class="kpi-delta" id="kpi-margem-d"></div><div class="kpi-sub" id="kpi-margemsub">lucro ÷ faturamento</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">A Receber</div><div class="kpi-value" id="kpi-areceber">R$0</div><div class="kpi-delta" id="kpi-areceber-d"></div><div class="kpi-sub" id="kpi-arsub">entradas pendentes</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div></div>
+      </div>
+      <div class="kpi-mini">
         <div class="kpi-card" style="--card-accent:var(--text-muted)"><div class="kpi-label">Orçamentos do Período</div><div class="kpi-value" id="kpi-orcamentos">R$0</div><div class="kpi-sub" id="kpi-osub">orçamentos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kpi-ticket">R$0</div><div class="kpi-sub" id="kpi-ticketsub">por pedido</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V4a1.2 1.2 0 0 1 1.2-1.2h8a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Entradas</div><div class="kpi-value" id="kpi-entradas">R$0</div><div class="kpi-sub">recebido no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Saídas</div><div class="kpi-value" id="kpi-saidas">R$0</div><div class="kpi-sub">pago no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Faturamento</div><div class="kpi-value" id="kpi-resultado">R$0</div><div class="kpi-sub" id="kpi-rsub">soma dos pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--danger)"><div class="kpi-label">Despesas Fixas</div><div class="kpi-value" id="kpi-despfixas">R$0</div><div class="kpi-sub" id="kpi-dfsub">custo fixo + folha</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="7" y1="15" x2="13" y2="15"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Lucro</div><div class="kpi-value" id="kpi-lucro">R$0</div><div class="kpi-sub" id="kpi-lucrosub">faturamento − despesas fixas</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">A Receber</div><div class="kpi-value" id="kpi-areceber">R$0</div><div class="kpi-sub" id="kpi-arsub">entradas pendentes</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Margem</div><div class="kpi-value" id="kpi-margem">0%</div><div class="kpi-sub" id="kpi-margemsub">lucro ÷ faturamento</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></div></div>
+      </div>
       </div>
       <div class="charts-grid">
-        <div class="chart-card" id="dash-chart-vendas"><div class="chart-title">Evolução de Pedidos <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><canvas id="chart-vendas" height="180"></canvas></div>
-        <div class="chart-card"><div class="chart-title">Status dos Pedidos</div><canvas id="chart-status" height="180"></canvas></div>
+        <div class="chart-card" id="dash-chart-vendas"><div class="chart-title">Evolução de Pedidos <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><div class="grafico-moldura"><canvas id="chart-vendas"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Status dos Pedidos</div><div class="rosca-moldura"><canvas id="chart-status"></canvas></div><div class="dash-legenda" id="dash-status-legenda"></div></div>
       </div>
       <div class="bottom-grid">
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">⚠️ Estoque Crítico</div></div><table><thead><tr><th>Produto</th><th>Atual</th><th>Mínimo</th></tr></thead><tbody id="dash-estoque"></tbody></table></div>
+        <div class="table-wrapper" id="dash-top-clientes"><div class="table-toolbar"><div class="table-toolbar-title">Top 5 Clientes do Período</div></div><table><thead><tr><th>#</th><th>Cliente</th><th>Pedidos</th><th>Faturamento</th></tr></thead><tbody id="dash-ranking"></tbody></table></div>
         <div class="table-wrapper" id="dash-transacoes"><div class="table-toolbar"><div class="table-toolbar-title">Últimas Transações</div></div><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Valor</th></tr></thead><tbody id="dash-fin"></tbody></table></div>
       </div>
     </div>
@@ -2220,6 +2263,61 @@ function onVndChange(){PER_VND.mes=+$('vnd-per-mes-sel').value;PER_VND.ano=+$('v
 let PER_ORC={modo:'tudo',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function setOrcModo(m){PER_ORC.modo=m;renderOrcamentos();}
 function onOrcChange(){PER_ORC.mes=+$('orc-per-mes-sel').value;PER_ORC.ano=+$('orc-per-ano-sel').value;renderOrcamentos();}
+/* ================= NÚMEROS DO PAINEL =================
+   As mesmas contas que o dashboard já fazia, só que recebendo o período como
+   argumento — é isso que permite rodá-las de novo no período anterior e
+   mostrar a variação. */
+function metricasDoPeriodo(p){
+ const oPer=DB.orcamentos.filter(o=>matchPer(o.data,p)&&o.status!=='Reprovado');
+ const oFeitos=oPer.filter(o=>o.status!=='Rascunho');
+ const oRasc=oPer.filter(o=>o.status==='Rascunho');
+ const vPer=DB.vendas.filter(v=>matchPer(v.data,p)&&v.status!=='Cancelado');
+ const pagos=DB.financeiro.filter(f=>f.status==='Pago'&&matchPer(f.data,p));
+ const entradas=pagos.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
+ const saidas=pagos.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
+ /* faturamento = soma dos pedidos do período (não cancelados), não o caixa */
+ const faturamento=vPer.reduce((s,v)=>s+Number(v.total||0),0);
+ const cfg=DB.config.cf;
+ const custoFixoMensal=['aluguel','iptu','agua','energia','contador','outros'].reduce((s2,k)=>s2+(Number(cfg[k])||0),0)
+  +(DB.config.custosFixosExtras||[]).reduce((s2,c)=>s2+(Number(c.valor)||0),0);
+ const folhaMensal=(DB.config.folhaPagamento||[]).reduce((s2,c)=>s2+(Number(c.salario)||0),0);
+ const corrido=periodoCorrido(p);
+ const custoFixo=custoFixoMensal*corrido.fracao,folha=folhaMensal*corrido.fracao;
+ const lucro=faturamento-(custoFixo+folha);
+ const aReceberList=DB.financeiro.filter(f=>f.tipo==='Entrada'&&f.status==='Pendente'&&matchPer(f.data,p));
+ return {oFeitos,oRasc,vPer,entradas,saidas,faturamento,corrido,custoFixo,folha,
+  despesas:custoFixo+folha,lucro,
+  ticket:vPer.length?faturamento/vPer.length:0,
+  margem:faturamento>0?lucro/faturamento*100:0,
+  orcFeitos:oFeitos.reduce((s2,o)=>s2+Number(o.preco||0),0),
+  orcRasc:oRasc.reduce((s2,o)=>s2+Number(o.preco||0),0),
+  aReceberList,aReceber:aReceberList.reduce((s2,f)=>s2+Number(f.val||0),0)};}
+/* o mês antes do mês escolhido, ou o ano antes do ano escolhido.
+   "Tudo" não tem anterior — e aí o painel diz isso em vez de inventar. */
+function periodoAnterior(p){
+ if(p.modo==='mes')return p.mes===0?{modo:'mes',mes:11,ano:p.ano-1}:{modo:'mes',mes:p.mes-1,ano:p.ano};
+ if(p.modo==='ano')return {modo:'ano',ano:p.ano-1,mes:p.mes};
+ return null;}
+/* Escreve a variação embaixo do número. `bom` diz qual lado é o lado bom:
+   faturamento subindo é verde, despesa subindo seria vermelha. 'neutro' não
+   pinta — é o caso de "a receber", em que subir não é bom nem ruim. */
+function pintarDelta(id,atual,anterior,bom,emPontos){
+ const el=$(id);if(!el)return;
+ const rotulo=PER.modo==='ano'?'vs. ano anterior':'vs. mês anterior';
+ if(anterior===null||anterior===undefined){
+  el.className='kpi-delta';el.innerHTML='<span class="kd-nota">sem período anterior para comparar</span>';return;}
+ const dif=atual-anterior;
+ const quase=Math.abs(dif)<0.005;
+ if(quase){el.className='kpi-delta';el.innerHTML='= 0'+(emPontos?' p.p.':'%')+' <span class="kd-nota">'+rotulo+'</span>';return;}
+ let texto;
+ if(emPontos)texto=(dif>0?'+':'−')+fmtN(Math.abs(dif),1)+' p.p.';
+ else if(!anterior){el.className='kpi-delta';
+  el.innerHTML='<span class="kd-nota">'+rotulo+' sem valor para comparar</span>';return;}
+ else texto=(dif>0?'+':'−')+fmtN(Math.abs(dif/anterior*100),1)+'%';
+ const sobe=dif>0;
+ const classe=bom==='neutro'?'':((sobe&&bom==='cima')||(!sobe&&bom==='baixo')?'sobe':'desce');
+ el.className='kpi-delta'+(classe?' '+classe:'');
+ el.innerHTML=(sobe?'↑':'↓')+' '+texto+' <span class="kd-nota">'+rotulo+'</span>';}
 function renderDashboard(){
  if(!window.Chart){carregarLib('chart').then(ok=>{if(ok&&CUR==='dashboard')renderDashboard();});}
  $('per-mes-sel').innerHTML=MESES.map((m,i)=>'<option value="'+i+'"'+(i===PER.mes?' selected':'')+'>'+m+'</option>').join('');
@@ -2231,19 +2329,14 @@ function renderDashboard(){
 
  /* rascunho é orçamento que ainda não saiu da casa: entra na contagem como
     nota de rodapé, não no número que a pessoa lê como trabalho feito */
- const oPer=DB.orcamentos.filter(o=>inPer(o.data)&&o.status!=='Reprovado');
- const oFeitos=oPer.filter(o=>o.status!=='Rascunho');
- const oRasc=oPer.filter(o=>o.status==='Rascunho');
- $('kpi-orcamentos').textContent=fmtK(oFeitos.reduce((s,o)=>s+Number(o.preco||0),0));
+ const M=metricasDoPeriodo(PER);
+ const antP=periodoAnterior(PER);
+ const A=antP?metricasDoPeriodo(antP):null;
+ const oFeitos=M.oFeitos,oRasc=M.oRasc,vPer=M.vPer;
+ const entradas=M.entradas,saidas=M.saidas,faturamento=M.faturamento,ticket=M.ticket;
+ $('kpi-orcamentos').textContent=fmtK(M.orcFeitos);
  $('kpi-osub').textContent=oFeitos.length+' orçamento(s)'
-  +(oRasc.length?'  ·  +'+oRasc.length+' em rascunho ('+fmtK(oRasc.reduce((s,o)=>s+Number(o.preco||0),0))+')':'');
- const vPer=DB.vendas.filter(v=>inPer(v.data)&&v.status!=='Cancelado');
- const pagos=DB.financeiro.filter(f=>f.status==='Pago'&&inPer(f.data));
- const entradas=pagos.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
- const saidas=pagos.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
- /* faturamento = soma dos pedidos do periodo (nao cancelados), nao o caixa do financeiro */
- const faturamento=vPer.reduce((s,v)=>s+Number(v.total||0),0);
- const ticket=vPer.length?faturamento/vPer.length:0;
+  +(oRasc.length?'  ·  +'+oRasc.length+' em rascunho ('+fmtK(M.orcRasc)+')':'');
  $('kpi-ticket').textContent=fmtK(ticket);
  $('kpi-ticketsub').textContent=vPer.length?('média de '+vPer.length+' pedido(s)'):'sem pedidos no período';
  $('kpi-entradas').textContent=fmtK(entradas);
@@ -2251,27 +2344,45 @@ function renderDashboard(){
  $('kpi-resultado').textContent=fmtK(faturamento);
  $('kpi-resultado').style.color='var(--success)';
  $('kpi-rsub').textContent='soma de '+vPer.length+' pedido(s) no período';
- const cfg=DB.config.cf;
- const custoFixoMensal=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
- const folhaMensal=(DB.config.folhaPagamento||[]).reduce((s,c)=>s+(Number(c.salario)||0),0);
- const corrido=periodoCorrido(PER);
- const custoFixoPeriodo=custoFixoMensal*corrido.fracao,folhaPeriodo=folhaMensal*corrido.fracao;
+ const corrido=M.corrido;
+ const custoFixoPeriodo=M.custoFixo,folhaPeriodo=M.folha;
  $('kpi-despfixas').textContent=fmtK(custoFixoPeriodo+folhaPeriodo);
  $('kpi-dfsub').textContent='custo fixo '+fmtK(custoFixoPeriodo)+' + folha '+fmtK(folhaPeriodo)
   +(corrido.parcial?'  ·  '+corrido.dias+' de '+corrido.total+(corrido.unidade==='mês'?' meses':' dias'):'');
- const lucro=faturamento-(custoFixoPeriodo+folhaPeriodo);
+ const lucro=M.lucro;
  $('kpi-lucro').textContent=fmtK(lucro);
  $('kpi-lucro').style.color=lucro>=0?'var(--success)':'var(--danger)';
  $('kpi-lucrosub').textContent=(lucro>=0?'faturamento - despesas fixas':'prejuízo no período')
   +(corrido.parcial?' (até hoje)':'');
- const aReceber=DB.financeiro.filter(f=>f.tipo==='Entrada'&&f.status==='Pendente'&&inPer(f.data));
- const totReceber=aReceber.reduce((s,f)=>s+Number(f.val||0),0);
+ const aReceber=M.aReceberList;
+ const totReceber=M.aReceber;
  $('kpi-areceber').textContent=fmtK(totReceber);
  $('kpi-arsub').textContent=aReceber.length?(aReceber.length+' entrada(s) pendente(s)'):'nada pendente no período';
- const margem=faturamento>0?lucro/faturamento*100:0;
+ const margem=M.margem;
  $('kpi-margem').textContent=fmtN(margem,1)+'%';
  $('kpi-margem').style.color=margem>=0?'var(--success)':'var(--danger)';
  $('kpi-margemsub').textContent=faturamento>0?'lucro ÷ faturamento':'sem faturamento no período';
+
+ /* variação contra o período anterior */
+ pintarDelta('kpi-resultado-d',faturamento,A?A.faturamento:null,'cima');
+ pintarDelta('kpi-lucro-d',lucro,A?A.lucro:null,'cima');
+ pintarDelta('kpi-margem-d',margem,A?A.margem:null,'cima',true);
+ /* a receber subir não é bom nem ruim: é dinheiro que entra depois */
+ pintarDelta('kpi-areceber-d',totReceber,A?A.aReceber:null,'neutro');
+
+ /* top 5 clientes do período, por faturamento */
+ const porCliente={};
+ vPer.forEach(v=>{const k=v.cliId||'__sem';
+  if(!porCliente[k])porCliente[k]={total:0,n:0};
+  porCliente[k].total+=Number(v.total||0);porCliente[k].n++;});
+ const ranking=Object.keys(porCliente).map(k=>({k,...porCliente[k]}))
+  .sort((a,b)=>b.total-a.total).slice(0,5);
+ $('dash-ranking').innerHTML=ranking.length
+  ?ranking.map((r,i)=>'<tr><td><span class="rank-pos'+(i===0?' top':'')+'">'+(i+1)+'</span></td>'
+    +'<td><strong>'+esc(r.k==='__sem'?'— sem cliente —':cliName(r.k))+'</strong></td>'
+    +'<td class="mono">'+r.n+'</td>'
+    +'<td class="mono" style="font-weight:700">'+fmtK(r.total)+'</td></tr>').join('')
+  :emptyRow(4,'Nenhum pedido no período');
 
  const crit=DB.produtos.filter(estoqueCritico);
  $('dash-estoque').innerHTML=crit.length?crit.slice(0,6).map(p=>'<tr><td>'+esc(p.nome)+'</td><td class="mono" style="color:var(--danger);font-weight:700">'+p.est+'</td><td class="mono">'+p.min+'</td></tr>').join(''):'<tr><td colspan="3" style="color:var(--text-muted)">Nenhum item crítico 👍</td></tr>';
@@ -2292,12 +2403,19 @@ function renderDashboard(){
  if(!window.Chart)return;
  if(chVendas)chVendas.destroy();
  const ticksVendas=ticksRegua(Math.max(...vals,1));
- chVendas=new Chart($('chart-vendas'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:'#c8a96e',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{type:'logarithmic',min:1000,max:ticksVendas[ticksVendas.length-1],afterBuildTicks:axis=>{axis.ticks=ticksVendas.map(v=>({value:v}));},ticks:{autoSkip:false,font:{size:9},callback:v=>v>=1000?(v/1000)+'k':v}}},responsive:true}});
+ chVendas=new Chart($('chart-vendas'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:'#c8a96e',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{type:'logarithmic',min:1000,max:ticksVendas[ticksVendas.length-1],afterBuildTicks:axis=>{axis.ticks=ticksVendas.map(v=>({value:v}));},ticks:{autoSkip:false,font:{size:9},callback:v=>v>=1000?(v/1000)+'k':v}}},responsive:true}});
  const sts={};vPer.forEach(v=>sts[v.status]=(sts[v.status]||0)+1);
  if(chStatus)chStatus.destroy();
  const cores={'Pendente':'#a07830','Confirmado':'#c8a96e','Enviado':'#7a6f62','Entregue':'#3d6b4f','Cancelado':'#b54040'};
  const stKeys=Object.keys(sts);
- chStatus=new Chart($('chart-status'),{type:'doughnut',data:{labels:stKeys.length?stKeys:['Sem pedidos'],datasets:[{data:stKeys.length?Object.values(sts):[1],backgroundColor:stKeys.length?stKeys.map(k=>cores[k]||'#1a1714'):['#e0d9ce']}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}}},cutout:'65%'}});}
+ /* a legenda diz o que a cor sozinha não diz: quantos e quanto por cento */
+ const totalSt=stKeys.reduce((s2,k)=>s2+sts[k],0);
+ $('dash-status-legenda').innerHTML=stKeys.length
+  ?stKeys.map(k=>'<div class="dl-item"><span class="dl-cor" style="background:'+(cores[k]||'#7a6f62')+'"></span>'
+    +'<span class="dl-nome">'+esc(k)+'</span><span class="dl-num">'+sts[k]+'</span>'
+    +'<span class="dl-pct">'+fmtN(sts[k]/totalSt*100,1)+'%</span></div>').join('')
+  :'<div class="dl-item"><span class="dl-nome" style="color:var(--text-muted)">Nenhum pedido no período</span></div>';
+ chStatus=new Chart($('chart-status'),{type:'doughnut',data:{labels:stKeys.length?stKeys:['Sem pedidos'],datasets:[{data:stKeys.length?Object.values(sts):[1],backgroundColor:stKeys.length?stKeys.map(k=>cores[k]||'#1a1714'):['#e0d9ce']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}});}
 function saldoFin(){const inicial=Number(DB.config.cf.saldoInicial)||0;
  return inicial+DB.financeiro.filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
 
@@ -8975,13 +9093,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-08.7';
+const APP_VERSAO='2026-10-10.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=287;
+const APP_ATUALIZACAO=288;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
