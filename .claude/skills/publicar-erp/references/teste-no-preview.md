@@ -135,6 +135,36 @@ navigate http://localhost:8123/
 A recarga apaga os dados falsos e o bloqueio. Não deixe a aba com números
 inventados: o usuário pode abrir o painel e achar que são os dele.
 
+## Testar no celular de verdade, pelo cabo
+
+A simulação de 375px no painel **não reproduz** o compositor da placa de vídeo,
+a barra de endereço, o teclado nem o cache do service worker. A "tela de login
+cortada" de outubro/2026 (overlays fechadas com `backdrop-filter` vazando a
+pintura) nunca apareceu na simulação e levou 20 minutos no aparelho real. Para
+qualquer defeito que só acontece no celular, vá ao celular:
+
+```
+A=C:/Users/mateu/ferramentas/platform-tools/adb.exe     # ja instalado
+$A devices -l                                            # precisa de "device", nao "unauthorized"
+$A forward tcp:9222 localabstract:chrome_devtools_remote # inspetor do Chrome do celular
+$A reverse tcp:8123 tcp:8123                             # o celular enxerga o servidor de teste
+$A shell am start -a android.intent.action.VIEW -d http://localhost:8123/ com.android.chrome
+$A exec-out screencap -p > foto.png                      # tela fisica
+```
+
+O inspetor responde em `http://localhost:9222/json`; a aba do ERP é a que tem
+a URL do ERP (filtre — a lista traz **todas** as abas do usuário). Com o
+`webSocketDebuggerUrl` dela, `Runtime.evaluate` roda JavaScript lá dentro e
+`Page.captureScreenshot` dá a foto interna do Chrome (compará-la com a física
+separa bug de pintura de bug de exibição). Um cliente de 40 linhas com o
+`WebSocket` do Node basta; a memória do projeto descreve o `cdp.js` da sessão
+de 10/10/2026.
+
+O usuário precisa ligar a Depuração USB no aparelho e aceitar a caixa; o
+combinado é desligá-la ao terminar, só mexer na aba do ERP, não instalar nada,
+e nunca digitar a senha dele. Fotos da tela podem pegar notificações: se
+pegarem, apague a foto.
+
 ## Conferir em produção
 
 Para o usuário olhar com os dados reais, abra `https://mabe-erp.vercel.app` com
