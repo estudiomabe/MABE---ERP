@@ -4588,7 +4588,7 @@ function omBusca(input){const nome=input.value.trim();const found=buscarMaterial
  calcOrc();}
 let LINHA_MATERIAL_PENDENTE=null,PRODUTO_RAPIDO_ORC=false;
 function abrirNovoProdutoRapido(){openProduto('Insumo');PRODUTO_RAPIDO_ORC=true;}
-let FORNECEDOR_RAPIDO_ORC=false,FORNECEDOR_RAPIDO_SERVICO=false,SERVICO_RAPIDO_ORC=false;
+let FORNECEDOR_RAPIDO_SERVICO=false,SERVICO_RAPIDO_ORC=false;
 /* Cadastrar um serviço sem sair do orçamento: salva, a lista das linhas já
    abertas é refeita e o serviço novo entra numa linha já preenchido. */
 function abrirNovoServicoRapido(){if(!guard())return;openServico();SERVICO_RAPIDO_ORC=true;}
@@ -4598,7 +4598,6 @@ function usarServicoNoOrcamento(id){
  if(!alvo){addServico();const todos=document.querySelectorAll('#orc-servicos .sv-cat');alvo=todos[todos.length-1];}
  if(!alvo)return;
  alvo.value=id;svEscolhido(alvo);}
-function abrirNovoPrestadorRapido(){openFornecedor();FORNECEDOR_RAPIDO_ORC=true;}
 /* so material vindo do cadastro tem link, e o cadastro guarda link so de produto/insumo:
    a referencia da linha e "p:<id>" para produto e "m:<id>" para madeira */
 function linkDoRefMaterial(ref){
@@ -7141,8 +7140,8 @@ async function delServico(id){if(!guard())return;const lista=listaServicos();con
 function atualizarDatalistServicos(){
  document.querySelectorAll('#orc-servicos .sv-cat').forEach(sel=>{const v=sel.value;sel.innerHTML=servicoCatOptions(v);});}
 function renderFornecedores(){renderFornecedoresCards();$('tb-fornecedores').innerHTML=DB.fornecedores.map((f,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(f.nome)+'</strong></td><td class="mono">'+esc(f.cnpj||'—')+'</td><td>'+esc(f.email||'—')+'</td><td>'+esc(f.tel||'—')+'</td><td>'+esc(f.cidade||'—')+'</td><td><span class="badge '+(f.status==='Ativo'?'badge-success':'badge-muted')+'">'+f.status+'</span></td><td>'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</td></tr>').join('')||emptyRow(8,'Nenhum fornecedor cadastrado');}
-function openFornecedor(){FORNECEDOR_RAPIDO_ORC=false;FORNECEDOR_RAPIDO_SERVICO=false;['for-id','for-nome','for-cnpj','for-tel','for-email','for-cidade'].forEach(i=>$(i).value='');$('for-status').value='Ativo';$('mfor-title').textContent='Novo Fornecedor';openModal('modal-fornecedores');}
-function editFornecedor(id){if(!guard())return;FORNECEDOR_RAPIDO_ORC=false;FORNECEDOR_RAPIDO_SERVICO=false;const f=DB.fornecedores.find(x=>x.id===id);if(!f)return;
+function openFornecedor(){FORNECEDOR_RAPIDO_SERVICO=false;['for-id','for-nome','for-cnpj','for-tel','for-email','for-cidade'].forEach(i=>$(i).value='');$('for-status').value='Ativo';$('mfor-title').textContent='Novo Fornecedor';openModal('modal-fornecedores');}
+function editFornecedor(id){if(!guard())return;FORNECEDOR_RAPIDO_SERVICO=false;const f=DB.fornecedores.find(x=>x.id===id);if(!f)return;
  $('for-id').value=f.id;$('for-nome').value=f.nome;$('for-cnpj').value=f.cnpj||'';$('for-tel').value=f.tel||'';$('for-email').value=f.email||'';$('for-cidade').value=f.cidade||'';$('for-status').value=f.status;$('mfor-title').textContent='Editar Fornecedor';openModal('modal-fornecedores');}
 async function saveFornecedor(){if(!guard())return;const nome=$('for-nome').value.trim();if(!nome){toast('Informe a razão social.','error');return;}
  const id=$('for-id').value;const o={nome,cnpj:$('for-cnpj').value.trim(),tel:$('for-tel').value.trim(),email:$('for-email').value.trim(),cidade:$('for-cidade').value.trim(),status:$('for-status').value};
@@ -7153,10 +7152,6 @@ async function saveFornecedor(){if(!guard())return;const nome=$('for-nome').valu
  else{DB.fornecedores.push(registro);commit('criar','Fornecedores',nome);}
  syncSheets('fornecedores','upsert',registro);
  if(FORNECEDOR_RAPIDO_SERVICO&&!id){FORNECEDOR_RAPIDO_SERVICO=false;closeModal('modal-fornecedores');toast('Fornecedor salvo!','success');voltarAoServico(registro.id);return;}
- if(FORNECEDOR_RAPIDO_ORC&&!id){FORNECEDOR_RAPIDO_ORC=false;
-  /* o prestador novo passa a aparecer também nas linhas de serviço que já estavam no item */
-  document.querySelectorAll('#orc-servicos .sv-forn').forEach(sel=>{const v=sel.value;sel.innerHTML=fornOptions(v);});
-  addServico({fornId:registro.id,desc:'',valor:0});}
  closeModal('modal-fornecedores');toast('Fornecedor salvo!','success');}
 async function delFornecedor(id){if(!guard())return;const f=DB.fornecedores.find(x=>x.id===id);if(!confirm('Excluir fornecedor "'+f.nome+'"?'))return;
  const {error}=await supa.from('fornecedores').delete().eq('id',id);
@@ -9094,13 +9089,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-10.3';
+const APP_VERSAO='2026-10-10.4';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=290;
+const APP_ATUALIZACAO=291;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
