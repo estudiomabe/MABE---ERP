@@ -1489,7 +1489,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
  <div id="rec-step-1">
   <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Informe seu e-mail. Enviamos um link para você definir uma senha nova.</p>
   <div class="form-group"><label class="form-label">E-mail</label><input type="text" class="form-control" id="rec-login" placeholder="voce@estudiomabe.com.br" onkeydown="if(event.key==='Enter')recAvancarStep1()"></div>
-  <p style="font-size:11px;color:var(--text-muted);margin-top:-6px">Se o seu acesso ainda for um login antigo, sem e-mail, digite o login: você responderá a pergunta de segurança.</p>
+  <p style="font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.45">Se o seu acesso ainda for um login antigo, sem e-mail, digite o login: você responderá a pergunta de segurança.</p>
   <div id="rec-ok-1" style="display:none;font-size:13px;color:var(--success);margin-top:12px;line-height:1.5"></div>
   <div id="rec-err-1" class="login-err" style="margin-top:12px"></div>
  </div>
@@ -9190,13 +9190,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-12.4';
+const APP_VERSAO='2026-10-12.5';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=295;
+const APP_ATUALIZACAO=296;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
