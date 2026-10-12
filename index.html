@@ -542,6 +542,18 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 .hp-linha { display:grid;grid-template-columns:116px minmax(0,1.3fr) 72px 104px minmax(0,1.5fr) 30px;gap:6px;align-items:center; }
 .hp-linha .form-control { font-size:12.5px;padding:5px 7px; }
 .hp-dica { color:var(--text-muted); }
+/* Gastos do pedido: só leitura, vêm das saídas do Financeiro ligadas ao pedido */
+#vnd-gastos-corpo { display:flex;flex-direction:column;gap:6px; }
+.gp-item { display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 10px;
+ background:var(--surface);border:1px solid var(--border);border-radius:8px; }
+.gp-item.clicavel { cursor:pointer; }
+.gp-item.clicavel:hover { border-color:var(--accent); }
+.gp-info { min-width:0; }
+.gp-desc { font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.gp-meta { font-size:11px;color:var(--text-muted);margin-top:2px; }
+.gp-pend { color:var(--danger);font-weight:700; }
+.gp-valor { font-family:var(--mono);font-weight:700;font-size:13px;white-space:nowrap;flex:none; }
+.gp-vazio { font-size:12px;color:var(--text-muted); }
 .hp-dica.sujas { color:var(--danger);font-weight:700; }
 .hp-totais { margin-top:10px;border-top:1px solid var(--border);padding-top:8px; }
 .hp-tot-linha { display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 2px;font-size:12.5px; }
@@ -856,7 +868,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento({data:$('vnd-data').value||today()},'vnd-pags')">+ Adicionar forma de pagamento</button>
 <div id="vnd-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
 <div id="vnd-pags-aviso" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
-</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div><div id="vnd-horas" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">⏱️ Horas trabalhadas neste projeto</div><button type="button" class="btn btn-ghost btn-sm" id="vnd-horas-add" onclick="addLinhaHoras()">+ Adicionar Horas</button></div><div id="vnd-horas-dica" style="font-size:11.5px;margin:-4px 0 8px"></div><div id="vnd-horas-aviso" style="display:none;font-size:12px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--warning,#c9a227);border-radius:8px;padding:10px 12px;margin-bottom:8px">Para guardar as horas, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface2);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists horas jsonb default '[]'::jsonb;</div></div><div class="hp-cabecalho" id="vnd-horas-cab" style="display:none"><span>Data</span><span>Mão de obra</span><span>Horas</span><span>Valor (R$)</span><span>Observações</span><span></span></div><div id="vnd-horas-corpo" style="display:flex;flex-direction:column;gap:7px"></div><div id="vnd-horas-total"></div></div></div></div>
+</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div><div id="vnd-gastos" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">💸 Valor gasto neste pedido</div></div><div class="hp-dica" style="font-size:11.5px;margin:-4px 0 8px">Vem do Financeiro: as saídas, inclusive as do extrato, em que este pedido foi escolhido na coluna "Pedido".</div><div id="vnd-gastos-corpo"></div><div id="vnd-gastos-total"></div></div><div id="vnd-horas" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">⏱️ Horas trabalhadas neste projeto</div><button type="button" class="btn btn-ghost btn-sm" id="vnd-horas-add" onclick="addLinhaHoras()">+ Adicionar Horas</button></div><div id="vnd-horas-dica" style="font-size:11.5px;margin:-4px 0 8px"></div><div id="vnd-horas-aviso" style="display:none;font-size:12px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--warning,#c9a227);border-radius:8px;padding:10px 12px;margin-bottom:8px">Para guardar as horas, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface2);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists horas jsonb default '[]'::jsonb;</div></div><div class="hp-cabecalho" id="vnd-horas-cab" style="display:none"><span>Data</span><span>Mão de obra</span><span>Horas</span><span>Valor (R$)</span><span>Observações</span><span></span></div><div id="vnd-horas-corpo" style="display:flex;flex-direction:column;gap:7px"></div><div id="vnd-horas-total"></div></div></div></div>
         <div class="config-card orc-anexos-zona" id="vnd-anexos-zona" style="margin-top:14px" ondragenter="anexoPedidoArrastando(event,true)" ondragover="anexoPedidoArrastando(event,true)" ondragleave="anexoPedidoArrastando(event,false)" ondrop="anexoPedidoSolto(event)">
           <div class="orc-anexos-aviso">Solte os arquivos para anexar</div>
           <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência<span class="orc-anexos-dica"> — ou arraste os arquivos para cá</span></div><button class="btn btn-ghost btn-sm" id="vnd-anexo-btn" onclick="document.getElementById('vnd-anexo-input').click()">+ Anexar Arquivo</button></div>
@@ -3556,6 +3568,66 @@ function renderHorasPedido(v){
  wrap.innerHTML='';
  ((v&&v.horas)||[]).forEach(l=>addLinhaHoras(l));
  pintarAvisoHoras();calcHorasPedido();limparHorasSujas();}
+/* ================= GASTOS DO PEDIDO =================
+   Não se digita nada aqui: o gasto é lançado uma vez, no Financeiro, como saída
+   com o pedido escolhido no campo "Pedido". O campo guarda "V-0031 — Cliente";
+   o vínculo é pelo número, para não se perder se o nome do cliente mudar. */
+function lancamentoEhDoPedido(f,v){const c=String(f.cat||''),cod='V-'+pad(v.num);
+ return c===cod||c.indexOf(cod+' ')===0;}
+function gastosDoPedido(v){if(!v)return [];
+ return DB.financeiro.filter(f=>f.tipo==='Saída'&&f.status!=='Cancelado'&&lancamentoEhDoPedido(f,v))
+  .sort((a,b)=>String(a.data||'').localeCompare(String(b.data||'')));}
+function renderGastosPedido(v){
+ const corpo=$('vnd-gastos-corpo'),tot=$('vnd-gastos-total');if(!corpo)return;
+ if(!v){corpo.innerHTML='<div class="gp-vazio">Salve o pedido primeiro. Depois, cada saída do Financeiro direcionada a ele aparece aqui.</div>';
+  tot.innerHTML='';return;}
+ const L=gastosDoPedido(v);
+ if(!L.length){corpo.innerHTML='<div class="gp-vazio">Nenhuma saída do Financeiro ligada a este pedido ainda.</div>';
+  /* mesmo sem gasto, o orçado já interessa: é o teto antes de começar a comprar */
+  tot.innerHTML=comparativoGastos(0,gastoOrcadoDoPedido(v));return;}
+ corpo.innerHTML=L.map(g=>'<div class="gp-item'+(canEdit()?' clicavel" onclick="editFin(\''+g.id+'\')" title="Abrir este lançamento no Financeiro':'')+'">'
+  +'<div class="gp-info"><div class="gp-desc">'+esc(g.desc||'—')+'</div>'
+  +'<div class="gp-meta">'+fmtD(g.data)+(g.centroCusto?' · '+esc(g.centroCusto):'')+(g.status==='Pendente'?' · <span class="gp-pend">Pendente</span>':'')+'</div></div>'
+  +'<div class="gp-valor">'+fmt(g.val)+'</div></div>').join('');
+ const total=L.reduce((s,g)=>s+(Number(g.val)||0),0);
+ const pend=L.filter(g=>g.status==='Pendente').reduce((s,g)=>s+(Number(g.val)||0),0);
+ tot.innerHTML='<div class="hp-totais"><div class="hp-tot-linha hp-tot-geral" style="border-top:none;margin-top:0;padding-top:3px"><span class="hp-nome">Total gasto'
+  +(L.length>1?' ('+L.length+' lançamentos)':'')+'</span><span class="hp-nums"><span style="color:var(--accent)">'+fmt(total)+'</span></span></div>'
+  +(pend?'<div class="hp-tot-linha"><span class="hp-nome">ainda a pagar</span><span class="hp-nums"><span class="gp-pend">'+fmt(pend)+'</span></span></div>':'')
+  +'</div>'+comparativoGastos(total,gastoOrcadoDoPedido(v));}
+/* O que o orçamento de origem previu gastar fora de casa: materiais/insumos e
+   serviços terceirizados de cada item. Na ficha do item eles valem para 1
+   unidade, então multiplicam pela quantidade do item. Custo fixo, mão de obra,
+   frete, imposto e margem ficam de fora de propósito. */
+function gastoOrcadoDoPedido(v){
+ const o=v?orcDoPedido(v):null;if(!o)return null;
+ let mat=0,serv=0;
+ itensOrc(o).forEach(it=>{const q=Number(it.qty)||1;
+  (Array.isArray(it.materiais)?it.materiais:[]).forEach(m=>{mat+=(Number(m.qty)||0)*(Number(m.custo)||0)*q;});
+  (Array.isArray(it.servicos)?it.servicos:[]).forEach(s=>{serv+=(Number(s.valor)||0)*q;});});
+ return {orc:o,mat,serv,total:mat+serv};}
+function comparativoGastos(gasto,orcado){
+ if(!orcado)return '<div class="hp-compara hp-vazio-cmp">Sem orçamento vinculado a este pedido — não há valor orçado para comparar.</div>';
+ if(!orcado.total)return '<div class="hp-compara hp-vazio-cmp">O orçamento ORC-'+pad(orcado.orc.num)+' não tem materiais nem serviços terceirizados lançados na ficha dos itens.</div>';
+ const linha=(rot,val,classe)=>'<div class="hp-tot-linha'+(classe?' '+classe:'')+'"><span class="hp-nome">'+rot+'</span>'
+  +'<span class="hp-nums"><span>'+val+'</span></span></div>';
+ const d=gasto-orcado.total;
+ const estado=d>0.005?'acima':(d<-0.005?'abaixo':'');
+ const rotulo=estado==='acima'?'Diferença (acima do orçado)':estado==='abaixo'?'Diferença (abaixo do orçado)':'Diferença (bateu com o orçado)';
+ /* o sinal repete o que a cor diz, para quem não distingue verde de vermelho */
+ const sinal=estado==='acima'?'+':estado==='abaixo'?'−':'';
+ return '<div class="hp-compara">'
+  +'<div class="hp-compara-tit">Comparativo com o orçamento ORC-'+pad(orcado.orc.num)+'</div>'
+  +linha('Materiais/Insumos orçados',fmt(orcado.mat))
+  +linha('Serviços terceirizados orçados',fmt(orcado.serv))
+  +linha('<strong style="color:var(--text)">Total orçado</strong>','<strong>'+fmt(orcado.total)+'</strong>')
+  +linha('<strong style="color:var(--text)">Gasto até agora</strong>','<strong>'+fmt(gasto)+'</strong>')
+  +linha(rotulo,sinal+fmt(Math.abs(d)),'hp-dif '+estado)
+  +'</div>';}
+/* o Financeiro mudou com a ficha do pedido aberta: a lista de gastos acompanha */
+function atualizarGastosDoPedidoAberto(){
+ const ficha=$('vendas-form-view');if(!ficha||ficha.style.display!=='block')return;
+ const v=DB.vendas.find(x=>x.id===$('vnd-id').value);if(v)renderGastosPedido(v);}
 function statusPcpCelula(v){const op=opDoPedido(v);
  if(!op)return '<span class="badge badge-muted" title="Nenhuma ordem de produção vinculada">—</span>';
  if(op.status==='Concluída')return '<span class="badge badge-success" title="OP-'+pad(op.num)+'">✅ Concluída</span>';
@@ -3920,10 +3992,10 @@ function cancelarPedido(){
  if(HORAS_SUJAS&&!confirm('As horas que você lançou ainda não foram salvas e vão se perder. Sair mesmo assim?'))return;
  limparHorasSujas();vndShow('lista');renderVendas();}
 function openVenda(){if(!guardValores())return;$('vnd-id').value='';fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-origem').value='';
- $('vnd-pags').innerHTML='';addFormaPagamento({forma:'pix',data:today()},'vnd-pags');$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderHorasPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
+ $('vnd-pags').innerHTML='';addFormaPagamento({forma:'pix',data:today()},'vnd-pags');$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderGastosPedido(null);renderHorasPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-origem').value=v.origem||'';$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';preencherPagamentosVenda(v);
- $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderHorasPedido(v);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
+ $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderGastosPedido(v);renderHorasPedido(v);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 let ITEM_PARA_PEDIDO=null;
 function capturarPedido(){const itens=[];
  document.querySelectorAll('#vnd-itens > div').forEach(r=>{const sel=r.querySelector('.vi-prod'),desc=r.querySelector('.vi-desc');
@@ -3943,6 +4015,7 @@ function restaurarPedido(r){
  r.visaoGeralValores.forEach(([id,valor])=>{if($(id))$(id).value=valor;});
  $('vnd-horas-corpo').innerHTML='';(r.horas||[]).forEach(l=>addLinhaHoras(l));calcHorasPedido();
  if(r.horasSujas)marcarHorasSujas();else limparHorasSujas();
+ renderGastosPedido(DB.vendas.find(x=>x.id===r.id)||null);
  $('vnd-itens').innerHTML='';
  r.itens.forEach(it=>it.tipo==='livre'?addItemLivreVenda(it):addItemVenda(it));
  vndShow('form');}
@@ -7047,11 +7120,11 @@ async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').valu
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
   DB.financeiro.unshift(f2);commit('criar','Financeiro',desc);syncSheets('financeiro','upsert',f2);
  }
- closeModal('modal-financeiro');toast('Lançamento salvo!','success');}
+ closeModal('modal-financeiro');toast('Lançamento salvo!','success');atualizarGastosDoPedidoAberto();}
 async function delFin(id){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!confirm('Excluir lançamento "'+f.desc+'"?'))return;
  const {error}=await supa.from('financeiro').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
- DB.financeiro=DB.financeiro.filter(x=>x.id!==id);commit('excluir','Financeiro',f.desc);syncSheets('financeiro','delete',{id});toast('Lançamento excluído.','info');}
+ DB.financeiro=DB.financeiro.filter(x=>x.id!==id);commit('excluir','Financeiro',f.desc);syncSheets('financeiro','delete',{id});toast('Lançamento excluído.','info');atualizarGastosDoPedidoAberto();}
 
 /* ================= FORNECEDORES & COMPRAS ================= */
 async function carregarFornecedoresSupabase(){
@@ -9190,13 +9263,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-12.5';
+const APP_VERSAO='2026-10-12.6';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=296;
+const APP_ATUALIZACAO=297;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
