@@ -620,7 +620,8 @@ body.sem-fin-obs .fin-obs { display:none; }
   /* linhas de itens: descrição na linha de cima, números com rótulo embaixo */
   .rot-cel { display:block;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);margin-bottom:-2px; }
   #vnd-itens>div, #orc-materiais>div, #orc-mdo>div, #orc-servicos>div { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px;row-gap:6px !important;column-gap:8px !important; }
-  #vnd-itens>div, #orc-materiais>div { grid-template-columns:64px minmax(0,1fr) minmax(0,1fr) 40px !important; }
+  #vnd-itens>div { grid-template-columns:64px minmax(0,1fr) minmax(0,1fr) 40px !important; }
+  #orc-materiais>div { grid-template-columns:84px minmax(0,1.2fr) minmax(0,0.8fr) 40px !important; }
   #orc-mdo>div { grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px !important; }
   #orc-servicos>div { grid-template-columns:76px minmax(0,1fr) minmax(0,1fr) 40px !important; }
   .sv-primeira { flex-direction:column;align-items:stretch; }
@@ -4143,8 +4144,8 @@ function aplicarOrdemOrc(lista){const col=ORC_ORDEM.col,dir=ORC_ORDEM.dir;if(!co
   const r=typeof x==='number'?x-y:String(x).localeCompare(String(y),'pt-BR');
   return r?r*dir:(b.num||0)-(a.num||0);});}
 function pintarOrdemOrc(){
- document.querySelectorAll('#orcamentos-tabela th[data-ord]').forEach(th=>{const on=th.dataset.ord===ORC_ORDEM.col;
-  th.classList.toggle('ord-ativa',on);th.querySelector('.ord-seta').textContent=on?(ORC_ORDEM.dir>0?'▲':'▼'):'↕';});
+ document.querySelectorAll('#orcamentos-tabela th.th-ord').forEach(th=>{const on=th.dataset.ord===ORC_ORDEM.col;
+  th.classList.toggle('ord-ativa',on);const seta=th.querySelector('.ord-seta');if(seta)seta.textContent=on?(ORC_ORDEM.dir>0?'▲':'▼'):'↕';});
  const s=$('orc-ordem-cel');if(s){const v=ORC_ORDEM.col?ORC_ORDEM.col+':'+ORC_ORDEM.dir:'';
   s.value=[...s.options].some(op=>op.value===v)?v:'';}
  const cx=$('orc-ordem-cel-box');if(cx)cx.classList.toggle('ativa',!!ORC_ORDEM.col);}
@@ -9189,13 +9190,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-12.3';
+const APP_VERSAO='2026-10-12.4';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=294;
+const APP_ATUALIZACAO=295;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
