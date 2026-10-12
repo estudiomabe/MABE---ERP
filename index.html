@@ -127,6 +127,21 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 .rank-pos.top { background:var(--accent);color:#1a1714; }
 .period-bar { display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap; }
 .per-tabs { display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px; }
+/* busca e ordem da lista de orcamentos: cabem na barra do periodo, sem linha nova */
+.busca-orc { position:relative;flex:1 1 160px;min-width:150px;max-width:260px; }
+.busca-orc svg { position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-muted);pointer-events:none; }
+.busca-orc input { padding-left:31px; }
+/* no celular a ordem e um botao quadrado ao lado da busca; o select fica invisivel
+   por cima dele, entao o toque abre o seletor nativo do aparelho */
+.ordem-cel { display:none; }
+.ordem-cel svg { width:18px;height:18px;pointer-events:none; }
+.ordem-cel select { position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer; }
+.ordem-cel.ativa { border-color:var(--accent);color:var(--accent);background:rgba(200,169,110,0.14); }
+#orcamentos-tabela th.th-ord { cursor:pointer;user-select:none;white-space:nowrap; }
+#orcamentos-tabela th.th-ord:hover { color:var(--text); }
+#orcamentos-tabela th.th-ord .ord-seta { display:inline-block;margin-left:4px;font-size:9px;opacity:.35; }
+#orcamentos-tabela th.th-ord.ord-ativa { color:var(--text); }
+#orcamentos-tabela th.th-ord.ord-ativa .ord-seta { opacity:1;color:var(--accent); }
 .per-tab { padding:6px 14px;border:none;background:none;border-radius:6px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all 0.15s; }
 .per-tab:hover { color:var(--text); } .per-tab.active { background:#1a1714;color:#faf7f2; }
 .kpi-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
@@ -453,6 +468,9 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
   #cal-agenda { display:block;margin-top:4px; }
   #cal-grid, .cal-semana, .cal-legenda { display:none !important; }
   #section-calendario .period-bar { gap:6px; }
+  /* no celular a lista vira cartao e nao tem titulo de coluna: a ordem vai para um seletor */
+  #section-orcamentos .busca-orc { flex:1 1 calc(100% - 60px);min-width:0;max-width:none;order:-1; }
+  .ordem-cel { display:flex;position:relative;order:-1;flex:none;width:48px;align-self:stretch;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text-muted); }
   .kpi-hero { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
   .kpi-hero .kpi-value { font-size:21px; }
   .kpi-mini { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -1008,17 +1026,23 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <select class="form-control" id="orc-per-ano-sel" style="width:auto;min-width:90px" onchange="onOrcChange()"></select>
           <select class="form-control" id="orc-status-filter" style="width:auto;min-width:150px" onchange="renderOrcamentos()">
             <option value="">Todos os status</option>
-            <option value="Rascunho">Rascunho</option>
-            <option value="Enviado">Enviado</option>
-            <option value="Em ajuste">Em ajuste</option>
-            <option value="Aprovado">Aprovado</option>
-            <option value="Reprovado">Reprovado</option>
-            <option value="Concluído">Concluído</option>
           </select>
+          <div class="busca-orc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input class="form-control" id="orc-busca" type="search" placeholder="Buscar nº ou cliente" autocomplete="off" oninput="renderOrcamentos()"></div>
+          <label class="ordem-cel" id="orc-ordem-cel-box" title="Ordenar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg>
+          <select id="orc-ordem-cel" onchange="ordemOrcCel(this.value)" aria-label="Ordenar orçamentos">
+            <option value="">Ordem padrão</option>
+            <option value="num:-1">Nº — maior primeiro</option>
+            <option value="data:-1">Data — mais recentes</option>
+            <option value="data:1">Data — mais antigas</option>
+            <option value="cliente:1">Cliente — A a Z</option>
+            <option value="entrega:1">Entrega — mais próxima</option>
+            <option value="entrega:-1">Entrega — mais distante</option>
+            <option value="status:1">Status</option>
+          </select></label>
           <span id="orc-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
         </div>
         <div id="orcamentos-cards"></div><div class="table-wrapper" id="orcamentos-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Orçamentos — Mabe</div></div>
-        <table><thead><tr><th>#</th><th>Status</th><th>Data</th><th>Cliente</th><th>Entrega</th><th>Contato</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tb-orcamentos"></tbody></table></div>
+        <table><thead><tr><th class="th-ord" data-ord="num" onclick="ordenarOrc('num')" title="Ordenar por número">#<span class="ord-seta">↕</span></th><th class="th-ord" data-ord="status" onclick="ordenarOrc('status')" title="Ordenar por status">Status<span class="ord-seta">↕</span></th><th class="th-ord" data-ord="data" onclick="ordenarOrc('data')" title="Ordenar por data">Data<span class="ord-seta">↕</span></th><th class="th-ord" data-ord="cliente" onclick="ordenarOrc('cliente')" title="Ordenar por cliente">Cliente<span class="ord-seta">↕</span></th><th class="th-ord" data-ord="entrega" onclick="ordenarOrc('entrega')" title="Ordenar por entrega">Entrega<span class="ord-seta">↕</span></th><th>Contato</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tb-orcamentos"></tbody></table></div>
       </div>
       <div id="orc-header-view" style="display:none">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><button class="btn btn-ghost btn-sm" onclick="cancelarHeaderOrc()">← Voltar</button><h2 style="font-size:16px;font-weight:700" id="orch-title">Novo Orçamento</h2></div>
@@ -4089,10 +4113,49 @@ async function mudarStatusOrc(id,novo,el){
  toast('Status de ORC-'+pad(o.num)+' alterado para '+novo+'.','success');
  if(veioDaDetalhe){orcShow('detalhe');renderOrcDetalhe();}
  else if(CUR==='orcamentos')renderOrcamentos();}
+/* ================= BUSCA E ORDEM DA LISTA =================
+   A busca acha pelo número (142, ORC-142) ou pelo nome do cliente, sem ligar
+   para acento. A ordem vem do clique no título da coluna; o segundo clique
+   inverte. Sem ordem escolhida, a lista fica como sempre foi. */
+let ORC_ORDEM={col:null,dir:1};
+/* o primeiro clique ja vai para o sentido mais util de cada coluna */
+const ORC_ORDEM_INICIAL={num:-1,data:-1,status:1,cliente:1,entrega:1};
+function encherFiltroStatusOrc(){const s=$('orc-status-filter');if(!s||s.options.length===ORC_STATUS.length+1)return;
+ const v=s.value;s.innerHTML='<option value="">Todos os status</option>'+ORC_STATUS.map(st=>'<option>'+esc(st)+'</option>').join('');s.value=v;}
+const textoBuscaOrc=o=>['orc-'+pad(o.num),'orc-'+o.num,'orc '+o.num,'orc'+o.num,'orc'+pad(o.num),semAcento(cliName(o.cliId))].join(' | ');
+function chaveOrdemOrc(o,col){
+ if(col==='num')return o.num||0;
+ if(col==='status')return ORC_STATUS.indexOf(o.status);
+ if(col==='cliente')return o.cliId?semAcento(cliName(o.cliId)):'';
+ if(col==='entrega')return o.validade||'';
+ return o.data||'';}
+function aplicarOrdemOrc(lista){const col=ORC_ORDEM.col,dir=ORC_ORDEM.dir;if(!col)return lista;
+ return [...lista].sort((a,b)=>{const x=chaveOrdemOrc(a,col),y=chaveOrdemOrc(b,col);
+  /* sem data de entrega ou sem cliente vai sempre para o fim, nos dois sentidos */
+  const vx=x==='',vy=y==='';if(vx!==vy)return vx?1:-1;
+  const r=typeof x==='number'?x-y:String(x).localeCompare(String(y),'pt-BR');
+  return r?r*dir:(b.num||0)-(a.num||0);});}
+function pintarOrdemOrc(){
+ document.querySelectorAll('#orcamentos-tabela th[data-ord]').forEach(th=>{const on=th.dataset.ord===ORC_ORDEM.col;
+  th.classList.toggle('ord-ativa',on);th.querySelector('.ord-seta').textContent=on?(ORC_ORDEM.dir>0?'▲':'▼'):'↕';});
+ const s=$('orc-ordem-cel');if(s){const v=ORC_ORDEM.col?ORC_ORDEM.col+':'+ORC_ORDEM.dir:'';
+  s.value=[...s.options].some(op=>op.value===v)?v:'';}
+ const cx=$('orc-ordem-cel-box');if(cx)cx.classList.toggle('ativa',!!ORC_ORDEM.col);}
+function ordenarOrc(col){
+ if(ORC_ORDEM.col===col)ORC_ORDEM.dir*=-1;else ORC_ORDEM={col,dir:ORC_ORDEM_INICIAL[col]||1};
+ renderOrcamentos();}
+function ordemOrcCel(v){if(!v)ORC_ORDEM={col:null,dir:1};else{const [col,d]=v.split(':');ORC_ORDEM={col,dir:+d};}renderOrcamentos();}
+function vazioOrc(){const bruto=($('orc-busca')||{}).value||'';
+ if(!bruto.trim())return 'Nenhum orçamento no período selecionado';
+ return 'Nenhum orçamento com “'+esc(bruto.trim())+'”'+(PER_ORC.modo!=='tudo'
+  ?' neste período — <a href="#" onclick="event.preventDefault();setOrcModo(\'tudo\')" style="color:var(--accent);font-weight:600">buscar em Tudo</a>':'');}
 const orcEditandoItem=()=>['tipo','form','catalogo'].some(v=>$('orc-'+v+'-view').style.display==='block');
 function renderOrcamentos(){if(!orcEditandoItem())orcShow('lista');syncPerBar('orc-per',PER_ORC);
+ encherFiltroStatusOrc();
  const filtroStatus=$('orc-status-filter')?$('orc-status-filter').value:'';
- const lista=DB.orcamentos.filter(o=>matchPer(o.data,PER_ORC)&&(!filtroStatus||o.status===filtroStatus));
+ const termo=semAcento(($('orc-busca')||{}).value||'').trim();
+ const lista=aplicarOrdemOrc(DB.orcamentos.filter(o=>matchPer(o.data,PER_ORC)&&(!filtroStatus||o.status===filtroStatus)&&(!termo||textoBuscaOrc(o).includes(termo))));
+ pintarOrdemOrc();
  $('tb-orcamentos').innerHTML=lista.map(o=>{const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Em ajuste':'badge-warning','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
   const itens=itensOrc(o);
   const cliObj=DB.clientes.find(c=>c.id===o.cliId);
@@ -4124,12 +4187,12 @@ function renderOrcamentos(){if(!orcEditandoItem())orcShow('lista');syncPerBar('o
     +'<td class="mono" style="font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">'+fmt(it.preco)+'</td><td></td></tr>').join('');
    if(canEdit())linhasItens+='<tr class="sub-row" style="background:var(--surface)"><td></td><td colspan="7" style="padding:6px 14px"><a href="#" onclick="event.preventDefault();event.stopPropagation();abrirDetalheOrc(\''+o.id+'\');abrirAdicionarItem();" style="font-size:11.5px;color:var(--accent);font-weight:600;text-decoration:none">+ Novo Item</a></td></tr>';
   }
-  return linhaHeader+linhasItens;}).join('')||emptyRow(8,'Nenhum orçamento no período selecionado');
+  return linhaHeader+linhasItens;}).join('')||emptyRow(8,vazioOrc());
   renderOrcamentosCards(lista);}
 /* mesma informacao da tabela, empilhada para o celular */
 function renderOrcamentosCards(lista){
  const alvo=$('orcamentos-cards');if(!alvo)return;
- if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum orçamento no período selecionado</div>';return;}
+ if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">'+vazioOrc()+'</div>';return;}
  const tipoL={'sob_medida':'🔨','catalogo':'📦','novo_produto':'🆕'};
  const faixa={'Aprovado':'st-aprovado','Reprovado':'st-reprovado','Enviado':'st-enviado','Concluído':'st-aprovado'};
  alvo.innerHTML=lista.map(o=>{
@@ -4593,6 +4656,10 @@ let FORNECEDOR_RAPIDO_SERVICO=false,SERVICO_RAPIDO_ORC=false;
    abertas é refeita e o serviço novo entra numa linha já preenchido. */
 function abrirNovoServicoRapido(){if(!guard())return;openServico();SERVICO_RAPIDO_ORC=true;}
 function usarServicoNoOrcamento(id){
+ /* o prestador pode ter acabado de ser cadastrado junto com o serviço: as linhas
+    que já estavam abertas montaram a lista de prestadores antes dele existir, e
+    escolher um id que não está na lista deixa a linha em "Sem fornecedor" */
+ document.querySelectorAll('#orc-servicos .sv-forn').forEach(sel=>{const v=sel.value;sel.innerHTML=fornOptions(v);});
  const selects=[...document.querySelectorAll('#orc-servicos .sv-cat')];
  let alvo=selects.find(sel=>!sel.value);
  if(!alvo){addServico();const todos=document.querySelectorAll('#orc-servicos .sv-cat');alvo=todos[todos.length-1];}
@@ -9089,13 +9156,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-10.4';
+const APP_VERSAO='2026-10-12.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=291;
+const APP_ATUALIZACAO=292;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
