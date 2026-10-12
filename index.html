@@ -137,15 +137,15 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 /* Filtro por coluna: um funil discreto no título abre uma janelinha só com o
    filtro daquela coluna. Nada ocupa espaço na tela até ser usado; o funil
    fica dourado enquanto o filtro estiver ligado. */
-#orcamentos-tabela th { white-space:nowrap; }
-#tb-orcamentos td:nth-child(7) { white-space:nowrap; }
-#orcamentos-tabela th .th-filtro { background:none;border:none;padding:2px 3px;margin-left:3px;cursor:pointer;color:var(--text-muted);opacity:.35;vertical-align:middle;line-height:0;border-radius:4px; }
-#orcamentos-tabela th:hover .th-filtro { opacity:.75; }
-#orcamentos-tabela th .th-filtro:hover { background:var(--surface3); }
-#orcamentos-tabela th .th-filtro svg { width:11px;height:11px; }
-#orcamentos-tabela th .th-filtro.ativo { opacity:1;color:var(--accent); }
-#orcamentos-tabela th .th-filtro.ativo svg { fill:currentColor; }
-#orc-pop { position:fixed;z-index:950;width:250px;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+#orcamentos-tabela th, #vendas-tabela th { white-space:nowrap; }
+#tb-orcamentos td:nth-child(7), #tb-vendas tr:not(.venda-item-row) td:nth-child(5) { white-space:nowrap; }
+#orcamentos-tabela th .th-filtro, #vendas-tabela th .th-filtro { background:none;border:none;padding:2px 3px;margin-left:3px;cursor:pointer;color:var(--text-muted);opacity:.35;vertical-align:middle;line-height:0;border-radius:4px; }
+#orcamentos-tabela th:hover .th-filtro, #vendas-tabela th:hover .th-filtro { opacity:.75; }
+#orcamentos-tabela th .th-filtro:hover, #vendas-tabela th .th-filtro:hover { background:var(--surface3); }
+#orcamentos-tabela th .th-filtro svg, #vendas-tabela th .th-filtro svg { width:11px;height:11px; }
+#orcamentos-tabela th .th-filtro.ativo, #vendas-tabela th .th-filtro.ativo { opacity:1;color:var(--accent); }
+#orcamentos-tabela th .th-filtro.ativo svg, #vendas-tabela th .th-filtro.ativo svg { fill:currentColor; }
+#orc-pop, #fc-pop { position:fixed;z-index:950;width:250px;background:var(--surface);border:1px solid var(--border);border-radius:10px;
  box-shadow:0 12px 32px rgba(26,23,20,.18);padding:12px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:400; }
 .fo-tit { font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px; }
 .fo-bloco + .fo-bloco { margin-top:16px;padding-top:14px;border-top:1px solid var(--border); }
@@ -879,9 +879,9 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         </div>
         <select class="form-control" id="vnd-per-mes-sel" style="width:auto;min-width:130px" onchange="onVndChange()"></select>
         <select class="form-control" id="vnd-per-ano-sel" style="width:auto;min-width:90px" onchange="onVndChange()"></select>
-        <select class="form-control" id="vnd-status-filter" style="width:auto;min-width:150px" onchange="renderVendas()"><option value="">Todos os status</option><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select><span id="vnd-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
+        <button type="button" class="ordem-cel filtro-cel" id="vnd-filtro-cel" title="Filtros" onclick="fcAbrirCel('vnd')"><svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg><span class="fc-n" id="vnd-fc-n" style="display:none"></span></button><div class="orc-resumo"><button type="button" class="orc-limpar" id="vnd-limpar" style="display:none" onclick="fcLimparTudo('vnd')">Limpar filtros</button><span id="vnd-resumo" style="display:none"></span><span id="vnd-per-label"></span></div>
       </div>
-      <div id="vendas-cards"></div><div class="table-wrapper" id="vendas-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos</div></div><table><thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>STATUS R$</th><th>STATUS PCP</th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
+      <div id="vendas-cards"></div><div class="table-wrapper" id="vendas-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos</div></div><table><thead><tr><th>Pedido<button type="button" class="th-filtro" data-fc="vnd" data-col="num" onclick="event.stopPropagation();fcAbrir('vnd','num',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Data<button type="button" class="th-filtro" data-fc="vnd" data-col="data" onclick="event.stopPropagation();fcAbrir('vnd','data',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Cliente<button type="button" class="th-filtro" data-fc="vnd" data-col="cliente" onclick="event.stopPropagation();fcAbrir('vnd','cliente',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Itens<button type="button" class="th-filtro" data-fc="vnd" data-col="itens" onclick="event.stopPropagation();fcAbrir('vnd','itens',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Total<button type="button" class="th-filtro" data-fc="vnd" data-col="total" onclick="event.stopPropagation();fcAbrir('vnd','total',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Pagamento<button type="button" class="th-filtro" data-fc="vnd" data-col="pag" onclick="event.stopPropagation();fcAbrir('vnd','pag',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>STATUS R$<button type="button" class="th-filtro" data-fc="vnd" data-col="status" onclick="event.stopPropagation();fcAbrir('vnd','status',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>STATUS PCP<button type="button" class="th-filtro" data-fc="vnd" data-col="pcp" onclick="event.stopPropagation();fcAbrir('vnd','pcp',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
       </div>
       <div id="vendas-form-view" style="display:none">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
@@ -1460,6 +1460,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
   <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-nfe-info')">Entendi</button></div>
 </div></div>
 <div class="modal-overlay" id="modal-conciliacao"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🧾 Conferência com o extrato</div><button class="modal-close" onclick="closeModal('modal-conciliacao')">✕</button></div><div class="modal-body" id="conc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="conc-desfazer" onclick="desfazerAjusteSaldo()">↩ Desfazer ajuste do saldo</button><button class="btn btn-primary" onclick="closeModal('modal-conciliacao')">Entendi</button></div></div></div>
+<div class="modal-overlay" id="modal-fc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title" id="fc-titulo">Filtrar</div><button class="modal-close" onclick="closeModal('modal-fc-filtros')">✕</button></div><div class="modal-body" id="fc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="fcLimparTudo(FC_ATUAL);fcAbrirCel(FC_ATUAL)">Limpar</button><button class="btn btn-primary" id="fc-ver" onclick="closeModal('modal-fc-filtros')">Ver</button></div></div></div>
 <div class="modal-overlay" id="modal-orc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title">Filtrar orçamentos</div><button class="modal-close" onclick="closeModal('modal-orc-filtros')">✕</button></div><div class="modal-body" id="orc-filtros-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="limparFiltrosOrc();abrirFiltrosCel()">Limpar</button><button class="btn btn-primary" id="orc-filtros-ver" onclick="closeModal('modal-orc-filtros')">Ver orçamentos</button></div></div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-comissoes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mcom-title">Nova Pessoa com Comissão</div><button class="modal-close" onclick="closeModal('modal-comissoes')">✕</button></div><div class="modal-body">
@@ -1480,7 +1481,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div class="form-group"><label class="form-label">Serviço *</label><input type="text" class="form-control" id="serv-nome" placeholder="Ex: Estofamento, Pintura eletrostática, Corte a laser"></div>
 <div class="form-group"><label class="form-label">Prestador</label><div style="display:flex;gap:6px"><select class="form-control" id="serv-forn" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar fornecedor" onclick="abrirNovoPrestadorDoServico()">+ Novo</button></div></div>
 <div class="form-grid form-2">
-<div class="form-group"><label class="form-label">Cobrança</label><select class="form-control" id="serv-unidade"><option>Por peça</option><option>Por hora</option><option>Por m²</option><option>Por metro linear</option><option>Por projeto</option></select></div>
+<div class="form-group"><label class="form-label">Cobrança</label><select class="form-control" id="serv-unidade"></select></div>
 <div class="form-group"><label class="form-label">Valor padrão (R$)</label><input type="number" class="form-control" id="serv-valor" step="0.01" min="0" value="0"></div>
 </div>
 <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="serv-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Prazo médio, condição de pagamento, detalhes combinados..."></textarea></div>
@@ -3656,13 +3657,102 @@ function comparativoGastos(gasto,orcado){
 function atualizarGastosDoPedidoAberto(){
  const ficha=$('vendas-form-view');if(!ficha||ficha.style.display!=='block')return;
  const v=DB.vendas.find(x=>x.id===$('vnd-id').value);if(v)renderGastosPedido(v);}
+/* ================= FILTRO POR COLUNA (genérico) =================
+   Mesmo funcionamento do filtro dos orçamentos, descrito por coluna: cada
+   coluna diz o tipo de filtro (texto, opções, datas, faixa de valor) e de onde
+   vem o valor. Usado pelos pedidos; outras listas podem se registrar igual. */
+const FC_REG={};let FC_ATUAL='';
+function fcVazio(cols){const s={};Object.entries(cols).forEach(([k,c])=>{s[k]=c.tipo==='opcoes'?[]:(c.tipo==='datas'||c.tipo==='faixa')?{de:'',ate:''}:'';});return s;}
+function fcRegistrar(chave,cfg){FC_REG[chave]=Object.assign({estado:fcVazio(cfg.cols)},cfg);}
+function fcAtivo(chave,col){const c=FC_REG[chave],v=c.estado[col],t=c.cols[col].tipo;
+ return t==='opcoes'?v.length>0:t==='texto'?!!String(v).trim():(v.de!==''||v.ate!=='');}
+const fcAtivos=chave=>Object.keys(FC_REG[chave].cols).filter(k=>fcAtivo(chave,k));
+function fcPassa(chave,item){const c=FC_REG[chave];if(!c)return true;
+ for(const [k,def] of Object.entries(c.cols)){if(!fcAtivo(chave,k))continue;const v=c.estado[k],x=def.val(item);
+  if(def.tipo==='texto'&&!semAcento(String(x||'')).includes(semAcento(String(v).trim())))return false;
+  if(def.tipo==='opcoes'&&!v.includes(String(x)))return false;
+  if(def.tipo==='datas'){if(!x)return false;if(v.de&&x<v.de)return false;if(v.ate&&x>v.ate)return false;}
+  if(def.tipo==='faixa'){const n=Number(x)||0;if(v.de!==''&&n<Number(v.de))return false;if(v.ate!==''&&n>Number(v.ate))return false;}}
+ return true;}
+function fcHtml(chave,col){const def=FC_REG[chave].cols[col],v=FC_REG[chave].estado[col];
+ const q=s=>'\''+s+'\'';
+ const par=(rot,lado,tipo,extra)=>'<div class="fo-par"><span>'+rot+'</span><input class="form-control fo-campo" type="'+tipo+'" value="'+esc(String(v[lado]))+'"'+(extra||'')
+  +' oninput="fcSetPar('+q(chave)+','+q(col)+','+q(lado)+',this.value)"></div>';
+ let h='';
+ if(def.tipo==='texto')h='<input class="form-control fo-campo" type="text" value="'+esc(String(v))+'" placeholder="'+(def.ph||'')+'" oninput="fcSet('+q(chave)+','+q(col)+',this.value)">';
+ if(def.tipo==='opcoes'){const ops=def.opcoes();
+  h=ops.length?ops.map((op,i)=>'<label class="fo-check"><input type="checkbox"'+(v.includes(op)?' checked':'')+' onchange="fcAlternar('+q(chave)+','+q(col)+','+i+',this.checked)">'+esc(op)+'</label>').join('')
+   :'<div class="gp-vazio">Nada para escolher no período.</div>';}
+ if(def.tipo==='datas')h=par('de','de','date')+par('até','ate','date');
+ if(def.tipo==='faixa')h=par('mín.','de','number',' placeholder="R$" min="0" step="100"')+par('máx.','ate','number',' placeholder="R$" min="0" step="100"');
+ return '<div class="fo-bloco'+(def.valores?' fo-bloco-valor':'')+'"><div class="fo-tit">'+esc(def.nome)+'</div>'+h+'</div>';}
+function fcSet(chave,col,valor){FC_REG[chave].estado[col]=valor;FC_REG[chave].render();}
+function fcSetPar(chave,col,lado,valor){FC_REG[chave].estado[col][lado]=valor;FC_REG[chave].render();}
+function fcAlternar(chave,col,i,ligado){const op=FC_REG[chave].cols[col].opcoes()[i];
+ const a=FC_REG[chave].estado[col].filter(x=>x!==op);if(ligado)a.push(op);FC_REG[chave].estado[col]=a;FC_REG[chave].render();}
+function fcLimparCol(chave,col){FC_REG[chave].estado[col]=fcVazio({[col]:FC_REG[chave].cols[col]})[col];FC_REG[chave].render();}
+function fcLimparTudo(chave){if(!FC_REG[chave])return;FC_REG[chave].estado=fcVazio(FC_REG[chave].cols);fcFechar();FC_REG[chave].render();}
+const fcBotao=(chave,col)=>document.querySelector('.th-filtro[data-fc="'+chave+'"][data-col="'+col+'"]');
+function fcFechar(){const p=$('fc-pop');if(p)p.remove();}
+function fcPosicionar(){const p=$('fc-pop');if(!p)return;const b=fcBotao(p.dataset.fc,p.dataset.col);if(!b){fcFechar();return;}
+ const r=b.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight||!r.width){fcFechar();return;}
+ p.style.left=Math.max(8,Math.min(r.left-8,innerWidth-p.offsetWidth-8))+'px';
+ p.style.top=Math.max(8,Math.min(r.bottom+6,innerHeight-p.offsetHeight-8))+'px';}
+function fcAbrir(chave,col){
+ const aberta=$('fc-pop');if(aberta&&aberta.dataset.fc===chave&&aberta.dataset.col===col){fcFechar();return;}
+ fcFechar();
+ const p=document.createElement('div');p.id='fc-pop';p.dataset.fc=chave;p.dataset.col=col;
+ p.innerHTML=fcHtml(chave,col)+'<div class="fo-rodape"><button type="button" class="fo-limpar" onclick="fcLimparCol(\''+chave+'\',\''+col+'\');fcFechar();fcAbrir(\''+chave+'\',\''+col+'\')">Limpar</button>'
+  +'<button type="button" class="btn btn-primary btn-sm" onclick="fcFechar()">OK</button></div>';
+ document.body.appendChild(p);fcPosicionar();
+ const c=p.querySelector('input:not([type=checkbox])');if(c)c.focus();}
+(function(){
+ document.addEventListener('mousedown',e=>{const p=$('fc-pop');if(p&&!p.contains(e.target)&&!e.target.closest('.th-filtro'))fcFechar();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')fcFechar();});
+ const ligar=()=>{const c=$('content');if(c)c.addEventListener('scroll',fcPosicionar,{passive:true});};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ligar);else ligar();})();
+function fcAbrirCel(chave){fcFechar();FC_ATUAL=chave;const c=FC_REG[chave];
+ $('fc-titulo').textContent=c.titulo||'Filtrar';
+ $('fc-corpo').innerHTML=Object.keys(c.cols).map(k=>fcHtml(chave,k)).join('');
+ c.render();openModal('modal-fc-filtros');}
+/* funis dourados, contador do botão do celular, resumo e "Limpar filtros" */
+function fcPintar(chave,lista){const c=FC_REG[chave],ativos=fcAtivos(chave);
+ document.querySelectorAll('.th-filtro[data-fc="'+chave+'"]').forEach(b=>{const on=fcAtivo(chave,b.dataset.col);
+  b.classList.toggle('ativo',on);b.title=on?'Filtro ligado — clique para mudar':'Filtrar esta coluna';});
+ const n=$(chave+'-fc-n');if(n){n.style.display=ativos.length?'':'none';n.textContent=ativos.length;}
+ const cel=$(chave+'-filtro-cel');if(cel)cel.classList.toggle('ativa',ativos.length>0);
+ const l=$(chave+'-limpar');if(l)l.style.display=ativos.length?'':'none';
+ const r=$(chave+'-resumo');
+ if(r){r.style.display=ativos.length?'':'none';
+  const soma=lista.reduce((t,x)=>t+(Number(c.somar?c.somar(x):0)||0),0);
+  r.innerHTML=lista.length+' '+(lista.length===1?c.um:c.varios)+'<span class="orc-resumo-sep"> · </span><span class="orc-resumo-valor">'+fmt(soma)+'</span>';}
+ if(FC_ATUAL===chave){const ver=$('fc-ver');if(ver)ver.textContent='Ver '+lista.length+' '+(lista.length===1?c.um:c.varios);}}
+function fcMsgVazia(chave,padrao){const ativos=fcAtivos(chave);if(!ativos.length)return padrao;
+ return 'Nada passa no filtro de '+ativos.map(k=>FC_REG[chave].cols[k].nome.toLowerCase()).join(', ')
+  +' — <a href="#" onclick="event.preventDefault();fcLimparTudo(\''+chave+'\')" style="color:var(--accent);font-weight:600">limpar filtros</a>';}
+
+/* ----- pedidos ----- */
+const VND_STATUS=['Pendente','Confirmado','Enviado','Entregue','Cancelado'];
+function etapaPcpDoPedido(v){const op=opDoPedido(v);
+ if(!op)return 'Sem ordem de produção';if(op.status==='Concluída')return 'Concluída';return ETAPAS[op.etapa]||'—';}
+/* as opções de Pagamento vêm dos próprios pedidos do período: o campo é texto livre ("PIX", "PIX + Cartão"...) */
+const vndDoPeriodo=()=>DB.vendas.filter(v=>matchPer(v.data,PER_VND));
+const unicosOrdenados=arr=>[...new Set(arr)].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+fcRegistrar('vnd',{titulo:'Filtrar pedidos',um:'pedido',varios:'pedidos',somar:v=>v.total,render:()=>renderVendas(),cols:{
+ num:{nome:'Pedido',tipo:'texto',ph:'ex.: 31',val:v=>'v-'+pad(v.num)+' v-'+v.num+' v'+v.num+' '+v.num},
+ data:{nome:'Data',tipo:'datas',val:v=>v.data||''},
+ cliente:{nome:'Cliente',tipo:'texto',ph:'parte do nome',val:v=>cliName(v.cliId)},
+ itens:{nome:'Itens',tipo:'texto',ph:'parte da descrição',val:v=>(v.itens||[]).map(i=>i.desc||'').join(' | ')},
+ total:{nome:'Total',tipo:'faixa',valores:true,val:v=>v.total},
+ pag:{nome:'Pagamento',tipo:'opcoes',opcoes:()=>unicosOrdenados(vndDoPeriodo().map(v=>v.pag||'—')),val:v=>v.pag||'—'},
+ status:{nome:'Status R$',tipo:'opcoes',valores:true,opcoes:()=>VND_STATUS,val:v=>v.status},
+ pcp:{nome:'Status PCP',tipo:'opcoes',opcoes:()=>['Sem ordem de produção',...ETAPAS,'Concluída'],val:etapaPcpDoPedido}}});
 function statusPcpCelula(v){const op=opDoPedido(v);
  if(!op)return '<span class="badge badge-muted" title="Nenhuma ordem de produção vinculada">—</span>';
  if(op.status==='Concluída')return '<span class="badge badge-success" title="OP-'+pad(op.num)+'">✅ Concluída</span>';
  return '<span class="badge badge-info" title="OP-'+pad(op.num)+'">'+(ETAPAS[op.etapa]||'—')+'</span>';}
 function renderVendas(){syncPerBar('vnd-per',PER_VND);
- const fStatus=$('vnd-status-filter')?$('vnd-status-filter').value:'';
- const lista=DB.vendas.filter(v=>matchPer(v.data,PER_VND)&&(!fStatus||v.status===fStatus));
+ const lista=DB.vendas.filter(v=>matchPer(v.data,PER_VND)&&fcPassa('vnd',v));
  $('tb-vendas').innerHTML=lista.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
  const itens=v.itens||[];
  const expandido=VND_EXPANDIDOS.has(v.id);
@@ -3673,12 +3763,12 @@ function renderVendas(){syncPerBar('vnd-per',PER_VND);
  if(expandido&&itens.length){
   linhasItens=itens.map(it=>'<tr class="venda-item-row sub-row" style="background:var(--surface2);cursor:pointer" onclick="'+abrirPedido+'"><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
  }
- return linhaHeader+linhasItens;}).join('')||emptyRow(9,'Nenhum pedido no período selecionado');
- renderVendasCards(lista);}
+ return linhaHeader+linhasItens;}).join('')||emptyRow(9,fcMsgVazia('vnd','Nenhum pedido no período selecionado'));
+ renderVendasCards(lista);fcPintar('vnd',lista);}
 /* mesma informacao da tabela, empilhada: nada de arrastar para o lado */
 function renderVendasCards(lista){
  const alvo=$('vendas-cards');if(!alvo)return;
- if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum pedido no período selecionado</div>';return;}
+ if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">'+fcMsgVazia('vnd','Nenhum pedido no período selecionado')+'</div>';return;}
  alvo.innerHTML=lista.map(v=>{
   const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
   const itens=v.itens||[];
@@ -4819,7 +4909,7 @@ function servicoCatOptions(sel){
  +'<option value="__outro"'+(sel==='__outro'?' selected':'')+'>✏️ Outro (digitar)</option>';}
 /* o serviço escolhido traz prestador e valor do cadastro; um valor já digitado nesta linha não é sobrescrito */
 /* a unidade do cadastro vira o rótulo da quantidade: "Por hora" → "h" */
-const SV_UNID_CURTA={'Por peça':'pç','Por hora':'h','Por m²':'m²','Por metro linear':'m','Por projeto':'proj.'};
+const SV_UNID_CURTA={'Por peça':'pç','Por hora':'h','Diária':'dia(s)','Por m²':'m²','Por metro linear':'m','Por projeto':'proj.'};
 const unidadeCurta=u=>SV_UNID_CURTA[u]||'un';
 function pintarUnidadeServico(row,unidade){row.dataset.unidade=unidade||'';
  const el=row.querySelector('.sv-unid');if(el)el.textContent=unidadeCurta(unidade);
@@ -7378,7 +7468,9 @@ async function delComissionado(id){if(!guard())return;const lista=listaComission
 /* ================= SERVIÇOS TERCEIRIZADOS =================
    Catálogo do que é feito fora (estofamento, pintura, corte a laser...) com prestador e valor de referência.
    Fica em config (campo "servicos"), como os tipos de mão de obra — não precisa de tabela própria no banco. */
-const SERV_UNIDADES=['Por peça','Por hora','Por m²','Por metro linear','Por projeto'];
+const SERV_UNIDADES=['Por peça','Por hora','Diária','Por m²','Por metro linear','Por projeto'];
+function encherUnidadesServ(){const s=$('serv-unidade');if(!s||s.options.length===SERV_UNIDADES.length)return;
+ s.innerHTML=SERV_UNIDADES.map(u=>'<option>'+esc(u)+'</option>').join('');}
 const listaServicos=()=>DB.config.servicos||(DB.config.servicos=[]);
 function renderServicosCards(lista){const alvo=$('servicos-cards');if(!alvo)return;
  if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum serviço terceirizado cadastrado</div>';return;}
@@ -7394,11 +7486,11 @@ function renderServicos(){
  renderServicosCards(lista);
  $('tb-servicos').innerHTML=lista.map(sv=>'<tr><td><strong>'+esc(sv.nome)+'</strong></td><td>'+esc(sv.fornId?fornName(sv.fornId):'—')+'</td><td>'+esc(sv.unidade||'—')+'</td><td class="mono" style="font-weight:700">'+fmt(sv.valor)+'</td><td style="font-size:12px;color:var(--text-muted)">'+esc(sv.obs||'—')+'</td><td>'+actionBtns("editServico('"+sv.id+"')","delServico('"+sv.id+"')")+'</td></tr>').join('')||emptyRow(6,'Nenhum serviço terceirizado cadastrado');
  atualizarDatalistServicos();}
-function openServico(){if(!guard())return;SERVICO_RAPIDO_ORC=false;
+function openServico(){if(!guard())return;SERVICO_RAPIDO_ORC=false;encherUnidadesServ();
  $('serv-id').value='';$('serv-nome').value='';$('serv-valor').value=0;$('serv-obs').value='';$('serv-unidade').value='Por peça';
  fillSel('serv-forn',DB.fornecedores,f=>f.nome,'','— Sem prestador —');
  $('mserv-title').textContent='Novo Serviço Terceirizado';openModal('modal-servicos');}
-function editServico(id){if(!guard())return;SERVICO_RAPIDO_ORC=false;const sv=listaServicos().find(x=>x.id===id);if(!sv)return;
+function editServico(id){if(!guard())return;SERVICO_RAPIDO_ORC=false;encherUnidadesServ();const sv=listaServicos().find(x=>x.id===id);if(!sv)return;
  $('serv-id').value=sv.id;$('serv-nome').value=sv.nome||'';$('serv-valor').value=sv.valor||0;$('serv-obs').value=sv.obs||'';
  $('serv-unidade').value=SERV_UNIDADES.includes(sv.unidade)?sv.unidade:'Por peça';
  fillSel('serv-forn',DB.fornecedores,f=>f.nome,sv.fornId||'','— Sem prestador —');
@@ -9390,13 +9482,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-12.7';
+const APP_VERSAO='2026-10-12.8';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=298;
+const APP_ATUALIZACAO=299;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
