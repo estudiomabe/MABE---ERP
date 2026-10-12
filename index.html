@@ -134,6 +134,33 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 /* no celular a ordem e um botao quadrado ao lado da busca; o select fica invisivel
    por cima dele, entao o toque abre o seletor nativo do aparelho */
 .ordem-cel { display:none; }
+/* Filtro por coluna: um funil discreto no título abre uma janelinha só com o
+   filtro daquela coluna. Nada ocupa espaço na tela até ser usado; o funil
+   fica dourado enquanto o filtro estiver ligado. */
+#orcamentos-tabela th { white-space:nowrap; }
+#tb-orcamentos td:nth-child(7) { white-space:nowrap; }
+#orcamentos-tabela th .th-filtro { background:none;border:none;padding:2px 3px;margin-left:3px;cursor:pointer;color:var(--text-muted);opacity:.35;vertical-align:middle;line-height:0;border-radius:4px; }
+#orcamentos-tabela th:hover .th-filtro { opacity:.75; }
+#orcamentos-tabela th .th-filtro:hover { background:var(--surface3); }
+#orcamentos-tabela th .th-filtro svg { width:11px;height:11px; }
+#orcamentos-tabela th .th-filtro.ativo { opacity:1;color:var(--accent); }
+#orcamentos-tabela th .th-filtro.ativo svg { fill:currentColor; }
+#orc-pop { position:fixed;z-index:950;width:250px;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+ box-shadow:0 12px 32px rgba(26,23,20,.18);padding:12px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:400; }
+.fo-tit { font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px; }
+.fo-bloco + .fo-bloco { margin-top:16px;padding-top:14px;border-top:1px solid var(--border); }
+.fo-check { display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;font-size:13px; }
+.fo-check input { width:16px;height:16px;accent-color:var(--accent);margin:0; }
+.fo-par { display:grid;grid-template-columns:30px minmax(0,1fr);gap:6px;align-items:center;margin-bottom:6px; }
+.fo-par span { font-size:11.5px;color:var(--text-muted); }
+.fo-campo { width:100%;font-size:13px;padding:6px 8px; }
+.fo-rodape { display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px; }
+.fo-limpar { background:none;border:none;padding:0;font-size:12px;font-weight:600;color:var(--accent);text-decoration:underline;cursor:pointer; }
+.orc-resumo { margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap; }
+.orc-resumo .orc-limpar { font-size:12px;font-weight:600;color:var(--accent);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0; }
+.orc-resumo .orc-resumo-valor { font-family:var(--mono);color:var(--text); }
+body.sem-valores .orc-resumo-valor, body.sem-valores .orc-resumo-sep, body.sem-valores .fo-bloco-valor { display:none; }
+.filtro-cel .fc-n { position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;border-radius:9px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px; }
 .ordem-cel svg { width:18px;height:18px;pointer-events:none; }
 .ordem-cel select { position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer; }
 .ordem-cel.ativa { border-color:var(--accent);color:var(--accent);background:rgba(200,169,110,0.14); }
@@ -476,7 +503,7 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
   #cal-grid, .cal-semana, .cal-legenda { display:none !important; }
   #section-calendario .period-bar { gap:6px; }
   /* no celular a lista vira cartao e nao tem titulo de coluna: a ordem vai para um seletor */
-  #section-orcamentos .busca-orc { flex:1 1 calc(100% - 60px);min-width:0;max-width:none;order:-1; }
+  #section-orcamentos .busca-orc { flex:1 1 calc(100% - 116px);min-width:0;max-width:none;order:-1; }
   .ordem-cel { display:flex;position:relative;order:-1;flex:none;width:48px;align-self:stretch;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text-muted); }
   .kpi-hero { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
   .kpi-hero .kpi-value { font-size:21px; }
@@ -1044,9 +1071,6 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           </div>
           <select class="form-control" id="orc-per-mes-sel" style="width:auto;min-width:130px" onchange="onOrcChange()"></select>
           <select class="form-control" id="orc-per-ano-sel" style="width:auto;min-width:90px" onchange="onOrcChange()"></select>
-          <select class="form-control" id="orc-status-filter" style="width:auto;min-width:150px" onchange="renderOrcamentos()">
-            <option value="">Todos os status</option>
-          </select>
           <div class="busca-orc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input class="form-control" id="orc-busca" type="search" placeholder="Buscar nº ou cliente" autocomplete="off" oninput="renderOrcamentos()"></div>
           <label class="ordem-cel" id="orc-ordem-cel-box" title="Ordenar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg>
           <select id="orc-ordem-cel" onchange="ordemOrcCel(this.value)" aria-label="Ordenar orçamentos">
@@ -1057,12 +1081,15 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             <option value="cliente:1">Cliente — A a Z</option>
             <option value="entrega:1">Entrega — mais próxima</option>
             <option value="entrega:-1">Entrega — mais distante</option>
+            <option value="valor:-1">Valor — maior primeiro</option>
+            <option value="valor:1">Valor — menor primeiro</option>
             <option value="status:1">Status</option>
           </select></label>
-          <span id="orc-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
+          <button type="button" class="ordem-cel filtro-cel" id="orc-filtro-cel" title="Filtros" onclick="abrirFiltrosCel()"><svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg><span class="fc-n" id="orc-fc-n" style="display:none"></span></button>
+          <div class="orc-resumo"><button type="button" class="orc-limpar" id="orc-limpar" style="display:none" onclick="limparFiltrosOrc()">Limpar filtros</button><span id="orc-resumo" style="display:none"></span><span id="orc-per-label"></span></div>
         </div>
         <div id="orcamentos-cards"></div><div class="table-wrapper" id="orcamentos-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Orçamentos — Mabe</div></div>
-        <table><thead><tr><th class="th-ord" data-ord="num" onclick="ordenarOrc('num')" title="Ordenar por número">#<span class="ord-seta">↕</span></th><th class="th-ord" data-ord="status" onclick="ordenarOrc('status')" title="Ordenar por status">Status<span class="ord-seta">↕</span></th><th class="th-ord" data-ord="data" onclick="ordenarOrc('data')" title="Ordenar por data">Data<span class="ord-seta">↕</span></th><th class="th-ord" data-ord="cliente" onclick="ordenarOrc('cliente')" title="Ordenar por cliente">Cliente<span class="ord-seta">↕</span></th><th class="th-ord" data-ord="entrega" onclick="ordenarOrc('entrega')" title="Ordenar por entrega">Entrega<span class="ord-seta">↕</span></th><th>Contato</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tb-orcamentos"></tbody></table></div>
+        <table><thead><tr><th class="th-ord" data-ord="num" onclick="ordenarOrc('num')" title="Ordenar por número">#<span class="ord-seta">↕</span><button type="button" class="th-filtro" data-col="num" onclick="event.stopPropagation();abrirFiltroCol('num',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th class="th-ord" data-ord="status" onclick="ordenarOrc('status')" title="Ordenar por status">Status<span class="ord-seta">↕</span><button type="button" class="th-filtro" data-col="status" onclick="event.stopPropagation();abrirFiltroCol('status',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th class="th-ord" data-ord="data" onclick="ordenarOrc('data')" title="Ordenar por data">Data<span class="ord-seta">↕</span><button type="button" class="th-filtro" data-col="data" onclick="event.stopPropagation();abrirFiltroCol('data',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th class="th-ord" data-ord="cliente" onclick="ordenarOrc('cliente')" title="Ordenar por cliente">Cliente<span class="ord-seta">↕</span><button type="button" class="th-filtro" data-col="cliente" onclick="event.stopPropagation();abrirFiltroCol('cliente',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th class="th-ord" data-ord="entrega" onclick="ordenarOrc('entrega')" title="Ordenar por entrega">Entrega<span class="ord-seta">↕</span><button type="button" class="th-filtro" data-col="entrega" onclick="event.stopPropagation();abrirFiltroCol('entrega',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th data-ord="fixo">Contato<button type="button" class="th-filtro" data-col="contato" onclick="event.stopPropagation();abrirFiltroCol('contato',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th class="th-ord" data-ord="valor" onclick="ordenarOrc('valor')" title="Ordenar por valor">Valor<span class="ord-seta">↕</span><button type="button" class="th-filtro" data-col="valor" onclick="event.stopPropagation();abrirFiltroCol('valor',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Ações</th></tr></thead><tbody id="tb-orcamentos"></tbody></table></div>
       </div>
       <div id="orc-header-view" style="display:none">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><button class="btn btn-ghost btn-sm" onclick="cancelarHeaderOrc()">← Voltar</button><h2 style="font-size:16px;font-weight:700" id="orch-title">Novo Orçamento</h2></div>
@@ -1433,6 +1460,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
   <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-nfe-info')">Entendi</button></div>
 </div></div>
 <div class="modal-overlay" id="modal-conciliacao"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🧾 Conferência com o extrato</div><button class="modal-close" onclick="closeModal('modal-conciliacao')">✕</button></div><div class="modal-body" id="conc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="conc-desfazer" onclick="desfazerAjusteSaldo()">↩ Desfazer ajuste do saldo</button><button class="btn btn-primary" onclick="closeModal('modal-conciliacao')">Entendi</button></div></div></div>
+<div class="modal-overlay" id="modal-orc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title">Filtrar orçamentos</div><button class="modal-close" onclick="closeModal('modal-orc-filtros')">✕</button></div><div class="modal-body" id="orc-filtros-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="limparFiltrosOrc();abrirFiltrosCel()">Limpar</button><button class="btn btn-primary" id="orc-filtros-ver" onclick="closeModal('modal-orc-filtros')">Ver orçamentos</button></div></div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-comissoes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mcom-title">Nova Pessoa com Comissão</div><button class="modal-close" onclick="closeModal('modal-comissoes')">✕</button></div><div class="modal-body">
 <input type="hidden" id="com-id">
@@ -4200,7 +4228,7 @@ async function mudarStatusOrc(id,novo,el){
    inverte. Sem ordem escolhida, a lista fica como sempre foi. */
 let ORC_ORDEM={col:null,dir:1};
 /* o primeiro clique ja vai para o sentido mais util de cada coluna */
-const ORC_ORDEM_INICIAL={num:-1,data:-1,status:1,cliente:1,entrega:1};
+const ORC_ORDEM_INICIAL={num:-1,data:-1,status:1,cliente:1,entrega:1,valor:-1};
 function encherFiltroStatusOrc(){const s=$('orc-status-filter');if(!s||s.options.length===ORC_STATUS.length+1)return;
  const v=s.value;s.innerHTML='<option value="">Todos os status</option>'+ORC_STATUS.map(st=>'<option>'+esc(st)+'</option>').join('');s.value=v;}
 const textoBuscaOrc=o=>['orc-'+pad(o.num),'orc-'+o.num,'orc '+o.num,'orc'+o.num,'orc'+pad(o.num),semAcento(cliName(o.cliId))].join(' | ');
@@ -4209,6 +4237,7 @@ function chaveOrdemOrc(o,col){
  if(col==='status')return ORC_STATUS.indexOf(o.status);
  if(col==='cliente')return o.cliId?semAcento(cliName(o.cliId)):'';
  if(col==='entrega')return o.validade||'';
+ if(col==='valor')return Number(o.preco)||0;
  return o.data||'';}
 function aplicarOrdemOrc(lista){const col=ORC_ORDEM.col,dir=ORC_ORDEM.dir;if(!col)return lista;
  return [...lista].sort((a,b)=>{const x=chaveOrdemOrc(a,col),y=chaveOrdemOrc(b,col);
@@ -4227,16 +4256,114 @@ function ordenarOrc(col){
  renderOrcamentos();}
 function ordemOrcCel(v){if(!v)ORC_ORDEM={col:null,dir:1};else{const [col,d]=v.split(':');ORC_ORDEM={col,dir:+d};}renderOrcamentos();}
 function vazioOrc(){const bruto=($('orc-busca')||{}).value||'';
+ const ativos=filtrosAtivosOrc();
+ if(!bruto.trim()&&ativos.length)return 'Nenhum orçamento passa no filtro de '+ativos.map(c=>ORC_FILTRO_NOMES[c].toLowerCase()).join(', ')
+  +' — <a href="#" onclick="event.preventDefault();limparFiltrosOrc()" style="color:var(--accent);font-weight:600">limpar filtros</a>';
  if(!bruto.trim())return 'Nenhum orçamento no período selecionado';
  return 'Nenhum orçamento com “'+esc(bruto.trim())+'”'+(PER_ORC.modo!=='tudo'
   ?' neste período — <a href="#" onclick="event.preventDefault();setOrcModo(\'tudo\')" style="color:var(--accent);font-weight:600">buscar em Tudo</a>':'');}
+/* ================= FILTRO POR COLUNA =================
+   Um estado só, ORC_FILTROS, alimentado pela janelinha de cada coluna (no
+   computador) ou pela janela "Filtros" (no celular, onde não há colunas). */
+const ORC_FECHADOS=['Aprovado','Reprovado','Concluído'];
+const orcEmAberto=o=>!ORC_FECHADOS.includes(o.status);
+const FILTROS_VAZIOS=()=>({num:'',status:[],dataDe:'',dataAte:'',cliente:'',entDe:'',entAte:'',entVencida:false,entSem:false,contato:[],valMin:'',valMax:''});
+let ORC_FILTROS=FILTROS_VAZIOS();
+const ORC_FILTRO_NOMES={num:'Número',status:'Status',data:'Data',cliente:'Cliente',entrega:'Entrega',contato:'Contato',valor:'Valor'};
+function filtroColAtivo(col){const F=ORC_FILTROS;
+ if(col==='num')return !!F.num.trim();
+ if(col==='status')return F.status.length>0;
+ if(col==='data')return !!(F.dataDe||F.dataAte);
+ if(col==='cliente')return !!F.cliente.trim();
+ if(col==='entrega')return !!(F.entDe||F.entAte||F.entVencida||F.entSem);
+ if(col==='contato')return F.contato.length>0;
+ if(col==='valor')return F.valMin!==''||F.valMax!=='';
+ return false;}
+const filtrosAtivosOrc=()=>Object.keys(ORC_FILTRO_NOMES).filter(filtroColAtivo);
+function passaFiltrosOrc(o){const F=ORC_FILTROS;
+ if(F.num.trim()){const d=F.num.replace(/\D/g,'');if(d&&!(String(o.num).includes(d)||pad(o.num).includes(d)))return false;}
+ if(F.status.length&&!F.status.includes(o.status))return false;
+ if(F.dataDe&&(o.data||'')<F.dataDe)return false;
+ if(F.dataAte&&(!o.data||o.data>F.dataAte))return false;
+ if(F.cliente.trim()&&!semAcento(cliName(o.cliId)).includes(semAcento(F.cliente.trim())))return false;
+ if(F.entDe||F.entAte){if(!o.validade)return false;if(F.entDe&&o.validade<F.entDe)return false;if(F.entAte&&o.validade>F.entAte)return false;}
+ /* "vencida" e "sem data" somam: marcando os dois, vem um ou outro */
+ if(F.entVencida||F.entSem){const venc=orcEmAberto(o)&&!!o.validade&&o.validade<today(),sem=!o.validade;
+  if(!((F.entVencida&&venc)||(F.entSem&&sem)))return false;}
+ if(F.contato.length){const c=DB.clientes.find(x=>x.id===o.cliId)||{};
+  const tem={wa:!!c.tel,mail:!!c.email,nenhum:!c.tel&&!c.email};
+  if(!F.contato.some(k=>tem[k]))return false;}
+ if(F.valMin!==''&&(Number(o.preco)||0)<Number(F.valMin))return false;
+ if(F.valMax!==''&&(Number(o.preco)||0)>Number(F.valMax))return false;
+ return true;}
+/* os controles de cada coluna; o mesmo HTML serve a janelinha e a janela do celular */
+function htmlFiltroCol(col){const F=ORC_FILTROS;
+ const chk=(chave,valor,rot)=>'<label class="fo-check"><input type="checkbox"'+(F[chave].includes(valor)?' checked':'')+' onchange="alternarFiltroOrc(\''+chave+'\',\''+valor+'\',this.checked)">'+rot+'</label>';
+ const bool=(chave,rot)=>'<label class="fo-check"><input type="checkbox"'+(F[chave]?' checked':'')+' onchange="setFiltroOrc(\''+chave+'\',this.checked)">'+rot+'</label>';
+ const campo=(chave,tipo,ph,extra)=>'<input class="form-control fo-campo" type="'+tipo+'" value="'+esc(String(F[chave]))+'"'+(ph?' placeholder="'+ph+'"':'')+(extra||'')+' oninput="setFiltroOrc(\''+chave+'\',this.value)">';
+ const par=(rot,html)=>'<div class="fo-par"><span>'+rot+'</span>'+html+'</div>';
+ let h='';
+ if(col==='num')h=campo('num','text','ex.: 142',' inputmode="numeric"');
+ if(col==='status')h=ORC_STATUS.map(st=>chk('status',st,esc(st))).join('');
+ if(col==='data')h=par('de',campo('dataDe','date'))+par('até',campo('dataAte','date'));
+ if(col==='cliente')h=campo('cliente','text','parte do nome');
+ if(col==='entrega')h=par('de',campo('entDe','date'))+par('até',campo('entAte','date'))+bool('entVencida','Vencida e ainda em aberto')+bool('entSem','Sem data de entrega');
+ if(col==='contato')h=chk('contato','wa','Com WhatsApp')+chk('contato','mail','Com e-mail')+chk('contato','nenhum','Sem contato');
+ if(col==='valor')h=par('mín.',campo('valMin','number','R$',' min="0" step="100"'))+par('máx.',campo('valMax','number','R$',' min="0" step="100"'));
+ return '<div class="fo-bloco'+(col==='valor'?' fo-bloco-valor':'')+'"><div class="fo-tit">'+ORC_FILTRO_NOMES[col]+'</div>'+h+'</div>';}
+function setFiltroOrc(chave,valor){ORC_FILTROS[chave]=valor;renderOrcamentos();}
+function alternarFiltroOrc(chave,valor,ligado){const a=ORC_FILTROS[chave].filter(x=>x!==valor);if(ligado)a.push(valor);ORC_FILTROS[chave]=a;renderOrcamentos();}
+function limparFiltroCol(col){const V=FILTROS_VAZIOS(),grupos={num:['num'],status:['status'],data:['dataDe','dataAte'],cliente:['cliente'],
+ entrega:['entDe','entAte','entVencida','entSem'],contato:['contato'],valor:['valMin','valMax']};
+ (grupos[col]||[]).forEach(k=>ORC_FILTROS[k]=V[k]);renderOrcamentos();}
+function limparFiltrosOrc(){ORC_FILTROS=FILTROS_VAZIOS();const b=$('orc-busca');if(b)b.value='';ORC_ORDEM={col:null,dir:1};fecharFiltroCol();renderOrcamentos();}
+/* janelinha do computador */
+/* a janelinha acompanha o funil quando a lista rola (ou encolhe com o filtro); se o funil sai da tela, ela fecha */
+function posicionarFiltroCol(){const p=$('orc-pop');if(!p)return;
+ const b=document.querySelector('#orcamentos-tabela .th-filtro[data-col='+p.dataset.col+']');if(!b){fecharFiltroCol();return;}
+ const r=b.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight||!r.width){fecharFiltroCol();return;}
+ p.style.left=Math.max(8,Math.min(r.left-8,innerWidth-p.offsetWidth-8))+'px';
+ p.style.top=Math.max(8,Math.min(r.bottom+6,innerHeight-p.offsetHeight-8))+'px';}
+function fecharFiltroCol(){const p=$('orc-pop');if(p)p.remove();}
+function abrirFiltroCol(col,botao){
+ const aberta=$('orc-pop');if(aberta&&aberta.dataset.col===col){fecharFiltroCol();return;}
+ fecharFiltroCol();
+ const p=document.createElement('div');p.id='orc-pop';p.dataset.col=col;
+ p.innerHTML=htmlFiltroCol(col)+'<div class="fo-rodape"><button type="button" class="fo-limpar" onclick="limparFiltroCol(\''+col+'\');fecharFiltroCol();abrirFiltroCol(\''+col+'\',document.querySelector(\'.th-filtro[data-col='+col+']\'))">Limpar</button>'
+  +'<button type="button" class="btn btn-primary btn-sm" onclick="fecharFiltroCol()">OK</button></div>';
+ document.body.appendChild(p);
+ posicionarFiltroCol();
+ const c=p.querySelector('input:not([type=checkbox])');if(c)c.focus();}
+(function(){
+ document.addEventListener('mousedown',e=>{const p=$('orc-pop');if(p&&!p.contains(e.target)&&!e.target.closest('.th-filtro'))fecharFiltroCol();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharFiltroCol();});
+ const ligar=()=>{const c=$('content');if(c)c.addEventListener('scroll',posicionarFiltroCol,{passive:true});};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ligar);else ligar();})();
+/* janela do celular: todas as colunas, uma embaixo da outra */
+function abrirFiltrosCel(){fecharFiltroCol();
+ $('orc-filtros-corpo').innerHTML=Object.keys(ORC_FILTRO_NOMES).map(htmlFiltroCol).join('');
+ pintarFiltrosOrc(null);openModal('modal-orc-filtros');}
+/* funis dourados, contador do botão do celular, resumo e "Limpar filtros" */
+function pintarFiltrosOrc(lista){
+ const ativos=filtrosAtivosOrc();
+ document.querySelectorAll('#orcamentos-tabela .th-filtro').forEach(b=>{const on=filtroColAtivo(b.dataset.col);
+  b.classList.toggle('ativo',on);b.title=on?'Filtro ligado — clique para mudar':'Filtrar esta coluna';});
+ const n=$('orc-fc-n');if(n){n.style.display=ativos.length?'':'none';n.textContent=ativos.length;}
+ const cel=$('orc-filtro-cel');if(cel)cel.classList.toggle('ativa',ativos.length>0);
+ const termo=(($('orc-busca')||{}).value||'').trim();
+ const ligado=ativos.length>0||!!termo;
+ const l=$('orc-limpar');if(l)l.style.display=ligado||ORC_ORDEM.col?'':'none';
+ const r=$('orc-resumo');
+ if(lista&&r){r.style.display=ligado?'':'none';
+  const soma=lista.reduce((t,o)=>t+(Number(o.preco)||0),0);
+  r.innerHTML=lista.length+(lista.length===1?' orçamento':' orçamentos')+'<span class="orc-resumo-sep"> · </span><span class="orc-resumo-valor">'+fmt(soma)+'</span>';}
+ const ver=$('orc-filtros-ver');if(ver&&lista)ver.textContent='Ver '+lista.length+(lista.length===1?' orçamento':' orçamentos');}
 const orcEditandoItem=()=>['tipo','form','catalogo'].some(v=>$('orc-'+v+'-view').style.display==='block');
 function renderOrcamentos(){if(!orcEditandoItem())orcShow('lista');syncPerBar('orc-per',PER_ORC);
  encherFiltroStatusOrc();
- const filtroStatus=$('orc-status-filter')?$('orc-status-filter').value:'';
  const termo=semAcento(($('orc-busca')||{}).value||'').trim();
- const lista=aplicarOrdemOrc(DB.orcamentos.filter(o=>matchPer(o.data,PER_ORC)&&(!filtroStatus||o.status===filtroStatus)&&(!termo||textoBuscaOrc(o).includes(termo))));
- pintarOrdemOrc();
+ const lista=aplicarOrdemOrc(DB.orcamentos.filter(o=>matchPer(o.data,PER_ORC)&&passaFiltrosOrc(o)&&(!termo||textoBuscaOrc(o).includes(termo))));
+ pintarOrdemOrc();pintarFiltrosOrc(lista);
  $('tb-orcamentos').innerHTML=lista.map(o=>{const stB={'Rascunho':'badge-muted','Enviado':'badge-info','Em ajuste':'badge-warning','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'}[o.status]||'badge-muted';
   const itens=itensOrc(o);
   const cliObj=DB.clientes.find(c=>c.id===o.cliId);
@@ -9263,13 +9390,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-12.6';
+const APP_VERSAO='2026-10-12.7';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=297;
+const APP_ATUALIZACAO=298;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
