@@ -344,7 +344,14 @@ body.sem-anexos-pedido #vnd-anexos-zona { display:none; }
 .sv-primeira { display:flex;gap:6px;min-width:0;align-items:center; }
 .sv-primeira .sv-cat { flex:1 1 0;min-width:0; }
 .sv-primeira .sv-desc { flex:1.6 1 0;min-width:0; }
-.sv-cab { display:grid;grid-template-columns:minmax(0,2.6fr) 132px 92px 28px;gap:6px;align-items:end;margin-bottom:5px;
+/* caixa de quantidade com a unidade do cadastro ao lado: "3 h", "12 pç", "4,5 m²" */
+.sv-caixa { display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 6px 0 4px;min-width:0; }
+.sv-caixa input { border:none;background:transparent;padding-left:2px;padding-right:2px;min-width:0; }
+.sv-caixa .sv-unid, .sv-caixa .sv-rs { font-size:10px;color:var(--text-muted);flex-shrink:0;font-weight:600; }
+.sv-total { text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;white-space:nowrap; }
+.sv-linha>.sv-primeira { grid-column:1 / -1; }
+@media (min-width:861px){ #orc-servicos>.sv-linha:not(:last-child) { padding-bottom:9px;border-bottom:1px dashed var(--border); } }
+.sv-cab { display:grid;grid-template-columns:minmax(0,1fr) 84px 98px 88px 28px;gap:6px;align-items:end;margin-bottom:5px;
  font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted); }
 @media (max-width:860px){ .om-cab, .sv-cab { display:none; } }
 .nivel-sel { font-family:inherit;font-size:11px;font-weight:700;padding:3px 20px 3px 8px;border-radius:20px;border:1px solid var(--border);background-color:var(--surface2);color:var(--text);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6f62' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:9px; }
@@ -615,7 +622,7 @@ body.sem-fin-obs .fin-obs { display:none; }
   #vnd-itens>div, #orc-materiais>div, #orc-mdo>div, #orc-servicos>div { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px;row-gap:6px !important;column-gap:8px !important; }
   #vnd-itens>div, #orc-materiais>div { grid-template-columns:64px minmax(0,1fr) minmax(0,1fr) 40px !important; }
   #orc-mdo>div { grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px !important; }
-  #orc-servicos>div { grid-template-columns:minmax(0,1fr) 40px !important; }
+  #orc-servicos>div { grid-template-columns:76px minmax(0,1fr) minmax(0,1fr) 40px !important; }
   .sv-primeira { flex-direction:column;align-items:stretch; }
   .orc-link-nova { grid-template-columns:minmax(0,1fr); }
   .orc-link-nova .btn { min-height:44px; }
@@ -1165,7 +1172,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             </div>
             <div class="config-card" style="margin:0">
               <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px"><div class="config-title" style="margin:0">🔧 Serviços Terceirizados</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="addServico()">+ Adicionar Serviço</button><button class="btn btn-primary btn-sm" onclick="abrirNovoServicoRapido()">+ Cadastrar Serviço Terceirizado</button></div></div>
-              <div class="sv-cab" id="orc-servicos-cab"><span>Serviço</span><span>Prestador</span><span>Valor</span><span></span></div>
+              <div class="sv-cab" id="orc-servicos-cab"><span>Serviço · Prestador</span><span>Qtd</span><span>Valor un.</span><span style="text-align:right">Total</span><span></span></div>
               <div id="orc-servicos" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
               <div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-muted)">Total Serviços</span><span style="font-family:var(--mono);font-weight:700" id="orc-total-serv">R$ 0,00</span></div>
             </div>
@@ -4610,15 +4617,24 @@ function servicoCatOptions(sel){
   .map(sv=>'<option value="'+sv.id+'"'+(sv.id===sel?' selected':'')+'>'+esc(sv.nome)+'</option>').join('')
  +'<option value="__outro"'+(sel==='__outro'?' selected':'')+'>✏️ Outro (digitar)</option>';}
 /* o serviço escolhido traz prestador e valor do cadastro; um valor já digitado nesta linha não é sobrescrito */
+/* a unidade do cadastro vira o rótulo da quantidade: "Por hora" → "h" */
+const SV_UNID_CURTA={'Por peça':'pç','Por hora':'h','Por m²':'m²','Por metro linear':'m','Por projeto':'proj.'};
+const unidadeCurta=u=>SV_UNID_CURTA[u]||'un';
+function pintarUnidadeServico(row,unidade){row.dataset.unidade=unidade||'';
+ const el=row.querySelector('.sv-unid');if(el)el.textContent=unidadeCurta(unidade);
+ const q=row.querySelector('.sv-qtd');if(q)q.title=unidade?'Quantidade ('+unidade.toLowerCase()+')':'Quantidade';}
 function svEscolhido(select){const row=select.closest('.sv-linha');if(!row)return;const desc=row.querySelector('.sv-desc');
- const valor=row.querySelector('.sv-valor'),forn=row.querySelector('.sv-forn');
- if(select.value==='__outro'){desc.style.display='';desc.focus();calcOrc();return;}
+ const valor=row.querySelector('.sv-un'),forn=row.querySelector('.sv-forn'),qtd=row.querySelector('.sv-qtd');
+ if(select.value==='__outro'){pintarUnidadeServico(row,'');desc.style.display='';desc.focus();calcOrc();return;}
  const sv=listaServicos().find(x=>x.id===select.value);
  desc.style.display='none';
- if(!sv){desc.value='';calcOrc();return;}
+ if(!sv){desc.value='';pintarUnidadeServico(row,'');calcOrc();return;}
  desc.value=sv.nome;
+ pintarUnidadeServico(row,sv.unidade);
  if(sv.fornId&&forn)forn.value=sv.fornId;
+ /* o valor do cadastro é o da unidade (a hora, a peça, o m²); um valor já digitado nesta linha não é sobrescrito */
  if(valor&&Number(sv.valor)&&!Number(valor.value))valor.value=sv.valor;
+ if(qtd&&!Number(qtd.value))qtd.value=1;
  /* a unidade do cadastro ("Por peça", "Por m²") muda o que o valor significa —
     sem ela na tela, R$ 400 num serviço por peça parece o total do item */
  select.title=sv.nome+(sv.unidade?' · '+sv.unidade:'')+(Number(sv.valor)?' · '+fmt(sv.valor):'')
@@ -4626,12 +4642,23 @@ function svEscolhido(select){const row=select.closest('.sv-linha');if(!row)retur
  calcOrc();}
 function addServico(sv){const wrap=$('orc-servicos');const row=document.createElement('div');
  row.className='sv-linha';
- row.style.cssText='display:grid;grid-template-columns:minmax(0,2.6fr) 132px 92px 28px;gap:6px;align-items:center';
+ row.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) 84px 98px 88px 28px;gap:6px;align-items:center';
  const doCatalogo=sv&&sv.desc?listaServicos().find(x=>String(x.nome).toLowerCase()===String(sv.desc).toLowerCase()):null;
  const escolha=doCatalogo?doCatalogo.id:(sv&&sv.desc?'__outro':'');
+ /* linha salva antes da quantidade existir: era um valor só, que vira 1 × valor */
+ const temQtd=sv&&sv.qtd!=null&&sv.qtd!=='';
+ const qtd=temQtd?Number(sv.qtd)||0:1;
+ const valorUn=temQtd?(Number(sv.valorUn)||0):(sv?Number(sv.valor)||0:0);
+ const unidade=sv&&sv.unidade!=null?sv.unidade:(doCatalogo?doCatalogo.unidade||'':'');
  row.innerHTML='<div class="sv-primeira"><select class="form-control sv-cat" onchange="svEscolhido(this)">'+servicoCatOptions(escolha)+'</select>'
   +'<input type="text" class="form-control sv-desc" placeholder="Descreva o serviço" value="'+esc(sv?sv.desc:'')+'" oninput="calcOrc()"'+(escolha==='__outro'?'':' style="display:none"')+'></div>'
-  +'<select class="form-control sv-forn">'+fornOptions(sv?sv.fornId:'')+'</select><span class="rot-cel">Valor</span><span class="rot-cel"></span><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control sv-valor" value="'+(sv?sv.valor:0)+'" step="0.01" min="0" oninput="calcOrc()" style="border:none;background:transparent;padding-left:2px"></div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
+  +'<select class="form-control sv-forn">'+fornOptions(sv?sv.fornId:'')+'</select>'
+  +'<span class="rot-cel">Qtd</span><span class="rot-cel">Valor un.</span><span class="rot-cel" style="text-align:right">Total</span><span class="rot-cel"></span>'
+  +'<div class="sv-caixa"><input type="number" class="form-control sv-qtd" value="'+qtd+'" step="0.5" min="0" oninput="calcOrc()"><span class="sv-unid">un</span></div>'
+  +'<div class="sv-caixa"><span class="sv-rs">R$</span><input type="number" class="form-control sv-un" value="'+valorUn+'" step="0.01" min="0" oninput="calcOrc()"></div>'
+  +'<div class="sv-total">R$ 0,00</div>'
+  +'<button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
+ pintarUnidadeServico(row,unidade);
  wrap.appendChild(row);calcOrc();}
 function materiaisDatalistOptions(){let opts='';
  DB.madeiras.forEach(m=>{opts+='<option value="'+esc(m.especie+' '+m.tipo+' '+m.esp+'×'+m.larg+'cm')+'"></option>';});
@@ -4718,8 +4745,14 @@ function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua',
   const inpCat=r.querySelector('.om-desc-cat');const inpLivre=r.querySelector('.om-desc');
   materiais.push({mode:r.dataset.mode,ref:r.dataset.ref||'',desc:inpCat?inpCat.value.trim():(inpLivre?inpLivre.value.trim():''),qty,custo});});
  let serv=0;const servicos=[];
- document.querySelectorAll('#orc-servicos > div').forEach(r=>{const valor=parseFloat(r.querySelector('.sv-valor').value)||0;serv+=valor;
-  servicos.push({fornId:r.querySelector('.sv-forn').value,desc:r.querySelector('.sv-desc').value.trim(),valor});});
+ /* "valor" segue sendo o total da linha: custo, PDF, pedido e relatórios somam
+    esse campo como sempre. Quantidade, valor da unidade e unidade vão junto
+    para a ficha reabrir como foi digitada. */
+ document.querySelectorAll('#orc-servicos > div').forEach(r=>{
+  const qtd=parseFloat(r.querySelector('.sv-qtd').value)||0,valorUn=parseFloat(r.querySelector('.sv-un').value)||0;
+  const valor=Math.round(qtd*valorUn*100)/100;serv+=valor;
+  r.querySelector('.sv-total').textContent=fmt(valor);
+  servicos.push({fornId:r.querySelector('.sv-forn').value,desc:r.querySelector('.sv-desc').value.trim(),valor,qtd,valorUn,unidade:r.dataset.unidade||''});});
  /* frete entra no custo, como um serviço de terceiro: é dinheiro que sai para
     entregar este item, e por isso é coberto pelo preço como o resto do custo */
  const frete=Math.max(0,num('orc-frete'));
@@ -6365,7 +6398,7 @@ function montarPdfDetalhamentoOrc(o){
 
   yr=tituloCard(X2,yr,COLW,'SERVIÇOS TERCEIRIZADOS');
   const linhasServ=(it.servicos||[]).filter(x=>x.desc||x.valor).map(x=>
-   [lp(x.desc)||'—',x.fornId?lp(fornName(x.fornId)):'—',fmt(x.valor)]);
+   [(lp(x.desc)||'—')+(x.qtd!=null&&Number(x.qtd)!==1?' ('+fmtN(Number(x.qtd),Number(x.qtd)%1?1:0)+' '+unidadeCurta(x.unidade)+' × '+fmt(x.valorUn)+')':''),x.fornId?lp(fornName(x.fornId)):'—',fmt(x.valor)]);
   yr=tabelaCol(X2,yr,COLW,['Serviço','Prestador','Valor'],
    linhasServ.length?linhasServ:[[{content:'Nenhum serviço lançado',colSpan:3,styles:{textColor:MUTED,halign:'center'}}]],
    {0:{cellWidth:COLW-50},1:{cellWidth:28},2:Object.assign({cellWidth:22},dir)});
@@ -9156,13 +9189,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-12.2';
+const APP_VERSAO='2026-10-12.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=293;
+const APP_ATUALIZACAO=294;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
