@@ -580,6 +580,12 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 .hp-linha { display:grid;grid-template-columns:116px minmax(0,1.3fr) 72px 104px minmax(0,1.5fr) 30px;gap:6px;align-items:center; }
 .hp-linha .form-control { font-size:12.5px;padding:5px 7px; }
 .hp-dica { color:var(--text-muted); }
+/* consulta do CNPJ no cadastro de cliente: uma linha embaixo do campo */
+.cnpj-info { font-size:11.5px;line-height:1.45;margin-top:5px;color:var(--text-muted); }
+.cnpj-info:empty { display:none; }
+.cnpj-info.ok { color:var(--success); }
+.cnpj-info.alerta { color:var(--danger);font-weight:600; }
+.cnpj-info button { background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--accent);text-decoration:underline;cursor:pointer; }
 /* Gastos do pedido: só leitura, vêm das saídas do Financeiro ligadas ao pedido */
 #vnd-gastos-corpo { display:flex;flex-direction:column;gap:6px; }
 .gp-item { display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 10px;
@@ -1452,7 +1458,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Entradas já pagas e ainda não ligadas a nenhum pedido. O escolhido passa a contar como o pagamento deste pedido, sem criar lançamento novo.</div></div>
 <div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.7"></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
-<div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this)"></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this);cnpjDigitado(this)"><div class="cnpj-info" id="cli-cnpj-info"></div></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title" id="imp-titulo">🖨️ Imprimir pedido (PCP)</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div id="imp-explicacao" style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O pedido sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><label style="display:flex;align-items:center;gap:9px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;cursor:pointer"><input type="checkbox" id="imp-sem-valores" style="width:17px;height:17px;flex-shrink:0">Ocultar valores nesta impressão<span style="font-size:11px;color:var(--text-muted)">— para mandar à oficina</span></label><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0" oninput="atualizarCustoFinalProduto()"></div><div class="form-group" id="prod-frete-wrap"><label class="form-label">Frete (R$)</label><input type="number" class="form-control" id="prod-frete" step="0.01" min="0" placeholder="0,00" oninput="atualizarCustoFinalProduto()"></div></div><div id="prod-custo-final" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:-6px"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-link-wrap"><label class="form-label">Link do material</label><input type="url" class="form-control" id="prod-link" placeholder="https://site-do-fornecedor.com/produto" inputmode="url" autocomplete="off"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Página do produto no site do fornecedor — abre pelo 🔗 na lista</div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
@@ -2815,9 +2821,74 @@ function emptyRow(n,msg){return '<tr><td colspan="'+n+'" style="color:var(--text
 let CLIENTE_RAPIDO_ORC=false,CLIENTE_RAPIDO_VENDA=false;
 function abrirNovoClienteRapido(){openCliente();CLIENTE_RAPIDO_ORC=true;}
 function abrirNovoClienteRapidoVenda(){openCliente();CLIENTE_RAPIDO_VENDA=true;}
-function openCliente(){['cli-id','cli-nome','cli-email','cli-tel','cli-doc','cli-cidade','cli-end'].forEach(i=>$(i).value='');$('cli-status').value='Ativo';$('mc-title').textContent='Novo Cliente';openModal('modal-clientes');}
-function editCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!c)return;
+function openCliente(){limparInfoCnpj();['cli-id','cli-nome','cli-email','cli-tel','cli-doc','cli-cidade','cli-end'].forEach(i=>$(i).value='');$('cli-status').value='Ativo';$('mc-title').textContent='Novo Cliente';openModal('modal-clientes');}
+function editCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!c)return;limparInfoCnpj();
  $('cli-id').value=c.id;$('cli-nome').value=c.nome;$('cli-email').value=c.email||'';$('cli-tel').value=c.tel||'';$('cli-doc').value=c.doc||'';$('cli-cidade').value=c.cidade||'';$('cli-end').value=c.end||'';$('cli-status').value=c.status;$('mc-title').textContent='Editar Cliente';openModal('modal-clientes');}
+/* ================= CNPJ → DADOS DA EMPRESA =================
+   Com 14 dígitos válidos no CPF/CNPJ, o ERP consulta o cadastro público da
+   Receita (BrasilAPI: gratuito, sem conta) e preenche só os campos vazios. O
+   que já foi digitado fica; um link oferece trocar pelos dados da Receita.
+   CPF não é consultado: dado de pessoa física não é público. */
+let CNPJ_CONSULTADO='',CNPJ_TIMER=null,CNPJ_RECEITA=null;
+function cnpjValido(d){if(!/^\d{14}$/.test(d)||/^(\d)\1{13}$/.test(d))return false;
+ const dv=n=>{const p=n===12?[5,4,3,2,9,8,7,6,5,4,3,2]:[6,5,4,3,2,9,8,7,6,5,4,3,2];
+  const s=p.reduce((t,x,i)=>t+x*Number(d[i]),0)%11;return s<2?0:11-s;};
+ return dv(12)===Number(d[12])&&dv(13)===Number(d[13]);}
+const MINUSCULAS=['de','da','do','das','dos','e'];
+const SIGLAS=['sa','s/a','s.a.','s.a','me','epp','eireli','mei'];
+const ehRomano=p=>/^(i{1,3}|iv|v|vi{1,3}|ix|x{1,3})[,.]?$/.test(p);
+const nomeProprio=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim().split(' ')
+ .map((p,i)=>{const limpo=p.replace(/[,;]$/,'');
+  if(SIGLAS.includes(limpo)||ehRomano(p))return p.toUpperCase();
+  if(i>0&&MINUSCULAS.includes(p))return p;
+  return p.charAt(0).toUpperCase()+p.slice(1);}).join(' ');
+function limparInfoCnpj(){clearTimeout(CNPJ_TIMER);CNPJ_CONSULTADO='';CNPJ_RECEITA=null;const el=$('cli-cnpj-info');if(el){el.className='cnpj-info';el.innerHTML='';}}
+function infoCnpj(html,classe){const el=$('cli-cnpj-info');if(el){el.className='cnpj-info'+(classe?' '+classe:'');el.innerHTML=html;}}
+function cnpjDigitado(el){const d=String(el.value||'').replace(/\D/g,'');
+ clearTimeout(CNPJ_TIMER);
+ if(d.length!==14){if(CNPJ_CONSULTADO)limparInfoCnpj();return;}
+ if(!cnpjValido(d)){infoCnpj('CNPJ com dígito verificador errado — confira o número.','alerta');return;}
+ if(d===CNPJ_CONSULTADO)return;
+ CNPJ_TIMER=setTimeout(()=>consultarCnpj(d),350);}
+/* o que a Receita devolve, já no formato dos campos do cadastro */
+function camposDaReceita(j){
+ const tel=j.ddd_telefone_1?String(j.ddd_telefone_1).replace(/\D/g,''):'';
+ const cep=String(j.cep||'').replace(/\D/g,'');
+ const end=[nomeProprio([j.descricao_tipo_de_logradouro,j.logradouro].filter(Boolean).join(' '))+(j.numero?', '+j.numero:''),
+  nomeProprio(j.complemento),nomeProprio(j.bairro),cep.length===8?'CEP '+cep.slice(0,5)+'-'+cep.slice(5):''].filter(Boolean).join(' — ');
+ return {'cli-nome':nomeProprio(j.razao_social),'cli-tel':tel,'cli-email':String(j.email||'').toLowerCase().trim(),
+  'cli-cidade':j.municipio?nomeProprio(j.municipio)+(j.uf?'/'+j.uf:''):'','cli-end':end};}
+const ROTULO_CAMPO={'cli-nome':'nome','cli-tel':'telefone','cli-email':'e-mail','cli-cidade':'cidade','cli-end':'endereço'};
+function aplicarCampoCnpj(id,valor){const el=$(id);if(!el)return;el.value=valor;if(id==='cli-tel'&&typeof mascararTel==='function')mascararTel(el);}
+async function consultarCnpj(d){
+ CNPJ_CONSULTADO=d;CNPJ_RECEITA=null;
+ infoCnpj('🔎 Buscando dados da empresa na Receita...');
+ let j=null;
+ try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),12000);
+  const r=await fetch('https://brasilapi.com.br/api/cnpj/v1/'+d,{signal:ctl.signal});clearTimeout(t);
+  if(r.status===404){infoCnpj('CNPJ não encontrado na Receita. Preencha os dados à mão.','alerta');return;}
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  j=await r.json();}
+ catch(e){if(CNPJ_CONSULTADO===d)infoCnpj('Não deu para consultar a Receita agora. Preencha à mão ou <button type="button" onclick="consultarCnpj(\''+d+'\')">tentar de novo</button>.','alerta');return;}
+ /* o número mudou enquanto a consulta ia e voltava: esta resposta já não vale */
+ if(CNPJ_CONSULTADO!==d||String($('cli-doc').value).replace(/\D/g,'')!==d)return;
+ CNPJ_RECEITA=camposDaReceita(j);
+ const preenchidos=[],mantidos=[];
+ Object.entries(CNPJ_RECEITA).forEach(([id,valor])=>{if(!valor)return;
+  const atual=($(id).value||'').trim();
+  if(!atual){aplicarCampoCnpj(id,valor);preenchidos.push(ROTULO_CAMPO[id]);}
+  else{const dif=id==='cli-tel'?atual.replace(/\D/g,'')!==valor.replace(/\D/g,''):atual.toLowerCase()!==valor.toLowerCase();if(dif)mantidos.push(id);}});
+ const sit=String(j.descricao_situacao_cadastral||'').toUpperCase();
+ const fantasia=j.nome_fantasia&&j.nome_fantasia.trim()&&nomeProprio(j.nome_fantasia)!==CNPJ_RECEITA['cli-nome']?nomeProprio(j.nome_fantasia):'';
+ let h=(preenchidos.length?'✓ Preenchido com a Receita: '+preenchidos.join(', ')+'.':'✓ Empresa encontrada na Receita.');
+ if(fantasia)h+=' Nome fantasia: <strong>'+esc(fantasia)+'</strong> — <button type="button" onclick="usarFantasiaCnpj(\''+esc(fantasia).replace(/'/g,'&#39;')+'\')">usar como nome</button>.';
+ if(mantidos.length)h+=' Mantive o que você já tinha digitado em '+mantidos.map(id=>ROTULO_CAMPO[id]).join(', ')+' — <button type="button" onclick="usarReceitaNosMantidos()">trocar pelos dados da Receita</button>.';
+ if(sit&&sit!=='ATIVA'){infoCnpj('⚠ Situação na Receita: '+esc(sit)+'. '+h,'alerta');return;}
+ infoCnpj(h,'ok');}
+function usarFantasiaCnpj(nome){aplicarCampoCnpj('cli-nome',nome);infoCnpj('✓ Nome trocado pelo nome fantasia.','ok');}
+function usarReceitaNosMantidos(){if(!CNPJ_RECEITA)return;
+ Object.entries(CNPJ_RECEITA).forEach(([id,valor])=>{if(valor)aplicarCampoCnpj(id,valor);});
+ infoCnpj('✓ Campos trocados pelos dados da Receita.','ok');}
 async function saveCliente(){if(!guard())return;const nome=$('cli-nome').value.trim();if(!nome){toast('Informe o nome do cliente.','error');return;}
  const id=$('cli-id').value;const o={nome,email:$('cli-email').value.trim(),tel:$('cli-tel').value.trim(),doc:$('cli-doc').value.trim(),cidade:$('cli-cidade').value.trim(),end:$('cli-end').value.trim(),status:$('cli-status').value};
  const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
@@ -9590,13 +9661,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-12.9';
+const APP_VERSAO='2026-10-12.10';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=300;
+const APP_ATUALIZACAO=301;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
