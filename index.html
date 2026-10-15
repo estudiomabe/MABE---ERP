@@ -581,6 +581,15 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 .hp-linha .form-control { font-size:12.5px;padding:5px 7px; }
 .hp-dica { color:var(--text-muted); }
 /* consulta do CNPJ no cadastro de cliente: uma linha embaixo do campo */
+/* janela "Duplicar item": um item por linha, com a bolinha de escolha */
+.dup-lista { display:flex;flex-direction:column;gap:8px; }
+.dup-op { display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer; }
+.dup-op:has(input:checked) { border-color:var(--accent);background:var(--surface-2,rgba(0,0,0,0.03)); }
+.dup-op input { width:18px;height:18px;flex-shrink:0;accent-color:var(--accent); }
+.dup-op .dup-txt { flex:1;min-width:0; }
+.dup-op .dup-desc { font-weight:700;overflow-wrap:anywhere; }
+.dup-op .dup-sub { font-size:11.5px;color:var(--text-muted);margin-top:2px; }
+body.sem-valores .dup-valor { display:none; }
 .cnpj-info { font-size:11.5px;line-height:1.45;margin-top:5px;color:var(--text-muted); }
 .cnpj-info:empty { display:none; }
 .cnpj-info.ok { color:var(--success); }
@@ -1143,7 +1152,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           </div>
         </div>
         <div class="table-wrapper" style="margin-top:14px">
-          <div class="table-toolbar"><div class="table-toolbar-title">Itens do Orçamento</div><button class="btn btn-primary btn-sm" onclick="abrirAdicionarItem()">+ Adicionar Item</button></div>
+          <div class="table-toolbar"><div class="table-toolbar-title">Itens do Orçamento</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="abrirDuplicarItem()">⧉ Duplicar Item</button><button class="btn btn-primary btn-sm" onclick="abrirAdicionarItem()">+ Adicionar Item</button></div></div>
           <table><thead><tr><th>Tipo</th><th>Descrição</th><th>Qtd</th><th>Preço</th><th>Lucro</th><th>Ações</th></tr></thead><tbody id="tb-orc-itens"></tbody></table>
         </div>
         <div class="config-card" id="orc-links-card" style="margin-top:14px">
@@ -1478,6 +1487,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </div></div>
 <div class="modal-overlay" id="modal-conciliacao"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🧾 Conferência com o extrato</div><button class="modal-close" onclick="closeModal('modal-conciliacao')">✕</button></div><div class="modal-body" id="conc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="conc-desfazer" onclick="desfazerAjusteSaldo()">↩ Desfazer ajuste do saldo</button><button class="btn btn-primary" onclick="closeModal('modal-conciliacao')">Entendi</button></div></div></div>
 <div class="modal-overlay" id="modal-fc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title" id="fc-titulo">Filtrar</div><button class="modal-close" onclick="closeModal('modal-fc-filtros')">✕</button></div><div class="modal-body" id="fc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="fcLimparTudo(FC_ATUAL);fcAbrirCel(FC_ATUAL)">Limpar</button><button class="btn btn-primary" id="fc-ver" onclick="closeModal('modal-fc-filtros')">Ver</button></div></div></div>
+<div class="modal-overlay" id="modal-dup-item"><div class="modal"><div class="modal-header"><div class="modal-title">Duplicar item</div><button class="modal-close" onclick="closeModal('modal-dup-item')">✕</button></div><div class="modal-body"><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Qual item você quer duplicar? A cópia entra logo abaixo do original, com os mesmos materiais, serviços e preço.</div><div class="dup-lista" id="dup-item-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-dup-item')">Cancelar</button><button class="btn btn-primary" id="dup-item-ok" onclick="duplicarItemOrc()">OK, duplicar</button></div></div></div>
 <div class="modal-overlay" id="modal-orc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title">Filtrar orçamentos</div><button class="modal-close" onclick="closeModal('modal-orc-filtros')">✕</button></div><div class="modal-body" id="orc-filtros-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="limparFiltrosOrc();abrirFiltrosCel()">Limpar</button><button class="btn btn-primary" id="orc-filtros-ver" onclick="closeModal('modal-orc-filtros')">Ver orçamentos</button></div></div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-comissoes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mcom-title">Nova Pessoa com Comissão</div><button class="modal-close" onclick="closeModal('modal-comissoes')">✕</button></div><div class="modal-body">
@@ -5551,6 +5561,30 @@ function botoesProduto(prod){
  /* quem abre o link é o próprio nome do item, sublinhado na lista */
  return acoes;}
 function fichaDoProdutoAberto(){const id=$('prod-id').value;if(!id)return;closeModal('modal-produtos');abrirFichaProduto(id);}
+/* Duplicar item: pergunta qual, copia tudo (materiais, serviços, preço) com
+   um id novo e põe a cópia logo abaixo do original. */
+function abrirDuplicarItem(){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ const itens=o.itens||[];
+ if(!itens.length){toast(itensOrc(o).length?'Este orçamento é do formato antigo: edite o item uma vez para poder duplicar.':'Ainda não há item para duplicar — use "+ Adicionar Item".','info');return;}
+ const tipoL={'sob_medida':'Sob medida','catalogo':'Catálogo','novo_produto':'Novo produto'};
+ $('dup-item-lista').innerHTML=itens.map((it,i)=>'<label class="dup-op"><input type="radio" name="dup-item" value="'+esc(it.id)+'"'+(itens.length===1?' checked':'')+'><div class="dup-txt"><div class="dup-desc">'+esc(it.desc||'(sem descrição)')+'</div><div class="dup-sub">'+esc(tipoL[it.tipo]||it.tipo||'')+' · Qtd '+(it.qty||1)+' · <span class="dup-valor">'+fmt(it.preco||0)+'</span></div></div></label>').join('');
+ openModal('modal-dup-item');}
+async function duplicarItemOrc(){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ const marcado=document.querySelector('#dup-item-lista input[name="dup-item"]:checked');
+ if(!marcado){toast('Escolha o item que vai ser duplicado.','info');return;}
+ const idx=(o.itens||[]).findIndex(x=>x.id===marcado.value);if(idx<0)return;
+ const orig=o.itens[idx];
+ const copia=Object.assign(JSON.parse(JSON.stringify(orig)),{id:uid()});
+ const btn=$('dup-item-ok');btn.disabled=true;
+ const antes=o.itens.slice();
+ o.itens.splice(idx+1,0,copia);
+ recomputeHeaderTotais(o);
+ const {error}=await supa.from('orcamentos').update(orcParaSupabase(o)).eq('id',o.id);
+ btn.disabled=false;
+ if(error){o.itens=antes;recomputeHeaderTotais(o);toast('Erro ao duplicar o item no Supabase: '+error.message,'error');return;}
+ commit('editar','Orçamentos','Item "'+orig.desc+'" duplicado em ORC-'+pad(o.num));syncSheets('orcamentos','upsert',o);
+ closeModal('modal-dup-item');
+ toast('Item duplicado! Clique em ✏️ na cópia para ajustar.','success');orcShow('detalhe');renderOrcDetalhe();}
 async function excluirItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const it=(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
  if(!confirm('Excluir item "'+it.desc+'"?'))return;
@@ -9661,13 +9695,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-12.10';
+const APP_VERSAO='2026-10-14.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=301;
+const APP_ATUALIZACAO=302;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
