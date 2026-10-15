@@ -138,6 +138,7 @@ create table if not exists public.orcamentos (
   itens       jsonb default '[]'::jsonb,
   anexos      jsonb default '[]'::jsonb,
   links       jsonb default '[]'::jsonb,   -- links de referencia: { url, nome }
+  lixeira     jsonb default '[]'::jsonb,   -- itens excluidos: { item, pos, em, por }
   custo       numeric default 0,
   preco       numeric default 0,
   lucro       numeric default 0,

@@ -602,6 +602,13 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
 .dup-op .dup-desc { font-weight:700;overflow-wrap:anywhere; }
 .dup-op .dup-sub { font-size:11.5px;color:var(--text-muted);margin-top:2px; }
 body.sem-valores .dup-valor { display:none; }
+/* lixeira de itens do orçamento */
+.lix-op { display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;flex-wrap:wrap; }
+.lix-op .lix-txt { flex:1 1 180px;min-width:0; }
+.lix-op .lix-desc { font-weight:700;overflow-wrap:anywhere; }
+.lix-op .lix-sub { font-size:11.5px;color:var(--text-muted);margin-top:2px; }
+.lix-op .lix-acoes { display:flex;gap:6px;flex-shrink:0; }
+body.sem-valores .lix-valor { display:none; }
 .cnpj-info { font-size:11.5px;line-height:1.45;margin-top:5px;color:var(--text-muted); }
 .cnpj-info:empty { display:none; }
 .cnpj-info.ok { color:var(--success); }
@@ -1165,7 +1172,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           </div>
         </div>
         <div class="table-wrapper" style="margin-top:14px">
-          <div class="table-toolbar"><div class="table-toolbar-title">Itens do Orçamento</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="abrirDuplicarItem()">⧉ Duplicar Item</button><button class="btn btn-primary btn-sm" onclick="abrirAdicionarItem()">+ Adicionar Item</button></div></div>
+          <div class="table-toolbar"><div class="table-toolbar-title">Itens do Orçamento</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" id="orc-lix-btn" onclick="abrirLixeiraOrc()">🗑️ Lixeira</button><button class="btn btn-ghost btn-sm" onclick="abrirDuplicarItem()">⧉ Duplicar Item</button><button class="btn btn-primary btn-sm" onclick="abrirAdicionarItem()">+ Adicionar Item</button></div></div>
           <table><thead><tr><th>Tipo</th><th>Descrição</th><th>Qtd</th><th>Preço</th><th>Lucro</th><th>Ações</th></tr></thead><tbody id="tb-orc-itens"></tbody></table>
         </div>
         <div class="config-card" id="orc-links-card" style="margin-top:14px">
@@ -1500,6 +1507,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </div></div>
 <div class="modal-overlay" id="modal-conciliacao"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🧾 Conferência com o extrato</div><button class="modal-close" onclick="closeModal('modal-conciliacao')">✕</button></div><div class="modal-body" id="conc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="conc-desfazer" onclick="desfazerAjusteSaldo()">↩ Desfazer ajuste do saldo</button><button class="btn btn-primary" onclick="closeModal('modal-conciliacao')">Entendi</button></div></div></div>
 <div class="modal-overlay" id="modal-fc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title" id="fc-titulo">Filtrar</div><button class="modal-close" onclick="closeModal('modal-fc-filtros')">✕</button></div><div class="modal-body" id="fc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="fcLimparTudo(FC_ATUAL);fcAbrirCel(FC_ATUAL)">Limpar</button><button class="btn btn-primary" id="fc-ver" onclick="closeModal('modal-fc-filtros')">Ver</button></div></div></div>
+<div class="modal-overlay" id="modal-lix-orc"><div class="modal"><div class="modal-header"><div class="modal-title" id="lix-orc-titulo">Lixeira do orçamento</div><button class="modal-close" onclick="closeModal('modal-lix-orc')">✕</button></div><div class="modal-body"><div id="lix-orc-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px">A lixeira ainda não está ligada: falta uma coluna no banco. Até lá, excluir um item continua sendo definitivo. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.orcamentos add column if not exists lixeira jsonb default '[]'::jsonb;</div></div><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Itens excluídos deste orçamento. <strong>Restaurar</strong> devolve o item ao lugar de onde saiu, com materiais, serviços e preço.</div><div class="dup-lista" id="lix-orc-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-lix-orc')">Fechar</button></div></div></div>
 <div class="modal-overlay" id="modal-dup-item"><div class="modal"><div class="modal-header"><div class="modal-title">Duplicar item</div><button class="modal-close" onclick="closeModal('modal-dup-item')">✕</button></div><div class="modal-body"><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Qual item você quer duplicar? A cópia entra logo abaixo do original, com os mesmos materiais, serviços e preço.</div><div class="dup-lista" id="dup-item-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-dup-item')">Cancelar</button><button class="btn btn-primary" id="dup-item-ok" onclick="duplicarItemOrc()">OK, duplicar</button></div></div></div>
 <div class="modal-overlay" id="modal-orc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title">Filtrar orçamentos</div><button class="modal-close" onclick="closeModal('modal-orc-filtros')">✕</button></div><div class="modal-body" id="orc-filtros-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="limparFiltrosOrc();abrirFiltrosCel()">Limpar</button><button class="btn btn-primary" id="orc-filtros-ver" onclick="closeModal('modal-orc-filtros')">Ver orçamentos</button></div></div></div>
 <div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
@@ -4020,7 +4028,7 @@ async function duplicarOrcamento(id){
   obs:(o.obs?o.obs+' · ':'')+'Cópia de ORC-'+pad(o.num),
   itens:JSON.parse(JSON.stringify(itensOrc(o))).map(it=>Object.assign({},it,{id:uid()})),
   preco:o.preco,custo:o.custo,lucro:o.lucro,imposto:o.imposto,markup:o.markup,descPct:o.descPct,
-  opId:null,anexos:[]};
+  opId:null,anexos:[],lixeira:[]};
  const {data,error}=await supa.from('orcamentos').insert(orcParaSupabase(novo)).select().single();
  if(error){toast('Erro ao duplicar no Supabase: '+error.message,'error');return;}
  novo.num=data.num;
@@ -4468,13 +4476,14 @@ async function verificarColunaOrigem(){
 const comOrigem=(r,x)=>{if(ORIGEM_NO_BANCO)r.origem=x.origem||null;return r;};
 function orcParaSupabase(o){const r={id:o.id,cli_id:o.cliId||null,data:o.data||null,validade:o.validade||null,status:o.status||null,obs:o.obs||null,itens:o.itens||[],anexos:o.anexos||[],custo:o.custo||0,preco:o.preco||0,lucro:o.lucro||0,op_id:o.opId||null,links:undefined,tipo:null,cf:null,mdo:null,materiais:null,imposto:0,markup:0,prod_id:null,qty:null,desc_pct:0};if(o.num!==undefined&&o.num!==null)r.num=o.num;
  if(COLUNA_LINKS)r.links=o.links||[];else delete r.links;
+ if(COLUNA_LIXEIRA)r.lixeira=o.lixeira||[];
  return comOrigem(r,o);}
-function orcDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,links:row.links||[],desc:row.descricao||''};}
+function orcDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,links:row.links||[],lixeira:row.lixeira||[],desc:row.descricao||''};}
 async function carregarOrcamentosSupabase(){
  const {data,error}=await supa.from('orcamentos').select('*').order('num',{ascending:false});
  if(error){erroDeCarga('orçamentos',error);return;}
  DB.orcamentos=(data||[]).map(orcDeSupabase);saveDB();
- conferirColunaLinks();
+ conferirColunaLinks();conferirColunaLixeira();
  if(CUR==='orcamentos'&&$('orc-lista-view').style.display!=='none')renderOrcamentos();}
 function itensOrc(o){return (o.itens&&o.itens.length)?o.itens:(o.desc?[{id:'legacy',tipo:o.tipo||'sob_medida',desc:o.desc,qty:o.qty||1,preco:o.preco||0,custo:o.custo||0,lucro:o.lucro||0}]:[]);}
 function resumoOrc(o){const itens=itensOrc(o);if(!itens.length)return '(sem itens)';
@@ -4871,7 +4880,7 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
    precoCell+='<div style="font-size:10px;margin-top:2px" title="Sugerido: '+fmt(it.precoSugerido)+'"><span class="badge '+(desvioPct<0?'badge-danger':desvioPct>0?'badge-info':'badge-muted')+'" style="font-size:9px">✏️ manual '+(desvioPct>=0?'+':'')+fmtN(desvioPct,1)+'%</span></div>';}
   return '<tr><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong></td><td class="mono">'+(it.qty||1)+'</td><td class="mono">'+precoCell+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>';}).join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
  atualizarResumoComissaoOrc(o);$('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);
- renderLinksOrc(o);renderAnexosOrc(o);}
+ renderLinksOrc(o);renderAnexosOrc(o);pintarBotaoLixeira();}
 const anexoEhImagem=a=>/\.(png|jpe?g)$/i.test(a.nome||'');
 /* a marca fica guardada no próprio anexo: vale para o Gerar PDF e para o Imprimir */
 function caixaAnexoNoOrc(a,extra){
@@ -5610,13 +5619,62 @@ async function duplicarItemOrc(){if(!guard())return;const o=DB.orcamentos.find(x
  toast('Item duplicado! Clique em ✏️ na cópia para ajustar.','success');orcShow('detalhe');renderOrcDetalhe();}
 async function excluirItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
  const it=(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
- if(!confirm('Excluir item "'+it.desc+'"?'))return;
+ if(!confirm(COLUNA_LIXEIRA
+  ?'Mandar o item "'+it.desc+'" para a lixeira?\n\nDá para restaurar depois no botão 🗑️ Lixeira.'
+  :'Excluir item "'+it.desc+'"?\n\nA lixeira ainda não está ligada: esta exclusão é definitiva.'))return;
+ const antesItens=o.itens,antesLix=o.lixeira;
+ const pos=(o.itens||[]).findIndex(x=>x.id===itemId);
  o.itens=(o.itens||[]).filter(x=>x.id!==itemId);
+ if(COLUNA_LIXEIRA)o.lixeira=[{item:it,pos,em:new Date().toISOString(),por:USER?USER.nome:''}].concat(o.lixeira||[]);
  recomputeHeaderTotais(o);
  const {error}=await supa.from('orcamentos').update(orcParaSupabase(o)).eq('id',o.id);
- if(error){toast('Erro ao excluir item no Supabase: '+error.message,'error');return;}
- commit('editar','Orçamentos','Item "'+it.desc+'" removido de ORC-'+pad(o.num));syncSheets('orcamentos','upsert',o);
- toast('Item removido.','info');orcShow('detalhe');renderOrcDetalhe();}
+ if(error){o.itens=antesItens;o.lixeira=antesLix;recomputeHeaderTotais(o);toast('Erro ao excluir item no Supabase: '+error.message,'error');return;}
+ commit('editar','Orçamentos','Item "'+it.desc+'" '+(COLUNA_LIXEIRA?'mandado para a lixeira de':'removido de')+' ORC-'+pad(o.num));syncSheets('orcamentos','upsert',o);
+ toast(COLUNA_LIXEIRA?'Item na lixeira — dá para restaurar.':'Item removido.','info');orcShow('detalhe');renderOrcDetalhe();}
+/* ---- Lixeira de itens do orçamento ----
+   Item excluído não some: vai para a coluna lixeira do próprio orçamento, com
+   a posição de onde saiu, quando e quem. Restaurar devolve ao mesmo lugar;
+   "Excluir de vez" tira da lixeira. Entra no backup junto com o orçamento. */
+let COLUNA_LIXEIRA=false;
+async function conferirColunaLixeira(){
+ try{const {error}=await supa.from('orcamentos').select('lixeira').limit(1);COLUNA_LIXEIRA=!error;}
+ catch(e){COLUNA_LIXEIRA=false;}
+ pintarBotaoLixeira();}
+function pintarBotaoLixeira(){const b=$('orc-lix-btn');if(!b)return;
+ const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);const n=o&&o.lixeira?o.lixeira.length:0;
+ b.textContent=n?'🗑️ Lixeira ('+n+')':'🗑️ Lixeira';}
+const fmtDataHora=iso=>{const d=new Date(iso);return isNaN(d)?'':d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});};
+function abrirLixeiraOrc(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ renderLixeiraOrc();openModal('modal-lix-orc');}
+function renderLixeiraOrc(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ $('lix-orc-titulo').textContent='Lixeira do ORC-'+pad(o.num);
+ $('lix-orc-aviso').style.display=COLUNA_LIXEIRA?'none':'';
+ const lix=o.lixeira||[];
+ $('lix-orc-lista').innerHTML=lix.map((l,i)=>{const it=l.item||{};
+  return '<div class="lix-op"><div class="lix-txt"><div class="lix-desc">'+esc(it.desc||'(sem descrição)')+'</div><div class="lix-sub">Qtd '+(it.qty||1)+'<span class="lix-valor"> · '+fmt(it.preco||0)+'</span> · excluído em '+esc(fmtDataHora(l.em))+(l.por?' por '+esc(l.por):'')+'</div></div>'
+   +(canEdit()?'<div class="lix-acoes"><button class="btn btn-primary btn-sm" onclick="restaurarItemOrc('+i+')">↩ Restaurar</button><button class="btn btn-danger btn-sm" title="Apagar de vez, sem volta" onclick="apagarDeVezItemOrc('+i+')">Excluir de vez</button></div>':'')+'</div>';}).join('')
+  ||'<div style="font-size:13px;color:var(--text-muted);text-align:center;padding:18px 0">A lixeira está vazia.</div>';}
+async function restaurarItemOrc(i){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ const l=(o.lixeira||[])[i];if(!l||!l.item)return;
+ const antesItens=o.itens,antesLix=o.lixeira;
+ const itens=(o.itens||[]).slice();
+ /* id repetido (o item foi duplicado depois) ganha id novo para não confundir edição */
+ const item=itens.some(x=>x.id===l.item.id)?Object.assign({},l.item,{id:uid()}):l.item;
+ itens.splice(Math.max(0,Math.min(Number(l.pos)||0,itens.length)),0,item);
+ o.itens=itens;o.lixeira=o.lixeira.filter((_,k)=>k!==i);
+ recomputeHeaderTotais(o);
+ const {error}=await supa.from('orcamentos').update(orcParaSupabase(o)).eq('id',o.id);
+ if(error){o.itens=antesItens;o.lixeira=antesLix;recomputeHeaderTotais(o);toast('Erro ao restaurar no Supabase: '+error.message,'error');return;}
+ commit('editar','Orçamentos','Item "'+item.desc+'" restaurado da lixeira de ORC-'+pad(o.num));syncSheets('orcamentos','upsert',o);
+ toast('Item restaurado!','success');orcShow('detalhe');renderOrcDetalhe();renderLixeiraOrc();}
+async function apagarDeVezItemOrc(i){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
+ const l=(o.lixeira||[])[i];if(!l)return;
+ if(!confirm('Apagar de vez o item "'+((l.item&&l.item.desc)||'')+'"?\n\nDepois disso não dá mais para restaurar.'))return;
+ const antesLix=o.lixeira;o.lixeira=o.lixeira.filter((_,k)=>k!==i);
+ const {error}=await supa.from('orcamentos').update({lixeira:o.lixeira}).eq('id',o.id);
+ if(error){o.lixeira=antesLix;toast('Erro ao apagar no Supabase: '+error.message,'error');return;}
+ commit('excluir','Orçamentos','Item "'+((l.item&&l.item.desc)||'')+'" apagado de vez da lixeira de ORC-'+pad(o.num));syncSheets('orcamentos','upsert',o);
+ toast('Item apagado de vez.','info');orcShow('detalhe');renderOrcDetalhe();renderLixeiraOrc();}
 async function delOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  const opsVinculadas=DB.producao.filter(op=>op.orcId===id);
  let msg='Excluir orçamento ORC-'+pad(o.num)+' inteiro (com todos os itens)?';
@@ -9802,13 +9860,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-15.2';
+const APP_VERSAO='2026-10-15.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=304;
+const APP_ATUALIZACAO=305;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
