@@ -383,6 +383,9 @@ body.sem-anexos-pedido #vnd-anexos-zona { display:none; }
 .om-nome > input { flex:1;min-width:0; }
 .om-nome .om-link { flex-shrink:0;width:34px;padding:5px 0;line-height:1;font-size:13px;text-align:center; }
 .om-nome .om-link-vazio { flex-shrink:0;width:34px;height:1px; }
+/* custo manual: linha de valor fechado, sem quantidade */
+.om-nome .om-tag-manual { flex-shrink:0;width:34px;text-align:center;font-size:14px;line-height:1; }
+.om-qty-manual { font-size:11px;font-weight:600;color:var(--text-muted);text-align:center;line-height:1.15;overflow-wrap:anywhere; }
 /* titulos das colunas da lista de materiais, na mesma grade das linhas.
    No celular cada linha ja traz o seu rotulo (.rot-cel), entao a faixa sai. */
 .om-cab { display:grid;grid-template-columns:minmax(0,2fr) 96px 85px 85px 28px;gap:6px;align-items:end;margin-bottom:5px;
@@ -1250,7 +1253,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
             <div class="config-card" style="margin:0;flex:1">
-              <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px"><div class="config-title" style="margin:0">🪵 Materiais / Insumos</div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="addMaterial('catalogo')">📦 Adicionar Material/Insumo</button><button class="btn btn-primary btn-sm" onclick="abrirNovoProdutoRapido()">+ Cadastrar Material/Insumo</button></div></div>
+              <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px"><div class="config-title" style="margin:0">🪵 Materiais / Insumos</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="addMaterial('catalogo')">📦 Adicionar Material/Insumo</button><button class="btn btn-ghost btn-sm" onclick="addCustoManual()">✍️ Adicionar custo manual</button><button class="btn btn-primary btn-sm" onclick="abrirNovoProdutoRapido()">+ Cadastrar Material/Insumo</button></div></div>
               <div class="om-tabela"><div class="om-cab" id="orc-materiais-cab"><div class="om-nome"><span class="om-cab-link">Link</span><span>Material / Insumo</span></div><span>Qtd</span><span>Custo unit.</span><span style="text-align:right">Subtotal</span><span></span></div>
               <div id="orc-materiais" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div></div>
               <datalist id="dl-materiais"></datalist>
@@ -5278,10 +5281,21 @@ function atualizarCabecalhoMateriais(){
  if(cab&&wrap)cab.style.display=wrap.querySelector('div')?'':'none';}
 function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.createElement('div');row.dataset.mode=mode;if(it&&it.ref)row.dataset.ref=it.ref;
  row.style.cssText='display:grid;grid-template-columns:minmax(0,2fr) 96px 85px 85px 28px;gap:6px;align-items:center';
- const campo=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">':'<input type="text" class="form-control om-desc" placeholder="Material / insumo" value="'+esc(it?it.desc:'')+'">';
- const desc='<div class="om-nome">'+htmlLinkMaterial(it?it.ref:'')+campo+'</div>';
- row.innerHTML=desc+'<span class="rot-cel">Qtd</span><span class="rot-cel">Custo unit.</span><span class="rot-cel">Subtotal</span><span class="rot-cel"></span><input type="number" class="form-control om-qty" value="'+(it?it.qty:1)+'" min="0" step="0.001" oninput="calcOrc()" title="Quantidade"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control om-custo" value="'+(it?it.custo:0)+'" step="0.01" min="0" oninput="calcOrc()" title="Custo unitário" style="border:none;background:transparent;padding-left:2px"></div><div class="mono om-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
+ const manual=mode==='manual';
+ const campo=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">'
+  :'<input type="text" class="form-control om-desc" placeholder="'+(manual?'Descrição do custo (opcional)':'Material / insumo')+'" value="'+esc(it?it.desc:'')+'">';
+ const desc='<div class="om-nome">'+(manual?'<span class="om-tag-manual" title="Custo manual: valor digitado à mão">✍️</span>':htmlLinkMaterial(it?it.ref:''))+campo+'</div>';
+ /* custo manual: a quantidade fica fixa em 1 (campo escondido) e o valor vai no custo unitário.
+    Como todo material da ficha, vale para 1 unidade do item e é multiplicado pela Quantidade. */
+ const qtdCel=manual?'<span class="om-qty-manual" title="Custo manual: vale para 1 unidade do item, como os outros materiais">por unidade</span><input type="hidden" class="om-qty" value="1">'
+  :'<input type="number" class="form-control om-qty" value="'+(it?it.qty:1)+'" min="0" step="0.001" oninput="calcOrc()" title="Quantidade">';
+ row.innerHTML=desc+'<span class="rot-cel">'+(manual?'':'Qtd')+'</span><span class="rot-cel">'+(manual?'Valor':'Custo unit.')+'</span><span class="rot-cel">Subtotal</span><span class="rot-cel"></span>'+qtdCel+'<div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control om-custo" value="'+(it?it.custo:0)+'" step="0.01" min="0" oninput="calcOrc()" title="'+(manual?'Valor do custo manual':'Custo unitário')+'" style="border:none;background:transparent;padding-left:2px"></div><div class="mono om-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();calcOrc()">✕</button>';
  wrap.appendChild(row);calcOrc();return row;}
+/* Adicionar custo manual: um valor qualquer que entra no total de materiais,
+   sem precisar de cadastro nem de quantidade. A descrição é opcional. */
+function addCustoManual(){const row=addMaterial('manual',{desc:'',qty:1,custo:''});
+ atualizarCabecalhoMateriais();
+ const v=row.querySelector('.om-custo');if(v){v.focus();row.scrollIntoView({block:'nearest',behavior:'smooth'});}}
 function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);
  const hmes=Number(cfg.hmes)||1;
  let mdo=0,horasTotal=0;const mdoLinhas=[];
@@ -5299,7 +5313,10 @@ function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua',
  document.querySelectorAll('#orc-materiais > div').forEach(r=>{const qty=parseFloat(r.querySelector('.om-qty').value)||0;const custo=parseFloat(r.querySelector('.om-custo').value)||0;const sub=qty*custo;
   r.querySelector('.om-sub').textContent=fmt(sub);mat+=sub;
   const inpCat=r.querySelector('.om-desc-cat');const inpLivre=r.querySelector('.om-desc');
-  materiais.push({mode:r.dataset.mode,ref:r.dataset.ref||'',desc:inpCat?inpCat.value.trim():(inpLivre?inpLivre.value.trim():''),qty,custo});});
+  const descLida=inpCat?inpCat.value.trim():(inpLivre?inpLivre.value.trim():'');
+  materiais.push(r.dataset.mode==='manual'
+   ?{mode:'manual',ref:'',desc:descLida||'Custo manual',qty:1,custo}
+   :{mode:r.dataset.mode,ref:r.dataset.ref||'',desc:descLida,qty,custo});});
  let serv=0;const servicos=[];
  /* "valor" segue sendo o total da linha: custo, PDF, pedido e relatórios somam
     esse campo como sempre. Quantidade, valor da unidade e unidade vão junto
@@ -9905,13 +9922,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-15.4';
+const APP_VERSAO='2026-10-15.5';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=306;
+const APP_ATUALIZACAO=307;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
