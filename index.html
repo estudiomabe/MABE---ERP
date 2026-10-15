@@ -288,6 +288,7 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 @media (max-width:640px){ .pag-linha > div { flex:1 1 130px; } }
 /* comprovantes: coluna com o botão; os arquivos ficam numa faixa embaixo da linha */
 .pag-linha > .pag-comp { flex:0 1 auto; }
+.pag-linha > .pag-local { flex:1.4 1 150px; }
 .pag-comp .btn { padding:7px 10px;font-size:12px;white-space:nowrap; }
 .pag-linha > .pag-comp-lista { flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px; }
 .pag-comp-lista:empty { display:none; }
@@ -928,7 +929,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         </div>
         <div class="config-card" style="margin:0"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div>
 <div class="form-group"><label class="form-label">Pagamento</label>
-<div id="vnd-pags" data-recalc="atualizarPagamentosVenda" style="display:flex;flex-direction:column;gap:8px"></div>
+<div id="vnd-pags" data-recalc="atualizarPagamentosVenda" style="display:flex;flex-direction:column;gap:8px"></div><datalist id="dl-locais-receb"></datalist>
 <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento({data:$('vnd-data').value||today()},'vnd-pags')">+ Adicionar forma de pagamento</button>
 <div id="vnd-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
 <div id="vnd-pags-aviso" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
@@ -5657,11 +5658,12 @@ function addFormaPagamento(dados,idAlvo){
   +'<div class="ap-parc-wrap" style="display:'+(forma==='cartao'?'block':'none')+'"><span class="rot">Parcelas</span><select class="form-control ap-parcelas" onchange="recalcularPagamentos(this)">'+opcoesParcelas(d.valor||0,d.parcelas)+'</select></div>'
   +'<div><span class="rot">Vencimento</span><input type="date" class="form-control ap-data" value="'+(d.data||today())+'" onchange="recalcularPagamentos(this)"></div>'
   +'<div><span class="rot">Situação</span><select class="form-control ap-situacao" onchange="recalcularPagamentos(this)"><option value="Pendente"'+(d.status==='Pago'?'':' selected')+'>A receber</option><option value="Pago"'+(d.status==='Pago'?' selected':'')+'>Já recebido</option></select></div>'
+  +(idAlvo==='vnd-pags'?'<div class="pag-local"><span class="rot">Local de recebimento</span><input type="text" class="form-control ap-local" maxlength="80" list="dl-locais-receb" placeholder="Ex.: Conta Itaú" value="'+esc(d.local||'')+'"></div>':'')
   +(idAlvo==='vnd-pags'?'<div class="pag-comp"><span class="rot">Comprovantes</span><button type="button" class="btn btn-ghost btn-sm" onclick="this.nextElementSibling.click()">📎 Anexar</button><input type="file" accept="image/png,image/jpeg,application/pdf" multiple style="display:none" onchange="anexarComprovante(this)"></div>':'')
   +'<button class="btn btn-danger btn-sm tirar" title="Tirar esta forma" onclick="removerFormaPagamento(this)">✕</button>'
   +(idAlvo==='vnd-pags'?'<div class="pag-comp-lista"></div>':'');
  alvo.appendChild(div);
- if(idAlvo==='vnd-pags')pintarComprovantesLinha(div);
+ if(idAlvo==='vnd-pags'){pintarComprovantesLinha(div);encherLocaisReceb();}
  recalcularPagamentos(div);}
 /* ---- Comprovantes de cada linha de pagamento ----
    O arquivo vai para a mesma área dos anexos do pedido (pedidos/<id>/comprovantes/)
@@ -5773,9 +5775,14 @@ function formasPagamentoDe(idAlvo){
   data:l.querySelector('.ap-data').value||today(),
   status:l.querySelector('.ap-situacao').value,
   id:l.dataset.pid,comprovantes:l._comp||[],
+  local:l.querySelector('.ap-local')?l.querySelector('.ap-local').value.trim():'',
   linha:l}));}
+/* sugestões do Local de recebimento: o que já foi digitado em qualquer pedido */
+function encherLocaisReceb(){const dl=$('dl-locais-receb');if(!dl)return;
+ const vistos=new Map();(DB.vendas||[]).forEach(v=>(v.pags||[]).forEach(p=>{const t=String(p.local||'').trim();if(t&&!vistos.has(t.toLowerCase()))vistos.set(t.toLowerCase(),t);}));
+ dl.innerHTML=[...vistos.values()].sort((a,b)=>a.localeCompare(b,'pt-BR')).map(t=>'<option value="'+esc(t)+'">').join('');}
 /* o que vai para o banco: tudo da linha, menos o elemento da tela */
-const pagsParaSalvar=idAlvo=>formasPagamentoDe(idAlvo).map(f=>({id:f.id,forma:f.forma,valor:f.valor,parcelas:f.parcelas,data:f.data,status:f.status,comprovantes:f.comprovantes}));
+const pagsParaSalvar=idAlvo=>formasPagamentoDe(idAlvo).map(f=>({id:f.id,forma:f.forma,valor:f.valor,parcelas:f.parcelas,data:f.data,status:f.status,local:f.local,comprovantes:f.comprovantes}));
 const formasPagamentoAprov=()=>formasPagamentoDe('aprv-pags');
 /* pedido antigo guarda a forma como texto ("PIX", "Cartão Crédito"): vira uma linha só */
 function formaDoTexto(txt){
@@ -9795,13 +9802,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-15.1';
+const APP_VERSAO='2026-10-15.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=303;
+const APP_ATUALIZACAO=304;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
