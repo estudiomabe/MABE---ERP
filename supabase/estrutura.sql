@@ -168,6 +168,7 @@ create table if not exists public.vendas (
   anexos      jsonb default '[]'::jsonb,
   horas       jsonb default '[]'::jsonb,   -- apontamento de horas: data, mao de obra, horas, valor, obs
   pags        jsonb default '[]'::jsonb,   -- linhas de pagamento: forma, valor, vencimento, situacao, comprovantes
+  lixeira     jsonb default '[]'::jsonb,   -- itens tirados do pedido: { item, pos, em, por }
   total       numeric default 0,
   pag         text,
   status      text default 'Pendente',
