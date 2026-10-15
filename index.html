@@ -286,6 +286,17 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .pag-linha .form-control { padding:7px 9px;font-size:12.5px; }
 .pag-linha .tirar { flex:0 0 auto;padding:7px 10px;align-self:flex-end; }
 @media (max-width:640px){ .pag-linha > div { flex:1 1 130px; } }
+/* comprovantes: coluna com o botão; os arquivos ficam numa faixa embaixo da linha */
+.pag-linha > .pag-comp { flex:0 1 auto; }
+.pag-comp .btn { padding:7px 10px;font-size:12px;white-space:nowrap; }
+.pag-linha > .pag-comp-lista { flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px; }
+.pag-comp-lista:empty { display:none; }
+.comp-chip { display:inline-flex;align-items:center;gap:4px;max-width:100%;font-size:11.5px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:3px 4px 3px 8px; }
+.comp-chip a { color:var(--text);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px; }
+.comp-chip a:hover { text-decoration:underline; }
+.comp-chip button { background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:0 4px;line-height:1; }
+.comp-chip button:hover { color:var(--danger); }
+@media (max-width:640px){ .pag-linha > .pag-comp { flex:1 1 150px; } .pag-comp .btn { width:100%;justify-content:center; } }
 .form-control::placeholder { color:var(--text-muted); }
 select.form-control { cursor:pointer; } select.form-control option { background:#fff;color:var(--text); }
 .stat-row { display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap; }
@@ -921,6 +932,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento({data:$('vnd-data').value||today()},'vnd-pags')">+ Adicionar forma de pagamento</button>
 <div id="vnd-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
 <div id="vnd-pags-aviso" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
+<div id="vnd-pags-sql" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:8px">Para guardar os comprovantes, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists pags jsonb default '[]'::jsonb;</div></div>
 </div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div><div id="vnd-gastos" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">💸 Valor gasto neste pedido</div></div><div class="hp-dica" style="font-size:11.5px;margin:-4px 0 8px">Vem do Financeiro: as saídas, inclusive as do extrato, em que este pedido foi escolhido na coluna "Pedido".</div><div id="vnd-gastos-corpo"></div><div id="vnd-gastos-total"></div></div><div id="vnd-horas" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">⏱️ Horas trabalhadas neste projeto</div><button type="button" class="btn btn-ghost btn-sm" id="vnd-horas-add" onclick="addLinhaHoras()">+ Adicionar Horas</button></div><div id="vnd-horas-dica" style="font-size:11.5px;margin:-4px 0 8px"></div><div id="vnd-horas-aviso" style="display:none;font-size:12px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--warning,#c9a227);border-radius:8px;padding:10px 12px;margin-bottom:8px">Para guardar as horas, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface2);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists horas jsonb default '[]'::jsonb;</div></div><div class="hp-cabecalho" id="vnd-horas-cab" style="display:none"><span>Data</span><span>Mão de obra</span><span>Horas</span><span>Valor (R$)</span><span>Observações</span><span></span></div><div id="vnd-horas-corpo" style="display:flex;flex-direction:column;gap:7px"></div><div id="vnd-horas-total"></div></div></div></div>
         <div class="config-card orc-anexos-zona" id="vnd-anexos-zona" style="margin-top:14px" ondragenter="anexoPedidoArrastando(event,true)" ondragover="anexoPedidoArrastando(event,true)" ondragleave="anexoPedidoArrastando(event,false)" ondrop="anexoPedidoSolto(event)">
           <div class="orc-anexos-aviso">Solte os arquivos para anexar</div>
@@ -2031,7 +2043,7 @@ function afterLogin(){document.body.classList.add('logado');
  navigate(secaoInicial());updateBadges();
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
  if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
- verificarColunaOrigem();verificarColunaObsFin();verificarColunaAnexosVenda();
+ verificarColunaOrigem();verificarColunaObsFin();verificarColunaAnexosVenda();verificarColunaPagsVenda();
  cargasDoBanco().forEach(p=>Promise.resolve(p).then(agendarRedesenho,agendarRedesenho));}
 /* as treze cargas do banco, numa lista só: o login dispara e o gesto de
    puxar para atualizar repete */
@@ -3496,8 +3508,8 @@ async function confirmarImportNf(){
 
 /* ================= VENDAS ================= */
 function vendaParaSupabase(v){const o={id:v.id,cli_id:v.cliId||null,data:v.data||null,pag:v.pag||null,status:v.status||null,obs:v.obs||null,itens:v.itens||[],total:v.total||0,baixa:!!v.baixa};
- if(COLUNA_HORAS)o.horas=v.horas||[];if(v.num!==undefined&&v.num!==null)o.num=v.num;return comOrigem(comAnexosVenda(o,v),v);}
-function vendaDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],horas:row.horas||[],total:row.total,baixa:row.baixa};}
+ if(COLUNA_HORAS)o.horas=v.horas||[];if(PAGS_VENDA_NO_BANCO)o.pags=v.pags||[];if(v.num!==undefined&&v.num!==null)o.num=v.num;return comOrigem(comAnexosVenda(o,v),v);}
+function vendaDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,pag:row.pag,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],horas:row.horas||[],pags:row.pags||[],total:row.total,baixa:row.baixa};}
 async function carregarVendasSupabase(){
  const {data,error}=await supa.from('vendas').select('*').order('num',{ascending:false});
  if(error){erroDeCarga('pedidos',error);return;}
@@ -3990,7 +4002,8 @@ async function duplicarVenda(id){
  const obsBase=(v.obs||'').replace(/\s*·\s*Entregue em: \d{2}\/\d{2}\/\d{4}/,'');
  const nova={id:uid(),cliId:v.cliId,origem:v.origem||'',data:today(),pag:v.pag,status:'Pendente',
   obs:(obsBase?obsBase+' · ':'')+'Cópia de V-'+pad(v.num),
-  itens:JSON.parse(JSON.stringify(v.itens||[])),total:v.total,baixa:false};
+  itens:JSON.parse(JSON.stringify(v.itens||[])),total:v.total,baixa:false,
+  pags:(v.pags||[]).map(p=>Object.assign({},p,{id:uid(),status:'Pendente',comprovantes:[]}))};
  const {data,error}=await supa.from('vendas').insert(vendaParaSupabase(nova)).select().single();
  if(error){toast('Erro ao duplicar no Supabase: '+error.message,'error');return;}
  nova.num=data.num;
@@ -4307,7 +4320,7 @@ function capturarPedido(){const itens=[];
  document.querySelectorAll('#vnd-itens > div').forEach(r=>{const sel=r.querySelector('.vi-prod'),desc=r.querySelector('.vi-desc');
   itens.push({tipo:r.dataset.tipo,prodId:sel?sel.value:'',desc:desc?desc.value:'',qty:parseFloat(r.querySelector('.vi-qty').value)||1,preco:parseFloat(r.querySelector('.vi-preco').value)||0});});
  return {id:$('vnd-id').value,cliId:$('vnd-cli').value,data:$('vnd-data').value,pag:rotuloPagamento(formasPagamentoDe('vnd-pags')),
-  pags:formasPagamentoDe('vnd-pags').map(f=>({forma:f.forma,valor:f.valor,parcelas:f.parcelas,data:f.data,status:f.status})),status:$('vnd-status').value,
+  pags:pagsParaSalvar('vnd-pags'),status:$('vnd-status').value,
   obs:$('vnd-obs').value,titulo:$('mv-title').textContent,visaoGeral:$('vnd-visao-geral-corpo').innerHTML,
   visaoGeralVisivel:$('vnd-visao-geral').style.display,
   visaoGeralValores:[...document.querySelectorAll('#vnd-visao-geral-corpo input')].map(i=>[i.id,i.value]),
@@ -4389,7 +4402,7 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
   toast('As horas não foram salvas: falta a coluna no banco. O SQL está na própria seção de horas.','error',9000);}
  const o={horas,cliId,origem:$('vnd-origem').value,data:$('vnd-data').value||today(),
   pag:formasPag.length?rotuloPagamento(formasPag):$('vnd-pags').querySelector('.ap-forma')?PAG_LABELS[$('vnd-pags').querySelector('.ap-forma').value]:'PIX',
-  status:statusForm,obs:obsForm,itens,total};
+  status:statusForm,obs:obsForm,itens,total,pags:pagsParaSalvar('vnd-pags')};
  if(id){
   const v2=Object.assign(DB.vendas.find(x=>x.id===id),o);
   const {error}=await supa.from('vendas').update(vendaParaSupabase(v2)).eq('id',id);
@@ -4438,6 +4451,15 @@ async function verificarColunaAnexosVenda(){
  ANEXOS_VENDA_NO_BANCO=!r.error;
  document.body.classList.toggle('sem-anexos-pedido',!ANEXOS_VENDA_NO_BANCO);}
 const comAnexosVenda=(o,v)=>{if(ANEXOS_VENDA_NO_BANCO)o.anexos=v.anexos||[];return o;};
+/* As linhas de pagamento do pedido (forma, valor, vencimento, situação e os
+   comprovantes de cada uma) ficam na coluna pags. Sem ela, o pedido guarda só
+   o texto ("PIX + Cartão 3x") e as linhas são remontadas ao abrir — e não há
+   onde pendurar comprovante: o botão fica desligado e aparece o SQL. */
+let PAGS_VENDA_NO_BANCO=false;
+async function verificarColunaPagsVenda(){
+ try{const {error}=await supa.from('vendas').select('pags').limit(1);PAGS_VENDA_NO_BANCO=!error;}
+ catch(e){PAGS_VENDA_NO_BANCO=false;}
+ pintarComprovantes();}
 async function verificarColunaOrigem(){
  const r=await supa.from('vendas').select('origem').limit(1);
  ORIGEM_NO_BANCO=!r.error;
@@ -5629,17 +5651,91 @@ function addFormaPagamento(dados,idAlvo){
  const opts=[['pix','PIX'],['cartao','Cartão de Crédito'],['dinheiro','Dinheiro'],['transferencia','Transferência'],['boleto','Boleto']]
   .map(o=>'<option value="'+o[0]+'"'+(o[0]===forma?' selected':'')+'>'+o[1]+'</option>').join('');
  const div=document.createElement('div');
- div.className='pag-linha';
+ div.className='pag-linha';div.dataset.pid=d.id||uid();div._comp=(d.comprovantes||[]).slice();
  div.innerHTML='<div><span class="rot">Forma</span><select class="form-control ap-forma" onchange="aoMudarFormaPag(this)">'+opts+'</select></div>'
   +'<div><span class="rot">Valor (R$)</span><input type="number" class="form-control ap-valor" step="0.01" min="0" value="'+(d.valor!==undefined?d.valor:'')+'" oninput="recalcularPagamentos(this)"></div>'
   +'<div class="ap-parc-wrap" style="display:'+(forma==='cartao'?'block':'none')+'"><span class="rot">Parcelas</span><select class="form-control ap-parcelas" onchange="recalcularPagamentos(this)">'+opcoesParcelas(d.valor||0,d.parcelas)+'</select></div>'
   +'<div><span class="rot">Vencimento</span><input type="date" class="form-control ap-data" value="'+(d.data||today())+'" onchange="recalcularPagamentos(this)"></div>'
   +'<div><span class="rot">Situação</span><select class="form-control ap-situacao" onchange="recalcularPagamentos(this)"><option value="Pendente"'+(d.status==='Pago'?'':' selected')+'>A receber</option><option value="Pago"'+(d.status==='Pago'?' selected':'')+'>Já recebido</option></select></div>'
-  +'<button class="btn btn-danger btn-sm tirar" title="Tirar esta forma" onclick="removerFormaPagamento(this)">✕</button>';
+  +(idAlvo==='vnd-pags'?'<div class="pag-comp"><span class="rot">Comprovantes</span><button type="button" class="btn btn-ghost btn-sm" onclick="this.nextElementSibling.click()">📎 Anexar</button><input type="file" accept="image/png,image/jpeg,application/pdf" multiple style="display:none" onchange="anexarComprovante(this)"></div>':'')
+  +'<button class="btn btn-danger btn-sm tirar" title="Tirar esta forma" onclick="removerFormaPagamento(this)">✕</button>'
+  +(idAlvo==='vnd-pags'?'<div class="pag-comp-lista"></div>':'');
  alvo.appendChild(div);
+ if(idAlvo==='vnd-pags')pintarComprovantesLinha(div);
  recalcularPagamentos(div);}
+/* ---- Comprovantes de cada linha de pagamento ----
+   O arquivo vai para a mesma área dos anexos do pedido (pedidos/<id>/comprovantes/)
+   e é gravado na hora, como os anexos: não depende do Salvar Pedido. Pedido novo
+   ainda não tem id: dá para anexar depois de salvar. */
+function pintarComprovantesLinha(l){
+ const lista=l.querySelector('.pag-comp-lista'),btn=l.querySelector('.pag-comp .btn');if(!lista||!btn)return;
+ const v=pedidoDosAnexos();
+ btn.disabled=!PAGS_VENDA_NO_BANCO||!v||!canEdit();
+ btn.title=!PAGS_VENDA_NO_BANCO?'Falta uma coluna no banco (veja o aviso abaixo)':!v?'Salve o pedido para anexar comprovantes':'PNG, JPEG ou PDF até 10MB';
+ const comp=l._comp||[];
+ btn.textContent=comp.length?'📎 Anexar ('+comp.length+')':'📎 Anexar';
+ lista.innerHTML=comp.map(c=>'<span class="comp-chip"><a href="'+(/^https?:\/\//.test(c.url||'')?esc(c.url):'#')+'" target="_blank" rel="noopener" title="'+esc(c.nome)+'">'+(/\.pdf$/i.test(c.nome||'')?'📄 ':'🖼️ ')+esc(c.nome)+'</a>'
+  +(canEdit()?'<button type="button" title="Excluir este comprovante" data-path="'+esc(c.path)+'" onclick="excluirComprovante(this)">✕</button>':'')+'</span>').join('');}
+function pintarComprovantes(){
+ document.querySelectorAll('#vnd-pags .pag-linha').forEach(pintarComprovantesLinha);
+ const sql=$('vnd-pags-sql');if(sql)sql.style.display=PAGS_VENDA_NO_BANCO?'none':'';}
+/* grava os comprovantes desta linha. Se o banco já tem a linha, mexe só nos
+   comprovantes dela; se não tem (pedido antigo, ou linha nova ainda não salva),
+   grava as linhas como estão na tela, senão o comprovante não teria onde ficar. */
+async function gravarComprovantesLinha(v,l){
+ const pid=l.dataset.pid;
+ let pags=(v.pags||[]).map(p=>Object.assign({},p));
+ const noBanco=pags.find(p=>p.id===pid);
+ if(noBanco)noBanco.comprovantes=(l._comp||[]).slice();
+ else pags=pagsParaSalvar('vnd-pags');
+ const {error}=await supa.from('vendas').update({pags}).eq('id',v.id);
+ if(error)return error;
+ v.pags=pags;saveDB();return null;}
+async function anexarComprovante(input){
+ const files=Array.from(input.files||[]);input.value='';
+ if(!files.length||!guard())return;
+ const l=input.closest('.pag-linha');const v=pedidoDosAnexos();
+ if(!v){toast('Salve o pedido antes de anexar comprovantes.','info');return;}
+ if(!PAGS_VENDA_NO_BANCO){toast('Falta a coluna no banco: o SQL está embaixo do Pagamento.','error',7000);return;}
+ if(ENVIANDO_ANEXOS){toast('Aguarde terminar o envio anterior.','info');return;}
+ const tiposOk=['image/png','image/jpeg','application/pdf'];
+ const recusados=files.filter(f=>!tiposOk.includes(f.type)||f.size>10*1024*1024);
+ const validos=files.filter(f=>!recusados.includes(f));
+ if(recusados.length)toast('Ficaram de fora (só PNG, JPEG ou PDF até 10MB): '+recusados.map(f=>f.name).join(', '),'error',7000);
+ if(!validos.length)return;
+ ENVIANDO_ANEXOS=true;const btn=l.querySelector('.pag-comp .btn');if(btn){btn.disabled=true;btn.textContent='Enviando...';}
+ try{
+  const novos=[];
+  for(const file of validos){
+   const path='pedidos/'+v.id+'/comprovantes/'+uid()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+   const {error:upErr}=await supa.storage.from('orcamentos-anexos').upload(path,file);
+   if(upErr){toast('Erro ao enviar '+file.name+': '+upErr.message,'error');continue;}
+   const {data:pub}=supa.storage.from('orcamentos-anexos').getPublicUrl(path);
+   novos.push({path,nome:file.name,url:pub.publicUrl});}
+  if(!novos.length)return;
+  const antes=l._comp||[];l._comp=antes.concat(novos);
+  const erro=await gravarComprovantesLinha(v,l);
+  if(erro){l._comp=antes;
+   await supa.storage.from('orcamentos-anexos').remove(novos.map(n=>n.path));
+   toast('Erro ao salvar o comprovante no pedido: '+erro.message,'error');return;}
+  log('editar','Pedidos','Comprovante anexado em V-'+pad(v.num)+': '+novos.map(n=>n.nome).join(', '));
+  toast(novos.length>1?novos.length+' comprovantes anexados!':'Comprovante anexado!','success');
+ }finally{ENVIANDO_ANEXOS=false;pintarComprovantesLinha(l);}}
+async function excluirComprovante(btn){if(!guard())return;
+ const l=btn.closest('.pag-linha');const v=pedidoDosAnexos();if(!l||!v)return;
+ const path=btn.dataset.path;const c=(l._comp||[]).find(x=>x.path===path);if(!c)return;
+ if(!confirm('Excluir o comprovante "'+c.nome+'"?'))return;
+ const antes=l._comp;l._comp=antes.filter(x=>x.path!==path);
+ const erro=await gravarComprovantesLinha(v,l);
+ if(erro){l._comp=antes;pintarComprovantesLinha(l);toast('Erro ao atualizar o pedido: '+erro.message,'error');return;}
+ const {error:delErr}=await supa.storage.from('orcamentos-anexos').remove([path]);
+ if(delErr)console.error('Comprovante tirado do pedido, mas o arquivo ficou no servidor:',delErr.message);
+ log('editar','Pedidos','Comprovante excluído de V-'+pad(v.num)+': '+c.nome);
+ pintarComprovantesLinha(l);toast('Comprovante excluído.','info');}
 function removerFormaPagamento(btn){
  const alvo=btn.closest('[data-recalc]');
+ const linhaTirada=btn.closest('.pag-linha');
+ if(linhaTirada&&(linhaTirada._comp||[]).length&&!confirm('Esta forma tem '+linhaTirada._comp.length+' comprovante(s). Tirar a linha mesmo assim?\n\nOs arquivos saem do pedido quando você clicar em Salvar Pedido.'))return;
  if(alvo.querySelectorAll('.pag-linha').length<=1){toast('O pedido precisa de ao menos uma forma de pagamento.','info');return;}
  const irmao=alvo;btn.closest('.pag-linha').remove();recalcularPagamentos(irmao.firstElementChild||irmao);}
 function aoMudarFormaPag(sel){
@@ -5676,7 +5772,10 @@ function formasPagamentoDe(idAlvo){
   parcelas:Math.max(1,Number(l.querySelector('.ap-parcelas').value)||1),
   data:l.querySelector('.ap-data').value||today(),
   status:l.querySelector('.ap-situacao').value,
+  id:l.dataset.pid,comprovantes:l._comp||[],
   linha:l}));}
+/* o que vai para o banco: tudo da linha, menos o elemento da tela */
+const pagsParaSalvar=idAlvo=>formasPagamentoDe(idAlvo).map(f=>({id:f.id,forma:f.forma,valor:f.valor,parcelas:f.parcelas,data:f.data,status:f.status,comprovantes:f.comprovantes}));
 const formasPagamentoAprov=()=>formasPagamentoDe('aprv-pags');
 /* pedido antigo guarda a forma como texto ("PIX", "Cartão Crédito"): vira uma linha só */
 function formaDoTexto(txt){
@@ -5692,6 +5791,7 @@ function preencherPagamentosVenda(v){
  const alvo=$('vnd-pags');if(!alvo)return;
  alvo.innerHTML='';
  if(!v){addFormaPagamento({forma:'pix',data:today()},'vnd-pags');return;}
+ if(v.pags&&v.pags.length){v.pags.forEach(p=>addFormaPagamento(p,'vnd-pags'));atualizarPagamentosVenda();return;}
  const partes=String(v.pag||'').split('+').map(x=>x.trim()).filter(Boolean);
  const total=Number(v.total)||0;
  if(partes.length<=1){
@@ -5820,7 +5920,7 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
  const itensVenda=itens.map(it=>({prodId:it.prodId||null,desc:it.desc,qty:it.qty||1,preco:(it.qty||1)?Math.round((it.preco/(it.qty||1))*100)/100:it.preco}));
  /* as fotos de referência seguem para o pedido: mesmos arquivos, sem cópia no servidor */
  const anexosDoOrc=(o.anexos||[]).map(a=>({path:a.path,nome:a.nome,url:a.url}));
- const vendaObj={cliId:o.cliId||'',origem:o.origem||'',anexos:anexosDoOrc,data:dataAprovacao,pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':''),itens:itensVenda,total:totalAprovado};
+ const vendaObj={cliId:o.cliId||'',origem:o.origem||'',anexos:anexosDoOrc,pags:pagsParaSalvar('aprv-pags').filter(p=>p.valor>0).map(p=>Object.assign(p,{comprovantes:[]})),data:dataAprovacao,pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':''),itens:itensVenda,total:totalAprovado};
  const novaVenda=Object.assign({id:uid(),baixa:false},vendaObj);
  const {data:dv,error:erroVenda}=await supa.from('vendas').insert(vendaParaSupabase(novaVenda)).select().single();
  if(erroVenda){toast('Erro ao gerar pedido no Supabase: '+erroVenda.message,'error');return;}
@@ -9695,13 +9795,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-14.1';
+const APP_VERSAO='2026-10-15.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=302;
+const APP_ATUALIZACAO=303;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
