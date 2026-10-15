@@ -385,7 +385,7 @@ body.sem-anexos-pedido #vnd-anexos-zona { display:none; }
 .om-nome .om-link-vazio { flex-shrink:0;width:34px;height:1px; }
 /* custo manual: linha de valor fechado, sem quantidade */
 .om-nome .om-tag-manual { flex-shrink:0;width:34px;text-align:center;font-size:14px;line-height:1; }
-.om-qty-manual { font-size:11px;font-weight:600;color:var(--text-muted);text-align:center;line-height:1.15;overflow-wrap:anywhere; }
+.om-qty-manual { position:relative;z-index:1;align-self:stretch;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text-muted);text-align:center;line-height:1.15;overflow-wrap:anywhere;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:2px 4px; }
 /* titulos das colunas da lista de materiais, na mesma grade das linhas.
    No celular cada linha ja traz o seu rotulo (.rot-cel), entao a faixa sai. */
 .om-cab { display:grid;grid-template-columns:minmax(0,2fr) 96px 85px 85px 28px;gap:6px;align-items:end;margin-bottom:5px;
@@ -5283,7 +5283,7 @@ function addMaterial(mode,it){const wrap=$('orc-materiais');const row=document.c
  row.style.cssText='display:grid;grid-template-columns:minmax(0,2fr) 96px 85px 85px 28px;gap:6px;align-items:center';
  const manual=mode==='manual';
  const campo=mode==='catalogo'?'<input type="text" class="form-control om-desc-cat" list="dl-materiais" placeholder="Digite pra buscar madeira/produto..." value="'+esc(it?it.desc:'')+'" oninput="omBusca(this)">'
-  :'<input type="text" class="form-control om-desc" placeholder="'+(manual?'Descrição do custo (opcional)':'Material / insumo')+'" value="'+esc(it?it.desc:'')+'">';
+  :'<input type="text" class="form-control om-desc" placeholder="'+(manual?'Descrição (opcional)':'Material / insumo')+'" value="'+esc(it?(manual&&it.desc==='Custo manual'?'':it.desc):'')+'">';
  const desc='<div class="om-nome">'+(manual?'<span class="om-tag-manual" title="Custo manual: valor digitado à mão">✍️</span>':htmlLinkMaterial(it?it.ref:''))+campo+'</div>';
  /* custo manual: a quantidade fica fixa em 1 (campo escondido) e o valor vai no custo unitário.
     Como todo material da ficha, vale para 1 unidade do item e é multiplicado pela Quantidade. */
@@ -9922,13 +9922,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-15.5';
+const APP_VERSAO='2026-10-15.6';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=307;
+const APP_ATUALIZACAO=308;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
