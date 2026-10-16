@@ -91,6 +91,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 .btn-ghost { background:var(--surface2);color:var(--text);border:1px solid var(--border); } .btn-ghost:hover { background:var(--surface3); }
 .btn-danger { background:rgba(181,64,64,0.08);color:var(--danger);border:1px solid rgba(181,64,64,0.18); } .btn-danger:hover { background:rgba(181,64,64,0.15); }
 .btn-sm { padding:4px 9px;font-size:12px; } .btn svg { width:13px;height:13px; }
+/* gravando: o botão tocado fica apagado e desligado até a gravação terminar */
+button.salvando { opacity:0.6;cursor:progress; }
 #content { flex:1;overflow-y:auto;padding:22px; }
 .section { display:none; } .section.active { display:block; }
 .kpi-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px; }
@@ -937,7 +939,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <h2 style="font-size:16px;font-weight:700" id="mv-title">Novo Pedido</h2>
           <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" id="vnd-btn-imprimir" style="display:none" onclick="imprimirPedido('pedido')">🖨️ Imprimir pedido (PCP)</button><button class="btn btn-ghost btn-sm" id="vnd-btn-recibo" style="display:none" onclick="imprimirPedido('recibo')">🧾 Imprimir recibo</button><button class="btn btn-primary btn-sm" onclick="saveVenda()">💾 Salvar Pedido</button></div>
         </div>
-        <div class="config-card" style="margin:0"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><option>Pendente</option><option>Confirmado</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select></div>
+        <div class="config-card" style="margin:0"><input type="hidden" id="vnd-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente *</label><div style="display:flex;gap:6px"><select class="form-control" id="vnd-cli" style="flex:1"></select><button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="abrirNovoClienteRapidoVenda()">+ Novo Cliente</button></div></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="vnd-data" oninput="if($('vg-pedido'))$('vg-pedido').value=this.value"></div></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="vnd-status"><!-- opcoes vem de VND_STATUS --></select></div>
 <div class="form-group"><label class="form-label">Pagamento</label>
 <div id="vnd-pags" data-recalc="atualizarPagamentosVenda" style="display:flex;flex-direction:column;gap:8px"></div><datalist id="dl-locais-receb"></datalist>
 <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento({data:$('vnd-data').value||today()},'vnd-pags')">+ Adicionar forma de pagamento</button>
@@ -1152,7 +1154,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
               <div class="form-group"><label class="form-label">Data de Entrega</label><input type="date" class="form-control" id="orch-validade" onchange="aoMudarDatasOrc()"></div>
             </div>
             <div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="orch-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div>
-            <div class="form-group"><label class="form-label">Status</label><select class="form-control" id="orch-status"><option>Rascunho</option><option>Enviado</option><option>Aprovado</option><option>Reprovado</option><option>Concluído</option></select></div>
+            <div class="form-group"><label class="form-label">Status</label><select class="form-control" id="orch-status"><!-- opcoes vem de ORC_STATUS --></select></div>
             <div class="form-group"><label class="form-label">Observações Gerais</label><textarea class="form-control" id="orch-obs" rows="4" style="resize:vertical;font-family:var(--font)" placeholder="Contexto geral do pedido, combinados com o cliente..."></textarea></div>
           </div>
           <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px" id="orc-header-acoes">
@@ -1514,7 +1516,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div class="modal-overlay" id="modal-lix-orc"><div class="modal"><div class="modal-header"><div class="modal-title" id="lix-orc-titulo">Lixeira do orçamento</div><button class="modal-close" onclick="closeModal('modal-lix-orc')">✕</button></div><div class="modal-body"><div id="lix-orc-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px">A lixeira ainda não está ligada: falta uma coluna no banco. Até lá, excluir um item continua sendo definitivo. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.orcamentos add column if not exists lixeira jsonb default '[]'::jsonb;</div></div><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Itens excluídos deste orçamento. <strong>Restaurar</strong> devolve o item ao lugar de onde saiu, com materiais, serviços e preço.</div><div class="dup-lista" id="lix-orc-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-lix-orc')">Fechar</button></div></div></div>
 <div class="modal-overlay" id="modal-dup-item"><div class="modal"><div class="modal-header"><div class="modal-title">Duplicar item</div><button class="modal-close" onclick="closeModal('modal-dup-item')">✕</button></div><div class="modal-body"><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Qual item você quer duplicar? A cópia entra logo abaixo do original, com os mesmos materiais, serviços e preço.</div><div class="dup-lista" id="dup-item-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-dup-item')">Cancelar</button><button class="btn btn-primary" id="dup-item-ok" onclick="duplicarItemOrc()">OK, duplicar</button></div></div></div>
 <div class="modal-overlay" id="modal-orc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title">Filtrar orçamentos</div><button class="modal-close" onclick="closeModal('modal-orc-filtros')">✕</button></div><div class="modal-body" id="orc-filtros-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="limparFiltrosOrc();abrirFiltrosCel()">Limpar</button><button class="btn btn-primary" id="orc-filtros-ver" onclick="closeModal('modal-orc-filtros')">Ver orçamentos</button></div></div></div>
-<div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><option>Pago</option><option>Pendente</option><option>Cancelado</option></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><!-- opcoes vem de FIN_STATUS --></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-comissoes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mcom-title">Nova Pessoa com Comissão</div><button class="modal-close" onclick="closeModal('modal-comissoes')">✕</button></div><div class="modal-body">
 <input type="hidden" id="com-id">
 <div class="form-grid">
@@ -1605,7 +1607,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
  <button class="btn btn-primary" id="rec-btn-2" style="display:none" onclick="recAvancarStep2()">Verificar</button>
  <button class="btn btn-primary" id="rec-btn-3" style="display:none" onclick="recFinalizar()">Redefinir senha</button>
 </div></div></div>
-<div class="modal-overlay" id="modal-compras"><div class="modal"><div class="modal-header"><div class="modal-title" id="mcmp-title">Nova Ordem de Compra</div><button class="modal-close" onclick="closeModal('modal-compras')">✕</button></div><div class="modal-body"><input type="hidden" id="cmp-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Fornecedor *</label><select class="form-control" id="cmp-for"></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="cmp-data"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Total (R$)</label><input type="number" class="form-control" id="cmp-total" step="0.01"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cmp-status"><option>Pendente</option><option>Confirmado</option><option>Recebido</option><option>Cancelado</option></select></div></div><div class="form-group"><label class="form-label">Observações / Itens</label><input type="text" class="form-control" id="cmp-obs" placeholder="Ex: 12 pranchas Tauari 5x30x300"></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-compras')">Cancelar</button><button class="btn btn-primary" onclick="saveCompra()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-compras"><div class="modal"><div class="modal-header"><div class="modal-title" id="mcmp-title">Nova Ordem de Compra</div><button class="modal-close" onclick="closeModal('modal-compras')">✕</button></div><div class="modal-body"><input type="hidden" id="cmp-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Fornecedor *</label><select class="form-control" id="cmp-for"></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="cmp-data"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Total (R$)</label><input type="number" class="form-control" id="cmp-total" step="0.01"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cmp-status"><!-- opcoes vem de COMPRA_STB --></select></div></div><div class="form-group"><label class="form-label">Observações / Itens</label><input type="text" class="form-control" id="cmp-obs" placeholder="Ex: 12 pranchas Tauari 5x30x300"></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-compras')">Cancelar</button><button class="btn btn-primary" onclick="saveCompra()">Salvar</button></div></div></div>
 
 <!-- MODAL MADEIRAS -->
 <div class="modal-overlay" id="modal-madeiras"><div class="modal"><div class="modal-header"><div class="modal-title" id="mmad-title">Nova Madeira</div><button class="modal-close" onclick="closeModal('modal-madeiras')">✕</button></div><div class="modal-body"><input type="hidden" id="mad-id"><div class="form-grid">
@@ -1629,7 +1631,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Data *</label><input type="date" class="form-control" id="ent-data"></div><div class="form-group"><label class="form-label">Cliente</label><select class="form-control" id="ent-cli"><option value="">—</option></select></div></div>
 <div class="form-group"><label class="form-label">Peça / Móvel *</label><input type="text" class="form-control" id="ent-peca" placeholder="Ex: Mesa de jantar Tauari 2,20m"></div>
 <div class="form-group"><label class="form-label">Endereço de Entrega</label><input type="text" class="form-control" id="ent-end"></div>
-<div class="form-grid form-2"><div class="form-group"><label class="form-label">Responsável</label><input type="text" class="form-control" id="ent-resp"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="ent-status"><option>Agendada</option><option>Em rota</option><option>Entregue</option><option>Instalada</option></select></div></div>
+<div class="form-grid form-2"><div class="form-group"><label class="form-label">Responsável</label><input type="text" class="form-control" id="ent-resp"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="ent-status"><!-- opcoes vem de ENT_ST --></select></div></div>
 <div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="ent-obs" placeholder="Instalação, montagem no local, cuidados..."></div>
 </div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-entregas')">Cancelar</button><button class="btn btn-primary" onclick="saveEntrega()">Salvar</button></div></div></div>
 
@@ -1637,8 +1639,8 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div class="modal-overlay" id="modal-producao"><div class="modal"><div class="modal-header"><div class="modal-title" id="mop-title">Nova Ordem de Produção</div><button class="modal-close" onclick="closeModal('modal-producao')">✕</button></div><div class="modal-body"><input type="hidden" id="op-id"><div class="form-grid">
 <div class="form-group"><label class="form-label">Peça / Projeto *</label><input type="text" class="form-control" id="op-titulo" placeholder="Ex: Mesa de reunião Freijó 3,00m"></div>
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente</label><select class="form-control" id="op-cli"><option value="">—</option></select></div><div class="form-group"><label class="form-label">Prazo de Entrega</label><input type="date" class="form-control" id="op-prazo"></div></div>
-<div class="form-grid form-2"><div class="form-group"><label class="form-label">Responsável</label><input type="text" class="form-control" id="op-resp" list="lista-resp" placeholder="Quem executa esta ordem"><datalist id="lista-resp"></datalist></div><div class="form-group"><label class="form-label">Prioridade</label><select class="form-control" id="op-prio"><option>Normal</option><option>Alta</option><option>Urgente</option></select></div></div>
-<div class="form-group"><label class="form-label">Etapa Atual</label><select class="form-control" id="op-etapa"><option value="0">📥 Fila</option><option value="1">🪚 Corte & Usinagem</option><option value="2">🔨 Montagem</option><option value="3">🎨 Acabamento</option><option value="4">🔁 Retrabalho</option><option value="5">📦 Pronto</option><option value="6">🚚 Entregue</option></select></div>
+<div class="form-grid form-2"><div class="form-group"><label class="form-label">Responsável</label><input type="text" class="form-control" id="op-resp" list="lista-resp" placeholder="Quem executa esta ordem"><datalist id="lista-resp"></datalist></div><div class="form-group"><label class="form-label">Prioridade</label><select class="form-control" id="op-prio"><!-- opcoes vem de OP_PRIO --></select></div></div>
+<div class="form-group"><label class="form-label">Etapa Atual</label><select class="form-control" id="op-etapa"><option value="0">📋 Planejamento</option><option value="1">🪚 Corte & Usinagem</option><option value="2">🔨 Montagem</option><option value="3">🎨 Acabamento</option><option value="4">🔁 Retrabalho</option><option value="5">📦 Pronto</option><option value="6">🚚 Entregue</option></select></div>
 <div class="form-group"><label class="form-label">Observações Técnicas</label><input type="text" class="form-control" id="op-obs" placeholder="Encaixes, acabamento, madeira, medidas..."></div>
 </div></div><div class="modal-footer"><button class="btn btn-danger" id="op-btn-del" style="margin-right:auto;display:none" onclick="delOPFromModal()">Excluir</button><button class="btn btn-ghost" onclick="closeModal('modal-producao')">Cancelar</button><button class="btn btn-primary" onclick="saveOP()">Salvar</button></div></div></div>
 
@@ -2816,6 +2818,73 @@ function instalarFilaDeEnvio(){
  setInterval(()=>{if(FILA.length)enviarFila();},20000);
  atualizarAvisoFila();
  if(FILA.length)enviarFila();}
+/* ================= TRAVA DOS BOTÕES DE GRAVAR =================
+   Com a internet lenta, um segundo toque em Salvar repetia a gravação inteira (pedido, contas a
+   receber e OP em dobro). Cada função desta lista agora roda uma vez por vez: enquanto a anterior
+   não termina, um novo toque é ignorado com aviso, e o botão tocado fica "Salvando..." desligado
+   até o fim — também quando a função sai no meio (validação, erro do banco ou exceção).
+   A trava é pelo nome da função, não pelo botão: vale para o Enter, para o botão redesenhado
+   durante a gravação e para o outro botão que chama a mesma função (Salvar / Salvar e Adicionar Item).
+   Por isso, quem chamar uma destas pelo código precisa de await: a segunda chamada sem esperar é ignorada. */
+const FUNCOES_DE_GRAVAR=[
+ /* criam registros */
+ 'saveVenda','confirmarAprovarOrc','orcParaProducao','concluirOP','duplicarVenda','duplicarOrcamento',
+ 'salvarHeaderOrc','salvarItemOrc','salvarItemCatalogo','duplicarItemOrc','restaurarItemOrc','adicionarLinkOrc',
+ 'saveOP','saveEntrega','saveFinanceiro','confirmarImportacaoOfx','confirmarImportNf','saveCompra','lancarCompra',
+ 'saveCliente','saveProduto','saveMadeira','saveFerramenta','saveFornecedor','saveServico','saveComissionado','saveUsuario',
+ /* mudam o que já existe: repetir avança de novo (etapa, status, estoque) ou grava igual duas vezes */
+ 'moveOP','advEntrega','baixaMadeira','manutFeita','receberCompra','rejeitarOrcamento','recFinalizar','doLogin',
+ 'saveCFConfig','saveCondPagto','saveEmpresaInfo','saveFolhaPagamento','saveMdoTipos',
+ /* excluem: o pedido devolveria o estoque de novo, e a lixeira apaga pela posição */
+ 'delVenda','delOrcamento','excluirItemOrc','apagarDeVezItemOrc','removerLinkOrc','delOPFromModal','delEntrega',
+ 'delFin','delCompra','delCliente','delProduto','delMadeira','delFerramenta','delFornecedor','delServico',
+ 'delComissionado','delUsuario','clearHistorico'];
+const rotuloGravando=nome=>nome==='doLogin'?'Entrando...':/^(del|excluir|apagar|remover|clear)/.test(nome)?'Excluindo...':'Salvando...';
+const GRAVANDO={};                    /* nome da função (ou nome|id do registro) → marca da chamada em andamento */
+/* Estas só gravam o próprio registro, que vem no 1º argumento: a trava vale por registro, para dar ▶ em
+   outra OP ou excluir outro lançamento sem esperar a gravação anterior. As demais ficam pelo nome: formulários,
+   o orçamento aberto (itens, lixeira e links regravam a mesma linha), delVenda (devolve estoque de produtos)
+   e delProduto/delServico/delComissionado (regravam listas da config). */
+const TRAVA_POR_REGISTRO=['orcParaProducao','concluirOP','duplicarVenda','duplicarOrcamento','lancarCompra',
+ 'moveOP','advEntrega','baixaMadeira','manutFeita','receberCompra','rejeitarOrcamento',
+ 'delOrcamento','delEntrega','delFin','delCompra','delCliente','delMadeira','delFerramenta','delFornecedor','delUsuario'];
+/* toque durante a gravação: o mesmo pedido de antes ainda está em andamento, basta esperar */
+const avisoTravado=nome=>(nome==='doLogin'?'Entrando':/^(del|excluir|apagar|remover|clear)/.test(nome)?'Ainda excluindo':'Ainda salvando')+'... aguarde terminar.';
+const BOTOES_GRAVANDO=new WeakMap();  /* botão → como estava antes de gravar */
+function prenderBotao(b,rotulo){
+ const s=BOTOES_GRAVANDO.get(b);if(s){s.n++;return;}
+ /* botão só de ícone (▶, 💰, 🗑️) só apaga: o texto não caberia nele */
+ const icone=b.innerText.trim().length<=3;
+ BOTOES_GRAVANDO.set(b,{n:1,html:b.innerHTML,desligado:b.disabled,rotulo:icone?'':rotulo});
+ b.disabled=true;b.classList.add('salvando');if(!icone)b.textContent=rotulo;}
+function soltarBotao(b){
+ const s=BOTOES_GRAVANDO.get(b);if(!s||--s.n>0)return;
+ BOTOES_GRAVANDO.delete(b);b.classList.remove('salvando');
+ /* a tela pode ter trocado o texto no meio (outro modo da ficha): aí fica o texto novo */
+ if(s.rotulo&&b.textContent===s.rotulo)b.innerHTML=s.html;
+ if(!s.desligado)b.disabled=false;}
+function instalarTravaDeGravacao(){
+ FUNCOES_DE_GRAVAR.forEach(nome=>{const orig=window[nome];
+  if(typeof orig!=='function'){console.warn('Trava de gravação: função não encontrada —',nome);return;}
+  window[nome]=function(...args){
+   const chave=TRAVA_POR_REGISTRO.includes(nome)&&args[0]!=null?nome+'|'+args[0]:nome;
+   if(GRAVANDO[chave]){toast(avisoTravado(nome),'info',3000);return Promise.resolve();}
+   /* o botão tocado; no Enter de um campo ou numa chamada sem clique não há botão a mudar */
+   const ev=window.event;
+   const alvo=ev&&ev.type==='click'&&ev.currentTarget&&ev.currentTarget.closest?ev.currentTarget.closest('button'):null;
+   const marca={};GRAVANDO[chave]=marca;
+   let solto=false,valvula=null;
+   const soltar=()=>{if(solto)return;solto=true;clearTimeout(valvula);
+    if(GRAVANDO[chave]===marca)delete GRAVANDO[chave];if(alvo)soltarBotao(alvo);};
+   let r;
+   try{r=orig.apply(this,args);}catch(e){soltar();throw e;}
+   /* função comum (não async): já terminou aqui */
+   if(!r||typeof r.then!=='function'){soltar();return r;}
+   /* só depois da parte síncrona: um confirm() cancelado nem chega a mostrar "Salvando..." */
+   if(alvo)prenderBotao(alvo,rotuloGravando(nome));
+   /* válvula: uma resposta que nunca chega não deixa o botão travado para sempre */
+   valvula=setTimeout(soltar,nome==='doLogin'?15000:120000);
+   return Promise.resolve(r).finally(soltar);};});}
 function clienteDeSupabase(row){return{id:row.id,nome:row.nome,email:row.email||'',tel:row.tel||'',doc:row.doc||'',cidade:row.cidade||'',end:row.endereco||'',status:row.status||'Ativo'};}
 function clienteParaSupabase(c){return{id:c.id,nome:c.nome,email:c.email||null,tel:c.tel||null,doc:c.doc||null,cidade:c.cidade||null,endereco:c.end||null,status:c.status||'Ativo'};}
 async function carregarClientesSupabase(){
@@ -3913,6 +3982,7 @@ const colsProduto=(base,comTempo)=>{const d=comTempo?1:0;const c={
   status:{th:6+d,nome:'Status',tipo:'opcoes',opcoes:()=>['Crítico','Baixo','OK','Sem mínimo'],val:statusProd}});return c;};
 fcRegistrar('ins',{titulo:'Filtrar materiais/insumos',um:'item',varios:'itens',tbody:'tb-insumos',antes:'insumos-cards',render:()=>renderInsumos(),cols:colsProduto('ins',false)});
 fcRegistrar('port',{titulo:'Filtrar portfólio',um:'produto',varios:'produtos',tbody:'tb-portfolio',antes:'portfolio-cards',render:()=>renderPortfolio(),cols:colsProduto('port',true)});
+const FIN_STATUS=['Pago','Pendente','Cancelado'];
 fcRegistrar('fin',{titulo:'Filtrar lançamentos',um:'lançamento',varios:'lançamentos',tbody:'tb-financeiro',antes:'financeiro-cards',render:()=>renderFinanceiro(),
  somar:x=>(x.tipo==='Saída'?-1:1)*(Number(x.val)||0),cols:{
  data:{th:0,nome:'Data',tipo:'datas',val:x=>x.data||''},
@@ -3922,7 +3992,7 @@ fcRegistrar('fin',{titulo:'Filtrar lançamentos',um:'lançamento',varios:'lança
  obs:{th:4,nome:'Observações',tipo:'texto',ph:'parte do texto',val:x=>x.obs},
  tipo:{th:5,nome:'Tipo',tipo:'opcoes',opcoes:()=>['Entrada','Saída'],val:x=>x.tipo},
  valor:{th:6,nome:'Valor',tipo:'faixa',val:x=>x.val},
- status:{th:7,nome:'Status',tipo:'opcoes',opcoes:()=>['Pago','Pendente','Cancelado'],val:x=>x.status}}});
+ status:{th:7,nome:'Status',tipo:'opcoes',opcoes:()=>FIN_STATUS,val:x=>x.status}}});
 fcRegistrar('cc',{titulo:'Filtrar centros de custo',um:'centro de custo',varios:'centros de custo',tbody:'tb-centrocustos',render:()=>renderCentroCustos(),somar:x=>x[1].saidas,cols:{
  cat:{th:0,nome:'Centro de custo',tipo:'opcoes',opcoes:()=>[...SETORES_FIXOS,'Não classificado'],val:x=>x[0]},
  said:{th:1,nome:'Saídas',tipo:'faixa',val:x=>x[1].saidas},
@@ -4368,9 +4438,9 @@ function cancelarPedido(){
  if(HORAS_SUJAS&&!confirm('As horas que você lançou ainda não foram salvas e vão se perder. Sair mesmo assim?'))return;
  limparHorasSujas();vndShow('lista');renderVendas();}
 function openVenda(){if(!guardValores())return;$('vnd-id').value='';VND_LIX=[];pintarBotaoLixeiraVnd();fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-origem').value='';
- $('vnd-pags').innerHTML='';addFormaPagamento({forma:'pix',data:today()},'vnd-pags');$('vnd-status').value='Pendente';$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderGastosPedido(null);renderHorasPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
+ $('vnd-pags').innerHTML='';addFormaPagamento({forma:'pix',data:today()},'vnd-pags');encherSelectLista('vnd-status',VND_STATUS,'Pendente');$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderGastosPedido(null);renderHorasPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;VND_LIX=(v.lixeira||[]).slice();pintarBotaoLixeiraVnd();
- $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-origem').value=v.origem||'';$('vnd-status').value=v.status;$('vnd-obs').value=v.obs||'';preencherPagamentosVenda(v);
+ $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-origem').value=v.origem||'';encherSelectLista('vnd-status',VND_STATUS,v.status);$('vnd-obs').value=v.obs||'';preencherPagamentosVenda(v);
  $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderGastosPedido(v);renderHorasPedido(v);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');}
 let ITEM_PARA_PEDIDO=null;
 function capturarPedido(){const itens=[];
@@ -4384,7 +4454,7 @@ function capturarPedido(){const itens=[];
   horas:horasDoPedidoForm(),horasSujas:HORAS_SUJAS,lixeira:VND_LIX.slice(),itens};}
 function restaurarPedido(r){VND_LIX=(r.lixeira||[]).slice();pintarBotaoLixeiraVnd();
  $('vnd-id').value=r.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,r.cliId,'— Selecionar —');
- $('vnd-data').value=r.data;$('vnd-status').value=r.status;$('vnd-obs').value=r.obs;
+ $('vnd-data').value=r.data;encherSelectLista('vnd-status',VND_STATUS,r.status);$('vnd-obs').value=r.obs;
  $('vnd-pags').innerHTML='';(r.pags&&r.pags.length?r.pags:[{forma:formaDoTexto(r.pag),data:r.data}]).forEach(f=>addFormaPagamento(f,'vnd-pags'));
  $('mv-title').textContent=r.titulo;
  $('vnd-visao-geral-corpo').innerHTML=r.visaoGeral;$('vnd-visao-geral').style.display=r.visaoGeralVisivel;
@@ -4491,11 +4561,74 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
   limparHorasSujas();vndShow('lista');renderVendas();toast('Pedido salvo!'+(opCriada?' Estoque, financeiro e produção (PCP) atualizados.':' Estoque e financeiro atualizados.'),'success');return;
  }
  limparHorasSujas();vndShow('lista');renderVendas();toast('Pedido atualizado!','success');}
-async function delVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!confirm('Excluir pedido V-'+pad(v.num)+'?'))return;
- if(v.baixa)for(const it of (v.itens||[])){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Number(p.est)+it.qty;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
+/* A OP que com certeza é deste pedido, para a exclusão poder apagá-la junto.
+   Pedido salvo à mão: a OP nasce com "Pedido V-00XX" no título e na observação.
+   Pedido da aprovação: a OP guarda o orçamento; só vale se nenhum outro pedido saiu dele.
+   A cópia (⧉) carrega o "ORC-" no texto, mas não tem OP própria: a OP é do original. */
+function opCertaDoPedido(v){const cod='V-'+pad(v.num);
+ const doPedido=DB.producao.filter(o=>{const t=String(o.titulo||'').match(/^Pedido V-(\d+)/);
+  return (t&&Number(t[1])===Number(v.num))||String(o.obs||'').includes('Gerado automaticamente do Pedido '+cod+')');});
+ if(doPedido.length)return doPedido.length===1?doPedido[0]:null;
+ const obs=String(v.obs||''),m=obs.match(/Gerado automaticamente do ORC-(\d+)/);
+ if(!m||obs.includes('Cópia de V-'))return null;
+ const orc=DB.orcamentos.find(o=>Number(o.num)===Number(m[1]));if(!orc)return null;
+ const outros=DB.vendas.filter(x=>x.id!==v.id&&String(x.obs||'').includes(m[0])&&!String(x.obs||'').includes('Cópia de V-'));
+ const ops=DB.producao.filter(o=>o.orcId===orc.id);
+ return (!outros.length&&ops.length===1)?ops[0]:null;}
+/* O que o pedido gerou ou o que foi ligado a ele, separado entre o que sai junto
+   na exclusão e o que fica. Sai: conta a receber ainda pendente (a "Pedido V-00XX"
+   ou a classificada nele na coluna Pedido) e a OP que nem começou. Fica: dinheiro
+   que já entrou ou saiu, a OP que já começou, as entregas e o orçamento. */
+function ligacoesDoPedido(v){const prefixo='Pedido V-'+pad(v.num);
+ const fins=DB.financeiro.filter(f=>{const d=String(f.desc||'');return d===prefixo||d.indexOf(prefixo+' ')===0||lancamentoEhDoPedido(f,v);});
+ const apagar=fins.filter(f=>f.tipo==='Entrada'&&f.status==='Pendente');
+ const manter=fins.filter(f=>f.status!=='Cancelado'&&!apagar.includes(f));
+ const op=opCertaDoPedido(v);
+ const entregas=op?(DB.entregas||[]).filter(e=>e.opId===op.id):[];
+ const opSai=!!op&&op.status!=='Concluída'&&!(Number(op.etapa)>0)&&!entregas.length;
+ return {apagar,manter,op,opSai,entregas,opTalvez:op?null:opDoPedido(v),orc:orcDoPedido(v)};}
+/* o aviso antes de excluir: o que apaga junto, o que continua e o que fazer com isso */
+function textoExclusaoPedido(v,L){const cod='V-'+pad(v.num),base='Pedido '+cod+' — '+cliName(v.cliId);
+ const soma=a=>fmt(a.reduce((s,f)=>s+(Number(f.val)||0),0));
+ const linhas=a=>a.slice().sort((x,y)=>String(x.data||'').localeCompare(String(y.data||''))).slice(0,6).map(f=>'   '+fmtD(f.data)+' · '+fmt(f.val)+' · '+(String(f.desc||'').replace(base,'').replace('Pedido '+cod,'').replace(/^\s*—\s*/,'').trim().slice(0,45)||'conta do pedido')).join('\n')+(a.length>6?'\n   … e mais '+(a.length-6):'');
+ const recebidos=L.manter.filter(f=>f.tipo==='Entrada'),saidas=L.manter.filter(f=>f.tipo!=='Entrada');
+ const aPagar=saidas.filter(f=>f.status==='Pendente').length;
+ const sai=[],fica=[];
+ if(L.apagar.length)sai.push('• '+L.apagar.length+' conta(s) a receber pendente(s), '+soma(L.apagar)+':\n'+linhas(L.apagar)
+  +(L.apagar.some(f=>/Cartão/.test(f.desc||''))?'\n   (cartão que já passou na maquininha só deixa de cair se for estornado lá)':''));
+ if(L.opSai)sai.push('• a OP-'+pad(L.op.num)+', que ainda está em Planejamento');
+ if(recebidos.length)fica.push('• '+recebidos.length+' recebimento(s) já pago(s), '+soma(recebidos)+': o dinheiro continua no caixa. Se for refazer o pedido, o pedido novo lança esse valor outra vez: depois de salvar, apague no Financeiro a entrada repetida. Se devolveu ao cliente, lance a devolução como Saída');
+ if(saidas.length)fica.push('• '+saidas.length+' saída(s) ligada(s) ao pedido, '+soma(saidas)+(aPagar?' ('+aPagar+' ainda a pagar)':''));
+ if(L.op&&!L.opSai)fica.push('• a OP-'+pad(L.op.num)+', '+(L.op.status==='Concluída'?'já concluída':'em '+semEmoji(ETAPAS[Number(L.op.etapa)]||''))+'. Se a peça não vai mais ser feita, exclua no PCP. Se for refazer o pedido, o pedido novo cria outra OP em Planejamento: exclua no PCP a que sobrar');
+ if(L.entregas.length)fica.push('• '+L.entregas.length+' entrega(s) dessa OP, em Entregas');
+ if(L.opTalvez){const mc=String(v.obs||'').match(/Cópia de V-(\d+)/),vo=mc&&DB.vendas.find(x=>Number(x.num)===Number(mc[1]));
+  fica.push('• a OP-'+pad(L.opTalvez.num)+(vo&&opCertaDoPedido(vo)===L.opTalvez?', que é do pedido original V-'+pad(vo.num)+' (a cópia não tem OP própria)':', que aparece ligada mas pode ser de outro pedido'));}
+ if(L.orc)fica.push('• o orçamento ORC-'+pad(L.orc.num)+' ('+(L.orc.status||'sem status')+')');
+ const estoque=v.baixa&&(v.itens||[]).some(it=>DB.produtos.some(p=>p.id===it.prodId));
+ return 'Excluir o pedido '+cod+' — '+cliName(v.cliId)+' ('+fmt(v.total)+')? Não dá para desfazer.'
+  +(sai.length?'\n\nApaga junto:\n'+sai.join('\n'):'')
+  +(fica.length?'\n\nContinua como está:\n'+fica.join('\n'):'')
+  +(estoque?'\n\nO estoque dos produtos do pedido volta.':'');}
+async function delVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
+ const L=ligacoesDoPedido(v);
+ if(!confirm(textoExclusaoPedido(v,L)))return;
+ /* o pedido sai primeiro: se o banco recusar, nada mais muda */
  const {error}=await supa.from('vendas').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
- DB.vendas=DB.vendas.filter(x=>x.id!==id);commit('excluir','Pedidos','V-'+pad(v.num));syncSheets('vendas','delete',{id});toast('Pedido excluído (estoque devolvido).','info');}
+ let devolvidos=0;
+ if(v.baixa)for(const it of (v.itens||[])){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Number(p.est)+it.qty;await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);devolvidos++;}}
+ const falhas=[];let contas=0,opFoi=false;
+ for(const f of L.apagar){const r=await supa.from('financeiro').delete().eq('id',f.id);
+  if(r.error){falhas.push('"'+f.desc+'" no Financeiro');continue;}
+  DB.financeiro=DB.financeiro.filter(x=>x.id!==f.id);syncSheets('financeiro','delete',{id:f.id});contas++;}
+ if(L.opSai){const r=await supa.from('producao').delete().eq('id',L.op.id);
+  if(r.error)falhas.push('OP-'+pad(L.op.num)+' no PCP');
+  else{DB.producao=DB.producao.filter(x=>x.id!==L.op.id);syncSheets('pcp','delete',{id:L.op.id});opFoi=true;}}
+ DB.vendas=DB.vendas.filter(x=>x.id!==id);
+ commit('excluir','Pedidos','V-'+pad(v.num)+(contas?' + '+contas+' conta(s) a receber pendente(s)':'')+(opFoi?' + OP-'+pad(L.op.num):'')+(L.manter.length?' · mantido(s) '+L.manter.length+' lançamento(s) pago(s) ou de saída':'')+(falhas.length?' · não saiu: '+falhas.join(', '):''));
+ syncSheets('vendas','delete',{id});
+ if(falhas.length)toast('Pedido excluído, mas não saiu: '+falhas.join(', ')+'. Apague à mão.','error',9000);
+ else toast('Pedido excluído'+(contas?', com '+contas+' conta(s) a receber':'')+(opFoi?(contas?' e a ':', com a ')+'OP-'+pad(L.op.num):'')+'.'+(devolvidos?' Estoque devolvido.':''),'info',6000);}
 
 /* ================= ORÇAMENTOS ================= */
 /* Origem (Indicação, Instagram, Google...) fica numa coluna "origem" em orcamentos e vendas.
@@ -4540,8 +4673,16 @@ function resumoOrc(o){const itens=itensOrc(o);if(!itens.length)return '(sem iten
 function recomputeHeaderTotais(o){o.preco=(o.itens||[]).reduce((s,i)=>s+Number(i.preco||0),0);o.custo=(o.itens||[]).reduce((s,i)=>s+Number(i.custo||0),0);o.lucro=(o.itens||[]).reduce((s,i)=>s+Number(i.lucro||0),0);}
 function statusPillHtml(status){const map={'Rascunho':['var(--text-muted)','var(--surface3)'],'Enviado':['var(--primary)','rgba(26,23,20,0.06)'],'Em ajuste':['#9a6b13','rgba(200,169,110,0.22)'],'Aprovado':['var(--success)','rgba(61,107,79,0.1)'],'Reprovado':['var(--danger)','rgba(181,64,64,0.1)'],'Concluído':['var(--success)','rgba(61,107,79,0.1)']};
  const [color,bg]=map[status]||map['Rascunho'];
- return '<span class="status-pill" style="color:'+color+';background:'+bg+';border-color:'+color+'40"><span class="dot" style="background:'+color+'"></span>'+status+'</span>';}
+ return '<span class="status-pill" style="color:'+color+';background:'+bg+';border-color:'+color+'40"><span class="dot" style="background:'+color+'"></span>'+(status?esc(status):'Sem status')+'</span>';}
 const ORC_STATUS=['Rascunho','Enviado','Em ajuste','Aprovado','Reprovado','Concluído'];
+/* opcoes de uma lista fixa (status, prioridade, centro de custo). O valor gravado que nao
+   esta na lista (antigo, vindo da planilha ou vazio) entra como opcao a mais: abrir e
+   salvar a ficha nunca o apaga. "vazio" e o rotulo da opcao em branco, quando a lista tem uma. */
+function opcoesLista(lista,atual,vazio){const v=atual==null?'':String(atual);
+ const op=(val,rot)=>'<option value="'+esc(val)+'"'+(val===v?' selected':'')+'>'+esc(rot)+'</option>';
+ const fora=lista.includes(v)||(vazio!==undefined&&!v)?'':op(v,v||'— sem status —');
+ return (vazio!==undefined?op('',vazio):'')+fora+lista.map(x=>op(x,x)).join('');}
+function encherSelectLista(id,lista,atual,vazio){const s=$(id);if(s)s.innerHTML=opcoesLista(lista,atual,vazio);}
 /* a mesma etiqueta, agora clicavel: quem pode editar troca o status ali mesmo */
 function statusOrcHtml(o){
  if(!canEdit())return statusPillHtml(o.status);
@@ -4549,9 +4690,9 @@ function statusOrcHtml(o){
  const [color,bg]=map[o.status]||map['Rascunho'];
  return '<span class="status-drop" style="color:'+color+';background:'+bg+';border-color:'+color+'40" title="Alterar o status deste orçamento" onclick="event.stopPropagation()">'
   +'<span class="dot" style="background:'+color+'"></span>'
-  +'<span class="rotulo">'+o.status+'</span><span class="seta">▾</span>'
+  +'<span class="rotulo">'+(o.status?esc(o.status):'Sem status')+'</span><span class="seta">▾</span>'
   +'<select aria-label="Status de ORC-'+pad(o.num)+'" onchange="mudarStatusOrc(\''+o.id+'\',this.value,this)" onclick="event.stopPropagation()">'
-  +ORC_STATUS.map(st=>'<option'+(st===o.status?' selected':'')+'>'+st+'</option>').join('')
+  +opcoesLista(ORC_STATUS,o.status)
   +'</select></span>';}
 /* Aprovar e Reprovar nao sao so uma etiqueta: um gera pedido, contas a receber e ordem
    de producao; o outro pede confirmacao. Por isso a caixa desvia para os fluxos de sempre. */
@@ -4576,7 +4717,7 @@ async function mudarStatusOrc(id,novo,el){
  o.status=novo;
  const {error}=await supa.from('orcamentos').update({status:novo}).eq('id',id);
  if(error){o.status=anterior;volta();toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
- commit('editar','Orçamentos','ORC-'+pad(o.num)+': status '+anterior+' → '+novo);syncSheets('orcamentos','upsert',o);
+ commit('editar','Orçamentos','ORC-'+pad(o.num)+': status '+(anterior||'sem status')+' → '+novo);syncSheets('orcamentos','upsert',o);
  toast('Status de ORC-'+pad(o.num)+' alterado para '+novo+'.','success');
  if(veioDaDetalhe){orcShow('detalhe');renderOrcDetalhe();}
  else if(CUR==='orcamentos')renderOrcamentos();}
@@ -4592,7 +4733,8 @@ function encherFiltroStatusOrc(){const s=$('orc-status-filter');if(!s||s.options
 const textoBuscaOrc=o=>['orc-'+pad(o.num),'orc-'+o.num,'orc '+o.num,'orc'+o.num,'orc'+pad(o.num),semAcento(cliName(o.cliId))].join(' | ');
 function chaveOrdemOrc(o,col){
  if(col==='num')return o.num||0;
- if(col==='status')return ORC_STATUS.indexOf(o.status);
+ /* status fora da lista (antigo ou vazio) vira '' e vai para o fim nos dois sentidos */
+ if(col==='status'){const i=ORC_STATUS.indexOf(o.status);return i<0?'':i;}
  if(col==='cliente')return o.cliId?semAcento(cliName(o.cliId)):'';
  if(col==='entrega')return o.validade||'';
  if(col==='valor')return Number(o.preco)||0;
@@ -4640,7 +4782,7 @@ function filtroColAtivo(col){const F=ORC_FILTROS;
 const filtrosAtivosOrc=()=>Object.keys(ORC_FILTRO_NOMES).filter(filtroColAtivo);
 function passaFiltrosOrc(o){const F=ORC_FILTROS;
  if(F.num.trim()){const d=F.num.replace(/\D/g,'');if(d&&!(String(o.num).includes(d)||pad(o.num).includes(d)))return false;}
- if(F.status.length&&!F.status.includes(o.status))return false;
+ if(F.status.length&&!F.status.includes(o.status||''))return false;
  if(F.dataDe&&(o.data||'')<F.dataDe)return false;
  if(F.dataAte&&(!o.data||o.data>F.dataAte))return false;
  if(F.cliente.trim()&&!semAcento(cliName(o.cliId)).includes(semAcento(F.cliente.trim())))return false;
@@ -4656,13 +4798,15 @@ function passaFiltrosOrc(o){const F=ORC_FILTROS;
  return true;}
 /* os controles de cada coluna; o mesmo HTML serve a janelinha e a janela do celular */
 function htmlFiltroCol(col){const F=ORC_FILTROS;
- const chk=(chave,valor,rot)=>'<label class="fo-check"><input type="checkbox"'+(F[chave].includes(valor)?' checked':'')+' onchange="alternarFiltroOrc(\''+chave+'\',\''+valor+'\',this.checked)">'+rot+'</label>';
+ const chk=(chave,valor,rot)=>'<label class="fo-check"><input type="checkbox"'+(F[chave].includes(valor)?' checked':'')+' data-v="'+esc(valor)+'" onchange="alternarFiltroOrc(\''+chave+'\',this.dataset.v,this.checked)">'+rot+'</label>';
  const bool=(chave,rot)=>'<label class="fo-check"><input type="checkbox"'+(F[chave]?' checked':'')+' onchange="setFiltroOrc(\''+chave+'\',this.checked)">'+rot+'</label>';
  const campo=(chave,tipo,ph,extra)=>'<input class="form-control fo-campo" type="'+tipo+'" value="'+esc(String(F[chave]))+'"'+(ph?' placeholder="'+ph+'"':'')+(extra||'')+' oninput="setFiltroOrc(\''+chave+'\',this.value)">';
  const par=(rot,html)=>'<div class="fo-par"><span>'+rot+'</span>'+html+'</div>';
  let h='';
  if(col==='num')h=campo('num','text','ex.: 142',' inputmode="numeric"');
- if(col==='status')h=ORC_STATUS.map(st=>chk('status',st,esc(st))).join('');
+ /* status gravados fora da lista (antigos ou vazios) tambem viram opcao, senao somem ao filtrar */
+ if(col==='status')h=[...ORC_STATUS,...new Set(DB.orcamentos.map(o=>o.status||'').filter(s=>!ORC_STATUS.includes(s)))]
+  .map(st=>chk('status',st,st?esc(st):'Sem status')).join('');
  if(col==='data')h=par('de',campo('dataDe','date'))+par('até',campo('dataAte','date'));
  if(col==='cliente')h=campo('cliente','text','parte do nome');
  if(col==='entrega')h=par('de',campo('entDe','date'))+par('até',campo('entAte','date'))+bool('entVencida','Vencida e ainda em aberto')+bool('entSem','Sem data de entrega');
@@ -4826,7 +4970,7 @@ function embutirCabecalhoOrc(destino){
  if(card.parentElement!==alvo)alvo.appendChild(card);
  alvo.style.display='block';}
 function prepararCabecalhoNovo(){ORC_ATUAL_ID=null;$('orch-id').value='';$('orch-cli').innerHTML='';fillSel('orch-cli',DB.clientes,c=>c.nome,'','— Sem cliente —');
- $('orch-data').value=today();$('orch-validade').value=addDays(today(),15);$('orch-status').value='Rascunho';$('orch-obs').value='';$('orch-origem').value='';aoMudarDatasOrc();}
+ $('orch-data').value=today();$('orch-validade').value=addDays(today(),15);encherSelectLista('orch-status',ORC_STATUS,'Rascunho');$('orch-obs').value='';$('orch-origem').value='';aoMudarDatasOrc();}
 function novoOrcamento(){if(!guard())return;
  prepararCabecalhoNovo();
  ORC_NOVO_INLINE=true;ORC_ITEM_EDITANDO=null;ORC_VOLTAR='lista';
@@ -4857,7 +5001,7 @@ async function garantirOrcamentoDoCabecalho(){
 function editarCabecalhoOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  ORC_NOVO_INLINE=false;embutirCabecalhoOrc(null);
  ORC_ATUAL_ID=id;$('orch-id').value=o.id;fillSel('orch-cli',DB.clientes,c=>c.nome,o.cliId||'','— Sem cliente —');
- $('orch-data').value=o.data;$('orch-validade').value=o.validade||'';$('orch-status').value=o.status;$('orch-obs').value=o.obs||'';$('orch-origem').value=o.origem||'';aoMudarDatasOrc();
+ $('orch-data').value=o.data;$('orch-validade').value=o.validade||'';encherSelectLista('orch-status',ORC_STATUS,o.status);$('orch-obs').value=o.obs||'';$('orch-origem').value=o.origem||'';aoMudarDatasOrc();
  $('orch-title').textContent='Editar Orçamento ORC-'+pad(o.num);orcShow('header');}
 function cancelarHeaderOrc(){const id=$('orch-id').value;if(id){abrirDetalheOrc(id);}else{orcShow('lista');renderOrcamentos();}}
 /* dias entre duas datas, contadas ao meio-dia para o horário de verão não tirar um dia */
@@ -6701,6 +6845,18 @@ function montarPdfContrato(o){
 /* ================= PRODUÇÃO (PCP) ================= */
 const ETAPAS=['📋 Planejamento','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','🔁 Retrabalho','📦 Pronto','🚚 Entregue'];
 const ETAPA_FINAL=ETAPAS.length-1;
+/* Retrabalho é desvio, não passo da fila: o ▶ de Acabamento vai direto para Pronto,
+   e o ▶ de Retrabalho também. Entra-se em Retrabalho pela ficha da OP (Etapa Atual).
+   Os números não mudam: o banco grava o índice da etapa. */
+const ETAPA_ACABAMENTO=3,ETAPA_RETRABALHO=4,ETAPA_PRONTO=5;
+function proximaEtapa(i){const n=Number(i)||0;
+ if(n===ETAPA_ACABAMENTO||n===ETAPA_RETRABALHO)return ETAPA_PRONTO;
+ return Math.min(ETAPA_FINAL,n+1);}
+/* o ◀ desfaz o ▶: de Pronto volta para Acabamento, sem passar por Retrabalho */
+function etapaAnterior(i){const n=Number(i)||0;
+ if(n===ETAPA_PRONTO||n===ETAPA_RETRABALHO)return ETAPA_ACABAMENTO;
+ return Math.max(0,n-1);}
+const OP_PRIO=['Normal','Alta','Urgente'];
 function opParaSupabase(o){const r={id:o.id,titulo:o.titulo,cli_id:o.cliId||null,prazo:o.prazo||null,resp:o.resp||null,prio:o.prio||null,etapa:o.etapa||0,status:o.status||'Ativa',obs:o.obs||null,orc_id:o.orcId||null,fim:o.fim||null};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
 function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim,criadoEm:row.created_at};}
 function elapsedStr(iso){if(!iso)return '';const ms=Date.now()-new Date(iso).getTime();if(ms<0)return '0min';
@@ -6778,7 +6934,7 @@ function renderPCP(){const t=today();
   return '<div class="kanban-col'+(i===PCP_ETAPA_MOBILE?' ativa':'')+'"><div class="kanban-col-header"><span class="kanban-col-title">'+et+'</span><span class="kanban-count">'+cards.length+'</span></div>'
   +cards.map(o=>{const pcls=!o.prazo?'ok':o.prazo<t?'vencido':o.prazo===t?'hoje':'ok';
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
-   const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶<span class="pcp-btn-txt"> '+esc(ETAPAS[i+1])+'</span></button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
+   const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶<span class="pcp-btn-txt"> '+esc(ETAPAS[proximaEtapa(i)])+'</span></button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
    const respLinha=canEdit()
     ?'<div class="card-resp" onclick="event.stopPropagation()">👤<select class="'+(o.resp?'':'vazio')+'" title="Quem é o responsável por esta ordem" onchange="definirRespOP(\''+o.id+'\',this.value,this)">'+opcoesResp(o.resp||'')+'</select></div>'
     :(o.resp?'<div class="card-resp">👤 '+esc(o.resp)+'</div>':'');
@@ -6835,7 +6991,7 @@ function renderPcpLista(ordens,t){
   const acoes=canEdit()
    ?'<div class="row-actions" style="opacity:1">'
     +(i>0?'<button class="btn btn-ghost btn-sm" title="Voltar etapa" onclick="moveOP(\''+o.id+'\',-1)">◀</button>':'')
-    +(i<ETAPA_FINAL?'<button class="btn btn-ghost btn-sm" title="Avançar para '+esc(semEmoji(ETAPAS[i+1]))+'" onclick="moveOP(\''+o.id+'\',1)">▶</button>':'<button class="btn btn-ghost btn-sm" title="Concluir" onclick="concluirOP(\''+o.id+'\')">✓</button>')
+    +(i<ETAPA_FINAL?'<button class="btn btn-ghost btn-sm" title="Avançar para '+esc(semEmoji(ETAPAS[proximaEtapa(i)]))+'" onclick="moveOP(\''+o.id+'\',1)">▶</button>':'<button class="btn btn-ghost btn-sm" title="Concluir" onclick="concluirOP(\''+o.id+'\')">✓</button>')
     +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
    :'';
   const aberta=PCP_OBS_ABERTAS.has(o.id);
@@ -6871,7 +7027,7 @@ function renderPcpListaCards(ordens,t){
   const acoes=canEdit()
    ?'<div class="pc-acoes">'
     +(i>0?'<button class="btn btn-ghost btn-sm" onclick="moveOP(\''+o.id+'\',-1)">◀</button>':'')
-    +(i<ETAPA_FINAL?'<button class="btn btn-primary btn-sm" onclick="moveOP(\''+o.id+'\',1)">▶ '+esc(semEmoji(ETAPAS[i+1]))+'</button>':'<button class="btn btn-primary btn-sm" onclick="concluirOP(\''+o.id+'\')">✓ Concluir</button>')
+    +(i<ETAPA_FINAL?'<button class="btn btn-primary btn-sm" onclick="moveOP(\''+o.id+'\',1)">▶ '+esc(semEmoji(ETAPAS[proximaEtapa(i)]))+'</button>':'<button class="btn btn-primary btn-sm" onclick="concluirOP(\''+o.id+'\')">✓ Concluir</button>')
     +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
    :'';
   return '<div class="pedido-card">'
@@ -6883,19 +7039,20 @@ function renderPcpListaCards(ordens,t){
    +(obs?'<button class="pc-itens-btn" onclick="togglePcpObs(\''+o.id+'\')">'+(PCP_OBS_ABERTAS.has(o.id)?'▾':'▸')+' observação</button>':'')
    +((obs&&PCP_OBS_ABERTAS.has(o.id))?'<div style="font-size:12.5px;color:var(--text-muted);margin:6px 0 8px">Obs. '+esc(obs)+'</div>':'')
    +acoes+'</div>';}).join('');}
-function openOP(){preencherDatalistResp();$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';$('op-prio').value='Normal';$('op-etapa').value='0';$('op-obs').value='';
+function openOP(){preencherDatalistResp();$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';encherSelectLista('op-prio',OP_PRIO,'Normal');$('op-etapa').value='0';$('op-obs').value='';
  $('op-btn-del').style.display='none';$('mop-title').textContent='Nova Ordem de Produção';openModal('modal-producao');}
 function editOP(id){if(!canEdit())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  preencherDatalistResp();
- $('op-id').value=o.id;$('op-titulo').value=o.titulo;fillSel('op-cli',DB.clientes,c=>c.nome,o.cliId,'—');$('op-prazo').value=o.prazo||'';$('op-resp').value=o.resp||'';$('op-prio').value=o.prio||'Normal';$('op-etapa').value=String(o.etapa);$('op-obs').value=o.obs||'';
+ $('op-id').value=o.id;$('op-titulo').value=o.titulo;fillSel('op-cli',DB.clientes,c=>c.nome,o.cliId,'—');$('op-prazo').value=o.prazo||'';$('op-resp').value=o.resp||'';encherSelectLista('op-prio',OP_PRIO,o.prio||'Normal');$('op-etapa').value=String(o.etapa);$('op-obs').value=o.obs||'';
  $('op-btn-del').style.display='inline-flex';$('mop-title').textContent='Editar OP-'+pad(o.num||0);openModal('modal-producao');}
 async function saveOP(){if(!guard())return;const titulo=$('op-titulo').value.trim();if(!titulo){toast('Informe a peça / projeto.','error');return;}
  const id=$('op-id').value;const o={titulo,cliId:$('op-cli').value,prazo:$('op-prazo').value,resp:$('op-resp').value.trim(),prio:$('op-prio').value,etapa:Number($('op-etapa').value),obs:$('op-obs').value.trim()};
  if(id){
-  const o2=Object.assign(DB.producao.find(x=>x.id===id),o);
+  const atual=DB.producao.find(x=>x.id===id);const etapaAntes=Number(atual.etapa);
+  const o2=Object.assign(atual,o);
   const {error}=await supa.from('producao').update(opParaSupabase(o2)).eq('id',id);
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
-  commit('editar','Produção',titulo);syncSheets('pcp','upsert',o2);
+  commit('editar','Produção',titulo+(Number(o2.etapa)!==etapaAntes?' → '+ETAPAS[o2.etapa]:''));syncSheets('pcp','upsert',o2);
  }
  else{
   const n=Object.assign({id:uid(),status:'Ativa'},o);
@@ -6911,9 +7068,12 @@ async function delOPFromModal(){const id=$('op-id').value;if(!id)return;const o=
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.producao=DB.producao.filter(x=>x.id!==id);closeModal('modal-producao');commit('excluir','Produção',o.titulo);syncSheets('pcp','delete',{id});toast('OP excluída.','info');}
 async function moveOP(id,dir){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
- o.etapa=Math.max(0,Math.min(ETAPA_FINAL,Number(o.etapa)+dir));
+ const antes=o.etapa;
+ const nova=dir>0?proximaEtapa(antes):etapaAnterior(antes);
+ if(nova===(Number(antes)||0))return; /* já está na ponta (Planejamento ◀ / Entregue ▶): nada a gravar */
+ o.etapa=nova;
  const {error}=await supa.from('producao').update({etapa:o.etapa}).eq('id',id);
- if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
+ if(error){o.etapa=antes;toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
  commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);
  if(ehCelular())toast(o.titulo+' → '+ETAPAS[o.etapa],'success');}
 async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
@@ -7413,9 +7573,9 @@ async function advEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.i
   const {error}=await supa.from('entregas').update({status:e.status}).eq('id',id);
   if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
   commit('editar','Entregas',e.peca+' → '+e.status);syncSheets('entregas','upsert',e);}}
-function openEntrega(){$('ent-id').value='';$('ent-data').value=today();fillSel('ent-cli',DB.clientes,c=>c.nome,'','—');['ent-peca','ent-end','ent-resp','ent-obs'].forEach(i=>$(i).value='');$('ent-status').value='Agendada';$('ment-title').textContent='Nova Entrega';openModal('modal-entregas');}
+function openEntrega(){$('ent-id').value='';$('ent-data').value=today();fillSel('ent-cli',DB.clientes,c=>c.nome,'','—');['ent-peca','ent-end','ent-resp','ent-obs'].forEach(i=>$(i).value='');encherSelectLista('ent-status',ENT_ST,'Agendada');$('ment-title').textContent='Nova Entrega';openModal('modal-entregas');}
 function editEntrega(id){if(!guard())return;const e=DB.entregas.find(x=>x.id===id);if(!e)return;
- $('ent-id').value=e.id;$('ent-data').value=e.data;fillSel('ent-cli',DB.clientes,c=>c.nome,e.cliId||'','—');$('ent-peca').value=e.peca;$('ent-end').value=e.end||'';$('ent-resp').value=e.resp||'';$('ent-status').value=e.status;$('ent-obs').value=e.obs||'';$('ment-title').textContent='Editar Entrega';openModal('modal-entregas');}
+ $('ent-id').value=e.id;$('ent-data').value=e.data;fillSel('ent-cli',DB.clientes,c=>c.nome,e.cliId||'','—');$('ent-peca').value=e.peca;$('ent-end').value=e.end||'';$('ent-resp').value=e.resp||'';encherSelectLista('ent-status',ENT_ST,e.status);$('ent-obs').value=e.obs||'';$('ment-title').textContent='Editar Entrega';openModal('modal-entregas');}
 async function saveEntrega(){if(!guard())return;const peca=$('ent-peca').value.trim();if(!peca){toast('Informe a peça.','error');return;}
  const id=$('ent-id').value;const o={data:$('ent-data').value||today(),cliId:$('ent-cli').value,peca,end:$('ent-end').value.trim(),resp:$('ent-resp').value.trim(),status:$('ent-status').value,obs:$('ent-obs').value.trim()};
  if(id){
@@ -7693,7 +7853,7 @@ function renderFinanceiro(){const ym=today().slice(0,7);
  const listaFin=DB.financeiro.filter(f=>(!fTipo||f.tipo===fTipo)&&(!fSt||f.status===fSt)&&fcPassa('fin',f));
  if($('fin-filtro-label'))$('fin-filtro-label').textContent=listaFin.length===DB.financeiro.length?(DB.financeiro.length+' lançamento(s)'):(listaFin.length+' de '+DB.financeiro.length+' lançamento(s)');
  $('tb-financeiro').innerHTML=listaFin.map(f=>{const stB={'Pago':'badge-success','Pendente':'badge-warning','Cancelado':'badge-muted'}[f.status]||'badge-muted';
-  const ccCell=canEdit()?('<select class="form-control" style="font-size:11px;padding:3px 5px;min-width:150px;'+(f.centroCusto?'':'border-color:var(--danger);color:var(--danger)')+'" onchange="setCentroCustoInline(\''+f.id+'\',this.value)"><option value=""'+(!f.centroCusto?' selected':'')+'>⚠ Não classificado</option>'+SETORES_FIXOS.map(s=>'<option value="'+esc(s)+'"'+(f.centroCusto===s?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select>'):(f.centroCusto?esc(f.centroCusto):'<span class="badge badge-danger">Não classificado</span>');
+  const ccCell=canEdit()?('<select class="form-control" style="font-size:11px;padding:3px 5px;min-width:150px;'+(f.centroCusto?'':'border-color:var(--danger);color:var(--danger)')+'" onchange="setCentroCustoInline(\''+f.id+'\',this.value)">'+opcoesLista(SETORES_FIXOS,f.centroCusto,'⚠ Não classificado')+'</select>'):(f.centroCusto?esc(f.centroCusto):'<span class="badge badge-danger">Não classificado</span>');
   const pedLabels=pedidos.map(pedidoLabel);
   const legado=f.cat&&!pedLabels.includes(f.cat)?'<option value="'+esc(f.cat)+'" selected>'+esc(f.cat)+'</option>':'';
   const catCell=canEdit()?('<select class="form-control" style="font-size:11px;padding:3px 5px;min-width:170px" onchange="setPedidoInline(\''+f.id+'\',this.value)"><option value=""'+(!f.cat?' selected':'')+'>— Nenhum —</option>'+legado+pedidos.map(v=>'<option value="'+esc(pedidoLabel(v))+'"'+(f.cat===pedidoLabel(v)?' selected':'')+'>'+esc(pedidoLabel(v))+'</option>').join('')+'</select>'):esc(f.cat||'—');
@@ -7722,8 +7882,7 @@ function renderFinanceiroCards(lista,pedidos){
   const stB={'Pago':'badge-success','Pendente':'badge-warning','Cancelado':'badge-muted'}[f.status]||'badge-muted';
   const selCC=canEdit()
    ?'<select class="form-control'+(f.centroCusto?'':' pendente')+'" onchange="setCentroCustoInline(\''+f.id+'\',this.value)">'
-    +'<option value=""'+(!f.centroCusto?' selected':'')+'>⚠ Não classificado</option>'
-    +SETORES_FIXOS.map(x=>'<option value="'+esc(x)+'"'+(f.centroCusto===x?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'
+    +opcoesLista(SETORES_FIXOS,f.centroCusto,'⚠ Não classificado')+'</select>'
    :'<span style="font-size:12.5px">'+(f.centroCusto?esc(f.centroCusto):'<span class="badge badge-danger">Não classificado</span>')+'</span>';
   const legado=f.cat&&!pedLabels.includes(f.cat)?'<option value="'+esc(f.cat)+'" selected>'+esc(f.cat)+'</option>':'';
   const selPed=canEdit()
@@ -7761,9 +7920,9 @@ function encherSelectCC(){const el=$('fin-cc');if(!el)return;const atual=el.valu
  el.innerHTML='<option value="">— Não classificado —</option>'
   +SETORES_FIXOS.map(x=>'<option>'+esc(x)+'</option>').join('');
  el.value=atual;}
-function openFin(){encherSelectCC();$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';fillFinPedidoSelect('');$('fin-cc').value='';$('fin-val').value='';$('fin-st').value='Pago';$('fin-obs').value='';$('mf-title').textContent='Novo Lançamento';openModal('modal-financeiro');}
+function openFin(){encherSelectCC();$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';fillFinPedidoSelect('');$('fin-cc').value='';$('fin-val').value='';encherSelectLista('fin-st',FIN_STATUS,'Pago');$('fin-obs').value='';$('mf-title').textContent='Novo Lançamento';openModal('modal-financeiro');}
 function editFin(id){encherSelectCC();if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
- $('fin-id').value=f.id;$('fin-tipo').value=f.tipo;$('fin-data').value=f.data;$('fin-desc').value=f.desc;fillFinPedidoSelect(f.cat||'');$('fin-cc').value=f.centroCusto||'';$('fin-val').value=f.val;$('fin-st').value=f.status;$('fin-obs').value=f.obs||'';$('mf-title').textContent='Editar Lançamento';openModal('modal-financeiro');}
+ $('fin-id').value=f.id;$('fin-tipo').value=f.tipo;$('fin-data').value=f.data;$('fin-desc').value=f.desc;fillFinPedidoSelect(f.cat||'');encherSelectLista('fin-cc',SETORES_FIXOS,f.centroCusto,'— Não classificado —');$('fin-val').value=f.val;encherSelectLista('fin-st',FIN_STATUS,f.status);$('fin-obs').value=f.obs||'';$('mf-title').textContent='Editar Lançamento';openModal('modal-financeiro');}
 async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').value.trim();if(!desc||num('fin-val')<=0){toast('Informe descrição e valor.','error');return;}
  const id=$('fin-id').value;const o={tipo:$('fin-tipo').value,data:$('fin-data').value||today(),desc,cat:$('fin-cat').value.trim(),centroCusto:$('fin-cc').value,val:num('fin-val'),status:$('fin-st').value,obs:$('fin-obs').value.trim()};
  if(id){
@@ -8031,9 +8190,9 @@ async function lancarCompra(id){if(!guard())return;const c=DB.compras.find(x=>x.
  const {error}=await supa.from('compras').update({lancado:true}).eq('id',id);
  if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
  commit('criar','Financeiro','Lançamento da OC-'+pad(c.num));syncSheets('financeiro','upsert',finReg);syncSheets('compras','upsert',c);toast('Compra lançada no financeiro!','success');}
-function openCompra(){$('cmp-id').value='';fillSel('cmp-for',DB.fornecedores,f=>f.nome,'','— Selecionar —');$('cmp-data').value=today();$('cmp-total').value='';$('cmp-status').value='Pendente';$('cmp-obs').value='';$('mcmp-title').textContent='Nova Ordem de Compra';openModal('modal-compras');}
+function openCompra(){$('cmp-id').value='';fillSel('cmp-for',DB.fornecedores,f=>f.nome,'','— Selecionar —');$('cmp-data').value=today();$('cmp-total').value='';encherSelectLista('cmp-status',Object.keys(COMPRA_STB),'Pendente');$('cmp-obs').value='';$('mcmp-title').textContent='Nova Ordem de Compra';openModal('modal-compras');}
 function editCompra(id){if(!guard())return;const c=DB.compras.find(x=>x.id===id);if(!c)return;
- $('cmp-id').value=c.id;fillSel('cmp-for',DB.fornecedores,f=>f.nome,c.forId,'— Selecionar —');$('cmp-data').value=c.data;$('cmp-total').value=c.total;$('cmp-status').value=c.status;$('cmp-obs').value=c.obs||'';$('mcmp-title').textContent='Editar OC-'+pad(c.num);openModal('modal-compras');}
+ $('cmp-id').value=c.id;fillSel('cmp-for',DB.fornecedores,f=>f.nome,c.forId,'— Selecionar —');$('cmp-data').value=c.data;$('cmp-total').value=c.total;encherSelectLista('cmp-status',Object.keys(COMPRA_STB),c.status);$('cmp-obs').value=c.obs||'';$('mcmp-title').textContent='Editar OC-'+pad(c.num);openModal('modal-compras');}
 async function saveCompra(){if(!guard())return;const forId=$('cmp-for').value;if(!forId){toast('Selecione o fornecedor.','error');return;}
  const id=$('cmp-id').value;const o={forId,data:$('cmp-data').value||today(),total:num('cmp-total'),status:$('cmp-status').value,obs:$('cmp-obs').value.trim()};
  if(id){
@@ -8060,7 +8219,7 @@ function renderRelatorios(){syncPerBar('rel-per',REL);
  const orcRealizados=DB.orcamentos.filter(o=>matchPer(o.data,REL)).slice().sort((a,b)=>b.num-a.num);
  $('rel-orc-real-count').textContent='— '+orcRealizados.length+' no período';
  const stBOrc={'Rascunho':'badge-muted','Enviado':'badge-info','Em ajuste':'badge-warning','Aprovado':'badge-success','Reprovado':'badge-danger','Concluído':'badge-success'};
- $('tb-rel-orc-realizados').innerHTML=orcRealizados.map(o=>'<tr><td class="mono">ORC-'+pad(o.num)+'</td><td>'+esc(cliName(o.cliId))+'</td><td class="mono">'+fmtD(o.data)+'</td><td><span class="badge '+(stBOrc[o.status]||'badge-muted')+'">'+o.status+'</span></td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td></tr>').join('')||emptyRow(5,'Nenhum orçamento no período');
+ $('tb-rel-orc-realizados').innerHTML=orcRealizados.map(o=>'<tr><td class="mono">ORC-'+pad(o.num)+'</td><td>'+esc(cliName(o.cliId))+'</td><td class="mono">'+fmtD(o.data)+'</td><td><span class="badge '+(stBOrc[o.status]||'badge-muted')+'">'+(o.status?esc(o.status):'Sem status')+'</span></td><td class="mono" style="font-weight:700">'+fmt(o.preco)+'</td></tr>').join('')||emptyRow(5,'Nenhum orçamento no período');
  const orcAprovados=DB.orcamentos.filter(o=>(o.status==='Aprovado'||o.status==='Concluído')&&matchPer(o.data,REL)).slice().sort((a,b)=>b.num-a.num);
  $('rel-orc-aprov-count').textContent='— '+orcAprovados.length+' no período';
  $('tb-rel-orc-aprovados').innerHTML=orcAprovados.map(o=>{const venda=DB.vendas.find(v=>(v.obs||'').includes('ORC-'+pad(o.num)));
@@ -8167,7 +8326,7 @@ async function gerarPdfRelatorio(){
   y=doc.lastAutoTable.finalY+7;}
 
  novaSecao('Orçamentos Realizados',['#','Cliente','Data','Status','Valor'],
-  orcRealizados.map(o=>['ORC-'+pad(o.num),cliName(o.cliId),fmtD(o.data),o.status,fmt(o.preco)]),
+  orcRealizados.map(o=>['ORC-'+pad(o.num),cliName(o.cliId),fmtD(o.data),o.status||'Sem status',fmt(o.preco)]),
   {4:{halign:'right'}});
 
  novaSecao('Orçamentos Aprovados (Pedidos)',['#','Cliente','Data Aprovação','Pedido Gerado','Valor'],
@@ -9367,7 +9526,7 @@ ORC-0007, V-0014, OP-0009, OC-0003.
   com o mesmo conteúdo do período selecionado.
 - Orçamentos — criação de orçamentos com múltiplos itens (sob medida,
   catálogo ou novo produto); status em caixa de seleção na própria lista
-  (Rascunho, Enviado, Aprovado, Reprovado, Concluído); aprovação parcial
+  (Rascunho, Enviado, Em ajuste, Aprovado, Reprovado, Concluído); aprovação parcial
   de itens (checklist) que gera automaticamente um Pedido, contas a
   receber e uma Ordem de Produção; anexos de referência (fotos, PDFs);
   geração do PDF da proposta (com capa), do contrato de prestação de
@@ -9922,13 +10081,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-15.6';
+const APP_VERSAO='2026-10-15.7';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=308;
+const APP_ATUALIZACAO=309;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
@@ -10037,6 +10196,7 @@ function registrarServiceWorker(){
   recarregando=true;location.reload();});}
 registrarServiceWorker();
 instalarFilaDeEnvio();
+instalarTravaDeGravacao();
 escreverVersaoNoLogin();
 
 /* ================= PUXAR PARA ATUALIZAR =================
