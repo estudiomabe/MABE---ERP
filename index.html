@@ -1689,7 +1689,9 @@ const fmt=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:
 const fmtK=v=>{v=Number(v)||0;return v>=100000?'R$ '+(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k':fmt(v);};
 const fmtN=(v,d)=> (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:d===undefined?2:d,maximumFractionDigits:d===undefined?2:d});
 const num=id=>parseFloat($(id).value)||0;
-const today=()=>new Date().toISOString().slice(0,10);
+/* a data de hoje no relógio do aparelho (Brasília), não em UTC: com toISOString, depois das 21h
+   os campos de data já vinham com o dia seguinte */
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const addMonths=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setMonth(d.getMonth()+n);return d.toISOString().slice(0,10);};
 const fmtD=d=>d?String(d).slice(0,10).split('-').reverse().join('/'):'—';
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -10081,13 +10083,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-15.7';
+const APP_VERSAO='2026-10-15.8';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=309;
+const APP_ATUALIZACAO=310;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
