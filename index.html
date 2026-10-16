@@ -91,6 +91,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 .btn-ghost { background:var(--surface2);color:var(--text);border:1px solid var(--border); } .btn-ghost:hover { background:var(--surface3); }
 .btn-danger { background:rgba(181,64,64,0.08);color:var(--danger);border:1px solid rgba(181,64,64,0.18); } .btn-danger:hover { background:rgba(181,64,64,0.15); }
 .btn-sm { padding:4px 9px;font-size:12px; } .btn svg { width:13px;height:13px; }
+/* ao voltar para a lista, o cartão de onde a pessoa saiu pisca de leve */
+@keyframes destaqueVolta { 0% { box-shadow:0 0 0 3px var(--accent); } 100% { box-shadow:0 0 0 0 transparent; } }
+.acabou-de-abrir { animation:destaqueVolta 1.6s ease-out; }
 /* gravando: o botão tocado fica apagado e desligado até a gravação terminar */
 button.salvando { opacity:0.6;cursor:progress; }
 #content { flex:1;overflow-y:auto;padding:22px; }
@@ -2165,10 +2168,33 @@ const TITULOS_CURTOS={clientes:'Clientes',pcp:'Produção',entregas:'Entregas',f
 const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','servicos','comissoes','compras','usuarios'];
 const BTN_NEW_LABELS={orcamentos:'Novo Orçamento',financeiro:'Adicionar Lançamento',servicos:'Cadastrar Novo Serviço Terceirizado',comissoes:'Nova Pessoa'};
 let CUR='dashboard';
+/* ================= ROLAGEM ENTRE TELAS =================
+   Todas as telas rolam no mesmo #content. Sem isto, a tela nova abria no meio
+   (ou no fim) da rolagem da anterior. Agora: aba nova e tela interna começam no
+   topo; voltar para a lista devolve a posição em que ela estava, com um destaque
+   rápido no cartão de onde a pessoa saiu; tocar de novo na aba já aberta sobe ao topo. */
+const VISTA={orcamentos:'lista',vendas:'lista'},POS_LISTA={};
+function irAoTopo(suave){const c=$('content');if(!c)return;
+ if(suave&&c.scrollTo)c.scrollTo({top:0,behavior:'smooth'});else c.scrollTop=0;}
+/* chamada pelo orcShow/vndShow ANTES de trocar o que aparece: a lista ainda está na tela para medir */
+function trocarVista(sec,view){const antes=VISTA[sec];VISTA[sec]=view;if(antes===view)return;
+ const c=$('content');if(!c)return;
+ if(antes==='lista')POS_LISTA[sec]=c.scrollTop;
+ if(view!=='lista'){c.scrollTop=0;return;}
+ /* a lista é redesenhada logo depois: devolve a posição quando ela já estiver lá */
+ const y=POS_LISTA[sec]||0;c.scrollTop=y;
+ requestAnimationFrame(()=>{if(VISTA[sec]!=='lista')return;c.scrollTop=y;destacarUltimoAberto(sec);});}
+function destacarUltimoAberto(sec){
+ const id=sec==='orcamentos'?ORC_ATUAL_ID:sec==='vendas'?($('vnd-id')||{}).value:'';if(!id)return;
+ const alvo=[...document.querySelectorAll('#section-'+sec+' [onclick*="\''+id+'\'"]')]
+  .map(el=>el.closest('.pedido-card, tr')).find(el=>el&&el.offsetParent);
+ if(!alvo)return;alvo.classList.remove('acabou-de-abrir');void alvo.offsetWidth;alvo.classList.add('acabou-de-abrir');}
 function toggleSidebar(){$('sidebar').classList.toggle('open');}
 function closeSidebar(){$('sidebar').classList.remove('open');}
 function navigate(sec){
  if(!podeVer(sec)){toast('Seu nível de acesso ('+nivelDe(USER)+') não inclui esta seção.','error');if(sec!=='dashboard')navigate('dashboard');return;}
+ /* tocar de novo na aba aberta: dentro de um orçamento/pedido volta para a lista (onde estava); já na lista, sobe ao topo */
+ const mesmaAba=sec===CUR,naLista=!(sec in VISTA)||VISTA[sec]==='lista';
  CUR=sec;ITEM_PARA_PEDIDO=null;FICHA_PROD_ID='';ORC_ITEM_PROD_ID='';
  try{localStorage.setItem(LASTSEC_KEY,sec);}catch(e){}
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -2183,6 +2209,8 @@ function navigate(sec){
  closeSidebar();
  if(sec==='orcamentos')orcShow('lista');
  if(sec==='vendas'&&!ITEM_PARA_PEDIDO)vndShow('lista');
+ /* a Agenda tem rolagem própria (vai para hoje logo abaixo) */
+ if(!mesmaAba)irAoTopo();else if(naLista&&sec!=='calendario')irAoTopo(true);
  renderSection(sec);
  if(sec==='calendario')rolarAgendaParaHoje();
  prepararOrdenacao(sec);
@@ -4435,7 +4463,7 @@ function calcVendaTotal(){let t=0;document.querySelectorAll('#vnd-itens > div').
  t+=(parseFloat(r.querySelector('.vi-qty').value)||0)*(parseFloat(r.querySelector('.vi-preco').value)||0);});return t;}
 function calcVenda(){let t=0;document.querySelectorAll('#vnd-itens > div').forEach(r=>{const s=(parseFloat(r.querySelector('.vi-qty').value)||0)*(parseFloat(r.querySelector('.vi-preco').value)||0);r.querySelector('.vi-sub').textContent=fmt(s);t+=s;});$('vnd-total').textContent=fmt(t);if($('vnd-pags-soma'))atualizarPagamentosVenda();return t;}
 /* O pedido virou página (era uma janela): lista e ficha dividem a seção Pedidos. */
-function vndShow(view){['lista','form'].forEach(v=>{const el=$('vendas-'+v+'-view');if(el)el.style.display=v===view?'block':'none';});}
+function vndShow(view){trocarVista('vendas',view);['lista','form'].forEach(v=>{const el=$('vendas-'+v+'-view');if(el)el.style.display=v===view?'block':'none';});}
 function cancelarPedido(){
  if(HORAS_SUJAS&&!confirm('As horas que você lançou ainda não foram salvas e vão se perder. Sair mesmo assim?'))return;
  limparHorasSujas();vndShow('lista');renderVendas();}
@@ -4957,7 +4985,7 @@ let ORC_ATUAL_ID=null,ORC_ITEM_EDITANDO=null,ORC_VOLTAR='lista';
 /* FICHA_PROD_ID: a ficha aberta é a de um produto do portfólio (salva no produto).
    ORC_ITEM_PROD_ID: o item do orçamento veio do portfólio (guarda o vínculo com o produto). */
 let FICHA_PROD_ID='',ORC_ITEM_PROD_ID='';
-function orcShow(view){['lista','header','detalhe','tipo','form','catalogo'].forEach(v=>{$('orc-'+v+'-view').style.display=v===view?'block':'none';});}
+function orcShow(view){trocarVista('orcamentos',view);['lista','header','detalhe','tipo','form','catalogo'].forEach(v=>{$('orc-'+v+'-view').style.display=v===view?'block':'none';});}
 /* Orçamento novo abre numa página só: os dados do orçamento (cliente, datas, status) ficam no topo
    da própria ficha do item, e o Salvar cria o orçamento e o primeiro item de uma vez. */
 let ORC_NOVO_INLINE=false;
@@ -10083,13 +10111,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-15.8';
+const APP_VERSAO='2026-10-16.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=310;
+const APP_ATUALIZACAO=311;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
