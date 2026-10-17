@@ -233,6 +233,12 @@ create table if not exists public.compras (
 
 -- Lançamentos financeiros. `tipo` é 'entrada' ou 'saida'; `val` é o
 -- valor; `centro_custo` liga o lançamento a um centro de custo.
+--
+-- De `origem` para baixo: de onde veio cada lançamento e a que ele está
+-- ligado (migracao-financeiro-origem.sql, out/2026). Num banco que já
+-- existia antes disso, as colunas entram por aquele arquivo, que também
+-- marca a origem dos lançamentos antigos. O index.html confere se elas
+-- existem antes de gravar e, sem elas, segue como antes.
 create table if not exists public.financeiro (
   id            text primary key,
   tipo          text,
@@ -243,6 +249,19 @@ create table if not exists public.financeiro (
   val           numeric default 0,
   status        text,
   obs           text,
+  origem        text,                      -- extrato | pedido | manual | compra | nf
+  venda_id      text,                      -- aponta para vendas.id
+  pag_id        text,                      -- vendas.pags[i].id (linha de pagamento)
+  parcela       integer,                   -- 1..N no cartão; 1 nas outras formas
+  parcelas      integer,
+  compra_id     text,                      -- aponta para compras.id
+  fitid         text,                      -- FITID da transação no extrato OFX
+  conta         text not null default '',  -- conta do OFX (BANKID/ACCTID)
+  desc_banco    text,                      -- texto original do banco
+  lote_ofx      text,                      -- id da importação do extrato
+  mesclado_com  text,                      -- lançamento que absorveu este
+  mesclagem     jsonb,                     -- o que este recebeu de outro e como era antes
+  nao_juntar    jsonb default '[]'::jsonb, -- pares marcados como "não é o mesmo"
   created_at    timestamptz default now()
 );
 
@@ -299,6 +318,11 @@ create index if not exists idx_vendas_num       on public.vendas (num desc);
 create index if not exists idx_producao_num     on public.producao (num desc);
 create index if not exists idx_compras_num      on public.compras (num desc);
 create index if not exists idx_financeiro_data  on public.financeiro (data desc);
+-- o mesmo FITID não entra duas vezes na mesma conta (índice simples, sem
+-- "where": várias linhas sem FITID são permitidas)
+create unique index if not exists financeiro_conta_fitid_unico on public.financeiro (conta, fitid);
+create index if not exists financeiro_venda_idx on public.financeiro (venda_id);
+create index if not exists financeiro_pag_idx   on public.financeiro (pag_id);
 create index if not exists idx_historico_id     on public.historico (id desc);
 create index if not exists idx_usuarios_login   on public.usuarios (login);
 

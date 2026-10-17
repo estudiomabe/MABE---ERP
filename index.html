@@ -652,6 +652,12 @@ body.sem-valores .lix-valor { display:none; }
 body.sem-origem .campo-origem { display:none; }
 body.sem-fin-obs .fin-obs { display:none; }
 .fin-obs-campo { font-size:11.5px;padding:3px 6px;min-width:140px; }
+/* selo de origem do lançamento (Banco, Pedido, Manual, Compra, NF): contornado e sem caixa-alta,
+   para não competir com os selos de status e de tipo. O do banco leva o dourado da casa */
+.selo-origem { display:inline-flex;align-items:center;padding:1px 7px;border-radius:20px;border:1px solid var(--surface3);background:var(--surface);color:var(--text-muted);font-size:11px;font-weight:600;line-height:1.45;letter-spacing:0.2px;white-space:nowrap; }
+.selo-origem.so-extrato { border-color:rgba(200,169,110,0.6);background:rgba(200,169,110,0.12);color:#6e5526; }
+.fin-tipo-cel { display:flex;flex-direction:column;align-items:flex-start;gap:5px; }
+.pc-topo-esq { display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0; }
 .conc-resumo { background:var(--surface2);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;margin-bottom:14px; }
 .conc-ok { background:rgba(61,107,79,0.12);border-left:3px solid var(--success);border-radius:8px;padding:11px 13px;font-size:13px;margin-bottom:14px; }
 .conc-bloco { border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--surface); }
@@ -2063,7 +2069,7 @@ function afterLogin(){document.body.classList.add('logado');
  navigate(secaoInicial());updateBadges();
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
  if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
- verificarColunaOrigem();verificarColunaObsFin();verificarColunaAnexosVenda();verificarColunaPagsVenda();conferirColunaLixeiraVnd();
+ verificarColunaOrigem();verificarColunaObsFin();verificarColunaLigacaoFin();verificarColunaAnexosVenda();verificarColunaPagsVenda();conferirColunaLixeiraVnd();
  cargasDoBanco().forEach(p=>Promise.resolve(p).then(agendarRedesenho,agendarRedesenho));}
 /* as treze cargas do banco, numa lista só: o login dispara e o gesto de
    puxar para atualizar repete */
@@ -2739,17 +2745,24 @@ async function enviarFila(){
  if(ENVIO_EM_CURSO)return ENVIO_EM_CURSO;
  if(!FILA.length)return;
  ENVIO_EM_CURSO=(async()=>{
-  const tabelas=new Set();let enviados=0,recusados=0;
+  const tabelas=new Set();let enviados=0,recusados=0,jaEstavam=0;
   while(FILA.length){
    const item=FILA[0];
    const r=await comPrazoRede(montarConsulta(item),15000);
    if(ehFalhaDeRede(r)){marcarSemRede();break;}
    SEM_REDE=false;
-   const jaExistia=r.error&&item.passos[0][0]==='insert'&&(r.error.code==='23505'||/duplicate key/i.test(r.error.message||''));
-   if(r.error&&!jaExistia){FILA_FALHAS.push(Object.assign({},item,{erro:r.error.message||String(r.error)}));recusados++;}
-   else enviados++;
+   const args=item.passos[0][0]==='insert'?item.passos[0][1]||[]:null,lote=args&&Array.isArray(args[0])?args[0]:null;
+   const repetido=!!r.error&&!!args&&(r.error.code==='23505'||/duplicate key/i.test(r.error.message||''));
+   /* lote com uma linha que o banco já tem (ex.: extrato que outro aparelho importou): o banco recusa o lote
+      inteiro. Ele volta para a fila linha a linha, e só a repetida conta como "já existia" */
+   if(repetido&&lote&&lote.length>1){
+    FILA.splice(0,1,...lote.map(l=>({id:uid(),tabela:item.tabela,passos:[['insert',[[l]].concat(args.slice(1))]].concat(item.passos.slice(1)),quando:item.quando,quem:item.quem,doLote:true})));
+    gravarFila();continue;}
+   if(r.error&&!repetido){FILA_FALHAS.push(Object.assign({},item,{erro:r.error.message||String(r.error)}));recusados++;}
+   else{enviados++;if(repetido&&item.doLote)jaEstavam++;}
    tabelas.add(item.tabela);FILA.shift();gravarFila();}
-  if(enviados&&!FILA.length)toast(enviados===1?'A alteração guardada no aparelho foi enviada.':'As '+enviados+' alterações guardadas no aparelho foram enviadas.','success');
+  if(enviados&&!FILA.length)toast((enviados===1?'A alteração guardada no aparelho foi enviada.':'As '+enviados+' alterações guardadas no aparelho foram enviadas.')
+   +(jaEstavam?' '+(jaEstavam===1?'Uma delas já estava no servidor e não foi repetida.':jaEstavam+' delas já estavam no servidor e não foram repetidas.'):''),'success');
   if(recusados)toast(recusados+' alteração(ões) guardada(s) foram recusadas pelo servidor. Toque no aviso no topo para ver.','error',9000);
   /* com a fila vazia, busca de novo o que mudou: o servidor passa a ser a referência */
   if(!FILA.length)tabelas.forEach(t=>{const f=CARREGADORES_ORIGINAIS[t];if(f)f().catch(()=>{});});
@@ -2758,10 +2771,10 @@ async function enviarFila(){
 /* antes de criar documento numerado: confere a conexão e esvazia a fila, para o documento não ficar à frente de edições antigas */
 async function servidorResponde(){if(navigator.onLine===false)return false;
  return !ehFalhaDeRede(await comPrazoRede(supaFromDireto('config').select('id').limit(1),6000));}
-async function exigeConexao(acao){
+async function exigeConexao(acao,porque){
  if(await servidorResponde()){SEM_REDE=false;if(FILA.length)await enviarFila();atualizarAvisoFila();return true;}
  marcarSemRede();atualizarAvisoFila();
- toast('Sem conexão: '+acao+' precisa de internet, porque gera um número de documento. Tente de novo quando o sinal voltar — as outras alterações continuam funcionando.','error',9000);
+ toast('Sem conexão: '+acao+' precisa de internet, '+(porque||'porque gera um número de documento')+'. Tente de novo quando o sinal voltar — as outras alterações continuam funcionando.','error',9000);
  return false;}
 /* A bolinha lê o mesmo estado da fila de envio: SEM_REDE é ligado quando uma
    requisição falha por rede e desligado quando alguma volta a responder. Assim
@@ -2797,7 +2810,9 @@ async function conferirConexao(){
 async function conferirConexaoEmSilencio(){
  if(CONFERINDO_CONEXAO||document.hidden)return;
  const ok=await servidorResponde();
- if(ok){if(SEM_REDE){SEM_REDE=false;if(FILA.length)enviarFila();}}
+ if(ok){if(SEM_REDE){SEM_REDE=false;if(FILA.length)enviarFila();}
+  /* a conferência das colunas de origem do Financeiro que falhou por falta de rede tenta de novo */
+  if(!FIN_LIGACAO_CONFERIDA)verificarColunaLigacaoFin();}
  else marcarSemRede();
  atualizarAvisoFila();}
 function atualizarAvisoFila(){atualizarSinalRede();
@@ -3557,6 +3572,7 @@ async function confirmarImportNf(){
  if(lancarFin&&!parcelas.some(pc=>pc.valor>0)){toast('As parcelas estão sem valor.','error');return;}
  /* a importação cadastra fornecedor e estoque antes da ordem de compra: sem rede, pararia no meio */
  if(!await exigeConexao('importar a nota'))return;
+ await ligacaoFin();
  const btn=$('nf-btn-importar');btn.disabled=true;btn.textContent='Importando…';
  try{
   /* 1. fornecedor */
@@ -3605,7 +3621,7 @@ async function confirmarImportNf(){
    const comValor=parcelas.filter(pc=>pc.valor>0);
    for(let k=0;k<comValor.length;k++){const pc=comValor[k];
     const desc=(compra?'OC-'+pad(compra.num)+' — ':'')+'NF '+d.nf.numero+' — '+forn.nome+(comValor.length>1?' — parcela '+(k+1)+'/'+comValor.length:'');
-    const fin={id:uid(),tipo:'Saída',data:pc.data,desc,cat:'Compras',centroCusto:'',val:pc.valor,status:pc.status};
+    const fin=comLigacaoFin({id:uid(),tipo:'Saída',data:pc.data,desc,cat:'Compras',centroCusto:'',val:pc.valor,status:pc.status},{origem:'nf',compraId:compra?compra.id:''});
     const {error}=await supa.from('financeiro').insert(financeiroParaSupabase(fin));
     if(error)throw new Error('financeiro (parcela '+(k+1)+'): '+error.message);
     DB.financeiro.unshift(fin);syncSheets('financeiro','upsert',fin);lancados++;}
@@ -3651,10 +3667,20 @@ function opDoPedido(v){
 /* pedido → orçamento de origem, mesmo indício de texto já usado em opDoPedido (nao ha coluna de vinculo) */
 function orcDoPedido(v){const m=(v.obs||'').match(/ORC-(\d+)/);if(!m)return null;return DB.orcamentos.find(o=>Number(o.num)===Number(m[1]))||null;}
 /* contas a receber deste pedido: mesmo padrao de texto usado ao gerar o lancamento (ver aprovarOrcamento/saveVenda) */
-/* lançamentos do pedido: os criados por ele (descrição 'Pedido V-00XX') e os do extrato que você
-   classificou naquele pedido na coluna 'Pedido' do Financeiro */
-function finsDoPedido(v){const prefixo='Pedido V-'+pad(v.num),rotulo=pedidoLabel(v);
- return DB.financeiro.filter(f=>(f.desc||'').indexOf(prefixo)===0||(f.cat||'')===rotulo);}
+/* lançamentos do pedido: pela ligação gravada (venda_id). Os antigos, sem ela, pelo texto: os criados
+   pelo pedido (descrição 'Pedido V-00XX') e os que você classificou nele na coluna 'Pedido' (pelo código,
+   que não muda se o nome do cliente mudar). Gasto do pedido (Saída) também entra: quem trata de
+   pagamento filtra Entrada */
+/* a ligação gravada (venda_id) vale enquanto a coluna Pedido não a desmente. O app de antes (celular ainda
+   sem atualizar) troca ou limpa só o cat: aí vale o que está na tela, pelo texto, como era */
+function vendaIdDoFin(f){if(!f||!f.vendaId)return '';
+ const c=String(f.cat||'').trim();if(!c)return '';
+ const m=c.match(/^V-(\d+)(?: |$)/);if(!m)return f.vendaId;
+ const v=DB.vendas.find(x=>x.id===f.vendaId);return v&&Number(v.num)===Number(m[1])?f.vendaId:'';}
+function finEhDoPedido(f,v){const vid=vendaIdDoFin(f);if(vid)return vid===v.id;
+ const prefixo='Pedido V-'+pad(v.num),d=String(f.desc||'');
+ return d===prefixo||d.indexOf(prefixo+' ')===0||lancamentoEhDoPedido(f,v);}
+function finsDoPedido(v){return DB.financeiro.filter(f=>finEhDoPedido(f,v));}
 /* último lançamento pago do pedido (é o que a data de Pagamento move no Financeiro) e se ainda há parcela pendente */
 function pagamentoDoPedido(v){const fins=finsDoPedido(v).filter(f=>f.tipo==='Entrada');
  const ultimoPago=fins.filter(f=>f.status==='Pago').reduce((m,f)=>(!m||f.data>m.data)?f:m,null);
@@ -3818,7 +3844,8 @@ function renderHorasPedido(v){
    Não se digita nada aqui: o gasto é lançado uma vez, no Financeiro, como saída
    com o pedido escolhido no campo "Pedido". O campo guarda "V-0031 — Cliente";
    o vínculo é pelo número, para não se perder se o nome do cliente mudar. */
-function lancamentoEhDoPedido(f,v){const c=String(f.cat||''),cod='V-'+pad(v.num);
+function lancamentoEhDoPedido(f,v){const vid=vendaIdDoFin(f);if(vid)return vid===v.id;
+ const c=String(f.cat||''),cod='V-'+pad(v.num);
  return c===cod||c.indexOf(cod+' ')===0;}
 function gastosDoPedido(v){if(!v)return [];
  return DB.financeiro.filter(f=>f.tipo==='Saída'&&f.status!=='Cancelado'&&lancamentoEhDoPedido(f,v))
@@ -3882,7 +3909,9 @@ const FC_REG={};let FC_ATUAL='';
 function fcVazio(cols){const s={};Object.entries(cols).forEach(([k,c])=>{s[k]=c.tipo==='opcoes'?[]:(c.tipo==='datas'||c.tipo==='faixa')?{de:'',ate:''}:'';});return s;}
 function fcRegistrar(chave,cfg){FC_REG[chave]=Object.assign({estado:fcVazio(cfg.cols)},cfg);}
 function fcAtivo(chave,col){const c=FC_REG[chave],v=c.estado[col],t=c.cols[col].tipo;
- return t==='opcoes'?v.length>0:t==='texto'?!!String(v).trim():(v.de!==''||v.ate!=='');}
+ const ativo=t==='opcoes'?v.length>0:t==='texto'?!!String(v).trim():(v.de!==''||v.ate!=='');
+ /* coluna escondida (mostrar falso) não filtra, mesmo com valor guardado */
+ return ativo&&!(c.cols[col].mostrar&&!c.cols[col].mostrar());}
 const fcAtivos=chave=>Object.keys(FC_REG[chave].cols).filter(k=>fcAtivo(chave,k));
 function fcPassa(chave,item){const c=FC_REG[chave];if(!c)return true;
  for(const [k,def] of Object.entries(c.cols)){if(!fcAtivo(chave,k))continue;const v=c.estado[k],x=def.val(item);
@@ -3891,7 +3920,10 @@ function fcPassa(chave,item){const c=FC_REG[chave];if(!c)return true;
   if(def.tipo==='datas'){if(!x)return false;if(v.de&&x<v.de)return false;if(v.ate&&x>v.ate)return false;}
   if(def.tipo==='faixa'){const n=Number(x)||0;if(v.de!==''&&n<Number(v.de))return false;if(v.ate!==''&&n>Number(v.ate))return false;}}
  return true;}
+/* coluna sem funil próprio (junto:'outra'): aparece no funil da outra; no celular, como um bloco a mais */
+const fcJuntos=(chave,col)=>Object.keys(FC_REG[chave].cols).filter(k=>FC_REG[chave].cols[k].junto===col);
 function fcHtml(chave,col){const def=FC_REG[chave].cols[col],v=FC_REG[chave].estado[col];
+ if(def.mostrar&&!def.mostrar())return '';
  const q=s=>'\''+s+'\'';
  const par=(rot,lado,tipo,extra)=>'<div class="fo-par"><span>'+rot+'</span><input class="form-control fo-campo" type="'+tipo+'" value="'+esc(String(v[lado]))+'"'+(extra||'')
   +' oninput="fcSetPar('+q(chave)+','+q(col)+','+q(lado)+',this.value)"></div>';
@@ -3908,7 +3940,7 @@ function fcSet(chave,col,valor){FC_REG[chave].estado[col]=valor;FC_REG[chave].re
 function fcSetPar(chave,col,lado,valor){FC_REG[chave].estado[col][lado]=valor;FC_REG[chave].render();}
 function fcAlternar(chave,col,i,ligado){const op=FC_REG[chave].cols[col].opcoes()[i];
  const a=FC_REG[chave].estado[col].filter(x=>x!==op);if(ligado)a.push(op);FC_REG[chave].estado[col]=a;FC_REG[chave].render();}
-function fcLimparCol(chave,col){FC_REG[chave].estado[col]=fcVazio({[col]:FC_REG[chave].cols[col]})[col];FC_REG[chave].render();}
+function fcLimparCol(chave,col){[col,...fcJuntos(chave,col)].forEach(k=>{FC_REG[chave].estado[k]=fcVazio({[k]:FC_REG[chave].cols[k]})[k];});FC_REG[chave].render();}
 function fcLimparTudo(chave){if(!FC_REG[chave])return;FC_REG[chave].estado=fcVazio(FC_REG[chave].cols);fcFechar();FC_REG[chave].render();}
 const fcBotao=(chave,col)=>document.querySelector('.th-filtro[data-fc="'+chave+'"][data-col="'+col+'"]');
 function fcFechar(){const p=$('fc-pop');if(p)p.remove();}
@@ -3920,7 +3952,7 @@ function fcAbrir(chave,col){
  const aberta=$('fc-pop');if(aberta&&aberta.dataset.fc===chave&&aberta.dataset.col===col){fcFechar();return;}
  fcFechar();
  const p=document.createElement('div');p.id='fc-pop';p.dataset.fc=chave;p.dataset.col=col;
- p.innerHTML=fcHtml(chave,col)+'<div class="fo-rodape"><button type="button" class="fo-limpar" onclick="fcLimparCol(\''+chave+'\',\''+col+'\');fcFechar();fcAbrir(\''+chave+'\',\''+col+'\')">Limpar</button>'
+ p.innerHTML=fcHtml(chave,col)+fcJuntos(chave,col).map(k=>fcHtml(chave,k)).join('')+'<div class="fo-rodape"><button type="button" class="fo-limpar" onclick="fcLimparCol(\''+chave+'\',\''+col+'\');fcFechar();fcAbrir(\''+chave+'\',\''+col+'\')">Limpar</button>'
   +'<button type="button" class="btn btn-primary btn-sm" onclick="fcFechar()">OK</button></div>';
  document.body.appendChild(p);fcPosicionar();
  const c=p.querySelector('input:not([type=checkbox])');if(c)c.focus();}
@@ -3952,7 +3984,7 @@ function fcPreparar(chave){const c=FC_REG[chave];if(!c||!c.tbody)return;
 /* funis dourados, contador do botão do celular, resumo e "Limpar filtros" */
 function fcPintar(chave,lista){fcPreparar(chave);const c=FC_REG[chave],ativos=fcAtivos(chave);
  const barra=$(chave+'-fc-barra');if(barra)barra.classList.toggle('ligada',ativos.length>0);
- document.querySelectorAll('.th-filtro[data-fc="'+chave+'"]').forEach(b=>{const on=fcAtivo(chave,b.dataset.col);
+ document.querySelectorAll('.th-filtro[data-fc="'+chave+'"]').forEach(b=>{const on=fcAtivo(chave,b.dataset.col)||fcJuntos(chave,b.dataset.col).some(k=>fcAtivo(chave,k));
   b.classList.toggle('ativo',on);b.title=on?'Filtro ligado — clique para mudar':'Filtrar esta coluna';});
  const n=$(chave+'-fc-n');if(n){n.style.display=ativos.length?'':'none';n.textContent=ativos.length;}
  const cel=$(chave+'-filtro-cel');if(cel)cel.classList.toggle('ativa',ativos.length>0);
@@ -4013,6 +4045,12 @@ const colsProduto=(base,comTempo)=>{const d=comTempo?1:0;const c={
 fcRegistrar('ins',{titulo:'Filtrar materiais/insumos',um:'item',varios:'itens',tbody:'tb-insumos',antes:'insumos-cards',render:()=>renderInsumos(),cols:colsProduto('ins',false)});
 fcRegistrar('port',{titulo:'Filtrar portfólio',um:'produto',varios:'produtos',tbody:'tb-portfolio',antes:'portfolio-cards',render:()=>renderPortfolio(),cols:colsProduto('port',true)});
 const FIN_STATUS=['Pago','Pendente','Cancelado'];
+/* de onde veio cada lançamento (coluna origem): o selo, o filtro e a planilha saem desta lista */
+const ORIGEM_FIN={extrato:'Banco',pedido:'Pedido',manual:'Manual',compra:'Compra',nf:'NF'};
+const ORIGEM_FIN_TITULO={extrato:'Veio do extrato do banco',pedido:'Criado pelo pedido',manual:'Lançado à mão',compra:'Lançado pela ordem de compra',nf:'Lançado pela nota fiscal'};
+/* a origem do lançamento, só se for uma das conhecidas ('' nos demais) */
+const origemFin=f=>f&&typeof f.origem==='string'&&Object.prototype.hasOwnProperty.call(ORIGEM_FIN,f.origem)?f.origem:'';
+const origemFiltroFin=f=>ORIGEM_FIN[origemFin(f)]||'Sem origem';
 fcRegistrar('fin',{titulo:'Filtrar lançamentos',um:'lançamento',varios:'lançamentos',tbody:'tb-financeiro',antes:'financeiro-cards',render:()=>renderFinanceiro(),
  somar:x=>(x.tipo==='Saída'?-1:1)*(Number(x.val)||0),cols:{
  data:{th:0,nome:'Data',tipo:'datas',val:x=>x.data||''},
@@ -4021,6 +4059,10 @@ fcRegistrar('fin',{titulo:'Filtrar lançamentos',um:'lançamento',varios:'lança
  cc:{th:3,nome:'Centro de custo',tipo:'opcoes',opcoes:()=>[...SETORES_FIXOS,'Não classificado'],val:x=>(x.centroCusto||'').trim()||'Não classificado'},
  obs:{th:4,nome:'Observações',tipo:'texto',ph:'parte do texto',val:x=>x.obs},
  tipo:{th:5,nome:'Tipo',tipo:'opcoes',opcoes:()=>['Entrada','Saída'],val:x=>x.tipo},
+ /* sem coluna própria na tabela: o selo fica embaixo do tipo, e o filtro entra no funil de Tipo.
+    Some enquanto o banco não tem a coluna e nenhum lançamento tem origem */
+ origem:{junto:'tipo',nome:'Origem',tipo:'opcoes',mostrar:()=>FIN_LIGACAO_NO_BANCO||DB.financeiro.some(x=>origemFin(x)),
+  opcoes:()=>{const tem=new Set(DB.financeiro.map(origemFiltroFin));return [...Object.values(ORIGEM_FIN),'Sem origem'].filter(o=>tem.has(o));},val:origemFiltroFin},
  valor:{th:6,nome:'Valor',tipo:'faixa',val:x=>x.val},
  status:{th:7,nome:'Status',tipo:'opcoes',opcoes:()=>FIN_STATUS,val:x=>x.status}}});
 fcRegistrar('cc',{titulo:'Filtrar centros de custo',um:'centro de custo',varios:'centros de custo',tbody:'tb-centrocustos',render:()=>renderCentroCustos(),somar:x=>x[1].saidas,cols:{
@@ -4572,15 +4614,20 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
   const {data,error}=await supa.from('vendas').insert(vendaParaSupabase(nova)).select().single();
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
   nova.num=data.num;
-  let opCriada=false;
+  let opCriada=false,falhasFin=0,erroFinMsg='';
   if(nova.status!=='Cancelado'){for(const it of nova.itens){const p=DB.produtos.find(x=>x.id===it.prodId);if(p){p.est=Math.max(0,Number(p.est)-it.qty);await supa.from('produtos').update({est:p.est}).eq('id',p.id);syncSheets('produtos','upsert',p);}}
    nova.baixa=true;await supa.from('vendas').update({baixa:true}).eq('id',nova.id);
    /* uma conta a receber por forma informada; sem formas, cai no lançamento único de sempre */
    const baseDescV='Pedido V-'+pad(nova.num)+' — '+cliName(cliId);
+   await ligacaoFin();
    const lancs=formasPag.length?lancamentosDasFormas(formasPag,baseDescV)
-    :[{tipo:'Entrada',data:nova.data,desc:baseDescV,cat:'Pedidos',val:total,status:nova.status==='Entregue'?'Pago':'Pendente'}];
-   for(const l of lancs){const finReg=Object.assign({id:uid()},l);
-    await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
+    :[{tipo:'Entrada',data:nova.data,desc:baseDescV,cat:'Pedidos',val:total,status:nova.status==='Entregue'?'Pago':'Pendente',lig:{origem:'pedido'}}];
+   /* cada conta a receber nasce ligada ao pedido (e à linha de pagamento). Se o banco recusar, o aviso
+      aparece no fim, em vez de a tela mostrar uma conta que não foi gravada */
+   for(const l of lancs){const {lig,...dados}=l;
+    const finReg=comLigacaoFin(Object.assign({id:uid()},dados),Object.assign({vendaId:nova.id},lig));
+    const {error:erroFin}=await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
+    if(erroFin){falhasFin++;erroFinMsg=erroFin.message;continue;}
     DB.financeiro.unshift(finReg);syncSheets('financeiro','upsert',finReg);}
    // Gera automaticamente uma Ordem de Produção (PCP) em Planejamento pra este pedido
    const op={id:uid(),titulo:'Pedido V-'+pad(nova.num)+' — '+cliName(cliId),cliId,prazo:addDays(nova.data||today(),15),resp:'',prio:'Normal',etapa:0,status:'Ativa',obs:nova.itens.map(it=>'• '+it.desc+' × '+it.qty).join('\n')+'\n(Gerado automaticamente do Pedido V-'+pad(nova.num)+')'};
@@ -4588,7 +4635,9 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
    if(erroOp){toast('Pedido salvo, mas houve erro ao criar a ordem de produção: '+erroOp.message,'error');}
    else{op.num=dop.num;DB.producao.push(op);syncSheets('pcp','upsert',op);opCriada=true;}}
   DB.vendas.unshift(nova);commit('criar','Pedidos','V-'+pad(nova.num)+' — '+fmt(total)+(opCriada?' + OP-'+pad(DB.producao[DB.producao.length-1].num)+' em Planejamento':''));syncSheets('vendas','upsert',nova);
-  limparHorasSujas();vndShow('lista');renderVendas();toast('Pedido salvo!'+(opCriada?' Estoque, financeiro e produção (PCP) atualizados.':' Estoque e financeiro atualizados.'),'success');return;
+  limparHorasSujas();vndShow('lista');renderVendas();
+  if(falhasFin){toast('Pedido salvo, mas '+falhasFin+' conta(s) a receber não entrou(aram) no Financeiro: '+erroFinMsg+'. Lance à mão no Financeiro.','error',10000);return;}
+  toast('Pedido salvo!'+(opCriada?' Estoque, financeiro e produção (PCP) atualizados.':' Estoque e financeiro atualizados.'),'success');return;
  }
  limparHorasSujas();vndShow('lista');renderVendas();toast('Pedido atualizado!','success');}
 /* A OP que com certeza é deste pedido, para a exclusão poder apagá-la junto.
@@ -4610,7 +4659,7 @@ function opCertaDoPedido(v){const cod='V-'+pad(v.num);
    ou a classificada nele na coluna Pedido) e a OP que nem começou. Fica: dinheiro
    que já entrou ou saiu, a OP que já começou, as entregas e o orçamento. */
 function ligacoesDoPedido(v){const prefixo='Pedido V-'+pad(v.num);
- const fins=DB.financeiro.filter(f=>{const d=String(f.desc||'');return d===prefixo||d.indexOf(prefixo+' ')===0||lancamentoEhDoPedido(f,v);});
+ const fins=DB.financeiro.filter(f=>finEhDoPedido(f,v));
  const apagar=fins.filter(f=>f.tipo==='Entrada'&&f.status==='Pendente');
  const manter=fins.filter(f=>f.status!=='Cancelado'&&!apagar.includes(f));
  const op=opCertaDoPedido(v);
@@ -6110,7 +6159,8 @@ function preencherPagamentosVenda(v){
 /* o pedido guarda a forma em texto: com mais de uma, junta as duas */
 function rotuloPagamento(formas){
  return formas.map(f=>PAG_LABELS[f.forma]+(f.forma==='cartao'&&f.parcelas>1?' '+f.parcelas+'x':'')).join(' + ');}
-/* as contas a receber que cada linha vai gerar */
+/* as contas a receber que cada linha vai gerar. Em lig vai a ligação com a linha de pagamento (origem
+   pedido, pag_id, parcela/parcelas): quem grava acrescenta o pedido e só a envia se o banco tiver as colunas */
 function lancamentosDasFormas(formas,baseDesc){
  const saida=[];
  formas.forEach(f=>{
@@ -6123,9 +6173,10 @@ function lancamentosDasFormas(formas,baseDesc){
     saida.push({tipo:'Entrada',data:i===0?f.data:addMonths(f.data,i),
      desc:baseDesc+' — Cartão de Crédito '+(n>1?'Parcela '+(i+1)+'/'+n:'à vista')+(taxa?' (taxa '+fmtN(taxa,1)+'%)':''),
      cat:'Pedidos',val:ultima?Math.round((total-parcela*(n-1))*100)/100:parcela,
-     status:i===0?f.status:'Pendente'});}
+     status:i===0?f.status:'Pendente',lig:{origem:'pedido',pagId:f.id||'',parcela:i+1,parcelas:n}});}
   }else{
-   saida.push({tipo:'Entrada',data:f.data,desc:baseDesc+' — '+PAG_LABELS[f.forma],cat:'Pedidos',val:f.valor,status:f.status});}});
+   saida.push({tipo:'Entrada',data:f.data,desc:baseDesc+' — '+PAG_LABELS[f.forma],cat:'Pedidos',val:f.valor,status:f.status,
+    lig:{origem:'pedido',pagId:f.id||'',parcela:1,parcelas:1}});}});
  return saida;}
 function abrirAprovarOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  if(o.status==='Aprovado'){toast('Este orçamento já está aprovado.','info');return;}
@@ -6233,6 +6284,7 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
  // 2) Gerar contas a receber: uma sequência por forma de pagamento informada
  const baseDesc='Pedido V-'+pad(novaVenda.num)+' — '+cliName(o.cliId);
  const finEntries=lancamentosDasFormas(formasPag,baseDesc);
+ await ligacaoFin();
  /* o primeiro pagamento pode já estar no extrato: aí não cria outro, só classifica aquele */
  const recebido=$('aprv-recebido').value;
  const idLanc=recebido==='extrato'?$('aprv-lanc').value:'';
@@ -6240,12 +6292,18 @@ async function confirmarAprovarOrc(){const id=$('aprv-orc-id').value;const o=DB.
   if(recebido==='extrato'&&idLanc){
    const f=DB.financeiro.find(x=>x.id===idLanc);
    if(f){const rotulo=pedidoLabel(novaVenda);
-    const obsNova='Pagamento inicial do pedido '+rotulo+', recebido antes de o pedido ser lançado.';
-    const {error:erroVinc}=await supa.from('financeiro').update({cat:rotulo,obs:FIN_OBS_NO_BANCO?obsNova:undefined}).eq('id',idLanc);
+    /* a observação que o lançamento do banco já tinha continua: o aviso entra depois dela */
+    const obsAntes=String(f.obs||'').trim();
+    const obsNova=(obsAntes?obsAntes+' · ':'')+'Pagamento inicial do pedido '+rotulo+', recebido antes de o pedido ser lançado.';
+    /* continua sendo do banco (a origem não muda): ganha a ligação com o pedido e com a 1ª linha de pagamento */
+    const lig=Object.assign({vendaId:novaVenda.id},finEntries[0].lig);delete lig.origem;
+    const mud={cat:rotulo};if(FIN_OBS_NO_BANCO)mud.obs=obsNova;
+    if(FIN_LIGACAO_NO_BANCO)Object.assign(mud,{venda_id:lig.vendaId,pag_id:lig.pagId||null,parcela:lig.parcela||null,parcelas:lig.parcelas||null});
+    const {error:erroVinc}=await supa.from('financeiro').update(mud).eq('id',idLanc);
     if(erroVinc)toast('Não consegui ligar o lançamento ao pedido: '+erroVinc.message,'error',7000);
-    else{f.cat=rotulo;if(FIN_OBS_NO_BANCO)f.obs=obsNova;finEntries.shift();
+    else{f.cat=rotulo;if(FIN_OBS_NO_BANCO)f.obs=obsNova;comLigacaoFin(f,lig);finEntries.shift();
      toast('Pagamento inicial ligado ao lançamento de '+fmtD(f.data)+'.','info',5000);}}}}
- for(const fe of finEntries){const reg=Object.assign({id:uid()},fe);
+ for(const fe of finEntries){const {lig,...dados}=fe;const reg=comLigacaoFin(Object.assign({id:uid()},dados),Object.assign({vendaId:novaVenda.id},lig));
   const {error:erroFin}=await supa.from('financeiro').insert(financeiroParaSupabase(reg));
   if(erroFin){toast('Erro ao lançar financeiro no Supabase: '+erroFin.message,'error');continue;}
   DB.financeiro.unshift(reg);syncSheets('financeiro','upsert',reg);}
@@ -7688,10 +7746,67 @@ async function verificarColunaObsFin(){
  const r=await supa.from('financeiro').select('obs').limit(1);
  FIN_OBS_NO_BANCO=!r.error;
  document.body.classList.toggle('sem-fin-obs',!FIN_OBS_NO_BANCO);}
-function financeiroParaSupabase(f){const r={id:f.id,tipo:f.tipo||null,data:f.data||null,descricao:f.desc||null,cat:f.cat||null,centro_custo:f.centroCusto||null,val:f.val||0,status:f.status||null};
+/* De onde veio cada lançamento e a que ele está ligado (supabase/migracao-financeiro-origem.sql): origem
+   (extrato, pedido, manual, compra, nf), o pedido e a linha de pagamento (venda_id, pag_id, parcela/parcelas),
+   a compra (compra_id) e, do extrato, o identificador do banco (fitid), a conta, o texto original e a importação.
+   Sem as colunas no banco nada disso é enviado e o Financeiro funciona como antes. Só a resposta "a coluna não
+   existe" desliga de vez nesta sessão: sem rede, a conferência fica para depois (ao voltar a conexão, ao abrir o
+   Financeiro ou antes de criar um lançamento), e enquanto isso o lançamento novo sai sem origem, como sempre saiu. */
+let FIN_LIGACAO_NO_BANCO=false,FIN_LIGACAO_CONFERIDA=false,FIN_LIGACAO_CONFERINDO=null,FIN_LIGACAO_TENTOU=0;
+/* nome no ERP, coluna no banco e formato: t texto, c conta (texto obrigatório: '' quando não se sabe),
+   n número, j JSON, l lista JSON */
+const FIN_LIGACAO_CAMPOS=[['origem','origem','t'],['vendaId','venda_id','t'],['pagId','pag_id','t'],['parcela','parcela','n'],
+ ['parcelas','parcelas','n'],['compraId','compra_id','t'],['fitid','fitid','t'],['conta','conta','c'],['descBanco','desc_banco','t'],
+ ['loteOfx','lote_ofx','t'],['mescladoCom','mesclado_com','t'],['mesclagem','mesclagem','j'],['naoJuntar','nao_juntar','l']];
+/* 42703 é o Postgres dizendo que a coluna não existe; erro de rede ou servidor fora não prova nada */
+const colunaNaoExiste=e=>!!e&&(e.code==='42703'||e.code==='PGRST204'||/column .*does not exist|could not find the .* column/i.test(String(e.message||'')));
+function verificarColunaLigacaoFin(){
+ if(FIN_LIGACAO_CONFERIDA)return Promise.resolve(FIN_LIGACAO_NO_BANCO);
+ if(FIN_LIGACAO_CONFERINDO)return FIN_LIGACAO_CONFERINDO;
+ FIN_LIGACAO_TENTOU=Date.now();
+ FIN_LIGACAO_CONFERINDO=(async()=>{
+  const r=await comPrazoRede(supa.from('financeiro').select(FIN_LIGACAO_CAMPOS.map(c=>c[1]).join(',')).limit(1),10000);
+  const antes=FIN_LIGACAO_NO_BANCO;
+  if(!r.error){FIN_LIGACAO_NO_BANCO=true;FIN_LIGACAO_CONFERIDA=true;}
+  else if(colunaNaoExiste(r.error)){FIN_LIGACAO_NO_BANCO=false;FIN_LIGACAO_CONFERIDA=true;}
+  else{FIN_LIGACAO_NO_BANCO=false;
+   /* sem resposta: o aparelho passa a contar como sem rede, e o próximo Salvar não espera de novo */
+   if(ehFalhaDeRede(r)){marcarSemRede();atualizarAvisoFila();}}
+  if(antes!==FIN_LIGACAO_NO_BANCO&&CUR==='financeiro')renderFinanceiro();
+  return FIN_LIGACAO_NO_BANCO;})().finally(()=>{FIN_LIGACAO_CONFERINDO=null;});
+ return FIN_LIGACAO_CONFERINDO;}
+window.addEventListener('online',()=>{if(!FIN_LIGACAO_CONFERIDA)verificarColunaLigacaoFin();});
+/* antes de criar lançamento: se a conferência ainda não teve resposta e há rede, confere agora. Espera no
+   máximo 3 s (sinal fraco não pode travar o Salvar): sem resposta, o lançamento sai sem origem, como sempre
+   saiu, e a conferência termina sozinha */
+async function ligacaoFin(){
+ if(!FIN_LIGACAO_CONFERIDA&&!redeRuimAgora())await Promise.race([verificarColunaLigacaoFin(),new Promise(r=>setTimeout(r,3000))]);
+ return FIN_LIGACAO_NO_BANCO;}
+/* põe a origem e a ligação no lançamento só quando o banco tem onde guardar */
+function comLigacaoFin(f,campos){if(FIN_LIGACAO_NO_BANCO)Object.assign(f,campos);return f;}
+/* lançamento que deixou de ser a conta de uma linha de pagamento do pedido */
+const SEM_LINHA_PAG_FIN={pagId:'',parcela:null,parcelas:null};
+/* o pedido escolhido na coluna Pedido ("V-0031 — Cliente") vira a ligação venda_id */
+function vendaIdDoRotulo(rot){const m=String(rot||'').match(/^V-(\d+)(?: |$)/);if(!m)return '';
+ const v=DB.vendas.find(x=>Number(x.num)===Number(m[1]));return v?v.id:'';}
+function financeiroParaSupabase(f,opc){const r={id:f.id,tipo:f.tipo||null,data:f.data||null,descricao:f.desc||null,cat:f.cat||null,centro_custo:f.centroCusto||null,val:f.val||0,status:f.status||null};
  if(FIN_OBS_NO_BANCO)r.obs=f.obs||null;
+ /* só vai o campo que o lançamento traz: um lançamento antigo, ou de um backup de antes das colunas, não
+    apaga o que o banco tem. O modal pede semLigacao: ele não mostra esses campos, então não os regrava */
+ if(FIN_LIGACAO_NO_BANCO&&!(opc&&opc.semLigacao===true))FIN_LIGACAO_CAMPOS.forEach(([k,col,t])=>{const v=f[k];if(v===undefined)return;
+  r[col]=t==='c'?String(v||''):t==='n'?(v===null||v===''||!isFinite(Number(v))?null:Math.round(Number(v))):t==='l'?(Array.isArray(v)?v:[]):(v||null);});
  return r;}
-function financeiroDeSupabase(row){return{id:row.id,tipo:row.tipo,data:row.data,desc:row.descricao||'',cat:row.cat||'',centroCusto:row.centro_custo||'',val:row.val,status:row.status,obs:row.obs||''};}
+function financeiroDeSupabase(row){const f={id:row.id,tipo:row.tipo,data:row.data,desc:row.descricao||'',cat:row.cat||'',centroCusto:row.centro_custo||'',val:row.val,status:row.status,obs:row.obs||''};
+ /* as colunas de origem só existem depois do SQL: sem elas, o lançamento fica como sempre foi */
+ FIN_LIGACAO_CAMPOS.forEach(([k,col,t])=>{if(!(col in row))return;const v=row[col];
+  f[k]=t==='n'?(v===null||v===undefined?null:Number(v)):t==='j'?(v||null):t==='l'?(Array.isArray(v)?v:[]):(v||'');});
+ return f;}
+/* selo de origem (Banco, Pedido...): só para origem conhecida; o texto vem da lista, não do banco */
+function seloOrigemFin(f){const k=origemFin(f);if(!k)return '';
+ return '<span class="selo-origem so-'+k+'" title="'+esc(ORIGEM_FIN_TITULO[k])+'">'+esc(ORIGEM_FIN[k])+'</span>';}
+/* o tipo na tabela, com o selo de origem embaixo quando o lançamento tem origem */
+function tipoComOrigemFin(f){const b='<span class="badge '+(f.tipo==='Entrada'?'badge-success':'badge-danger')+'">'+(f.tipo==='Entrada'?'↑':'↓')+' '+esc(f.tipo)+'</span>';
+ const s=seloOrigemFin(f);return s?'<div class="fin-tipo-cel">'+b+s+'</div>':b;}
 
 /* ================= IMPORTAÇÃO DE EXTRATO (OFX) ================= */
 let OFX_ITENS=[];
@@ -7726,7 +7841,39 @@ function parseOfx(texto){
  const datas=itens.map(t=>t.data).sort();
  if(!inicio&&datas.length)inicio=datas[0];
  if(!fim&&datas.length)fim=datas[datas.length-1];
- return{itens,saldoBanco,dataSaldoBanco,periodo:{inicio,fim}};}
+ /* a conta do arquivo (BANKID/ACCTID): o identificador da transação (FITID) só é único dentro da conta */
+ const blocoConta=(texto.match(/<(BANK|CC)ACCTFROM>[\s\S]*?<\/(BANK|CC)ACCTFROM>/i)||[''])[0];
+ const tagConta=tag=>{const m=blocoConta.match(new RegExp('<'+tag+'>([^\\r\\n<]*)','i'));return m?m[1].trim():'';};
+ const acct=tagConta('ACCTID'),conta=acct?[tagConta('BANKID'),acct].filter(Boolean).join('/'):'';
+ /* FITID repetido no mesmo arquivo (há banco que repete para transações diferentes do mesmo dia): a chave
+    passa a levar data, valor e tipo, para uma linha não barrar a outra no banco */
+ const vezes={},usadas={};
+ itens.forEach(t=>{if(t.fitid)vezes[t.fitid]=(vezes[t.fitid]||0)+1;});
+ itens.forEach(t=>{if(!t.fitid)return;t.fitidBanco=t.fitid;
+  let k=vezes[t.fitid]>1?chaveFitidOfx(t):t.fitid;
+  if(usadas[k]){let n=2;while(usadas[k+'#'+n])n++;k=k+'#'+n;}
+  usadas[k]=1;t.fitid=k;});
+ return{itens,conta,saldoBanco,dataSaldoBanco,periodo:{inicio,fim}};}
+/* a chave longa do FITID: identificador do banco + data, valor e tipo */
+const chaveFitidOfx=t=>(t.fitidBanco||t.fitid)+'|'+t.data+'|'+t.val.toFixed(2)+'|'+t.tipo;
+/* Confere cada item do arquivo com o que o ERP já tem pelo identificador do banco (mesma conta):
+   - mesmo FITID (ou a chave longa dele), mesma data, tipo e valor: é a mesma transação. Fica em jaNoErp, a lista
+     avisa e o item vem desmarcado;
+   - FITID que o ERP já usa num lançamento diferente: o banco reaproveitou o identificador. O item ganha a chave
+     longa, para entrar como novo sem esbarrar no outro, e a lista avisa em fitidDeOutro. */
+function conferirFitidOfx(itens,conta){
+ const doBanco=DB.financeiro.filter(f=>f.fitid&&(f.conta||'')===conta);
+ const usadas=new Set(doBanco.map(f=>f.fitid));
+ const doArquivo=new Set(itens.map(t=>t.fitid).filter(Boolean));
+ itens.forEach(t=>{t.jaNoErp=null;t.fitidDeOutro=null;if(!t.fitid)return;
+  const r=t.fitidBanco||t.fitid;
+  t.jaNoErp=doBanco.find(f=>(f.fitid===r||f.fitid.indexOf(r+'|')===0)&&f.tipo===t.tipo
+   &&Math.abs(Number(f.val)-t.val)<0.005&&String(f.data||'').slice(0,10)===t.data)||null;
+  if(t.jaNoErp||!usadas.has(t.fitid))return;
+  t.fitidDeOutro=doBanco.find(f=>f.fitid===t.fitid)||null;
+  let k=chaveFitidOfx(t);
+  if(usadas.has(k)||(doArquivo.has(k)&&k!==t.fitid)){let n=2;while(usadas.has(k+'#'+n)||doArquivo.has(k+'#'+n))n++;k=k+'#'+n;}
+  doArquivo.delete(t.fitid);t.fitid=k;usadas.add(k);doArquivo.add(k);});}
 function jaExisteFinanceiro(t){return DB.financeiro.some(f=>f.data===t.data&&Math.abs(Number(f.val)-t.val)<0.005&&(f.desc||'').trim()===t.desc.trim());}
 /* mesmo tipo e valor, até 3 dias de diferença, descrição diferente: costuma ser o mesmo pagamento já lançado à mão
    (ex.: "Salário - Jonathas" x "Transf Pix enviada - Jonathas…") */
@@ -7740,10 +7887,14 @@ function importarExtratoOfx(ev){const file=ev.target.files[0];ev.target.value=''
   try{resultado=parseOfx(reader.result);}catch(e){toast('Erro ao ler o arquivo OFX: '+e.message,'error');return;}
   const{itens,saldoBanco,dataSaldoBanco,periodo}=resultado;
   if(!itens.length){toast('Nenhum lançamento encontrado neste arquivo OFX.','error');return;}
-  OFX_ITENS=itens;OFX_SALDO_BANCO=saldoBanco;OFX_DATA_SALDO_BANCO=dataSaldoBanco;OFX_PERIODO=periodo||{inicio:'',fim:''};
-  $('ofx-itens-lista').innerHTML=itens.map((t,i)=>{const dup=jaExisteFinanceiro(t);const parecido=dup?null:possivelDuplicadoFinanceiro(t);
-   const aviso=dup?' · <span style="color:var(--warning)">já existe no financeiro</span>'
-    :parecido?' · <span style="color:var(--warning)">possível duplicado de "'+esc(parecido.desc)+'" ('+fmtD(parecido.data)+')</span>':'';
+  OFX_ITENS=itens;OFX_CONTA=resultado.conta||'';OFX_SALDO_BANCO=saldoBanco;OFX_DATA_SALDO_BANCO=dataSaldoBanco;OFX_PERIODO=periodo||{inicio:'',fim:''};
+  conferirFitidOfx(itens,OFX_CONTA);
+  $('ofx-itens-lista').innerHTML=itens.map((t,i)=>{const dup=!!t.jaNoErp||jaExisteFinanceiro(t);const parecido=dup?null:possivelDuplicadoFinanceiro(t);
+   const outro=t.fitidDeOutro;
+   const aviso=(t.jaNoErp?' · <span style="color:var(--warning)">já está no ERP (mesmo identificador do banco)</span>'
+    :dup?' · <span style="color:var(--warning)">já existe no financeiro</span>'
+    :parecido?' · <span style="color:var(--warning)">possível duplicado de "'+esc(parecido.desc)+'" ('+fmtD(parecido.data)+')</span>':'')
+    +(outro?' · <span style="color:var(--warning)">o banco repetiu o identificador de "'+esc(outro.desc)+'" ('+fmtD(outro.data)+', '+fmt(outro.val)+'): confira se é outra transação</span>':'');
    return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer"><input type="checkbox" class="ofx-item-check" value="'+i+'" onchange="atualizarComparacaoSaldoOfx()" '+(dup||parecido?'':'checked')+' style="width:16px;height:16px;flex-shrink:0"><div style="flex:1;min-width:0"><strong>'+esc(t.desc)+'</strong><div style="font-size:11px;color:var(--text-muted)">'+fmtD(t.data)+aviso+'</div></div><span class="mono" style="font-weight:700;flex-shrink:0;color:'+(t.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+(t.tipo==='Entrada'?'+':'−')+' '+fmt(t.val)+'</span></label>';
   }).join('');
   atualizarComparacaoSaldoOfx();
@@ -7751,7 +7902,7 @@ function importarExtratoOfx(ev){const file=ev.target.files[0];ev.target.value=''
  };
  reader.onerror=()=>toast('Não foi possível ler o arquivo.','error');
  reader.readAsText(file);}
-let OFX_SALDO_BANCO=null,OFX_DATA_SALDO_BANCO='',OFX_PERIODO={inicio:'',fim:''};
+let OFX_SALDO_BANCO=null,OFX_DATA_SALDO_BANCO='',OFX_PERIODO={inicio:'',fim:''},OFX_CONTA='';
 function marcarTodosOfx(v){document.querySelectorAll('.ofx-item-check').forEach(c=>c.checked=v);atualizarComparacaoSaldoOfx();}
 /* Recalcula a cada marca/desmarca: mostra o saldo atual do ERP, o que ele
    ficaria depois de lancar os itens marcados, e o que o banco diz que a
@@ -7839,17 +7990,34 @@ async function confirmarImportacaoOfx(){if(!guard())return;
  const idxs=Array.from(document.querySelectorAll('.ofx-item-check:checked')).map(c=>Number(c.value));
  /* nada marcado (extrato já todo lançado) ainda vale a pena: confere o saldo e aponta as diferenças */
  if(!idxs.length&&OFX_SALDO_BANCO===null){toast('Selecione ao menos um lançamento.','error');return;}
- const novos=idxs.map(i=>Object.assign({id:uid()},{tipo:OFX_ITENS[i].tipo,data:OFX_ITENS[i].data,desc:OFX_ITENS[i].desc,cat:'Extrato bancário',val:OFX_ITENS[i].val,status:'Pago'}));
+ await ligacaoFin();
+ /* com as colunas de origem (ou sem saber ainda se existem), importar precisa de internet: o identificador do
+    banco é único por conta, e um lote guardado no aparelho podia esbarrar no que outro aparelho gravou */
+ if(idxs.length&&(FIN_LIGACAO_NO_BANCO||!FIN_LIGACAO_CONFERIDA)){
+  if(!await exigeConexao('importar o extrato','porque o ERP confere no servidor o que já foi importado, também por outro aparelho'))return;
+  if(!FIN_LIGACAO_CONFERIDA)await verificarColunaLigacaoFin();
+  if(!FIN_LIGACAO_CONFERIDA){toast('O servidor não respondeu a tempo para conferir o extrato. Tente importar de novo em instantes.','error',8000);return;}}
+ /* com as colunas novas, cada linha guarda o identificador do banco (FITID), a conta, o texto original e a
+    importação (lote). A transação que já está no ERP (mesmo identificador, data e valor) não vai de novo: o
+    banco recusaria o lote inteiro. Confere outra vez, porque o Financeiro pode ter mudado desde a lista */
+ const lote=FIN_LIGACAO_NO_BANCO?uid():'';
+ if(FIN_LIGACAO_NO_BANCO)conferirFitidOfx(OFX_ITENS,OFX_CONTA);
+ const jaTem=new Set(FIN_LIGACAO_NO_BANCO?DB.financeiro.filter(f=>f.fitid).map(f=>(f.conta||'')+'|'+f.fitid):[]);
+ const repetido=i=>FIN_LIGACAO_NO_BANCO&&!!OFX_ITENS[i].fitid&&(!!OFX_ITENS[i].jaNoErp||jaTem.has(OFX_CONTA+'|'+OFX_ITENS[i].fitid));
+ const repetidos=idxs.filter(repetido).length;
+ const avisoRep=repetidos?' '+repetidos+' item(ns) marcado(s) já estava(m) no ERP (mesmo identificador do banco) e não entrou(aram) de novo.':'';
+ const novos=idxs.filter(i=>!repetido(i)).map(i=>comLigacaoFin(Object.assign({id:uid()},{tipo:OFX_ITENS[i].tipo,data:OFX_ITENS[i].data,desc:OFX_ITENS[i].desc,cat:'Extrato bancário',val:OFX_ITENS[i].val,status:'Pago'}),
+  {origem:'extrato',fitid:OFX_ITENS[i].fitid||'',conta:OFX_CONTA,descBanco:OFX_ITENS[i].desc,loteOfx:lote}));
  if(novos.length){
-  const {error}=await supa.from('financeiro').insert(novos.map(financeiroParaSupabase));
-  if(error){toast('Erro ao importar no Supabase: '+error.message,'error');return;}
+  const {error}=await supa.from('financeiro').insert(novos.map(n=>financeiroParaSupabase(n)));
+  if(error){toast('Erro ao importar no Supabase: '+error.message+(error.code==='23505'?' — algum item deste extrato já está no ERP (talvez importado em outro aparelho). Recarregue o ERP e importe de novo: os repetidos aparecem como já existentes.':''),'error',error.code==='23505'?10000:undefined);return;}
   DB.financeiro=novos.concat(DB.financeiro);}
  DB.config.ultimaImportacaoOfx=new Date().toLocaleString('pt-BR');
  commit(novos.length?'criar':'editar','Financeiro',novos.length?(novos.length+' lançamento(s) importado(s) do extrato OFX'):'Extrato conferido, sem lançamentos novos');
  novos.forEach(n=>syncSheets('financeiro','upsert',n));
  supa.from('config').upsert({campo:'ultimaImportacaoOfx',valor:DB.config.ultimaImportacaoOfx}).then(({error})=>{if(error)toast('Não consegui salvar a data da última importação: '+error.message,'error');});
  closeModal('modal-ofx');
- if(OFX_SALDO_BANCO===null){toast(novos.length+' lançamento(s) importado(s)! Este arquivo não trouxe o saldo do banco, então não deu para conferir.','info',7000);return;}
+ if(OFX_SALDO_BANCO===null){toast(novos.length+' lançamento(s) importado(s)! Este arquivo não trouxe o saldo do banco, então não deu para conferir.'+avisoRep,'info',7000);return;}
  const naoImportados=OFX_ITENS.filter((_,i)=>!idxs.includes(i));
  const an=analisarConciliacaoOfx(naoImportados);
  let ajustou=false;
@@ -7859,7 +8027,7 @@ async function confirmarImportacaoOfx(){if(!guard())return;
   if(ajustou)log('editar','Financeiro','Saldo igualado ao extrato ('+fmt(OFX_SALDO_BANCO)+'): saldo inicial de '+fmt(AJUSTE_SALDO_ANTERIOR)+' para '+fmt(DB.config.cf.saldoInicial));
  }
  renderFinanceiro();
- toast((novos.length?novos.length+' lançamento(s) importado(s). ':'Extrato conferido. ')+'Saldo do ERP: '+fmt(saldoFin())+'.','success',6000);
+ toast((novos.length?novos.length+' lançamento(s) importado(s). ':'Extrato conferido. ')+'Saldo do ERP: '+fmt(saldoFin())+'.'+avisoRep,'success',6000);
  mostrarConciliacaoOfx(an,ajustou);}
 async function carregarFinanceiroSupabase(){
  const {data,error}=await supa.from('financeiro').select('*').order('data',{ascending:false});
@@ -7871,6 +8039,9 @@ async function carregarFinanceiroSupabase(){
 function pedidoLabel(v){return 'V-'+pad(v.num)+' — '+cliName(v.cliId);}
 function pedidosOrdenados(){return DB.vendas.slice().sort((a,b)=>b.num-a.num);}
 function renderFinanceiro(){const ym=today().slice(0,7);
+ /* as colunas de origem ainda sem resposta (faltou rede): tenta de novo ao abrir o Financeiro, no máximo a
+    cada 30 s (cada filtro também passa por aqui) */
+ if(!FIN_LIGACAO_CONFERIDA&&!FIN_LIGACAO_CONFERINDO&&!redeRuimAgora()&&Date.now()-FIN_LIGACAO_TENTOU>30000)verificarColunaLigacaoFin();
  const pagos=DB.financeiro.filter(f=>f.status==='Pago');
  $('fin-saldo').textContent=fmtK(saldoFin());
  $('fin-ent').textContent=fmtK(pagos.filter(f=>f.tipo==='Entrada'&&String(f.data).slice(0,7)===ym).reduce((s,f)=>s+Number(f.val),0));
@@ -7887,7 +8058,7 @@ function renderFinanceiro(){const ym=today().slice(0,7);
   const pedLabels=pedidos.map(pedidoLabel);
   const legado=f.cat&&!pedLabels.includes(f.cat)?'<option value="'+esc(f.cat)+'" selected>'+esc(f.cat)+'</option>':'';
   const catCell=canEdit()?('<select class="form-control" style="font-size:11px;padding:3px 5px;min-width:170px" onchange="setPedidoInline(\''+f.id+'\',this.value)"><option value=""'+(!f.cat?' selected':'')+'>— Nenhum —</option>'+legado+pedidos.map(v=>'<option value="'+esc(pedidoLabel(v))+'"'+(f.cat===pedidoLabel(v)?' selected':'')+'>'+esc(pedidoLabel(v))+'</option>').join('')+'</select>'):esc(f.cat||'—');
-  return '<tr><td class="mono">'+fmtD(f.data)+'</td><td>'+esc(f.desc)+'</td><td>'+catCell+'</td><td>'+ccCell+'</td><td class="fin-obs">'+campoObsFin(f)+'</td><td><span class="badge '+(f.tipo==='Entrada'?'badge-success':'badge-danger')+'">'+(f.tipo==='Entrada'?'↑':'↓')+' '+f.tipo+'</span></td><td class="mono" style="font-weight:700;color:'+(f.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+fmt(f.val)+'</td><td><span class="badge '+stB+'">'+f.status+'</span></td><td>'+actionBtns("editFin('"+f.id+"')","delFin('"+f.id+"')")+'</td></tr>';}).join('')||emptyRow(9,fcMsgVazia('fin','Nenhum lançamento'));
+  return '<tr><td class="mono">'+fmtD(f.data)+'</td><td>'+esc(f.desc)+'</td><td>'+catCell+'</td><td>'+ccCell+'</td><td class="fin-obs">'+campoObsFin(f)+'</td><td>'+tipoComOrigemFin(f)+'</td><td class="mono" style="font-weight:700;color:'+(f.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+fmt(f.val)+'</td><td><span class="badge '+stB+'">'+f.status+'</span></td><td>'+actionBtns("editFin('"+f.id+"')","delFin('"+f.id+"')")+'</td></tr>';}).join('')||emptyRow(9,fcMsgVazia('fin','Nenhum lançamento'));
  renderFinanceiroCards(listaFin,pedidos);fcPintar('fin',listaFin);}
 /* mesma informacao da tabela, empilhada. Os dois seletores continuam
    editaveis no cartao: classificar lancamento e o trabalho desta tela. */
@@ -7921,8 +8092,10 @@ function renderFinanceiroCards(lista,pedidos){
     +pedidos.map(v=>'<option value="'+esc(pedidoLabel(v))+'"'+(f.cat===pedidoLabel(v)?' selected':'')+'>'+esc(pedidoLabel(v))+'</option>').join('')+'</select>'
    :'<span style="font-size:12.5px">'+esc(f.cat||'—')+'</span>';
   const acoes=actionBtns("editFin('"+f.id+"')","delFin('"+f.id+"')");
+  /* o selo de origem vai ao lado da data */
+  const selo=seloOrigemFin(f),dataC='<span class="pc-data">'+fmtD(f.data)+'</span>';
   return '<div class="pedido-card fin-card '+(ent?'ent':'sai')+'">'
-   +'<div class="pc-topo"><span class="pc-data">'+fmtD(f.data)+'</span><span class="badge '+stB+'">'+f.status+'</span></div>'
+   +'<div class="pc-topo">'+(selo?'<span class="pc-topo-esq">'+dataC+selo+'</span>':dataC)+'<span class="badge '+stB+'">'+f.status+'</span></div>'
    +'<div class="fc-desc">'+esc(f.desc)+'</div>'
    +'<div class="fc-valor '+(ent?'ent':'sai')+'">'+(ent?'↑':'↓')+' '+fmt(f.val)+'</div>'
    +'<div class="fc-campos">'
@@ -7938,9 +8111,15 @@ async function setCentroCustoInline(id,valor){if(!guard())return;const f=DB.fina
  f.centroCusto=valor;saveDB();syncSheets('financeiro','upsert',f);
  renderFinanceiro();toast(valor?'Classificado em "'+valor+'"!':'Marcado como não classificado.','success');}
 async function setPedidoInline(id,valor){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
- const {error}=await supa.from('financeiro').update({cat:valor||null}).eq('id',id);
+ await ligacaoFin();
+ /* o pedido escolhido vale também na ligação (venda_id); a origem do lançamento não muda. Trocou ou tirou o
+    pedido: a linha de pagamento (pag_id, parcela) era do pedido de antes e sai junto */
+ const mud={cat:valor||null},vendaId=vendaIdDoRotulo(valor),lig={};
+ if(FIN_LIGACAO_NO_BANCO){lig.vendaId=vendaId;mud.venda_id=vendaId||null;
+  if(vendaId!==(f.vendaId||'')){Object.assign(lig,SEM_LINHA_PAG_FIN);Object.assign(mud,{pag_id:null,parcela:null,parcelas:null});}}
+ const {error}=await supa.from('financeiro').update(mud).eq('id',id);
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');renderFinanceiro();return;}
- f.cat=valor;saveDB();syncSheets('financeiro','upsert',f);
+ f.cat=valor;Object.assign(f,lig);saveDB();syncSheets('financeiro','upsert',f);
  renderFinanceiro();toast(valor?'Direcionado para "'+valor+'"!':'Pedido removido.','success');}
 function fillFinPedidoSelect(sel){const pedidos=pedidosOrdenados();const labels=pedidos.map(pedidoLabel);
  const legado=sel&&!labels.includes(sel)?'<option value="'+esc(sel)+'" selected>'+esc(sel)+'</option>':'';
@@ -7955,13 +8134,24 @@ function editFin(id){encherSelectCC();if(!guard())return;const f=DB.financeiro.f
  $('fin-id').value=f.id;$('fin-tipo').value=f.tipo;$('fin-data').value=f.data;$('fin-desc').value=f.desc;fillFinPedidoSelect(f.cat||'');encherSelectLista('fin-cc',SETORES_FIXOS,f.centroCusto,'— Não classificado —');$('fin-val').value=f.val;encherSelectLista('fin-st',FIN_STATUS,f.status);$('fin-obs').value=f.obs||'';$('mf-title').textContent='Editar Lançamento';openModal('modal-financeiro');}
 async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').value.trim();if(!desc||num('fin-val')<=0){toast('Informe descrição e valor.','error');return;}
  const id=$('fin-id').value;const o={tipo:$('fin-tipo').value,data:$('fin-data').value||today(),desc,cat:$('fin-cat').value.trim(),centroCusto:$('fin-cc').value,val:num('fin-val'),status:$('fin-st').value,obs:$('fin-obs').value.trim()};
+ await ligacaoFin();
  if(id){
-  const f2=Object.assign(DB.financeiro.find(x=>x.id===id),o);
-  const {error}=await supa.from('financeiro').update(financeiroParaSupabase(f2)).eq('id',id);
+  const atual=DB.financeiro.find(x=>x.id===id),catAntes=atual.cat||'',vendaAntes=atual.vendaId||'',tipoAntes=atual.tipo;
+  const temLinhaPag=!!atual.pagId||atual.parcela!=null||atual.parcelas!=null;
+  const f2=Object.assign(atual,o);
+  /* o modal grava só o que ele mostra: origem, identificador do banco e ligações ficam como estão.
+     O pedido escolhido leva junto a ligação (venda_id), só quando ele muda. A linha de pagamento (pag_id,
+     parcela) é de uma Entrada daquele pedido: trocou o pedido ou virou Saída, ela sai */
+  const reg=financeiroParaSupabase(f2,{semLigacao:true}),lig={};
+  if(FIN_LIGACAO_NO_BANCO){
+   if((o.cat||'')!==catAntes){lig.vendaId=vendaIdDoRotulo(o.cat);reg.venda_id=lig.vendaId||null;}
+   const trocouPedido='vendaId' in lig&&lig.vendaId!==vendaAntes,virouSaida=o.tipo!=='Entrada'&&(tipoAntes==='Entrada'||temLinhaPag);
+   if(trocouPedido||virouSaida){Object.assign(lig,SEM_LINHA_PAG_FIN);Object.assign(reg,{pag_id:null,parcela:null,parcelas:null});}}
+  const {error}=await supa.from('financeiro').update(reg).eq('id',id);
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
-  commit('editar','Financeiro',desc);syncSheets('financeiro','upsert',f2);
+  Object.assign(f2,lig);commit('editar','Financeiro',desc);syncSheets('financeiro','upsert',f2);
  } else {
-  const f2=Object.assign({id:uid()},o);
+  const f2=comLigacaoFin(Object.assign({id:uid()},o),{origem:'manual',vendaId:vendaIdDoRotulo(o.cat)});
   const {error}=await supa.from('financeiro').insert(financeiroParaSupabase(f2));
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
   DB.financeiro.unshift(f2);commit('criar','Financeiro',desc);syncSheets('financeiro','upsert',f2);
@@ -8212,7 +8402,8 @@ function renderCompras(){const listaOc=DB.compras.filter(c=>fcPassa('oc',c));ren
  const lanc=(canEdit()&&!c.lancado&&c.status!=='Cancelado')?'<button class="btn btn-ghost btn-sm" title="Lançar no financeiro" onclick="lancarCompra(\''+c.id+'\')">💰</button>':'';
  return '<tr><td class="mono">OC-'+pad(c.num)+'</td><td class="mono">'+fmtD(c.data)+'</td><td>'+esc(fornName(c.forId))+'</td><td class="mono" style="font-weight:700">'+fmt(c.total)+'</td><td><span class="badge '+stB+'">'+c.status+'</span></td><td style="font-size:12px;color:var(--text-muted)">'+esc(c.obs||'—')+'</td><td><div class="row-actions">'+lanc+(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editCompra(\''+c.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delCompra(\''+c.id+'\')">🗑️</button>':'')+'</div></td></tr>';}).join('')||emptyRow(7,fcMsgVazia('oc','Nenhuma ordem de compra'));fcPintar('oc',listaOc);}
 async function lancarCompra(id){if(!guard())return;const c=DB.compras.find(x=>x.id===id);
- const finReg={id:uid(),tipo:'Saída',data:c.data,desc:'OC-'+pad(c.num)+' — '+fornName(c.forId),cat:'Compras',val:c.total,status:c.status==='Recebido'?'Pago':'Pendente'};
+ await ligacaoFin();
+ const finReg=comLigacaoFin({id:uid(),tipo:'Saída',data:c.data,desc:'OC-'+pad(c.num)+' — '+fornName(c.forId),cat:'Compras',val:c.total,status:c.status==='Recebido'?'Pago':'Pendente'},{origem:'compra',compraId:c.id});
  const {error:erroFin}=await supa.from('financeiro').insert(financeiroParaSupabase(finReg));
  if(erroFin){toast('Erro ao lançar no Supabase: '+erroFin.message,'error');return;}
  DB.financeiro.unshift(finReg);
@@ -8896,7 +9087,7 @@ function montarPlanilhaBackup(){
 
  criarAba('Financeiro','FINANCEIRO',[
   {t:'Data',w:12,fmt:FMT_DATA,al:'center',v:f=>dataExcel(f.data)},
-  {t:'Tipo',w:11,al:'center',v:f=>txt(f.tipo)},{t:'Descrição',w:44,v:f=>txt(f.desc)},
+  {t:'Tipo',w:11,al:'center',v:f=>txt(f.tipo)},{t:'Origem',w:10,al:'center',v:f=>txt(ORIGEM_FIN[origemFin(f)])},{t:'Descrição',w:44,v:f=>txt(f.desc)},
   {t:'Pedido / Categoria',w:20,v:f=>txt(f.cat)},{t:'Centro de Custo',w:22,v:f=>txt(f.centroCusto)},
   {t:'Valor',w:15,fmt:FMT_MOEDA,al:'right',v:f=>Number(f.val)||0},
   {t:'Status',w:13,v:f=>txt(f.status)}],
@@ -9484,7 +9675,13 @@ abaixo é o resumo em português.
 8. ferramentas (Máquinas & Ferramentas) — nome, tipo, ult (última
    manutenção), intervalo (dias), obs
 9. financeiro — tipo (Entrada/Saída), data, descricao, cat, centro_custo,
-   val, status (Pago/Pendente/Cancelado)
+   val, status (Pago/Pendente/Cancelado), obs. E de onde veio cada
+   lançamento: origem (extrato/pedido/manual/compra/nf), a ligação com o
+   pedido (venda_id; pag_id = a linha de pagamento; parcela/parcelas) e
+   com a compra (compra_id) e, do extrato, o identificador do banco
+   (fitid, único por conta), a conta, o texto original (desc_banco) e a
+   importação (lote_ofx). mesclado_com, mesclagem e nao_juntar ficam
+   reservadas para juntar lançamentos repetidos.
 10. fornecedores — nome, cnpj, tel, cidade, status
 11. compras (Ordens de Compra) — num sequencial, for_id, data, total,
     status, obs, lancado (boolean)
@@ -9509,7 +9706,8 @@ banco, as tabelas guardam só a lista (nome, caminho e URL) na coluna
 "anexos".
 
 Colunas que nasceram depois: algumas colunas foram acrescentadas à mão no
-Supabase (orcamentos.origem, financeiro.obs, vendas.anexos). Como o app
+Supabase (orcamentos.origem, financeiro.obs, vendas.anexos, as de origem
+e ligação do financeiro). Como o app
 não roda DDL, ele detecta em tempo de execução se a coluna existe antes
 de gravar — assim continua funcionando mesmo num banco que ainda não a
 tenha.
@@ -9975,6 +10173,9 @@ function normalizarBackup(dados){
  return {cru:false,quando:dados.geradoEm,
   itensDe:x=>Array.isArray(dados[x.chave])?dados[x.chave]:[],
   linhasConfig:linhasConfigDoBackup(dados.config||{})};}
+/* um registro do restauro em poucas palavras, para o aviso do que não entrou: data, descrição (ou nome) e valor */
+function rotuloRestauro(l){return [l.data?fmtD(String(l.data).slice(0,10)):'',String(l.descricao||l.nome||l.especie||l.id||'').slice(0,40),
+ l.val!==undefined&&l.val!==null?fmt(l.val):''].filter(Boolean).join(' ');}
 async function restaurarBackupJson(ev){
  const arquivo=ev.target.files&&ev.target.files[0];ev.target.value='';
  if(!arquivo)return;
@@ -9994,8 +10195,16 @@ async function restaurarBackupJson(ev){
  const quando=forma.quando?new Date(forma.quando).toLocaleString('pt-BR'):'data não informada';
  const resumo=plano.map(x=>'   • '+x.t.rotulo+': '+x.itens.length).join('\n')||'   (nenhum registro)';
  if(!totalRegistros){toast('O arquivo não tem registros para restaurar.','info',6000);return;}
+ /* lançamentos com origem e ligações (pedido, extrato): antes de gravar, o banco precisa dizer se tem essas
+    colunas. Sem resposta, para aqui, em vez de gravar sem elas e dizer que deu certo */
+ const finDoArquivo=(plano.find(x=>x.t.chave==='financeiro')||{itens:[]}).itens;
+ const temLigacao=finDoArquivo.some(f=>FIN_LIGACAO_CAMPOS.some(([k,col])=>{const v=forma.cru?f[col]:f[k];return v!==undefined&&v!==null&&v!==''&&!(Array.isArray(v)&&!v.length);}));
+ if(temLigacao&&!FIN_LIGACAO_CONFERIDA)await verificarColunaLigacaoFin();
+ if(temLigacao&&!FIN_LIGACAO_CONFERIDA){toast('Sem conexão para conferir o banco antes de restaurar (a origem dos lançamentos do Financeiro). Nada foi gravado: tente de novo quando o sinal voltar.','error',10000);return;}
+ const semColunasOrigem=temLigacao&&!FIN_LIGACAO_NO_BANCO;
  if(!confirm('RESTAURAR BACKUP\n\nArquivo gerado em '+quando+(forma.cru?' (backup automático diário)':'')+'\n\nSerão gravados '+totalRegistros+' registro(s):\n'+resumo
   +'\n\nMais as configurações (custos fixos, markup, mão de obra, fichas de preço, serviços).'
+  +(semColunasOrigem?'\n\nATENÇÃO: o banco ainda não tem as colunas de origem do Financeiro. Os lançamentos voltam, mas a origem (Banco, Pedido, Manual...) e as ligações com pedido e extrato ficam de fora. Para restaurá-las também, cancele, rode antes o supabase/migracao-financeiro-origem.sql e restaure de novo.':'')
   +'\n\nComo funciona: cada registro entra por cima do que tiver o mesmo código. Nada é apagado — o que existe hoje e não está no arquivo continua no lugar.'
   +'\n\nOs usuários voltam com a senha que tinham quando o backup foi gerado.'
   +'\nO histórico de edições não é restaurado, para não duplicar o diário do sistema.'))return;
@@ -10007,13 +10216,29 @@ async function restaurarBackupJson(ev){
  try{
   for(const {t,itens} of plano){
    if(btn)btn.textContent='⏳ '+t.rotulo+'...';
-   /* o arquivo cru já está no formato das tabelas; o do ERP precisa ser convertido */
-   const linhas=forma.cru?itens:itens.map(t.conv);
+   /* o arquivo cru já está no formato das tabelas; o do ERP precisa ser convertido (e só leva as colunas de
+      origem do Financeiro se o banco as tiver). No cru, sem as colunas no banco, elas saem da linha */
+   let linhas=forma.cru?itens:itens.map(t.conv);
+   if(forma.cru&&t.chave==='financeiro'&&!FIN_LIGACAO_NO_BANCO)
+    linhas=linhas.map(l=>{const c=Object.assign({},l);FIN_LIGACAO_CAMPOS.forEach(([,col])=>delete c[col]);return c;});
+   /* cada bloco leva só as colunas que as suas linhas trazem: uma linha sem o campo, no mesmo envio de
+      outra que tem, seria gravada com o campo vazio por cima do que o banco já tinha */
+   const grupos=new Map();
+   linhas.forEach(l=>{const k=Object.keys(l).sort().join(',');if(!grupos.has(k))grupos.set(k,[]);grupos.get(k).push(l);});
    /* em blocos: uma carga de 400 lançamentos de uma vez costuma estourar o pedido */
-   for(let i=0;i<linhas.length;i+=100){
-    const bloco=linhas.slice(i,i+100);
+   blocos:for(const grupo of grupos.values())for(let i=0;i<grupo.length;i+=100){
+    const bloco=grupo.slice(i,i+100);
     const {error}=await supa.from(t.tabela).upsert(bloco);
-    if(error){erros.push(t.rotulo+': '+error.message);break;}
+    /* registro repetido por outra chave única (ex.: o mesmo lançamento do extrato, reimportado com outro
+       código): o banco recusa o bloco inteiro. Vai linha a linha, e só a recusada fica de fora */
+    if(error&&(error.code==='23505'||/duplicate key/i.test(error.message||''))){
+     const recusadas=[];
+     for(const l of bloco){const r=await supa.from(t.tabela).upsert([l]);
+      if(r.error)recusadas.push(rotuloRestauro(l)+(r.error.code==='23505'?' (já está no banco com outro código)':' ('+r.error.message+')'));else gravados++;}
+     if(recusadas.length)erros.push(t.rotulo+': '+recusadas.length+' registro(s) não entraram — '
+      +recusadas.slice(0,5).join('; ')+(recusadas.length>5?'; e mais '+(recusadas.length-5):''));
+     continue;}
+    if(error){erros.push(t.rotulo+': '+error.message);break blocos;}
     gravados+=bloco.length;}}
   if(btn)btn.textContent='⏳ Configurações...';
   const linhasCfg=forma.linhasConfig;
@@ -10111,13 +10336,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-16.1';
+const APP_VERSAO='2026-10-17.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=311;
+const APP_ATUALIZACAO=312;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
