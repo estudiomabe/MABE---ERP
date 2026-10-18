@@ -83,6 +83,16 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 .fila-aviso { order:5;flex:none;font:inherit;font-size:12px;font-weight:700;padding:6px 11px;border-radius:20px;border:1px solid rgba(160,120,48,0.45);background:rgba(160,120,48,0.12);color:#7a5c20;cursor:pointer;white-space:nowrap; }
 .fila-aviso .fl-c { display:none; }
 .fila-aviso.erro { border-color:rgba(181,64,64,0.45);background:rgba(181,64,64,0.1);color:var(--danger); }
+/* Avisos com comando de banco (SQL): o comando é assunto do Administrador; a equipe lê só uma frase simples */
+body:not(.eh-admin) .so-admin, body.eh-admin .so-equipe { display:none !important; }
+/* erro de gravação fica na tela até a pessoa fechar no ✕ */
+.toast-txt { flex:1;min-width:0;overflow-wrap:anywhere;word-break:break-word; }
+.toast-x { flex:none;width:30px;height:30px;margin:-6px -8px -6px 0;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:none;color:var(--text-muted);font-family:var(--font);font-size:15px;cursor:pointer; }
+.toast-x:hover { background:var(--surface2);color:var(--text); }
+/* o bottom saiu do style da div: inline, ele vencia a regra do celular e o aviso cobria a barra inferior */
+#aviso-atualizacao { bottom:12px; }
+/* com o aviso de versão aberto, os toasts sobem para cima dele em vez de se misturar */
+body.com-aviso-versao #toast-container { bottom:calc(var(--aviso-versao-h,0px) + 24px); }
 .search-box { display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;width:220px; }
 .search-box input { background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:13px;width:100%; }
 .search-box input::placeholder { color:var(--text-muted); }
@@ -250,6 +260,12 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .pcp-stat { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04); }
 .pcp-stat-val { font-size:22px;font-weight:800;font-family:var(--mono); }
 .pcp-stat-label { font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px; }
+/* "Atrasadas" filtra o quadro: é botão, e fica marcado enquanto o filtro estiver ligado */
+.pcp-stat-btn { font:inherit;color:inherit;width:100%;cursor:pointer;border-color:rgba(181,64,64,0.4);transition:border-color 0.15s,box-shadow 0.15s; }
+.pcp-stat-btn > span { display:block; }
+.pcp-stat-btn:hover { border-color:var(--danger); }
+.pcp-stat-btn.ligado { border-color:var(--danger);box-shadow:inset 0 0 0 1px var(--danger);background:rgba(181,64,64,0.07); }
+.pcp-stat-btn.ligado .pcp-stat-label { color:var(--danger);font-weight:700; }
 .stock-bar { height:3px;background:var(--surface3);border-radius:2px;margin-top:3px;width:70px; }
 .stock-bar-fill { height:100%;border-radius:2px; }
 .row-actions { display:flex;gap:4px;opacity:0;transition:opacity 0.15s; } tr:hover .row-actions { opacity:1; }
@@ -310,6 +326,15 @@ select.form-control { cursor:pointer; } select.form-control option { background:
 .stat-box { flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .stat-value { font-size:20px;font-weight:800;font-family:var(--mono); }
 .stat-label { font-size:10px;color:var(--text-muted);margin-top:2px; }
+/* contador que abre a lista já filtrada: a setinha dourada avisa que dá para tocar */
+.num-atalho { cursor:pointer;transition:border-color .15s,transform .1s; }
+@media (hover:hover) { .num-atalho:hover { border-color:var(--accent); } }
+.num-atalho:focus-visible { outline:2px solid var(--accent);outline-offset:2px; }
+.num-atalho .stat-label::after, .num-atalho .kpi-label::after { content:'›';margin-left:5px;color:var(--accent);font-weight:800;font-size:1.4em;line-height:0;letter-spacing:0; }
+@media (hover:none) { .num-atalho:active { transform:scale(0.98); } }
+/* prejuízo: o "−" é um caractere a mais e, no cartão estreito do celular,
+   jogava o valor para duas linhas ("−R$" sozinho em cima) */
+@media (max-width:860px) { .kpi-hero .kpi-value.kpi-negativo { font-size:19px; } }
 .config-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .config-title { font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px; }
 .info-box { background:rgba(200,169,110,0.12);border:1px solid rgba(200,169,110,0.35);border-radius:8px;padding:11px 14px;font-size:13px;line-height:1.6;margin-bottom:14px;color:#7a5c20; }
@@ -318,6 +343,9 @@ select.form-control { cursor:pointer; } select.form-control option { background:
 .step-text { font-size:12.5px;line-height:1.6;color:var(--text-muted); } .step-text strong { color:var(--text); }
 code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding:1px 5px;border-radius:4px;color:#7a5c20;border:1px solid var(--border); }
 #toast-container { position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px; }
+/* no computador o aviso é uma caixa no canto: sem limite, um texto longo ocupava a largura toda e,
+   com o erro de gravação fixo até o ✕, cobria o botão de sair e o fim da lista (no celular a regra é outra) */
+@media (min-width:861px) { #toast-container { max-width:440px; } }
 /* Barra de navegação de baixo: no computador o menu lateral está sempre à vista,
    no celular ele vive escondido atrás do hambúrguer. As quatro telas do dia a dia
    passam a ficar a um toque, e o resto continua no menu, pelo "Mais". */
@@ -349,7 +377,9 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   #main { margin-left:0; }
   #topbar { flex-wrap:wrap;height:auto;min-height:58px;padding:10px 14px;row-gap:8px; }
   .topbar-title { order:1;flex:1 1 auto; }
-  .fila-aviso { order:2;padding:6px 10px;font-size:12px; }
+  /* no celular o aviso de conexão vira uma faixa com texto curto ('Sem conexão', '2 a enviar'):
+     só o ícone não dizia o que era, e na linha do título ele empurrava o botão Novo para baixo */
+  .fila-aviso { order:3;flex:1 1 100%;min-height:36px;padding:7px 12px;font-size:13px;text-align:left;border-radius:10px; }
   .fila-aviso .fl-l { display:none; } .fila-aviso .fl-c { display:inline; }
   #btn-new { order:2; }
   .search-box { order:3;flex:1 1 100%;width:100%; }
@@ -443,6 +473,10 @@ body.sem-anexos-pedido #vnd-anexos-zona { display:none; }
 .cal-ev-item { font-size:12.5px;color:var(--text-muted);margin-top:2px;word-break:break-word; }
 .cal-ev-tag { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;padding:2px 7px;border-radius:10px;flex:none; }
 .cal-vazio { padding:26px 14px;text-align:center;color:var(--text-muted);font-size:13px;background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius); }
+/* hoje sem nada marcado: a linha aparece mesmo assim, para a agenda mostrar onde se está */
+.cal-hoje-vazio { padding:12px;margin-bottom:6px;border-radius:10px;border:1px dashed var(--border);font-size:13px;color:var(--text-muted); }
+/* previsão que passou do prazo: selo "Previsão" e, embaixo, "Atrasada" */
+.cal-ev-tags { display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none; }
 /* Produção no celular: as colunas lado a lado ficavam espremidas; mostra uma etapa por vez, escolhida nas abas */
 .orc-anexos-zona { position:relative;transition:border-color .15s,background .15s; }
 .orc-anexos-zona.arrastando { border:2px dashed var(--accent);background:var(--surface2); }
@@ -496,6 +530,11 @@ body.sem-valores .pd-mat-topo strong { display:none; }
 .orc-card.st-aprovado { border-left-color:var(--success); }
 .orc-card.st-reprovado { border-left-color:var(--danger); }
 .orc-card.st-enviado { border-left-color:var(--primary); }
+/* o cartão inteiro abre o orçamento: mãozinha no mouse e um fundo rápido no toque
+   mostram que ele responde. Botões, status e as fileiras de botões (que não abrem
+   o orçamento, nem no vão entre um botão e outro) não acendem o cartão */
+.orc-card { cursor:pointer; }
+@media (hover:none) { .orc-card:active:not(:has(button:active, select:active, .oc-decidir:active, .pc-acoes:active)) { background:var(--surface2); } }
 .oc-validade { font-size:12px;color:var(--text-muted); }
 .oc-validade strong { color:var(--text);font-family:var(--mono);font-weight:600; }
 .oc-lucro { font-size:12px;color:var(--success);font-family:var(--mono); }
@@ -522,6 +561,9 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 .pc-acoes { display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:10px; }
 .pc-acoes .row-actions { display:flex;gap:6px;opacity:1; }
 .pc-vazio { padding:26px 14px;text-align:center;color:var(--text-muted);font-size:13px; }
+.sv-unid { font-family:var(--font);font-size:14px;font-weight:600;color:var(--text-muted); }
+.for-compras { background:none;border:none;font-family:inherit;cursor:pointer;text-align:left;align-self:flex-start;min-height:40px;padding:6px 0; }
+.pc-ficha .fer-sem-reg { grid-column:1 / -1;font-family:var(--font);font-weight:600;color:var(--text); }
 /* niveis sem acesso a valores nao veem dinheiro tambem nos cartoes */
 body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .pc-item strong, body.sem-valores .pc-status .badge-rs { display:none; }
 @media (max-width:860px) {
@@ -531,9 +573,15 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
   #cal-agenda { display:block;margin-top:4px; }
   #cal-grid, .cal-semana, .cal-legenda { display:none !important; }
   #section-calendario .period-bar { gap:6px; }
+  /* o topo da tela já diz "Calendário": o título repetido some e fica só o botão */
+  #section-calendario > .table-toolbar { justify-content:flex-end;padding:0 0 12px; }
+  #section-calendario > .table-toolbar .table-toolbar-title { display:none; }
   /* no celular a lista vira cartao e nao tem titulo de coluna: a ordem vai para um seletor */
   .fc-barra { display:flex; }
   .fc-barra .fc-btn-cel { display:inline-flex; }
+  /* telefone de 360 px: "Limpar filtros" e "N lançamentos · R$ ..." não cabem ao lado
+     do botão Filtros e a tela rolava de lado; o resumo desce para a linha de baixo */
+  .fc-barra .orc-resumo { flex-wrap:wrap;justify-content:flex-end;row-gap:2px; }
   #section-orcamentos .busca-orc { flex:1 1 calc(100% - 116px);min-width:0;max-width:none;order:-1; }
   .ordem-cel { display:flex;position:relative;order:-1;flex:none;width:48px;align-self:stretch;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text-muted); }
   .kpi-hero { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
@@ -564,6 +612,10 @@ body.sem-valores .pc-valor, body.sem-valores .pc-valor-ficha, body.sem-valores .
   .pcp-aba.ativa { background:var(--text);color:var(--surface);border-color:var(--text); }
   .pcp-aba-n { font-size:11px;font-family:var(--mono);background:var(--surface3);color:var(--text-muted);border-radius:10px;padding:1px 7px; }
   .pcp-aba.ativa .pcp-aba-n { background:rgba(250,247,242,0.18);color:var(--surface); }
+  /* ponto vermelho: esta etapa tem ordem atrasada (o mesmo aviso da aba Produção lá embaixo) */
+  .pcp-aba-n { position:relative; }
+  .pcp-aba-atraso { position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 2px var(--surface); }
+  .pcp-aba.ativa .pcp-aba-atraso { box-shadow:0 0 0 2px var(--text); }
   .kanban-board { display:block;overflow:visible; }
   .kanban-col { display:none;min-height:0;background:none;padding:0; }
   .kanban-col.ativa { display:block; }
@@ -698,6 +750,10 @@ body.sem-fin-obs .fin-obs { display:none; }
   /* nada pode terminar embaixo da barra */
   #content { padding-bottom:calc(78px + env(safe-area-inset-bottom)); }
   #aviso-atualizacao { bottom:calc(68px + env(safe-area-inset-bottom)); }
+  /* botões de 44px para o dedo acertar; em tela estreita o grupo desce inteiro para a linha de baixo */
+  #aviso-atualizacao .btn { min-height:44px;padding:0 18px;justify-content:center;font-size:14px; }
+  body.com-aviso-versao #toast-container { bottom:calc(var(--aviso-versao-h,0px) + 76px + env(safe-area-inset-bottom)); }
+  .toast-x { width:44px;height:44px;margin:-12px -13px -12px 0;font-size:16px; }
   #toast-container { bottom:calc(74px + env(safe-area-inset-bottom));right:12px;left:12px; }
 
   /* abaixo de 16px o iPhone dá zoom sozinho ao tocar no campo e a tela fica desalinhada */
@@ -732,11 +788,12 @@ body.sem-fin-obs .fin-obs { display:none; }
    row-gap:6px !important;column-gap:8px !important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important; }
   .hp-linha>:nth-child(1), .hp-linha>:nth-child(2), .hp-linha>:nth-child(7) { grid-column:1 / -1; }
   .hp-linha>:nth-child(8) { grid-column:2;justify-self:end;width:64px; }
-  .hp-linha .btn-danger { min-height:44px;padding:0; }
+  .hp-linha .btn-danger { min-height:44px;padding:0;justify-content:center; }
   .hp-tot-linha .hp-nums { gap:10px; }
   #vnd-itens>div>:first-child, #orc-materiais>div>:first-child, #orc-mdo>div>:first-child,
   #orc-servicos>div>:first-child, #orc-servicos>div>:nth-child(2) { grid-column:1 / -1; }
-  #vnd-itens>div .btn-danger, #orc-materiais>div .btn-danger, #orc-mdo>div .btn-danger, #orc-servicos>div .btn-danger { min-height:40px;padding:0; }
+  /* o ✕ no meio do botão: sem padding e sem centralizar ele encostava à esquerda */
+  #vnd-itens>div .btn-danger, #orc-materiais>div .btn-danger, #orc-mdo>div .btn-danger, #orc-servicos>div .btn-danger { min-height:40px;padding:0;justify-content:center; }
   #vnd-itens, #orc-materiais, #orc-servicos, #orc-mdo, .om-tabela { overflow-x:visible; }
   .card-head { flex-wrap:wrap; } .card-head > .config-title { width:100%; } .card-head > div:last-child { width:100%;justify-content:flex-start !important; }
 
@@ -758,6 +815,64 @@ body.sem-fin-obs .fin-obs { display:none; }
   #modal-nf .table-wrapper { max-height:none !important;overflow:visible !important; }
 }
 @media (max-width:520px) { .nf-parc { grid-template-columns:34px minmax(0,1fr) minmax(0,1fr); } .nf-parc .nf-parc-data { grid-column:2 / 4; } }
+/* "Olhinho" dos orçamentos: esconde lucro e custo quando a tela é mostrada a um
+   cliente ou arquiteto. O preço de venda continua à vista. Só a tela muda: PDFs e contas, não. */
+.olho-lucro { display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;padding:0;
+ border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text-muted);cursor:pointer; }
+.olho-lucro:hover { color:var(--text); }
+.olho-lucro svg { width:18px;height:18px;pointer-events:none; }
+.olho-lucro .ol-fechado { display:none; }
+body.lucro-oculto .olho-lucro { border-color:var(--accent);color:var(--accent);background:rgba(200,169,110,0.14); }
+body.lucro-oculto .olho-lucro .ol-aberto { display:none; }
+body.lucro-oculto .olho-lucro .ol-fechado { display:block; }
+body.sem-valores .olho-lucro { display:none; }
+body.lucro-oculto .oc-lucro, body.lucro-oculto .lucro-sigilo, body.lucro-oculto #orcd-comissao-linha,
+body.lucro-oculto #tb-orcamentos td:nth-child(7) > div,
+body.lucro-oculto #orc-detalhe-view thead th:nth-child(5), body.lucro-oculto #tb-orc-itens td:nth-child(5) { display:none !important; }
+/* Documentos: abas para trocar de modelo ali mesmo, sem voltar ao menu */
+.doc-abas { display:inline-flex;margin-bottom:14px; }
+/* Compras: a dica da NF tem um X; fechada, não volta mais neste aparelho */
+.dica-fechavel { display:flex;align-items:flex-start;gap:8px; }
+.dica-fechavel > span { flex:1;min-width:0; }
+.dica-x { flex:none;width:32px;height:32px;margin:-5px -8px -5px 0;padding:0;border:0;border-radius:6px;background:none;
+ color:inherit;font-size:14px;line-height:1;cursor:pointer;opacity:.75; }
+.dica-x:hover { opacity:1;background:rgba(200,169,110,0.2); }
+/* Login: olho dentro do campo da senha, para conferir o que foi digitado */
+.senha-caixa { position:relative; }
+.senha-caixa .form-control { width:100%;padding-right:46px; }
+.senha-olho { position:absolute;top:50%;right:2px;transform:translateY(-50%);width:42px;height:42px;padding:0;border:0;border-radius:8px;
+ background:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center; }
+.senha-olho:hover { color:var(--text); }
+.senha-olho svg { width:19px;height:19px;pointer-events:none; }
+.senha-olho .ol-fechado { display:none; }
+.senha-olho.visivel .ol-aberto { display:none; }
+.senha-olho.visivel .ol-fechado { display:block; }
+/* o Edge põe um olho próprio no campo de senha: fica só o nosso */
+.senha-caixa input::-ms-reveal { display:none; }
+/* Aprovar orçamento: o mesmo respiro entre um grupo de campos e o seguinte */
+.aprv-corpo { display:flex;flex-direction:column;gap:20px; }
+.aprv-corpo > .form-grid { gap:20px; }
+.aprv-corpo > .form-group, .aprv-corpo > .form-grid > .form-group { gap:8px; }
+.aprv-corpo #aprv-pags-soma:empty { display:none; }
+.aprv-item-chk { width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent); }
+/* janela estreita de computador (ou celular deitado): as ações do detalhe descem para a linha
+   de baixo em vez de sair da tela */
+@media (min-width:861px) and (max-width:1000px) { #orc-detalhe-view > div:first-child { flex-wrap:wrap; } }
+@media (max-width:860px) {
+  /* busca + três quadrados (ordem, filtros, olhinho) na mesma linha */
+  #section-orcamentos .busca-orc { flex-basis:calc(100% - 174px); }
+  #orc-lista-view .olho-lucro { order:-1;width:48px;height:auto;align-self:stretch; }
+  /* no detalhe o olhinho fica na ponta da linha do título; as ações descem para a linha de baixo */
+  #orc-detalhe-view .olho-lucro { margin-left:auto;width:44px;height:44px; }
+  .doc-abas { display:flex; }
+  .doc-abas .per-tab { flex:1;min-height:44px;padding:6px 4px;font-size:13px; }
+  .dica-x { width:44px;height:44px;margin:-10px -12px -10px 0;font-size:15px; }
+  .login-entrar { min-height:48px;font-size:15px; }
+  .login-esqueci { display:inline-flex;align-items:center;min-height:44px;padding:0 12px; }
+  /* extrato: a lista corre na rolagem da própria janela, sem uma segunda rolagem dentro */
+  #ofx-itens-lista { max-height:none !important;overflow:visible !important; }
+  #modal-ofx .modal-body .btn-sm { min-height:44px; }
+}
 /* busca global */
 .search-box { position:relative; }
 #busca-resultados { position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:120;
@@ -769,7 +884,12 @@ body.sem-fin-obs .fin-obs { display:none; }
 #busca-resultados .bg-item:hover, #busca-resultados .bg-item.sel { background:var(--surface2); }
 #busca-resultados .bg-cod { font-family:var(--mono);font-size:11px;color:var(--text-muted);flex:none; }
 #busca-resultados .bg-txt { font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0; }
-#busca-resultados .bg-sub { font-size:11px;color:var(--text-muted);margin-left:auto;flex:none; }
+/* o subtítulo (etapa da OP, prestador do serviço...) cede espaço antes do título e
+   corta com "…": na caixa estreita do computador, a etapa por extenso espremia o nome da OP */
+#busca-resultados .bg-sub { font-size:11px;color:var(--text-muted);margin-left:auto;flex:0 1 auto;max-width:45%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+/* no computador a caixa de busca tem 220px: a lista de resultados abre mais larga,
+   para a esquerda, e o nome e a etapa cabem lado a lado */
+@media (min-width:861px) { #busca-resultados { left:auto;width:400px; } }
 #busca-resultados .bg-vazio { padding:16px 12px;font-size:13px;color:var(--text-muted);text-align:center; }
 /* ordenação por cabeçalho */
 th.sortable { cursor:pointer;user-select:none;white-space:nowrap; }
@@ -867,10 +987,10 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <div class="login-sub">Faça login para continuar</div>
     <div class="login-form">
       <div id="login-err" class="login-err">Usuário ou senha incorretos.</div>
-      <div class="form-group"><label class="form-label">E-mail</label><input type="text" class="form-control" id="login-user" placeholder="voce@estudiomabe.com.br" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <div class="form-group"><label class="form-label">Senha</label><input type="password" class="form-control" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;padding:11px" onclick="doLogin()">Entrar</button>
-      <p style="text-align:center;margin-top:2px"><a href="#" onclick="event.preventDefault();openRecSenha()" style="font-size:12px;color:var(--text-muted);text-decoration:underline">Esqueci minha senha</a></p>
+      <div class="form-group"><label class="form-label">E-mail</label><input type="email" class="form-control" id="login-user" placeholder="voce@estudiomabe.com.br" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="form-group"><label class="form-label">Senha</label><div class="senha-caixa"><input type="password" class="form-control" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button type="button" class="senha-olho" id="login-olho" onmousedown="event.preventDefault()" onclick="mostrarSenhaLogin()" title="Mostrar senha" aria-label="Mostrar senha"><svg class="ol-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ol-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button></div></div>
+      <button class="btn btn-primary login-entrar" style="width:100%;justify-content:center;margin-top:4px;padding:11px" onclick="doLogin()">Entrar</button>
+      <p style="text-align:center;margin-top:2px"><a href="#" class="login-esqueci" onclick="event.preventDefault();openRecSenha()" style="font-size:12px;color:var(--text-muted);text-decoration:underline">Esqueci minha senha</a></p>
       <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:6px">Logins antigos (sem e-mail) continuam funcionando durante a migração.</p>
       <button type="button" class="btn btn-ghost" id="btn-instalar" style="display:none;width:100%;justify-content:center;margin-top:14px;padding:11px;font-weight:700" onclick="instalarErp()">📱 Instalar o ERP neste aparelho</button>
       <div class="login-versao" id="login-versao">—</div>
@@ -904,13 +1024,13 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Faturamento</div><div class="kpi-value" id="kpi-resultado">R$0</div><div class="kpi-delta" id="kpi-resultado-d"></div><div class="kpi-sub" id="kpi-rsub">soma dos pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Lucro</div><div class="kpi-value" id="kpi-lucro">R$0</div><div class="kpi-delta" id="kpi-lucro-d"></div><div class="kpi-sub" id="kpi-lucrosub">faturamento − despesas fixas</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Margem</div><div class="kpi-value" id="kpi-margem">0%</div><div class="kpi-delta" id="kpi-margem-d"></div><div class="kpi-sub" id="kpi-margemsub">lucro ÷ faturamento</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">A Receber</div><div class="kpi-value" id="kpi-areceber">R$0</div><div class="kpi-delta" id="kpi-areceber-d"></div><div class="kpi-sub" id="kpi-arsub">entradas pendentes</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div></div>
+        <div class="kpi-card num-atalho" style="--card-accent:var(--warning)" role="button" tabindex="0" title="Ver essas entradas pendentes no Financeiro" onclick="atalhoAReceber()"><div class="kpi-label">A Receber</div><div class="kpi-value" id="kpi-areceber">R$0</div><div class="kpi-delta" id="kpi-areceber-d"></div><div class="kpi-sub" id="kpi-arsub">entradas pendentes</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div></div>
       </div>
       <div class="kpi-mini">
         <div class="kpi-card" style="--card-accent:var(--text-muted)"><div class="kpi-label">Orçamentos do Período</div><div class="kpi-value" id="kpi-orcamentos">R$0</div><div class="kpi-sub" id="kpi-osub">orçamentos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kpi-ticket">R$0</div><div class="kpi-sub" id="kpi-ticketsub">por pedido</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V4a1.2 1.2 0 0 1 1.2-1.2h8a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Entradas</div><div class="kpi-value" id="kpi-entradas">R$0</div><div class="kpi-sub">recebido no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
-        <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Saídas</div><div class="kpi-value" id="kpi-saidas">R$0</div><div class="kpi-sub">pago no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Recebido</div><div class="kpi-value" id="kpi-entradas">R$0</div><div class="kpi-sub">o que já entrou no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
+        <div class="kpi-card" style="--card-accent:var(--warning)"><div class="kpi-label">Pago</div><div class="kpi-value" id="kpi-saidas">R$0</div><div class="kpi-sub">o que já saiu no período</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--danger)"><div class="kpi-label">Despesas Fixas</div><div class="kpi-value" id="kpi-despfixas">R$0</div><div class="kpi-sub" id="kpi-dfsub">custo fixo + folha</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="7" y1="15" x2="13" y2="15"/></svg></div></div>
       </div>
       </div>
@@ -954,8 +1074,8 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento({data:$('vnd-data').value||today()},'vnd-pags')">+ Adicionar forma de pagamento</button>
 <div id="vnd-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
 <div id="vnd-pags-aviso" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
-<div id="vnd-pags-sql" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:8px">Para guardar os comprovantes, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists pags jsonb default '[]'::jsonb;</div></div>
-</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn btn-ghost btn-sm" id="vnd-lix-btn" onclick="abrirLixeiraVnd()">🗑️ Lixeira</button><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div><div id="vnd-gastos" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">💸 Valor gasto neste pedido</div></div><div class="hp-dica" style="font-size:11.5px;margin:-4px 0 8px">Vem do Financeiro: as saídas, inclusive as do extrato, em que este pedido foi escolhido na coluna "Pedido".</div><div id="vnd-gastos-corpo"></div><div id="vnd-gastos-total"></div></div><div id="vnd-horas" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">⏱️ Horas trabalhadas neste projeto</div><button type="button" class="btn btn-ghost btn-sm" id="vnd-horas-add" onclick="addLinhaHoras()">+ Adicionar Horas</button></div><div id="vnd-horas-dica" style="font-size:11.5px;margin:-4px 0 8px"></div><div id="vnd-horas-aviso" style="display:none;font-size:12px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--warning,#c9a227);border-radius:8px;padding:10px 12px;margin-bottom:8px">Para guardar as horas, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface2);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists horas jsonb default '[]'::jsonb;</div></div><div class="hp-cabecalho" id="vnd-horas-cab" style="display:none"><span>Data</span><span>Mão de obra</span><span>Horas</span><span>Valor (R$)</span><span>Observações</span><span></span></div><div id="vnd-horas-corpo" style="display:flex;flex-direction:column;gap:7px"></div><div id="vnd-horas-total"></div></div></div></div>
+<div id="vnd-pags-sql" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:8px"><div class="so-admin">Para guardar os comprovantes, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists pags jsonb default '[]'::jsonb;</div></div><div class="so-equipe">Comprovantes indisponíveis no momento — avise o administrador.</div></div>
+</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn btn-ghost btn-sm" id="vnd-lix-btn" onclick="abrirLixeiraVnd()">🗑️ Lixeira</button><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div><div id="vnd-gastos" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">💸 Valor gasto neste pedido</div></div><div class="hp-dica" style="font-size:11.5px;margin:-4px 0 8px">Vem do Financeiro: as saídas, inclusive as do extrato, em que este pedido foi escolhido na coluna "Pedido".</div><div id="vnd-gastos-corpo"></div><div id="vnd-gastos-total"></div></div><div id="vnd-horas" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">⏱️ Horas trabalhadas neste projeto</div><button type="button" class="btn btn-ghost btn-sm" id="vnd-horas-add" onclick="addLinhaHoras()">+ Adicionar Horas</button></div><div id="vnd-horas-dica" style="font-size:11.5px;margin:-4px 0 8px"></div><div id="vnd-horas-aviso" style="display:none;font-size:12px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--warning,#c9a227);border-radius:8px;padding:10px 12px;margin-bottom:8px"><div class="so-admin">Para guardar as horas, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface2);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists horas jsonb default '[]'::jsonb;</div></div><div class="so-equipe">Lançamento de horas indisponível no momento — avise o administrador.</div></div><div class="hp-cabecalho" id="vnd-horas-cab" style="display:none"><span>Data</span><span>Mão de obra</span><span>Horas</span><span>Valor (R$)</span><span>Observações</span><span></span></div><div id="vnd-horas-corpo" style="display:flex;flex-direction:column;gap:7px"></div><div id="vnd-horas-total"></div></div></div></div>
         <div class="config-card orc-anexos-zona" id="vnd-anexos-zona" style="margin-top:14px" ondragenter="anexoPedidoArrastando(event,true)" ondragover="anexoPedidoArrastando(event,true)" ondragleave="anexoPedidoArrastando(event,false)" ondrop="anexoPedidoSolto(event)">
           <div class="orc-anexos-aviso">Solte os arquivos para anexar</div>
           <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência<span class="orc-anexos-dica"> — ou arraste os arquivos para cá</span></div><button class="btn btn-ghost btn-sm" id="vnd-anexo-btn" onclick="document.getElementById('vnd-anexo-input').click()">+ Anexar Arquivo</button></div>
@@ -967,10 +1087,10 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 
     <div class="section" id="section-financeiro">
       <div class="stat-row">
-        <div class="stat-box"><div class="stat-value" id="fin-saldo" style="color:var(--success)">R$0</div><div class="stat-label">Saldo Atual</div></div>
-        <div class="stat-box"><div class="stat-value" id="fin-ent" style="color:var(--success)">R$0</div><div class="stat-label">Entradas (mês)</div></div>
-        <div class="stat-box"><div class="stat-value" id="fin-sai" style="color:var(--danger)">R$0</div><div class="stat-label">Saídas (mês)</div></div>
-        <div class="stat-box"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
+        <div class="stat-box"><div class="stat-value" id="fin-saldo">R$0</div><div class="stat-label">Saldo Atual</div></div>
+        <div class="stat-box"><div class="stat-value" id="fin-ent" style="color:var(--success)">R$0</div><div class="stat-label">Recebido no mês</div></div>
+        <div class="stat-box"><div class="stat-value" id="fin-sai" style="color:var(--danger)">R$0</div><div class="stat-label">Pago no mês</div></div>
+        <div class="stat-box num-atalho" role="button" tabindex="0" title="Ver só os lançamentos pendentes" onclick="atalhoPendencias()"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
       </div>
       <div class="period-bar"><select class="form-control" id="fin-tipo-filter" style="width:auto;min-width:140px" onchange="renderFinanceiro()"><option value="">Entradas e saídas</option><option>Entrada</option><option>Saída</option></select><select class="form-control" id="fin-status-filter" style="width:auto;min-width:150px" onchange="renderFinanceiro()"><option value="">Todos os status</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><span id="ofx-ultima-atualizacao" style="font-size:10.5px;color:var(--text-muted)"></span></div><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"><span id="fin-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div id="financeiro-cards"></div><div class="table-wrapper" id="financeiro-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Pedido</th><th>Centro de Custo</th><th class="fin-obs">Observações</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody></table></div>
     </div>
@@ -987,11 +1107,11 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <span id="cc-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
       </div>
       <div class="stat-row">
-        <div class="stat-box"><div class="stat-value" id="cc-total-saidas" style="color:var(--danger)">R$0</div><div class="stat-label">Total de Custos (Saídas)</div></div>
-        <div class="stat-box"><div class="stat-value" id="cc-total-entradas" style="color:var(--success)">R$0</div><div class="stat-label">Total de Entradas</div></div>
+        <div class="stat-box"><div class="stat-value" id="cc-total-saidas" style="color:var(--danger)">R$0</div><div class="stat-label">Saídas previstas (pagas + a pagar)</div></div>
+        <div class="stat-box"><div class="stat-value" id="cc-total-entradas" style="color:var(--success)">R$0</div><div class="stat-label">Entradas previstas (recebidas + a receber)</div></div>
         <div class="stat-box"><div class="stat-value" id="cc-maior-cat">—</div><div class="stat-label">Maior Centro de Custo</div></div>
         <div class="stat-box"><div class="stat-value" id="cc-qtd-cats">0</div><div class="stat-label">Centros de custo com lançamento</div></div>
-        <div class="stat-box"><div class="stat-value" id="cc-nao-classif" style="color:var(--danger)">0</div><div class="stat-label">Lançamentos sem Centro de Custo</div></div>
+        <div class="stat-box num-atalho" role="button" tabindex="0" title="Ver e classificar esses lançamentos no Financeiro" onclick="atalhoSemCentro()"><div class="stat-value" id="cc-nao-classif">0</div><div class="stat-label">Lançamentos sem Centro de Custo</div></div>
       </div>
       <div class="bottom-grid" style="margin-bottom:14px">
         <div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">💰 Custos por Categoria</div></div><table><thead><tr><th>Categoria</th><th>Saídas</th><th>Entradas</th><th>% do Total</th></tr></thead><tbody id="tb-centrocustos"></tbody></table></div>
@@ -1007,11 +1127,17 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn btn-ghost btn-sm" onclick="marcarTodosOfx(true)">Marcar todos</button><button class="btn btn-ghost btn-sm" onclick="marcarTodosOfx(false)">Desmarcar todos</button></div>
         <div id="ofx-itens-lista" style="display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto"></div>
       </div>
-      <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-ofx')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImportacaoOfx()">✔ Lançar Selecionados</button></div>
+      <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-ofx')">Cancelar</button><button class="btn btn-primary" id="ofx-btn-lancar" onclick="confirmarImportacaoOfx()">✔ Lançar Selecionados</button></div>
     </div></div>
 
     <!-- DOCUMENTOS -->
     <div class="section" id="section-documentos">
+      <div class="per-tabs doc-abas" id="doc-abas" role="tablist" aria-label="Modelo do documento">
+        <button type="button" class="per-tab" role="tab" data-modo="orcamento" onclick="trocarDocumento('orcamento')">Orçamento</button>
+        <button type="button" class="per-tab" role="tab" data-modo="recibo" onclick="trocarDocumento('recibo')">Recibo</button>
+        <button type="button" class="per-tab" role="tab" data-modo="contrato" onclick="trocarDocumento('contrato')">Contrato</button>
+        <button type="button" class="per-tab" role="tab" data-modo="ficha" onclick="trocarDocumento('ficha')">Ficha</button>
+      </div>
       <div class="config-card">
         <div class="config-title" id="doc-modelo-titulo">📄 Modelo do Orçamento</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="doc-modelo-sub">Layout usado pelo ERP, em branco, só para conferir o visual. Nenhum dado de cliente ou pedido aparece aqui.</div>
@@ -1039,7 +1165,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     </div>
 
     <div class="section" id="section-fornecedores"><div id="fornecedores-cards"></div><div class="table-wrapper" id="fornecedores-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Fornecedores</div></div><table><thead><tr><th>#</th><th>Nome</th><th>CNPJ</th><th>Email</th><th>Telefone</th><th>Cidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-fornecedores"></tbody></table></div></div>
-    <div class="section" id="section-compras"><div class="info-box">📥 Faça o upload da nota fiscal de compra para obter os valores atualizados no cadastro de material/insumo.</div><div class="compras-topo"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button></div><div id="compras-cards"></div><div class="table-wrapper" id="compras-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button><input type="file" id="nf-xml-input" accept=".xml,text/xml,application/xml" style="display:none" onchange="importarNfXml(this)"></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
+    <div class="section" id="section-compras"><div class="info-box dica-fechavel" id="compras-dica-nf"><span>📥 Faça o upload da nota fiscal de compra para obter os valores atualizados no cadastro de material/insumo.</span><button type="button" class="dica-x" onclick="fecharDicaNf()" title="Fechar dica" aria-label="Fechar dica">✕</button></div><div class="compras-topo"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button></div><div id="compras-cards"></div><div class="table-wrapper" id="compras-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Compra</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('nf-xml-input').click()">📥 Importar NF (.xml)</button><input type="file" id="nf-xml-input" accept=".xml,text/xml,application/xml" style="display:none" onchange="importarNfXml(this)"></div><table><thead><tr><th>Ordem</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tb-compras"></tbody></table></div></div>
 
     <!-- MADEIRAS -->
     <div class="section" id="section-madeiras">
@@ -1073,7 +1199,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warning);margin-right:4px"></span>Agendada</span>
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text);margin-right:4px"></span>Em rota</span>
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:4px"></span>Entregue/Instalada</span>
-          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;border:1px dashed var(--accent);margin-right:4px"></span>🔮 Previsão (pedido em produção)</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;border:1px dashed var(--accent);margin-right:4px"></span>Previsão (pedido em produção)</span>
           <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-muted);margin-right:4px"></span>🔧 Manutenção de máquina</span>
         </span>
       </div>
@@ -1081,7 +1207,8 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       <div class="cal-semana" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:center">
         <div>DOM</div><div>SEG</div><div>TER</div><div>QUA</div><div>QUI</div><div>SEX</div><div>SÁB</div>
       </div>
-      <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px"></div>
+      <!-- minmax(0,1fr): texto comprido corta com "…" em vez de alargar a coluna e desalinhar dos dias da semana -->
+      <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:6px"></div>
     </div>
 
     <!-- ENTREGAS -->
@@ -1146,6 +1273,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             <option value="status:1">Status</option>
           </select></label>
           <button type="button" class="ordem-cel filtro-cel" id="orc-filtro-cel" title="Filtros" onclick="abrirFiltrosCel()"><svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg><span class="fc-n" id="orc-fc-n" style="display:none"></span></button>
+          <button type="button" class="olho-lucro" onclick="alternarOcultarLucro()" title="Esconder lucro e custo" aria-label="Esconder lucro e custo"><svg class="ol-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ol-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
           <div class="orc-resumo"><button type="button" class="orc-limpar" id="orc-limpar" style="display:none" onclick="limparFiltrosOrc()">Limpar filtros</button><span id="orc-resumo" style="display:none"></span><span id="orc-per-label"></span></div>
         </div>
         <div id="orcamentos-cards"></div><div class="table-wrapper" id="orcamentos-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Orçamentos — Mabe</div></div>
@@ -1177,6 +1305,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
           <button class="btn btn-ghost btn-sm" onclick="orcShow('lista');renderOrcamentos()">← Voltar</button>
           <div><h2 style="font-size:16px;font-weight:700" id="orcd-title">Orçamento</h2><div id="orcd-badge" style="font-size:11px;color:var(--text-muted);margin-top:2px"></div></div>
+          <button type="button" class="olho-lucro" onclick="alternarOcultarLucro()" title="Esconder lucro e custo" aria-label="Esconder lucro e custo"><svg class="ol-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ol-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
           <div style="margin-left:auto;display:flex;gap:8px" id="orcd-acoes"></div>
         </div>
         <div class="config-card">
@@ -1191,7 +1320,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         </div>
         <div class="config-card" id="orc-links-card" style="margin-top:14px">
           <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">🔗 Links de Referência</div></div>
-          <div id="orc-links-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px">Para guardar os links, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.orcamentos add column if not exists links jsonb default '[]'::jsonb;</div></div>
+          <div id="orc-links-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px"><div class="so-admin">Para guardar os links, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.orcamentos add column if not exists links jsonb default '[]'::jsonb;</div></div><div class="so-equipe">Links indisponíveis no momento — avise o administrador.</div></div>
           <div class="orc-link-nova" id="orc-link-nova">
             <input type="url" class="form-control" id="orc-link-url" placeholder="Cole o link (site, Pinterest, Drive, vídeo...)" onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarLinkOrc();}">
             <input type="text" class="form-control" id="orc-link-nome" placeholder="Nome (opcional)" onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarLinkOrc();}">
@@ -1207,9 +1336,9 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         </div>
         <div class="config-card" style="margin-top:14px;background:#1a1714;border-color:#1a1714;max-width:360px;margin-left:auto">
           <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Custo Total</span><span id="orcd-custo" style="font-family:var(--mono)">R$ 0,00</span></div>
+            <div class="lucro-sigilo" style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Custo Total</span><span id="orcd-custo" style="font-family:var(--mono)">R$ 0,00</span></div>
             <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;color:var(--accent);font-weight:700">Total do Orçamento</span><span id="orcd-preco" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent)">R$ 0,00</span></div>
-            <div id="orcd-comissao-linha" style="display:none;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:#d9b978" id="orcd-comissao-lbl">Comissão</span><span id="orcd-comissao" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#d9b978">R$ 0,00</span></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:rgba(250,247,242,0.5)">Lucro estimado</span><span id="orcd-lucro" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#6fcf97">R$ 0,00</span></div>
+            <div id="orcd-comissao-linha" style="display:none;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:#d9b978" id="orcd-comissao-lbl">Comissão</span><span id="orcd-comissao" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#d9b978">R$ 0,00</span></div><div class="lucro-sigilo" style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:rgba(250,247,242,0.5)">Lucro estimado</span><span id="orcd-lucro" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#6fcf97">R$ 0,00</span></div>
           </div>
         </div>
       </div>
@@ -1321,7 +1450,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
     </div>
 
-    <div class="section" id="section-pcp"><div class="period-bar"><select class="form-control" id="pcp-prio-filter" style="width:auto;min-width:150px" onchange="renderPCP()"><option value="">Todas as prioridades</option><option>Alta</option><option>Normal</option><option>Baixa</option></select><label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="pcp-ver-concluidas" onchange="renderPCP()" style="cursor:pointer">Mostrar concluídas</label><div class="per-tabs" id="pcp-modo-tabs"><button class="per-tab" id="pcp-modo-kanban" onclick="definirModoPcp('kanban')">▦ Kanban</button><button class="per-tab" id="pcp-modo-lista" onclick="definirModoPcp('lista')">☰ Lista</button></div><span id="pcp-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span><button class="btn btn-ghost btn-sm" onclick="imprimirPcp()">🖨️ Imprimir PCP</button></div><div class="pcp-stats" id="pcp-stats"></div><div class="pcp-abas" id="pcp-abas"></div><div class="kanban-board" id="pcp-kanban"></div><div id="pcp-lista-view" style="display:none"><div id="pcp-lista-cards"></div><div class="table-wrapper" id="pcp-lista-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Produção</div></div><table><thead><tr><th>Pedido</th><th>Peça / Projeto</th><th>Cliente</th><th>Status</th><th>Responsável</th><th>Prioridade</th><th>Prazo</th><th>Na fila</th><th>Ações</th></tr></thead><tbody id="tb-pcp-lista"></tbody></table></div></div></div>
+    <div class="section" id="section-pcp"><div class="period-bar"><select class="form-control" id="pcp-prio-filter" style="width:auto;min-width:150px" onchange="renderPCP()"><option value="">Todas as prioridades</option><option>Urgente</option><option>Alta</option><option>Normal</option></select><label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="pcp-ver-concluidas" onchange="renderPCP()" style="cursor:pointer">Mostrar concluídas</label><div class="per-tabs" id="pcp-modo-tabs"><button class="per-tab" id="pcp-modo-kanban" onclick="definirModoPcp('kanban')">▦ Kanban</button><button class="per-tab" id="pcp-modo-lista" onclick="definirModoPcp('lista')">☰ Lista</button></div><span id="pcp-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span><button class="btn btn-ghost btn-sm" onclick="imprimirPcp()">🖨️ Imprimir PCP</button></div><div class="pcp-stats" id="pcp-stats"></div><div class="pcp-abas" id="pcp-abas"></div><div class="kanban-board" id="pcp-kanban"></div><div id="pcp-lista-view" style="display:none"><div id="pcp-lista-cards"></div><div class="table-wrapper" id="pcp-lista-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Produção</div></div><table><thead><tr><th>Pedido</th><th>Peça / Projeto</th><th>Cliente</th><th>Status</th><th>Responsável</th><th>Prioridade</th><th>Prazo</th><th>Na fila</th><th>Ações</th></tr></thead><tbody id="tb-pcp-lista"></tbody></table></div></div></div>
 
     <div class="section" id="section-usuarios"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Usuários do Sistema</div></div><table><thead><tr><th>Login</th><th>Nome</th><th>Nível de Acesso</th><th title="Registrado por dispositivo: mostra o último acesso feito neste navegador">Último acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-usuarios"></tbody></table></div><div class="table-wrapper" style="margin-top:14px"><div class="table-toolbar"><div class="table-toolbar-title">O que cada nível enxerga</div></div><div class="niveis-legenda" id="usr-legenda"></div></div></div>
     <div class="section" id="section-historico"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Histórico de Edições</div><button class="btn btn-danger btn-sm" onclick="clearHistorico()">🗑️ Limpar</button></div><table><thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Módulo</th><th>Detalhe</th></tr></thead><tbody id="tb-historico"></tbody></table></div></div>
@@ -1458,10 +1587,12 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
   <div id="diag-detalhe" style="font-size:11px;color:var(--text-muted);margin-top:16px;font-family:var(--mono);word-break:break-word"></div>
  </div>
 </div>
-<div id="aviso-atualizacao" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9500;background:var(--text);color:var(--surface);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,0.25);align-items:center;gap:12px;flex-wrap:wrap">
+<div id="aviso-atualizacao" role="status" style="display:none;position:fixed;left:12px;right:12px;z-index:9500;background:var(--text);color:var(--surface);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,0.25);align-items:center;gap:12px;flex-wrap:wrap">
  <div style="flex:1;min-width:170px;font-size:13px;line-height:1.4"><strong>Nova versão disponível</strong><div style="opacity:.7;font-size:12px" id="aviso-versoes">Atualize para usar a versão mais recente do ERP.</div></div>
+ <div style="display:flex;gap:12px;margin-left:auto">
  <button class="btn btn-primary btn-sm" style="background:var(--accent);color:var(--text);border-color:var(--accent)" onclick="aplicarAtualizacao()">Atualizar</button>
- <button class="btn btn-ghost btn-sm" style="background:transparent;color:var(--surface);border-color:rgba(250,247,242,0.35)" onclick="$('aviso-atualizacao').style.display='none'">Depois</button>
+ <button class="btn btn-ghost btn-sm" style="background:transparent;color:var(--surface);border-color:rgba(250,247,242,0.35)" onclick="fecharAvisoAtualizacao()">Depois</button>
+ </div>
 </div>
 <nav id="barra-inferior" aria-label="Navegação principal"></nav>
 <div id="puxar-aviso" aria-hidden="true"><div id="puxar-roda"></div></div>
@@ -1480,14 +1611,14 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div id="pdf-refs-lista" style="display:flex;flex-wrap:wrap;gap:8px"></div>
 </div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-pdf-orc')">Cancelar</button><button class="btn btn-primary" onclick="gerarPdfOrcamento()">📄 Gerar PDF</button></div></div></div>
-<div class="modal-overlay" id="modal-aprovar-orc"><div class="modal" style="width:660px"><div class="modal-header"><div class="modal-title">✔ Aprovar Orçamento</div><button class="modal-close" onclick="closeModal('modal-aprovar-orc')">✕</button></div><div class="modal-body">
+<div class="modal-overlay" id="modal-aprovar-orc"><div class="modal" style="width:660px"><div class="modal-header"><div class="modal-title">✔ Aprovar Orçamento</div><button class="modal-close" onclick="closeModal('modal-aprovar-orc')">✕</button></div><div class="modal-body aprv-corpo">
 <input type="hidden" id="aprv-orc-id">
-<p style="font-size:13px;color:var(--text-muted);margin-bottom:14px" id="aprv-orc-desc"></p>
-<div class="form-group"><label class="form-label">Quais itens foram aprovados pelo cliente? *</label><div id="aprv-itens-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px"></div></div>
+<p style="font-size:13px;color:var(--text-muted)" id="aprv-orc-desc"></p>
+<div class="form-group"><label class="form-label">Quais itens foram aprovados pelo cliente? *</label><div id="aprv-itens-lista" style="display:flex;flex-direction:column;gap:6px"></div></div>
 <div class="form-group"><label class="form-label">Como o cliente vai pagar? *</label>
 <div id="aprv-pags" data-recalc="atualizarPreviewAprov" style="display:flex;flex-direction:column;gap:8px"></div>
-<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addFormaPagamento()">+ Adicionar forma de pagamento</button>
-<div id="aprv-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
+<button class="btn btn-ghost btn-sm" onclick="addFormaPagamento()">+ Adicionar forma de pagamento</button>
+<div id="aprv-pags-soma" style="font-size:11.5px;font-weight:600"></div>
 </div>
 <div class="form-grid form-2">
 <div class="form-group"><label class="form-label">Data da aprovação *</label><input type="date" class="form-control" id="aprv-data" onchange="aoMudarDataAprov()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">O dia em que o cliente fechou — é a data que o pedido vai levar</div></div>
@@ -1499,7 +1630,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </select></div>
 <div class="form-group" id="aprv-lanc-wrap" style="display:none"><label class="form-label">Qual lançamento do extrato é este pagamento?</label><select class="form-control" id="aprv-lanc" onchange="atualizarPreviewAprov()"></select>
 <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Entradas já pagas e ainda não ligadas a nenhum pedido. O escolhido passa a contar como o pagamento deste pedido, sem criar lançamento novo.</div></div>
-<div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;line-height:1.7"></div>
+<div id="aprv-preview" style="background:var(--surface2);border-radius:8px;padding:12px;font-size:12.5px;line-height:1.7"></div>
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="confirmarAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this);cnpjDigitado(this)"><div class="cnpj-info" id="cli-cnpj-info"></div></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title" id="imp-titulo">🖨️ Imprimir pedido (PCP)</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div id="imp-explicacao" style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O pedido sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><label style="display:flex;align-items:center;gap:9px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;cursor:pointer"><input type="checkbox" id="imp-sem-valores" style="width:17px;height:17px;flex-shrink:0">Ocultar valores nesta impressão<span style="font-size:11px;color:var(--text-muted)">— para mandar à oficina</span></label><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
@@ -1521,11 +1652,11 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </div></div>
 <div class="modal-overlay" id="modal-conciliacao"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🧾 Conferência com o extrato</div><button class="modal-close" onclick="closeModal('modal-conciliacao')">✕</button></div><div class="modal-body" id="conc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="conc-desfazer" onclick="desfazerAjusteSaldo()">↩ Desfazer ajuste do saldo</button><button class="btn btn-primary" onclick="closeModal('modal-conciliacao')">Entendi</button></div></div></div>
 <div class="modal-overlay" id="modal-fc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title" id="fc-titulo">Filtrar</div><button class="modal-close" onclick="closeModal('modal-fc-filtros')">✕</button></div><div class="modal-body" id="fc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="fcLimparTudo(FC_ATUAL);fcAbrirCel(FC_ATUAL)">Limpar</button><button class="btn btn-primary" id="fc-ver" onclick="closeModal('modal-fc-filtros')">Ver</button></div></div></div>
-<div class="modal-overlay" id="modal-lix-vnd"><div class="modal"><div class="modal-header"><div class="modal-title" id="lix-vnd-titulo">Lixeira do pedido</div><button class="modal-close" onclick="closeModal('modal-lix-vnd')">✕</button></div><div class="modal-body"><div id="lix-vnd-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px">A lixeira dos pedidos ainda não está ligada: falta uma coluna no banco. Até lá, tirar um item continua sendo definitivo. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists lixeira jsonb default '[]'::jsonb;</div></div><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Itens tirados deste pedido. <strong>Restaurar</strong> devolve o item à lista. Como o resto do pedido, a mudança só fica gravada quando você clicar em <strong>Salvar Pedido</strong>.</div><div class="dup-lista" id="lix-vnd-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-lix-vnd')">Fechar</button></div></div></div>
-<div class="modal-overlay" id="modal-lix-orc"><div class="modal"><div class="modal-header"><div class="modal-title" id="lix-orc-titulo">Lixeira do orçamento</div><button class="modal-close" onclick="closeModal('modal-lix-orc')">✕</button></div><div class="modal-body"><div id="lix-orc-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px">A lixeira ainda não está ligada: falta uma coluna no banco. Até lá, excluir um item continua sendo definitivo. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.orcamentos add column if not exists lixeira jsonb default '[]'::jsonb;</div></div><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Itens excluídos deste orçamento. <strong>Restaurar</strong> devolve o item ao lugar de onde saiu, com materiais, serviços e preço.</div><div class="dup-lista" id="lix-orc-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-lix-orc')">Fechar</button></div></div></div>
+<div class="modal-overlay" id="modal-lix-vnd"><div class="modal"><div class="modal-header"><div class="modal-title" id="lix-vnd-titulo">Lixeira do pedido</div><button class="modal-close" onclick="closeModal('modal-lix-vnd')">✕</button></div><div class="modal-body"><div id="lix-vnd-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div class="so-admin">A lixeira dos pedidos ainda não está ligada: falta uma coluna no banco. Até lá, tirar um item continua sendo definitivo. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists lixeira jsonb default '[]'::jsonb;</div></div><div class="so-equipe">Lixeira indisponível no momento — por enquanto, tirar um item apaga de vez. Avise o administrador.</div></div><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Itens tirados deste pedido. <strong>Restaurar</strong> devolve o item à lista. Como o resto do pedido, a mudança só fica gravada quando você clicar em <strong>Salvar Pedido</strong>.</div><div class="dup-lista" id="lix-vnd-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-lix-vnd')">Fechar</button></div></div></div>
+<div class="modal-overlay" id="modal-lix-orc"><div class="modal"><div class="modal-header"><div class="modal-title" id="lix-orc-titulo">Lixeira do orçamento</div><button class="modal-close" onclick="closeModal('modal-lix-orc')">✕</button></div><div class="modal-body"><div id="lix-orc-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div class="so-admin">A lixeira ainda não está ligada: falta uma coluna no banco. Até lá, excluir um item continua sendo definitivo. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.orcamentos add column if not exists lixeira jsonb default '[]'::jsonb;</div></div><div class="so-equipe">Lixeira indisponível no momento — por enquanto, excluir um item apaga de vez. Avise o administrador.</div></div><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Itens excluídos deste orçamento. <strong>Restaurar</strong> devolve o item ao lugar de onde saiu, com materiais, serviços e preço.</div><div class="dup-lista" id="lix-orc-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-lix-orc')">Fechar</button></div></div></div>
 <div class="modal-overlay" id="modal-dup-item"><div class="modal"><div class="modal-header"><div class="modal-title">Duplicar item</div><button class="modal-close" onclick="closeModal('modal-dup-item')">✕</button></div><div class="modal-body"><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Qual item você quer duplicar? A cópia entra logo abaixo do original, com os mesmos materiais, serviços e preço.</div><div class="dup-lista" id="dup-item-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-dup-item')">Cancelar</button><button class="btn btn-primary" id="dup-item-ok" onclick="duplicarItemOrc()">OK, duplicar</button></div></div></div>
 <div class="modal-overlay" id="modal-orc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title">Filtrar orçamentos</div><button class="modal-close" onclick="closeModal('modal-orc-filtros')">✕</button></div><div class="modal-body" id="orc-filtros-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="limparFiltrosOrc();abrirFiltrosCel()">Limpar</button><button class="btn btn-primary" id="orc-filtros-ver" onclick="closeModal('modal-orc-filtros')">Ver orçamentos</button></div></div></div>
-<div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st"><!-- opcoes vem de FIN_STATUS --></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-financeiro"><div class="modal"><div class="modal-header"><div class="modal-title" id="mf-title">Novo Lançamento</div><button class="modal-close" onclick="closeModal('modal-financeiro')">✕</button></div><div class="modal-body"><input type="hidden" id="fin-id"><div class="form-grid"><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="fin-tipo"><option value="Entrada">↑ Entrada</option><option value="Saída">↓ Saída</option></select></div><div class="form-group"><label class="form-label">Data</label><input type="date" class="form-control" id="fin-data" oninput="sugerirStatusFin()" onchange="sugerirStatusFin()"></div></div><div class="form-group"><label class="form-label">Descrição *</label><input type="text" class="form-control" id="fin-desc"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Pedido</label><select class="form-control" id="fin-cat"><option value="">— Nenhum —</option></select></div><div class="form-group"><label class="form-label">Valor (R$)</label><input type="number" class="form-control" id="fin-val" step="0.01" min="0"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Centro de Custo</label><select class="form-control" id="fin-cc"><option value="">— Não classificado —</option></select></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="fin-st" onchange="this.dataset.manual='1'"><!-- opcoes vem de FIN_STATUS --></select></div></div><div class="form-group fin-obs"><label class="form-label">Observações</label><textarea class="form-control" id="fin-obs" rows="3" style="resize:vertical;font-family:var(--font)" placeholder="Nota fiscal, combinado com o cliente, motivo do gasto..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-financeiro')">Cancelar</button><button class="btn btn-primary" onclick="saveFinanceiro()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-comissoes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mcom-title">Nova Pessoa com Comissão</div><button class="modal-close" onclick="closeModal('modal-comissoes')">✕</button></div><div class="modal-body">
 <input type="hidden" id="com-id">
 <div class="form-grid">
@@ -1649,7 +1780,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div class="form-group"><label class="form-label">Peça / Projeto *</label><input type="text" class="form-control" id="op-titulo" placeholder="Ex: Mesa de reunião Freijó 3,00m"></div>
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente</label><select class="form-control" id="op-cli"><option value="">—</option></select></div><div class="form-group"><label class="form-label">Prazo de Entrega</label><input type="date" class="form-control" id="op-prazo"></div></div>
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Responsável</label><input type="text" class="form-control" id="op-resp" list="lista-resp" placeholder="Quem executa esta ordem"><datalist id="lista-resp"></datalist></div><div class="form-group"><label class="form-label">Prioridade</label><select class="form-control" id="op-prio"><!-- opcoes vem de OP_PRIO --></select></div></div>
-<div class="form-group"><label class="form-label">Etapa Atual</label><select class="form-control" id="op-etapa"><option value="0">📋 Planejamento</option><option value="1">🪚 Corte & Usinagem</option><option value="2">🔨 Montagem</option><option value="3">🎨 Acabamento</option><option value="4">🔁 Retrabalho</option><option value="5">📦 Pronto</option><option value="6">🚚 Entregue</option></select></div>
+<div class="form-group"><label class="form-label">Etapa Atual</label><select class="form-control" id="op-etapa"><!-- opcoes vem de ETAPAS: o mesmo nome do quadro, das abas e da Lista --></select></div>
 <div class="form-group"><label class="form-label">Observações Técnicas</label><input type="text" class="form-control" id="op-obs" placeholder="Encaixes, acabamento, madeira, medidas..."></div>
 </div></div><div class="modal-footer"><button class="btn btn-danger" id="op-btn-del" style="margin-right:auto;display:none" onclick="delOPFromModal()">Excluir</button><button class="btn btn-ghost" onclick="closeModal('modal-producao')">Cancelar</button><button class="btn btn-primary" onclick="saveOP()">Salvar</button></div></div></div>
 
@@ -1696,6 +1827,11 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtK=v=>{v=Number(v)||0;return v>=100000?'R$ '+(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k':fmt(v);};
+/* saldo e resultado: positivo na cor do texto; negativo em vermelho e com "−"
+   na frente, para não depender só da cor (o "-" do toLocaleString some no meio) */
+const valorNegativo=v=>Math.round((Number(v)||0)*100)<0;
+const fmtSinal=v=>(valorNegativo(v)?'−':'')+fmtK(Math.abs(Number(v)||0));
+const corSinal=v=>valorNegativo(v)?'var(--danger)':'';
 const fmtN=(v,d)=> (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:d===undefined?2:d,maximumFractionDigits:d===undefined?2:d});
 const num=id=>parseFloat($(id).value)||0;
 /* a data de hoje no relógio do aparelho (Brasília), não em UTC: com toISOString, depois das 21h
@@ -1723,7 +1859,29 @@ function erroDeCarga(entidade,error){
   if(rede)toast("Sem conexão com o servidor. O ERP está mostrando os últimos dados salvos neste aparelho — o que você alterar fica guardado e é enviado quando a conexão voltar.","info",10000);
   else toast("Erro ao carregar "+lista+": "+msg,"error",9000);
  },500);}
-function toast(msg,type,ms){const c=$('toast-container');const t=document.createElement('div');t.className='toast '+(type||'info');t.innerHTML=(type==='success'?'✅ ':type==='error'?'⚠️ ':type==='warning'?'⚠️ ':'ℹ️ ')+esc(msg);c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},ms||3200);}
+/* Erro de gravação fica na tela até a pessoa fechar no ✕: sumindo em 3 segundos,
+   ninguém lê e quem estava salvando sai achando que salvou. Os demais avisos
+   (sucesso, informação e erro de preenchimento) continuam sumindo sozinhos. */
+const ERRO_DE_GRAVACAO=/supabase|^erro ao (?!carregar|ler)|n[ãa]o (foram|foi) salv|salv[oa], mas |mas houve erro|, mas n[ãa]o |n[ãa]o consegui (salvar|ligar|gravar|atualizar)|n[ãa]o foi poss[íi]vel (salvar|enviar)|recusad|restaurado em parte|importa[çc][ãa]o interrompida|^sem conex[ãa]o:|nada foi gravado|n[ãa]o respondeu a tempo/i;
+/* o navegador avisa a falha de rede em inglês ("Failed to fetch"): vira português. "Servidor", não
+   "internet": com o Supabase pausado a internet funciona e o erro é o mesmo */
+const semJargaoDeRede=m=>String(m==null?'':m).replace(/failed to fetch|networkerror when attempting to fetch resource.?|load failed|network request failed/gi,'sem conexão com o servidor');
+function toast(msg,type,ms){const c=$('toast-container');
+ const fixo=type==='error'&&ERRO_DE_GRAVACAO.test(String(msg));
+ const texto=type==='error'?semJargaoDeRede(msg):msg;
+ if(fixo){
+  /* o mesmo erro de novo (dois toques em Salvar) não empilha, e no máximo três ficam na tela */
+  c.querySelectorAll('.toast.fixo').forEach(o=>{if(o.dataset.msg===texto)o.remove();});
+  const fixos=c.querySelectorAll('.toast.fixo');if(fixos.length>=3)fixos[0].remove();}
+ const t=document.createElement('div');t.className='toast '+(type||'info')+(fixo?' fixo':'');
+ t.setAttribute('role',type==='error'?'alert':'status');
+ t.innerHTML='<span class="toast-txt">'+(type==='success'?'✅ ':type==='error'?'⚠️ ':type==='warning'?'⚠️ ':'ℹ️ ')+esc(texto)+'</span>'
+  +(fixo?'<button type="button" class="toast-x" aria-label="Fechar aviso" title="Fechar" onclick="fecharToast(this.parentNode)">✕</button>':'');
+ if(fixo)t.dataset.msg=texto;
+ c.appendChild(t);
+ if(!fixo)setTimeout(()=>fecharToast(t),ms||3200);
+ return t;}
+function fecharToast(t){if(!t||!t.parentNode)return;t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);}
 function openModal(id){$(id).classList.add('open');}
 function closeModal(id){$(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
@@ -1828,6 +1986,8 @@ const nivelDe=u=>{const n=u&&u.perfil;return NIVEIS[n]?n:(NIVEL_LEGADO[n]||NIVEL
 const nivelInfo=u=>NIVEIS[nivelDe(u)];
 const canEdit=()=>!!(USER&&nivelInfo(USER).edita);
 const isAdmin=()=>!!(USER&&nivelDe(USER)==='Administrador');
+/* mensagem com termo de banco (coluna, SQL) é para o Administrador; os demais leem a versão simples */
+const paraAdmin=(tecnica,simples)=>isAdmin()?tecnica:simples;
 const verValores=()=>!!(USER&&nivelInfo(USER).valores);
 function podeVer(sec){if(!USER)return false;
  if(sec==='usuarios'||sec==='configuracoes')return isAdmin();
@@ -1863,6 +2023,8 @@ function marcarBarraInferior(sec){
  const conhecida=itens.some(b=>b.dataset.sec===sec);
  itens.forEach(b=>b.classList.toggle('ativo',b.dataset.sec===sec||(!conhecida&&b.dataset.sec==='__mais')));}
 function aplicarPermissoes(){
+ /* comando de banco (SQL) nos avisos: só o Administrador vê; a equipe lê uma frase simples */
+ document.body.classList.toggle('eh-admin',isAdmin());
  montarBarraInferior();
  document.body.classList.toggle('sem-valores',!verValores());
  const filhos=[...document.querySelectorAll('#sidebar .nav-item, #sidebar .nav-label')];
@@ -2022,6 +2184,10 @@ function abrirDefinirNovaSenha(){
  setTimeout(()=>$('rec-nova-senha').focus(),80);}
 
 /* ================= LOGIN ================= */
+/* olho da senha: mostra o que foi digitado, para conferir antes de entrar */
+function mostrarSenhaLogin(){const p=$('login-pass'),b=$('login-olho');if(!p||!b)return;
+ const mostrar=p.type==='password';p.type=mostrar?'text':'password';b.classList.toggle('visivel',mostrar);
+ const rot=mostrar?'Esconder senha':'Mostrar senha';b.setAttribute('aria-label',rot);b.title=rot;}
 async function doLogin(){
  const l=$('login-user').value.trim(),p=$('login-pass').value;
  $('login-err').classList.remove('show');
@@ -2223,7 +2389,7 @@ function navigate(sec){
  if(sec==='clientes')carregarClientesSupabase();
  if(sec==='fornecedores')carregarFornecedoresSupabase();
  if(sec==='servicos'||sec==='comissoes')carregarConfigSupabase();
- if(sec==='documentos'){document.querySelector('#page-title .titulo-longo').textContent='Documentos — '+(DOC_MODO==='ficha'?'Modelo de Ficha Técnica':DOC_MODO==='contrato'?'Modelo de Contrato':DOC_MODO==='recibo'?'Modelo do Recibo':'Modelo do Orçamento');verModeloDocumento();}
+ if(sec==='documentos'){document.querySelector('#page-title .titulo-longo').textContent=tituloDocumento();verModeloDocumento();}
  if(sec==='insumos'||sec==='portfolio')carregarProdutosSupabase();
  if(sec==='madeiras')carregarMadeirasSupabase();
  if(sec==='ferramentas'||sec==='calendario')carregarFerramentasSupabase();
@@ -2239,26 +2405,40 @@ function navigate(sec){
 function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,servicos:renderServicos,comissoes:renderComissoes,documentos:renderDocumentos,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 /* ================= BUSCA GLOBAL =================
    Filtra a seção aberta, como antes, e ao mesmo tempo procura em todos os
-   cadastros. Clicar num resultado leva para a seção certa já filtrada. */
+   cadastros. Tocar num resultado abre o próprio registro, do mesmo jeito que
+   tocar nele na lista; sem permissão para abrir, cai na seção já filtrada. */
 const norm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+/* abrir: o que a lista faz ao tocar no registro. pode: a permissão que essa ficha
+   confere (sem "pode", basta poder editar). Sem ela, o toque leva à lista filtrada
+   em vez de abrir e mostrar o aviso de "sem permissão". */
+const podeAbrirComValores=()=>canEdit()&&verValores();
 function fontesBusca(){return [
- {sec:'comissoes',grupo:'Comissões',itens:listaComissionados(),cod:c=>'',txt:c=>c.nome,sub:c=>c.papel||'',extra:c=>[c.contato,c.obs]},
- {sec:'servicos',grupo:'Serviços',itens:listaServicos(),cod:sv=>'',txt:sv=>sv.nome,sub:sv=>sv.fornId?fornName(sv.fornId):'',extra:sv=>[sv.unidade,sv.obs]},
- {sec:'clientes',grupo:'Clientes',itens:DB.clientes,cod:c=>'',txt:c=>c.nome,sub:c=>c.tel||'',extra:c=>[c.email,c.doc,c.cidade]},
- {sec:'orcamentos',grupo:'Orçamentos',itens:DB.orcamentos,cod:o=>'ORC-'+pad(o.num),txt:o=>cliName(o.cliId),sub:o=>o.status,extra:o=>[(o.itens||[]).map(i=>i.desc).join(' '),o.obs]},
- {sec:'vendas',grupo:'Pedidos',itens:DB.vendas,cod:v=>'V-'+pad(v.num),txt:v=>cliName(v.cliId),sub:v=>v.status,extra:v=>[(v.itens||[]).map(i=>i.desc).join(' '),v.obs]},
- {sec:'pcp',grupo:'Produção',itens:DB.producao,cod:o=>'OP-'+pad(o.num),txt:o=>o.titulo,sub:o=>o.etapa,extra:o=>[cliName(o.cliId),o.obs,o.resp]},
- {sec:'portfolio',grupo:'Portfólio',itens:DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio'),cod:p=>'',txt:p=>p.nome,sub:p=>p.cat||'',extra:p=>[p.cat]},
- {sec:'insumos',grupo:'Material/Insumo',itens:DB.produtos.filter(p=>p.tipo==='Insumo'),cod:p=>'',txt:p=>p.nome,sub:p=>p.cat||'',extra:p=>[p.cat]},
- {sec:'financeiro',grupo:'Financeiro',itens:DB.financeiro,cod:f=>f.tipo==='Entrada'?'↑':'↓',txt:f=>f.desc,sub:f=>fmt(f.val),extra:f=>[f.centroCusto,f.status]},
- {sec:'fornecedores',grupo:'Fornecedores',itens:DB.fornecedores,cod:f=>'',txt:f=>f.nome,sub:f=>f.cidade||'',extra:f=>[f.cnpj,f.email,f.tel]},
- {sec:'ferramentas',grupo:'Máquinas',itens:DB.ferramentas,cod:f=>'',txt:f=>f.nome,sub:f=>f.tipo||'',extra:f=>[f.obs]}
+ {sec:'comissoes',grupo:'Comissões',itens:listaComissionados(),cod:c=>'',txt:c=>c.nome,sub:c=>c.papel||'',extra:c=>[c.contato,c.obs],abrir:c=>editComissionado(c.id)},
+ {sec:'servicos',grupo:'Serviços',itens:listaServicos(),cod:sv=>'',txt:sv=>sv.nome,sub:sv=>sv.fornId?fornName(sv.fornId):'',extra:sv=>[sv.unidade,sv.obs],abrir:sv=>editServico(sv.id)},
+ {sec:'clientes',grupo:'Clientes',itens:DB.clientes,cod:c=>'',txt:c=>c.nome,sub:c=>c.tel||'',extra:c=>[c.email,c.doc,c.cidade],abrir:c=>editCliente(c.id)},
+ {sec:'orcamentos',grupo:'Orçamentos',itens:DB.orcamentos,cod:o=>'ORC-'+pad(o.num),txt:o=>cliName(o.cliId),sub:o=>o.status,extra:o=>[(o.itens||[]).map(i=>i.desc).join(' '),o.obs],abrir:o=>abrirDetalheOrc(o.id),pode:()=>true},
+ {sec:'vendas',grupo:'Pedidos',itens:DB.vendas,cod:v=>'V-'+pad(v.num),txt:v=>cliName(v.cliId),sub:v=>v.status,extra:v=>[(v.itens||[]).map(i=>i.desc).join(' '),v.obs],abrir:v=>editVenda(v.id),pode:podeAbrirComValores},
+ /* a etapa pelo nome ("🔨 Montagem"): o número sozinho não dizia nada. A OP concluída
+    guarda a última etapa em que estava; aí o que vale é "Concluída", como no pedido */
+ {sec:'pcp',grupo:'Produção',itens:DB.producao,cod:o=>'OP-'+pad(o.num),txt:o=>o.titulo,sub:o=>o.status==='Concluída'?'✅ Concluída':ETAPAS[Number(o.etapa)||0]||'',extra:o=>[cliName(o.cliId),o.obs,o.resp],abrir:o=>editOP(o.id)},
+ /* no portfólio, abrir é a ficha de preço, como o ✏️ da lista */
+ {sec:'portfolio',grupo:'Portfólio',itens:DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio'),cod:p=>'',txt:p=>p.nome,sub:p=>p.cat||'',extra:p=>[p.cat],abrir:p=>abrirFichaProduto(p.id),pode:podeAbrirComValores},
+ {sec:'insumos',grupo:'Material/Insumo',itens:DB.produtos.filter(p=>p.tipo==='Insumo'),cod:p=>'',txt:p=>p.nome,sub:p=>p.cat||'',extra:p=>[p.cat],abrir:p=>editProduto(p.id),pode:podeAbrirComValores},
+ {sec:'financeiro',grupo:'Financeiro',itens:DB.financeiro,cod:f=>f.tipo==='Entrada'?'↑':'↓',txt:f=>f.desc,sub:f=>fmt(f.val),extra:f=>[f.centroCusto,f.status],abrir:f=>editFin(f.id)},
+ {sec:'fornecedores',grupo:'Fornecedores',itens:DB.fornecedores,cod:f=>'',txt:f=>f.nome,sub:f=>f.cidade||'',extra:f=>[f.cnpj,f.email,f.tel],abrir:f=>editFornecedor(f.id)},
+ {sec:'ferramentas',grupo:'Máquinas',itens:DB.ferramentas,cod:f=>'',txt:f=>f.nome,sub:f=>f.tipo||'',extra:f=>[f.obs],abrir:f=>editFerramenta(f.id)}
 ];}
 let BUSCA_ITENS=[],BUSCA_SEL=-1;
+/* a lista da seção fica só com o que bate com o termo: as linhas da tabela no
+   computador e os cartões no celular (lá a tabela fica escondida, e filtrar só
+   as linhas deixava a lista inteira na tela) */
+function filtrarSecaoBusca(sec,alvo){
+ document.querySelectorAll('#section-'+sec+' tbody tr, #section-'+sec+' .pedido-card')
+  .forEach(el=>{el.style.display=norm(el.textContent).includes(alvo)?'':'none';});}
 function handleSearch(v){
  /* comportamento antigo: filtra o que está na tela */
  const alvo=norm(v);
- document.querySelectorAll('#section-'+CUR+' tbody tr').forEach(tr=>{tr.style.display=norm(tr.textContent).includes(alvo)?'':'none';});
+ filtrarSecaoBusca(CUR,alvo);
  if(CUR==='pcp')document.querySelectorAll('#pcp-kanban .kanban-card').forEach(c=>{c.style.display=norm(c.textContent).includes(alvo)?'':'none';});
  const cx=$('busca-resultados');if(!cx)return;
  if(alvo.length<2){cx.hidden=true;cx.innerHTML='';BUSCA_ITENS=[];BUSCA_SEL=-1;return;}
@@ -2273,7 +2453,7 @@ function handleSearch(v){
   html+='<div class="bg-grupo">'+f.grupo+'</div>';
   achados.forEach(x=>{
    const i=BUSCA_ITENS.length;
-   BUSCA_ITENS.push({sec:f.sec,termo:String(f.cod(x)||f.txt(x)||'')});
+   BUSCA_ITENS.push({sec:f.sec,termo:String(f.cod(x)||f.txt(x)||''),abrir:f.abrir?()=>f.abrir(x):null,pode:f.pode||canEdit});
    html+='<div class="bg-item" data-i="'+i+'" onclick="irParaResultado('+i+')">'
     +(f.cod(x)?'<span class="bg-cod">'+esc(f.cod(x))+'</span>':'')
     +'<span class="bg-txt">'+esc(f.txt(x)||'—')+'</span>'
@@ -2284,11 +2464,14 @@ function irParaResultado(i){
  const r=BUSCA_ITENS[i];if(!r)return;
  fecharBusca();
  navigate(r.sec);
- const cx=$('global-search');if(!cx)return;
+ const cx=$('global-search');
+ /* abre direto o orçamento, pedido, OP, cliente...; o teclado fecha junto,
+    senão o que se digitasse ia para a busca escondida atrás da ficha */
+ if(r.abrir&&r.pode()){if(cx)cx.blur();r.abrir();return;}
+ if(!cx)return;
  cx.value=r.termo;
  const alvo=norm(r.termo);
- const aplicar=()=>document.querySelectorAll('#section-'+r.sec+' tbody tr')
-  .forEach(tr=>{tr.style.display=norm(tr.textContent).includes(alvo)?'':'none';});
+ const aplicar=()=>filtrarSecaoBusca(r.sec,alvo);
  aplicar();
  /* a seção recarrega do Supabase logo depois de abrir e redesenha a tabela;
     sem reaplicar, o filtro do resultado clicado sumia sozinho */
@@ -2407,7 +2590,9 @@ function renderCentroCustos(){syncPerBar('cc-per',CC);
  const totalEntradas=lancs.filter(f=>f.tipo==='Entrada').reduce((s,f)=>s+Number(f.val||0),0);
  $('cc-total-saidas').textContent=fmtK(totalSaidas);
  $('cc-total-entradas').textContent=fmtK(totalEntradas);
- $('cc-nao-classif').textContent=lancs.filter(f=>!(f.centroCusto||'').trim()).length;
+ /* vermelho só quando há o que classificar: um zero vermelho parecia problema */
+ const semCentro=lancs.filter(f=>!(f.centroCusto||'').trim()).length;
+ $('cc-nao-classif').textContent=semCentro;$('cc-nao-classif').style.color=semCentro?'var(--danger)':'';
  const cats=Object.entries(porCat).sort((a,b)=>b[1].saidas-a[1].saidas);
  const catsAtivas=cats.filter(c=>c[0]!=='Não classificado'&&(c[1].saidas>0||c[1].entradas>0));
  $('cc-qtd-cats').textContent=catsAtivas.length;
@@ -2506,8 +2691,9 @@ function renderDashboard(){
  $('kpi-ticketsub').textContent=vPer.length?('média de '+vPer.length+' pedido(s)'):'sem pedidos no período';
  $('kpi-entradas').textContent=fmtK(entradas);
  $('kpi-saidas').textContent=fmtK(saidas);
- $('kpi-resultado').textContent=fmtK(faturamento);
- $('kpi-resultado').style.color='var(--success)';
+ /* cor neutra; vermelho (e com "−") só quando o número fica negativo */
+ $('kpi-resultado').textContent=fmtSinal(faturamento);
+ $('kpi-resultado').style.color=corSinal(faturamento);
  $('kpi-rsub').textContent='soma de '+vPer.length+' pedido(s) no período';
  const corrido=M.corrido;
  const custoFixoPeriodo=M.custoFixo,folhaPeriodo=M.folha;
@@ -2515,8 +2701,9 @@ function renderDashboard(){
  $('kpi-dfsub').textContent='custo fixo '+fmtK(custoFixoPeriodo)+' + folha '+fmtK(folhaPeriodo)
   +(corrido.parcial?'  ·  '+corrido.dias+' de '+corrido.total+(corrido.unidade==='mês'?' meses':' dias'):'');
  const lucro=M.lucro;
- $('kpi-lucro').textContent=fmtK(lucro);
- $('kpi-lucro').style.color=lucro>=0?'var(--success)':'var(--danger)';
+ $('kpi-lucro').textContent=fmtSinal(lucro);
+ $('kpi-lucro').style.color=corSinal(lucro);
+ $('kpi-lucro').classList.toggle('kpi-negativo',valorNegativo(lucro));
  $('kpi-lucrosub').textContent=(lucro>=0?'faturamento - despesas fixas':'prejuízo no período')
   +(corrido.parcial?' (até hoje)':'');
  const aReceber=M.aReceberList;
@@ -2524,8 +2711,8 @@ function renderDashboard(){
  $('kpi-areceber').textContent=fmtK(totReceber);
  $('kpi-arsub').textContent=aReceber.length?(aReceber.length+' entrada(s) pendente(s)'):'nada pendente no período';
  const margem=M.margem;
- $('kpi-margem').textContent=fmtN(margem,1)+'%';
- $('kpi-margem').style.color=margem>=0?'var(--success)':'var(--danger)';
+ $('kpi-margem').textContent=(Math.round(margem*10)<0?'−':'')+fmtN(Math.abs(margem),1)+'%';
+ $('kpi-margem').style.color=Math.round(margem*10)<0?'var(--danger)':'';
  $('kpi-margemsub').textContent=faturamento>0?'lucro ÷ faturamento':'sem faturamento no período';
 
  /* variação contra o período anterior */
@@ -2583,6 +2770,35 @@ function renderDashboard(){
  chStatus=new Chart($('chart-status'),{type:'doughnut',data:{labels:stKeys.length?stKeys:['Sem pedidos'],datasets:[{data:stKeys.length?Object.values(sts):[1],backgroundColor:stKeys.length?stKeys.map(k=>cores[k]||'#1a1714'):['#e0d9ce']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}});}
 function saldoFin(){const inicial=Number(DB.config.cf.saldoInicial)||0;
  return inicial+DB.financeiro.filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
+/* ================= ATALHOS DOS CONTADORES =================
+   Tocar num contador abre o Financeiro já filtrado com a mesma regra da conta,
+   para a lista mostrar exatamente os lançamentos que formam aquele número.
+   Usa o painel Filtros que já existe; os dois seletores do topo voltam para
+   "todos", para que um só "Limpar filtros" devolva a lista inteira. */
+function datasDoPeriodo(p){if(!p||p.modo==='tudo')return {de:'',ate:''};
+ if(p.modo==='ano')return {de:p.ano+'-01-01',ate:p.ano+'-12-31'};
+ const ym=p.ano+'-'+String(p.mes+1).padStart(2,'0');
+ return {de:ym+'-01',ate:ym+'-'+new Date(p.ano,p.mes+1,0).getDate()};}
+function abrirFinanceiroFiltrado(f){if(!podeVer('financeiro'))return;
+ if(CUR!=='financeiro')navigate('financeiro');
+ /* começa do zero: um filtro esquecido faria a lista não bater com o número */
+ const fc=FC_REG.fin;fc.estado=fcVazio(fc.cols);
+ fc.estado.data=datasDoPeriodo(f.periodo);
+ ['tipo','cc','status'].forEach(k=>{if(f[k])fc.estado[k]=f[k];});
+ $('fin-tipo-filter').value='';$('fin-status-filter').value='';
+ renderFinanceiro();
+ /* no celular a lista começa abaixo dos contadores: leva até o filtro ligado e a lista */
+ const c=$('content'),alvo=$('fin-fc-barra')||$('fin-tipo-filter');if(!c||!alvo)return;
+ requestAnimationFrame(()=>{const y=Math.max(0,alvo.getBoundingClientRect().top-c.getBoundingClientRect().top+c.scrollTop-10);
+  if(c.scrollTo)c.scrollTo({top:y,behavior:'smooth'});else c.scrollTop=y;});}
+const atalhoPendencias=()=>abrirFinanceiroFiltrado({status:['Pendente']});
+/* mesmo período escolhido no Dashboard */
+const atalhoAReceber=()=>abrirFinanceiroFiltrado({tipo:['Entrada'],status:['Pendente'],periodo:PER});
+/* o Centro de Custos conta os não cancelados do período escolhido lá */
+const atalhoSemCentro=()=>abrirFinanceiroFiltrado({cc:['Não classificado'],status:['Pago','Pendente'],periodo:CC});
+/* os contadores com atalho são div: Enter e espaço também abrem, como num botão */
+document.addEventListener('keydown',e=>{const a=e.target&&e.target.closest&&e.target.closest('.num-atalho');
+ if(a&&(e.key==='Enter'||e.key===' ')){e.preventDefault();a.click();}});
 
 /* ================= RELATÓRIO DASHBOARD EM PDF ================= */
 async function gerarPdfDashboard(){if(!guardValores())return;
@@ -2820,9 +3036,11 @@ function atualizarAvisoFila(){atualizarSinalRede();
  const n=FILA.length,f=FILA_FALHAS.length;
  el.classList.toggle('erro',!!f);
  const txt=(longo,curto)=>'<span class="fl-l">'+longo+'</span><span class="fl-c">'+curto+'</span>';
- if(f)el.innerHTML=txt('⚠ '+f+' não enviada'+(f>1?'s':''),'⚠ '+f);
- else if(n)el.innerHTML=txt('⏳ '+n+' aguardando envio','⏳ '+n);
- else if(SEM_REDE)el.innerHTML=txt('📴 Sem conexão','📴');
+ /* o texto curto é o do celular: só o ícone não dizia o que estava acontecendo */
+ const off=SEM_REDE||navigator.onLine===false;
+ if(f)el.innerHTML=txt('⚠ '+f+' não enviada'+(f>1?'s':''),'⚠ '+f+' não enviada'+(f>1?'s':'')+' — toque para ver');
+ else if(n)el.innerHTML=txt('⏳ '+n+' aguardando envio',(off?'📴 Sem conexão · ':'⏳ ')+n+' a enviar');
+ else if(off)el.innerHTML=txt('📴 Sem conexão','📴 Sem conexão');
  else{el.style.display='none';return;}
  el.style.display='';}
 const NOME_ACAO={insert:'incluir',update:'alterar',upsert:'salvar',delete:'excluir'};
@@ -3070,7 +3288,8 @@ const estoqueCritico=p=>temMinimo(p)&&Number(p.est)<=Number(p.min);
 function statusEstoque(est,min){
  if(!(Number(min)>0))return ['—','badge-muted','var(--text-muted)','Sem estoque mínimo definido'];
  if(est<=min)return ['Crítico','badge-danger','var(--danger)','Abaixo ou igual ao mínimo'];
- if(est<=min*1.5)return ['Baixo','badge-warning','var(--warning)','Perto do mínimo'];
+ /* ainda acima do mínimo: o selo avisa sem dizer que já faltou */
+ if(est<=min*1.5)return ['Perto do mínimo','badge-warning','var(--warning)','Acima do mínimo, mas perto dele (até 1,5× o mínimo)'];
  return ['OK','badge-success','var(--success)','Acima do mínimo'];}
 let PORT_MAT_EXPANDIDOS=new Set();
 let PORT_MAT_QTD={};
@@ -3992,7 +4211,7 @@ function fcPintar(chave,lista){fcPreparar(chave);const c=FC_REG[chave],ativos=fc
  const r=$(chave+'-resumo');
  if(r){r.style.display=ativos.length?'':'none';
   const soma=c.somar?lista.reduce((t,x)=>t+(Number(c.somar(x))||0),0):0;
-  r.innerHTML=lista.length+' '+(lista.length===1?c.um:c.varios)+(c.somar?'<span class="orc-resumo-sep"> · </span><span class="orc-resumo-valor">'+fmt(soma)+'</span>':'');}
+  r.innerHTML=lista.length+' '+(lista.length===1?c.um:c.varios)+(c.somar?'<span class="orc-resumo-sep"> · </span><span class="orc-resumo-valor"'+(valorNegativo(soma)?' style="color:var(--danger)"':'')+'>'+(valorNegativo(soma)?'−':'')+fmt(Math.abs(soma))+'</span>':'');}
  if(FC_ATUAL===chave){const ver=$('fc-ver');if(ver)ver.textContent='Ver '+lista.length+' '+(lista.length===1?c.um:c.varios);}}
 function fcMsgVazia(chave,padrao){const ativos=fcAtivos(chave);if(!ativos.length)return padrao;
  return 'Nada passa no filtro de '+ativos.map(k=>FC_REG[chave].cols[k].nome.toLowerCase()).join(', ')
@@ -4024,8 +4243,11 @@ fcRegistrar('pcp',{titulo:'Filtrar produção',um:'ordem',varios:'ordens',tbody:
  cliente:{th:2,nome:'Cliente',tipo:'texto',ph:'parte do nome',val:o=>cliName(o.cliId)},
  etapa:{th:3,nome:'Status',tipo:'opcoes',opcoes:()=>[...ETAPAS,'Concluída'],val:o=>o.status==='Concluída'?'Concluída':ETAPAS[o.etapa]},
  resp:{th:4,nome:'Responsável',tipo:'opcoes',opcoes:opcoesDe(()=>DB.producao,o=>o.resp||'Sem responsável'),val:o=>o.resp||'Sem responsável'},
- prio:{th:5,nome:'Prioridade',tipo:'opcoes',opcoes:opcoesDe(()=>DB.producao,o=>o.prio||'Normal'),val:o=>o.prio||'Normal'},
- prazo:{th:6,nome:'Prazo',tipo:'datas',val:o=>o.prazo||''}}});
+ prio:{th:5,nome:'Prioridade',tipo:'opcoes',opcoes:()=>prioridadesOP(),val:o=>o.prio||'Normal'},
+ prazo:{th:6,nome:'Prazo',tipo:'datas',val:o=>o.prazo||''},
+ /* sem coluna na tabela: é o filtro que o quadro "Atrasadas" do topo liga e desliga */
+ situacao:{nome:'Situação do prazo',tipo:'opcoes',opcoes:()=>['Atrasada','Vence hoje','No prazo','Sem prazo'],
+  val:o=>{const t=today();return o.status==='Concluída'?'Concluída':!o.prazo?'Sem prazo':opAtrasada(o,t)?'Atrasada':o.prazo===t?'Vence hoje':'No prazo';}}}});
 fcRegistrar('fer',{titulo:'Filtrar máquinas',um:'equipamento',varios:'equipamentos',tbody:'tb-ferramentas',antes:'ferramentas-cards',render:()=>renderFerramentas(),cols:{
  nome:{th:0,nome:'Equipamento',tipo:'texto',ph:'parte do nome',val:x=>x.nome},
  tipo:{th:1,nome:'Tipo',tipo:'opcoes',opcoes:opcoesDe(()=>DB.ferramentas,x=>x.tipo),val:x=>x.tipo||'—'},
@@ -4041,7 +4263,7 @@ const colsProduto=(base,comTempo)=>{const d=comTempo?1:0;const c={
  Object.assign(c,{preco:{th:3+d,nome:'Preço venda',tipo:'faixa',valores:true,val:p=>p.preco},
   custo:{th:4+d,nome:'Custo',tipo:'faixa',valores:true,val:p=>p.custo},
   est:{th:5+d,nome:'Estoque',tipo:'faixa',ph:'qtd',val:p=>p.est},
-  status:{th:6+d,nome:'Status',tipo:'opcoes',opcoes:()=>['Crítico','Baixo','OK','Sem mínimo'],val:statusProd}});return c;};
+  status:{th:6+d,nome:'Status',tipo:'opcoes',opcoes:()=>['Crítico','Perto do mínimo','OK','Sem mínimo'],val:statusProd}});return c;};
 fcRegistrar('ins',{titulo:'Filtrar materiais/insumos',um:'item',varios:'itens',tbody:'tb-insumos',antes:'insumos-cards',render:()=>renderInsumos(),cols:colsProduto('ins',false)});
 fcRegistrar('port',{titulo:'Filtrar portfólio',um:'produto',varios:'produtos',tbody:'tb-portfolio',antes:'portfolio-cards',render:()=>renderPortfolio(),cols:colsProduto('port',true)});
 const FIN_STATUS=['Pago','Pendente','Cancelado'];
@@ -4598,7 +4820,7 @@ async function saveVenda(){if(!guard())return;const cliId=$('vnd-cli').value;if(
    toast('As formas de pagamento somam '+fmt(somaPag)+' e os itens somam '+fmt(total)+'. Ajuste antes de salvar.','error',8000);return;}}
  const horas=horasDoPedidoForm();
  if(horas.length&&!COLUNA_HORAS){
-  toast('As horas não foram salvas: falta a coluna no banco. O SQL está na própria seção de horas.','error',9000);}
+  toast(paraAdmin('As horas não foram salvas: falta a coluna no banco. O SQL está na própria seção de horas.','As horas não foram salvas: lançamento de horas indisponível no momento — avise o administrador.'),'error',9000);}
  const o={horas,cliId,origem:$('vnd-origem').value,data:$('vnd-data').value||today(),
   pag:formasPag.length?rotuloPagamento(formasPag):$('vnd-pags').querySelector('.ap-forma')?PAG_LABELS[$('vnd-pags').querySelector('.ap-forma').value]:'PIX',
   status:statusForm,obs:obsForm,itens,total,pags:pagsParaSalvar('vnd-pags'),lixeira:VND_LIX.map(l=>({item:l.item,pos:l.pos,em:l.em,por:l.por}))};
@@ -5005,9 +5227,13 @@ function renderOrcamentosCards(lista){
    +(itens.length?'<button class="btn btn-ghost btn-sm" title="Gerar PDF" onclick="abrirPdfOrcamentoLista(\''+o.id+'\')">📄</button>':'')
    +(canEdit()?'<button class="btn btn-ghost btn-sm" title="Duplicar orçamento" onclick="duplicarOrcamento(\''+o.id+'\')">⧉</button>':'')
    +(canEdit()?'<button class="btn btn-ghost btn-sm" onclick="editarCabecalhoOrc(\''+o.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="delOrcamento(\''+o.id+'\')">🗑️</button>':'');
-  return '<div class="pedido-card orc-card '+(faixa[o.status]||'')+'">'
+  /* tocar em qualquer parte livre do cartão abre o orçamento, como no cartão de pedido.
+     Botões e status seguem só com a função deles, e as fileiras de botões ficam de
+     fora: errar um botão por pouco não tira a pessoa da lista */
+  const abrir='if(event.target.closest(\'button,select,label,a,input,.status-drop,.oc-decidir,.pc-acoes\'))return;abrirDetalheOrc(\''+o.id+'\')';
+  return '<div class="pedido-card orc-card '+(faixa[o.status]||'')+'" onclick="'+abrir+'">'
    +'<div class="pc-topo"><span class="pc-num">ORC-'+pad(o.num)+'</span><span class="pc-data">'+fmtD(o.data)+'</span></div>'
-   +'<div class="pc-cliente" onclick="abrirDetalheOrc(\''+o.id+'\')" style="cursor:pointer">'+esc(cliName(o.cliId))+'</div>'
+   +'<div class="pc-cliente">'+esc(cliName(o.cliId))+'</div>'
    +'<div class="pc-valor"><span class="pc-total">'+fmt(o.preco)+'</span><span class="oc-lucro">lucro '+fmt(o.lucro)+'</span></div>'
    +'<div class="pc-status">'+statusOrcHtml(o)+'<span class="oc-validade">entrega <strong>'+fmtD(o.validade)+'</strong></span></div>'
    +btnItens+listaItens+decidir
@@ -5029,6 +5255,21 @@ function abrirEmailOrc(id){const o=DB.orcamentos.find(x=>x.id===id);if(!o)return
  const body='Olá '+primeiroNome+',\n\nSegue o orçamento ORC-'+pad(o.num)+' — '+resumoOrc(o)+'\nValor: '+fmt(o.preco)+'\n\nQualquer dúvida, estou à disposição!\n\nEstúdio MABE';
  window.location.href='mailto:'+encodeURIComponent(cli.email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);}
 
+/* ---- "Olhinho": esconde lucro e custo dos orçamentos ----
+   Para mostrar a tela a um cliente ou arquiteto sem expor a margem. O preço de venda
+   continua à vista. Só a tela muda (por CSS): PDFs e contas ficam iguais.
+   A escolha fica guardada neste aparelho. */
+const OCULTAR_LUCRO_KEY='mabe_ocultar_lucro';
+function aplicarOcultarLucro(){let on=false;try{on=localStorage.getItem(OCULTAR_LUCRO_KEY)==='1';}catch(e){}
+ document.body.classList.toggle('lucro-oculto',on);pintarOlhoLucro();}
+/* os dois botões (lista e detalhe) dizem o que o próximo toque faz */
+function pintarOlhoLucro(){const rot=document.body.classList.contains('lucro-oculto')?'Mostrar lucro e custo':'Esconder lucro e custo';
+ document.querySelectorAll('.olho-lucro').forEach(b=>{b.setAttribute('aria-label',rot);b.title=rot;});}
+function alternarOcultarLucro(){const on=!document.body.classList.contains('lucro-oculto');
+ document.body.classList.toggle('lucro-oculto',on);
+ try{if(on)localStorage.setItem(OCULTAR_LUCRO_KEY,'1');else localStorage.removeItem(OCULTAR_LUCRO_KEY);}catch(e){}
+ pintarOlhoLucro();toast(on?'Lucro e custo escondidos. O preço continua à mostra.':'Lucro e custo à mostra de novo.','info');}
+aplicarOcultarLucro();
 /* ---- Cabeçalho do orçamento ---- */
 let ORC_ATUAL_ID=null,ORC_ITEM_EDITANDO=null,ORC_VOLTAR='lista';
 /* FICHA_PROD_ID: a ficha aberta é a de um produto do portfólio (salva no produto).
@@ -5119,7 +5360,7 @@ async function salvarHeaderOrc(irParaItem){if(!guard())return;
   const novo=Object.assign({id:uid(),itens:[],preco:0,custo:0,lucro:0},o);
   const {data,error}=await supa.from('orcamentos').insert(orcParaSupabase(novo)).select().single();
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');
-   if(String(error.message||'').toLowerCase().includes('itens')){toast('A coluna "itens" ainda não existe no Supabase — peça para adicionar essa coluna jsonb na tabela orcamentos.','error');}
+   if(String(error.message||'').toLowerCase().includes('itens')){toast(paraAdmin('A coluna "itens" ainda não existe no Supabase — peça para adicionar essa coluna jsonb na tabela orcamentos.','Os itens do orçamento não foram salvos — avise o administrador.'),'error');}
    return;}
   novo.num=data.num;
   DB.orcamentos.unshift(novo);commit('criar','Orçamentos','ORC-'+pad(novo.num)+' criado');
@@ -5195,7 +5436,7 @@ function nomeCurtoDoLink(href){
 async function adicionarLinkOrc(){
  if(!guard())return;
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
- if(!COLUNA_LINKS){toast('Falta a coluna no banco — o SQL está aqui na própria seção.','error',8000);return;}
+ if(!COLUNA_LINKS){toast(paraAdmin('Falta a coluna no banco — o SQL está aqui na própria seção.','Links indisponíveis no momento — avise o administrador.'),'error',8000);return;}
  const campo=$('orc-link-url'),campoNome=$('orc-link-nome');
  const href=linkDeReferenciaValido(campo.value);
  if(!href){toast('Link inválido. Use um endereço que comece com http:// ou https://','error');campo.focus();return;}
@@ -6016,7 +6257,7 @@ function pintarComprovantesLinha(l){
  const lista=l.querySelector('.pag-comp-lista'),btn=l.querySelector('.pag-comp .btn');if(!lista||!btn)return;
  const v=pedidoDosAnexos();
  btn.disabled=!PAGS_VENDA_NO_BANCO||!v||!canEdit();
- btn.title=!PAGS_VENDA_NO_BANCO?'Falta uma coluna no banco (veja o aviso abaixo)':!v?'Salve o pedido para anexar comprovantes':'PNG, JPEG ou PDF até 10MB';
+ btn.title=!PAGS_VENDA_NO_BANCO?paraAdmin('Falta uma coluna no banco (veja o aviso abaixo)','Comprovantes indisponíveis no momento — avise o administrador'):!v?'Salve o pedido para anexar comprovantes':'PNG, JPEG ou PDF até 10MB';
  const comp=l._comp||[];
  btn.textContent=comp.length?'📎 Anexar ('+comp.length+')':'📎 Anexar';
  lista.innerHTML=comp.map(c=>'<span class="comp-chip"><a href="'+(/^https?:\/\//.test(c.url||'')?esc(c.url):'#')+'" target="_blank" rel="noopener" title="'+esc(c.nome)+'">'+(/\.pdf$/i.test(c.nome||'')?'📄 ':'🖼️ ')+esc(c.nome)+'</a>'
@@ -6041,7 +6282,7 @@ async function anexarComprovante(input){
  if(!files.length||!guard())return;
  const l=input.closest('.pag-linha');const v=pedidoDosAnexos();
  if(!v){toast('Salve o pedido antes de anexar comprovantes.','info');return;}
- if(!PAGS_VENDA_NO_BANCO){toast('Falta a coluna no banco: o SQL está embaixo do Pagamento.','error',7000);return;}
+ if(!PAGS_VENDA_NO_BANCO){toast(paraAdmin('Falta a coluna no banco: o SQL está embaixo do Pagamento.','Comprovantes indisponíveis no momento — avise o administrador.'),'error',7000);return;}
  if(ENVIANDO_ANEXOS){toast('Aguarde terminar o envio anterior.','info');return;}
  const tiposOk=['image/png','image/jpeg','application/pdf'];
  const recusados=files.filter(f=>!tiposOk.includes(f.type)||f.size>10*1024*1024);
@@ -6211,7 +6452,8 @@ function popularLancamentosAprov(){
 function atualizarPreviewAprov(){const o=DB.orcamentos.find(x=>x.id===$('aprv-orc-id').value);if(!o)return;
  const prazo=$('aprv-prazo').value;
  const recebido=$('aprv-recebido').value;
- $('aprv-lanc-wrap').style.display=recebido==='extrato'?'block':'none';
+ /* flex, como os outros grupos do Aprovar: o rótulo fica a 8px do campo, não colado */
+ $('aprv-lanc-wrap').style.display=recebido==='extrato'?'flex':'none';
  if(recebido==='extrato')popularLancamentosAprov();
  const itensSel=itensSelecionadosAprov(o);const totalSel=Math.round(itensSel.reduce((s2,it)=>s2+Number(it.preco||0),0)*100)/100;
  if(!itensSel.length){$('aprv-preview').innerHTML='<span style="color:var(--danger)">Selecione ao menos um item aprovado para gerar o pedido.</span>';
@@ -6933,6 +7175,8 @@ function montarPdfContrato(o){
 /* ================= PRODUÇÃO (PCP) ================= */
 const ETAPAS=['📋 Planejamento','🪚 Corte & Usinagem','🔨 Montagem','🎨 Acabamento','🔁 Retrabalho','📦 Pronto','🚚 Entregue'];
 const ETAPA_FINAL=ETAPAS.length-1;
+/* a ficha da OP usa a mesma lista do quadro: um nome só para cada etapa em todo o app */
+(function(){const s=$('op-etapa');if(s)s.innerHTML=ETAPAS.map((et,i)=>'<option value="'+i+'">'+esc(et)+'</option>').join('');})();
 /* Retrabalho é desvio, não passo da fila: o ▶ de Acabamento vai direto para Pronto,
    e o ▶ de Retrabalho também. Entra-se em Retrabalho pela ficha da OP (Etapa Atual).
    Os números não mudam: o banco grava o índice da etapa. */
@@ -6944,7 +7188,15 @@ function proximaEtapa(i){const n=Number(i)||0;
 function etapaAnterior(i){const n=Number(i)||0;
  if(n===ETAPA_PRONTO||n===ETAPA_RETRABALHO)return ETAPA_ACABAMENTO;
  return Math.max(0,n-1);}
-const OP_PRIO=['Normal','Alta','Urgente'];
+/* uma lista só, da mais urgente para a menos: a ficha, o seletor do topo e a janela Filtros */
+const OP_PRIO=['Urgente','Alta','Normal'];
+/* o que estiver gravado fora da lista (ex.: "Baixa" de antes) entra no fim, para nenhuma ordem sumir do filtro */
+function prioridadesOP(){return [...OP_PRIO,...unicosOrdenados(DB.producao.map(o=>o.prio||'Normal').filter(p=>!OP_PRIO.includes(p)))];}
+/* atrasada é a mesma regra do ponto vermelho da aba Produção, lá embaixo */
+const opAtrasada=(o,t)=>o.status!=='Concluída'&&!!o.prazo&&o.prazo<t;
+/* mais urgente primeiro: atrasada, depois prioridade, depois prazo */
+const pesoPrio=p=>{const i=OP_PRIO.indexOf(p||'Normal');return i<0?OP_PRIO.length:i;};
+const porUrgencia=t=>(a,b)=>(opAtrasada(b,t)-opAtrasada(a,t))||(pesoPrio(a.prio)-pesoPrio(b.prio))||porPrazo(a,b);
 function opParaSupabase(o){const r={id:o.id,titulo:o.titulo,cli_id:o.cliId||null,prazo:o.prazo||null,resp:o.resp||null,prio:o.prio||null,etapa:o.etapa||0,status:o.status||'Ativa',obs:o.obs||null,orc_id:o.orcId||null,fim:o.fim||null};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
 function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim,criadoEm:row.created_at};}
 function elapsedStr(iso){if(!iso)return '';const ms=Date.now()-new Date(iso).getTime();if(ms<0)return '0min';
@@ -6968,8 +7220,13 @@ const diasNaFila=iso=>{const d=Math.floor((Date.now()-new Date(iso).getTime())/8
 /* ordem criada pela aprovação se chama "Pedido V-0019 — Cliente": com o pedido e o cliente
    em colunas próprias, isso não diz o que é a peça. Nesse caso, usa os itens do pedido. */
 function pecaDaOp(o,ped){
- let peca=String(o.titulo||'').replace(/^Pedido\s+V-\d+\s*[—-]\s*/,'').trim();
- if((!peca||peca===cliName(o.cliId))&&ped){
+ const titulo=String(o.titulo||''),automatico=/^Pedido\s+V-\d+\s*[—-]/.test(titulo);
+ let peca=titulo.replace(/^Pedido\s+V-\d+\s*[—-]\s*/,'').trim();
+ /* o título automático guarda o nome do cliente de quando a ordem nasceu: se o cadastro
+    mudou depois ("Construtora Horizonte" virou "... Ltda"), ainda é o cliente, não a peça */
+ const cli=semAcento(cliName(o.cliId)).trim(),p=semAcento(peca).trim();
+ const ehCliente=p===cli||(automatico&&cli!=='—'&&p.length>2&&(cli.startsWith(p)||p.startsWith(cli)));
+ if((!peca||ehCliente)&&ped){
   const descs=(ped.itens||[]).map(i=>i.desc).filter(Boolean);
   peca=descs.slice(0,2).join(', ')+(descs.length>2?' +'+(descs.length-2):'');}
  return peca||String(o.titulo||'—');}
@@ -6995,38 +7252,84 @@ let PCP_MODO=(()=>{try{return localStorage.getItem('mabe_pcp_modo')||'kanban';}c
 let PCP_OBS_ABERTAS=new Set();
 function togglePcpObs(id){if(PCP_OBS_ABERTAS.has(id))PCP_OBS_ABERTAS.delete(id);else PCP_OBS_ABERTAS.add(id);renderPCP();}
 function definirModoPcp(m){PCP_MODO=m;try{localStorage.setItem('mabe_pcp_modo',m);}catch(e){}renderPCP();}
-let PCP_ETAPA_MOBILE=null;
-function selecionarEtapaPCP(i){PCP_ETAPA_MOBILE=i;renderPCP();
+/* no celular o quadro mostra uma etapa por vez. Sem escolha da pessoa (null), abre na
+   etapa da ordem mais urgente; depois que ela toca numa aba, a escolha vale até fechar o app */
+let PCP_ETAPA_MOBILE=null,PCP_ETAPA_ESCOLHIDA=false,PCP_ABA_CENTRAR=false;
+function selecionarEtapaPCP(i){PCP_ETAPA_MOBILE=i;PCP_ETAPA_ESCOLHIDA=true;renderPCP();
  const aba=document.querySelector('.pcp-aba.ativa');if(aba)aba.scrollIntoView({block:'nearest',inline:'center'});}
 const ehCelular=()=>window.matchMedia('(max-width:860px)').matches;
+/* a etapa da ordem mais urgente entre as que estão na tela (null se não há nenhuma em aberto) */
+function etapaMaisUrgente(ordens,t){const abertas=ordens.filter(o=>o.status!=='Concluída'&&ETAPAS[Number(o.etapa)]);
+ return abertas.length?Number(abertas.slice().sort(porUrgencia(t))[0].etapa):null;}
+/* põe a aba escolhida sozinha no meio da faixa, sem rolar a tela. Com a faixa escondida
+   (modo Lista, computador) não há o que medir: fica marcado para quando ela aparecer */
+function centralizarAbaPCP(){const s=$('pcp-abas'),a=s&&s.querySelector('.pcp-aba.ativa');if(!a||!s.clientWidth)return;
+ s.scrollLeft+=a.getBoundingClientRect().left-s.getBoundingClientRect().left-(s.clientWidth-a.offsetWidth)/2;PCP_ABA_CENTRAR=false;}
+/* saiu da Produção sem ter escolhido aba: na volta, abre de novo na ordem mais urgente.
+   Observa a própria seção para não mexer no navigate, que é de todas as telas. */
+(function(){const s=$('section-pcp');if(!s||!window.MutationObserver)return;
+ new MutationObserver(()=>{if(!s.classList.contains('active')&&!PCP_ETAPA_ESCOLHIDA)PCP_ETAPA_MOBILE=null;}).observe(s,{attributes:true,attributeFilter:['class']});})();
+/* o quadro "Atrasadas" liga e desliga o filtro de prazo da janela Filtros
+   (por isso o Imprimir PCP também sai só com as atrasadas, como na tela) */
+const pcpSoAtrasadas=()=>{const e=FC_REG.pcp&&FC_REG.pcp.estado.situacao;return !!e&&e.length===1&&e[0]==='Atrasada';};
+function alternarAtrasadasPCP(){const c=FC_REG.pcp;if(!c)return;
+ const ligar=!pcpSoAtrasadas();
+ c.estado.situacao=ligar?['Atrasada']:[];
+ /* ao ligar, o quadro do celular pula para a etapa da atrasada mais urgente */
+ if(ligar)PCP_ETAPA_MOBILE=null;
+ renderPCP();}
+/* o seletor do topo oferece a mesma lista da ficha (e o que houver gravado fora dela) */
+function encherFiltroPrioPCP(){const s=$('pcp-prio-filter');if(!s)return;
+ const ops=prioridadesOP();if(s.value&&!ops.includes(s.value))ops.push(s.value);
+ const chave=ops.join('|');if(s.dataset.ops===chave)return;
+ const v=s.value;
+ s.innerHTML='<option value="">Todas as prioridades</option>'+ops.map(p=>'<option value="'+esc(p)+'">'+esc(p)+'</option>').join('');
+ s.value=v;s.dataset.ops=chave;}
 function renderPCP(){const t=today();
+ encherFiltroPrioPCP();
  const verConcluidas=$('pcp-ver-concluidas')?$('pcp-ver-concluidas').checked:false;
  const fPrio=$('pcp-prio-filter')?$('pcp-prio-filter').value:'';
  const ativas=DB.producao.filter(o=>(verConcluidas||o.status!=='Concluída')&&(!fPrio||(o.prio||'Normal')===fPrio)&&fcPassa('pcp',o));
  fcPintar('pcp',ativas);
  if($('pcp-filtro-label')){const tot=DB.producao.length;
   $('pcp-filtro-label').textContent=ativas.length===tot?(tot+' ordem(ns)'):(ativas.length+' de '+tot+' ordem(ns)');}
- const atras=ativas.filter(o=>o.prazo&&o.prazo<t).length;
+ const atras=ativas.filter(o=>opAtrasada(o,t)).length;
  const ym=t.slice(0,7);const concMes=DB.producao.filter(o=>o.status==='Concluída'&&String(o.fim||'').slice(0,7)===ym).length;
- $('pcp-stats').innerHTML=[['Planejamento',ativas.filter(o=>o.etapa==0).length,''],['Em produção',ativas.filter(o=>o.etapa>0&&o.etapa<4).length,''],['Retrabalho',ativas.filter(o=>o.etapa==4).length,'color:var(--warning)'],['Prontas',ativas.filter(o=>o.etapa==5).length,''],['Atrasadas',atras,'color:var(--danger)'],['Concluídas (mês)',concMes,'color:var(--success)']].map(s=>'<div class="pcp-stat"><div class="pcp-stat-val" style="'+s[2]+'">'+s[1]+'</div><div class="pcp-stat-label">'+s[0]+'</div></div>').join('');
- if(PCP_ETAPA_MOBILE===null){const primeira=ETAPAS.findIndex((_,i)=>ativas.some(o=>Number(o.etapa)===i));PCP_ETAPA_MOBILE=primeira<0?0:primeira;}
- $('pcp-abas').innerHTML=ETAPAS.map((et,i)=>'<button class="pcp-aba'+(i===PCP_ETAPA_MOBILE?' ativa':'')+'" onclick="selecionarEtapaPCP('+i+')">'+esc(et)+'<span class="pcp-aba-n">'+ativas.filter(o=>Number(o.etapa)===i).length+'</span></button>').join('');
+ const caixa=s=>'<div class="pcp-stat"><div class="pcp-stat-val" style="'+s[2]+'">'+s[1]+'</div><div class="pcp-stat-label">'+s[0]+'</div></div>';
+ /* "Atrasadas" é botão: mostra só as atrasadas, e o segundo toque volta a mostrar todas */
+ const soAtras=pcpSoAtrasadas();
+ const caixaAtras=(atras||soAtras)
+  ?'<button type="button" class="pcp-stat pcp-stat-btn'+(soAtras?' ligado':'')+'" aria-pressed="'+soAtras+'" title="'+(soAtras?'Voltar a mostrar todas as ordens':'Mostrar só as ordens atrasadas')+'" onclick="alternarAtrasadasPCP()">'
+   +'<span class="pcp-stat-val" style="color:var(--danger)">'+atras+'</span><span class="pcp-stat-label">Atrasadas '+(soAtras?'×':'›')+'</span></button>'
+  :caixa(['Atrasadas',atras,'color:var(--danger)']);
+ $('pcp-stats').innerHTML=[['Planejamento',ativas.filter(o=>o.etapa==0).length,''],['Em produção',ativas.filter(o=>o.etapa>0&&o.etapa<4).length,''],['Retrabalho',ativas.filter(o=>o.etapa==4).length,'color:var(--warning)'],['Prontas',ativas.filter(o=>o.etapa==5).length,'']].map(caixa).join('')
+  +caixaAtras+caixa(['Concluídas (mês)',concMes,'color:var(--success)']);
+ /* sem escolha da pessoa, o celular abre na etapa da ordem mais urgente (atrasada, depois prioridade) */
+ if(PCP_ETAPA_MOBILE===null){const u=etapaMaisUrgente(ativas,t);if(u!==null){PCP_ETAPA_MOBILE=u;PCP_ABA_CENTRAR=true;}}
+ const aba=PCP_ETAPA_MOBILE===null?0:PCP_ETAPA_MOBILE;
+ $('pcp-abas').innerHTML=ETAPAS.map((et,i)=>{const daqui=ativas.filter(o=>Number(o.etapa)===i),atr=daqui.filter(o=>opAtrasada(o,t)).length;
+  return '<button class="pcp-aba'+(i===aba?' ativa':'')+'"'+(atr?' title="'+atr+(atr===1?' ordem atrasada':' ordens atrasadas')+'"':'')+' onclick="selecionarEtapaPCP('+i+')">'+esc(et)
+   +'<span class="pcp-aba-n">'+daqui.length+(atr?'<span class="pcp-aba-atraso"></span>':'')+'</span></button>';}).join('');
  /* o seletor de modo e o que cada um mostra */
  const modoLista=PCP_MODO==='lista';
  if($('pcp-modo-kanban')){$('pcp-modo-kanban').classList.toggle('active',!modoLista);$('pcp-modo-lista').classList.toggle('active',modoLista);}
  if($('pcp-lista-view'))$('pcp-lista-view').style.display=modoLista?'':'none';
  $('pcp-kanban').style.display=modoLista?'none':'';
  if($('pcp-abas'))$('pcp-abas').style.display=modoLista?'none':'';
+ if(PCP_ABA_CENTRAR&&!modoLista)centralizarAbaPCP();
  if(modoLista){renderPcpLista(ativas.slice().sort(porPrazo),t);return;}
  $('pcp-kanban').innerHTML=ETAPAS.map((et,i)=>{const cards=ativas.filter(o=>Number(o.etapa)===i).sort(porPrazo);
-  return '<div class="kanban-col'+(i===PCP_ETAPA_MOBILE?' ativa':'')+'"><div class="kanban-col-header"><span class="kanban-col-title">'+et+'</span><span class="kanban-count">'+cards.length+'</span></div>'
-  +cards.map(o=>{const pcls=!o.prazo?'ok':o.prazo<t?'vencido':o.prazo===t?'hoje':'ok';
+  return '<div class="kanban-col'+(i===aba?' ativa':'')+'"><div class="kanban-col-header"><span class="kanban-col-title">'+et+'</span><span class="kanban-count">'+cards.length+'</span></div>'
+  +cards.map(o=>{const pcls=!o.prazo?'ok':opAtrasada(o,t)?'vencido':o.prazo===t?'hoje':'ok';
+   /* a peça é o que a bancada procura; cliente, pedido e OP vêm embaixo, como na Lista */
+   const ped=pedidoDaOp(o),peca=pecaDaOp(o,ped),cli=o.cliId?cliName(o.cliId):'';
+   const sub=[cli==='—'?'':cli,ped?'V-'+pad(ped.num):'',o.num?'OP-'+pad(o.num):''].filter(Boolean).join(' · ');
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
    const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶<span class="pcp-btn-txt"> '+esc(ETAPAS[proximaEtapa(i)])+'</span></button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
    const respLinha=canEdit()
     ?'<div class="card-resp" onclick="event.stopPropagation()">👤<select class="'+(o.resp?'':'vazio')+'" title="Quem é o responsável por esta ordem" onchange="definirRespOP(\''+o.id+'\',this.value,this)">'+opcoesResp(o.resp||'')+'</select></div>'
     :(o.resp?'<div class="card-resp">👤 '+esc(o.resp)+'</div>':'');
-   return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(o.titulo)+'</div><div class="kanban-card-sub">'+esc(cliName(o.cliId))+'</div>'+respLinha+(o.criadoEm?'<div class="kanban-card-timer" data-criado="'+o.criadoEm+'">⏱ '+elapsedStr(o.criadoEm)+'</div>':'')+'<div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
+   return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(peca)+'</div>'+(sub?'<div class="kanban-card-sub">'+esc(sub)+'</div>':'')+respLinha+(o.criadoEm?'<div class="kanban-card-timer" data-criado="'+o.criadoEm+'">⏱ '+elapsedStr(o.criadoEm)+'</div>':'')+'<div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
   +(cards.length?'':'<div class="kanban-col-vazia">Nenhuma ordem nesta etapa</div>')
   +'</div>';}).join('');}
 /* nao existe cadastro de marceneiro: a lista sai de quem ja apareceu em ordens,
@@ -7119,7 +7422,7 @@ function renderPcpListaCards(ordens,t){
     +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
    :'';
   return '<div class="pedido-card">'
-   +'<div class="pc-topo"><span class="pc-num">'+(ped?'V-'+pad(ped.num):'OP-'+pad(o.num||0))+'</span><span class="pc-data"'+(atrasada?' style="color:var(--danger);font-weight:700"':'')+'>'+(o.prazo?(atrasada?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span></div>'
+   +'<div class="pc-topo"><span class="pc-num">'+(ped?'V-'+pad(ped.num)+(o.num?' · OP-'+pad(o.num):''):'OP-'+pad(o.num||0))+'</span><span class="pc-data"'+(atrasada?' style="color:var(--danger);font-weight:700"':'')+'>'+(o.prazo?(atrasada?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span></div>'
    +'<div class="pc-cliente" onclick="editOP(\''+o.id+'\')" style="cursor:pointer">'+esc(peca)+'</div>'
    +'<div class="pc-pag">'+esc(cliName(o.cliId))+'</div>'
    +'<div class="pc-status">'+badgeEtapa(o.etapa)+badgePrio(o.prio)+'<span style="font-size:11.5px;color:var(--text-muted)">'+(o.criadoEm?'na fila '+diasNaFila(o.criadoEm):'')+'</span></div>'
@@ -7567,7 +7870,8 @@ function renderCalendario(){
   if(!op||op.status==='Concluída'||!op.prazo||opsComEntrega.has(op.id))return;
   const cliente=cliName(v.cliId);
   const itensTxt=(v.itens||[]).map(it=>it.desc).filter(Boolean).join(', ')||'—';
-  addAoDia(op.prazo,{cliente:'🔮 V-'+pad(v.num)+' · '+cliente,itemTxt:itensTxt+' · '+(ETAPAS[op.etapa]||''),cor:['var(--accent)','rgba(200,169,110,0.14)'],dashed:true,atrasa:op.prazo<t,tag:op.prazo<t?'Atrasada':'Previsão',
+  /* "Previsão" por extenso no lugar do 🔮: no celular vira o selo (e "Atrasada" embaixo, se passou do prazo); na grade, abre a 2ª linha */
+  addAoDia(op.prazo,{cliente:'V-'+pad(v.num)+' · '+cliente,itemTxt:itensTxt+' · '+(ETAPAS[op.etapa]||''),cor:['var(--accent)','rgba(200,169,110,0.14)'],dashed:true,prev:true,atrasa:op.prazo<t,tag:'Previsão',tag2:op.prazo<t?'Atrasada':'',
    title:'Previsão de entrega — Pedido V-'+pad(v.num)+' ('+cliente+') — Itens: '+itensTxt+' — OP-'+pad(op.num)+' em '+(ETAPAS[op.etapa]||'—'),
    onclick:"editVenda('"+v.id+"')"});});
  DB.ferramentas.forEach(f=>{const prox=ferProx(f);if(!prox)return;
@@ -7588,7 +7892,7 @@ function renderCalendario(){
   const temAtrasada=lista.some(x=>x.atrasa);
   const itens=lista.slice(0,MAX_VISIVEIS).map(x=>'<div style="padding:2px 4px;border-radius:4px;margin-bottom:2px;cursor:pointer;background:'+x.cor[1]+(x.dashed?';border:1px dashed '+x.cor[0]:'')+'" title="'+esc(x.title)+'" onclick="'+x.onclick+'">'
    +'<div style="font-size:9.5px;font-weight:700;color:'+x.cor[0]+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.cliente)+'</div>'
-   +'<div style="font-size:9px;color:'+x.cor[0]+';opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.itemTxt)+'</div></div>').join('');
+   +'<div style="font-size:9px;color:'+x.cor[0]+';opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc((x.prev?'Previsão · ':'')+x.itemTxt)+'</div></div>').join('');
   const mais=lista.length>MAX_VISIVEIS?'<div style="font-size:9.5px;color:var(--text-muted)">+'+(lista.length-MAX_VISIVEIS)+' mais</div>':'';
   html+='<div style="min-height:96px;border:1px solid '+(temAtrasada?'var(--danger)':'var(--border)')+';border-radius:8px;padding:6px;background:'+(isHoje?'var(--surface2)':'var(--surface)')+'">'
    +'<div style="font-size:11px;font-weight:700;color:'+(isHoje?'var(--accent)':'var(--text-muted)')+';margin-bottom:4px">'+d+'</div>'+itens+mais+'</div>';
@@ -7597,22 +7901,33 @@ function renderCalendario(){
  renderAgendaCalendario(porDia,t);}
 /* mesma informação da grade, em lista por dia: no celular cada compromisso vira uma linha que dá para tocar */
 const DIAS_SEMANA=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+/* selo à direita do compromisso; a previsão que passou do prazo leva "Atrasada" embaixo de "Previsão" */
+function selosAgenda(x){
+ const selo=(txt,vermelho)=>'<span class="cal-ev-tag" style="color:'+(vermelho?'var(--danger)':x.cor[0])+';background:'+(vermelho?'rgba(181,64,64,0.1)':x.cor[1])+'">'+esc(txt)+'</span>';
+ if(x.tag2)return '<span class="cal-ev-tags">'+selo(x.tag,false)+selo(x.tag2,true)+'</span>';
+ return x.tag?selo(x.tag,x.atrasa):'';}
 function renderAgendaCalendario(porDia,t){const alvo=$('cal-agenda');if(!alvo)return;
- const dias=Object.keys(porDia).map(Number).sort((a,b)=>a-b);
- if(!dias.length){alvo.innerHTML='<div class="cal-vazio">Nada marcado em '+MESES[CAL.mes].toLowerCase()+'.</div>';return;}
+ const mesIso=CAL.ano+'-'+String(CAL.mes+1).padStart(2,'0');
+ const dias=Object.keys(porDia).map(Number),mesVazio=!dias.length;
+ /* no mês atual a linha de hoje entra mesmo sem nada marcado: a agenda sempre mostra onde se está */
+ const diaHoje=t.slice(0,7)===mesIso?Number(t.slice(8,10)):0;
+ if(diaHoje&&!porDia[diaHoje])dias.push(diaHoje);
+ dias.sort((a,b)=>a-b);
+ const msgVazio='<div class="cal-vazio">Nada marcado em '+MESES[CAL.mes].toLowerCase()+'.</div>';
+ if(!dias.length){alvo.innerHTML=msgVazio;return;}
  alvo.innerHTML=dias.map(d=>{
-  const iso=CAL.ano+'-'+String(CAL.mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-  const lista=porDia[d].slice().sort((a,b)=>(b.atrasa-a.atrasa)||a.cliente.localeCompare(b.cliente));
+  const iso=mesIso+'-'+String(d).padStart(2,'0');
+  const lista=(porDia[d]||[]).slice().sort((a,b)=>(b.atrasa-a.atrasa)||a.cliente.localeCompare(b.cliente));
   /* dia que já passou fica apagado, exceto se ainda tem algo atrasado */
   const cls=iso===t?' hoje':iso<t&&!lista.some(x=>x.atrasa)?' passado':'';
   const semana=DIAS_SEMANA[new Date(CAL.ano,CAL.mes,d).getDay()];
   return '<div class="cal-dia'+cls+'" data-iso="'+iso+'"><div class="cal-dia-tit"><b>'+String(d).padStart(2,'0')+'</b>'+semana+(iso===t?' · Hoje':'')+'</div>'
-   +lista.map(x=>'<button class="cal-ev" onclick="'+x.onclick+'"'+(x.dashed?' style="border-style:dashed;border-color:'+x.cor[0]+'"':'')+'>'
+   +(lista.length?lista.map(x=>'<button class="cal-ev" onclick="'+x.onclick+'"'+(x.dashed?' style="border-style:dashed;border-color:'+x.cor[0]+'"':'')+'>'
     +'<span class="cal-ev-barra" style="background:'+x.cor[0]+'"></span>'
     +'<span class="cal-ev-txt"><div class="cal-ev-cli">'+esc(x.cliente)+'</div><div class="cal-ev-item">'+esc(x.itemTxt)+'</div></span>'
-    +(x.tag?'<span class="cal-ev-tag" style="color:'+(x.atrasa?'var(--danger)':x.cor[0])+';background:'+(x.atrasa?'rgba(181,64,64,0.1)':x.cor[1])+'">'+esc(x.tag)+'</span>':'')
-    +'</button>').join('')
-   +'</div>';}).join('');}
+    +selosAgenda(x)
+    +'</button>').join(''):'<div class="cal-hoje-vazio">Nada marcado para hoje</div>')
+   +'</div>';}).join('')+(mesVazio?msgVazio:'');}
 /* no celular, abrir o mês atual leva direto ao dia de hoje (ou ao próximo com algo marcado) */
 function rolarAgendaParaHoje(){if(!ehCelular())return;const t=today();
  const alvo=[...document.querySelectorAll('#cal-agenda .cal-dia')].find(el=>el.dataset.iso>=t);
@@ -7702,12 +8017,14 @@ function renderFerramentasCards(base){const alvo=$('ferramentas-cards');if(!alvo
  const lista=fonte.slice().sort((a,b)=>(ferProx(a)||'9999')<(ferProx(b)||'9999')?-1:1);
  alvo.innerHTML=lista.map(f=>{const prox=ferProx(f),st=statusManut(f,t);
   const acoes=canEdit()?'<button class="btn btn-primary btn-sm" onclick="confirmarManutFeita(\''+f.id+'\')">✔ Manutenção feita hoje</button><button class="btn btn-ghost btn-sm" title="Editar" onclick="editFerramenta(\''+f.id+'\')">✏️</button><button class="btn btn-danger btn-sm" title="Excluir" onclick="delFerramenta(\''+f.id+'\')">🗑️</button>':'';
+  /* sem próxima data não há situação: some o selo "—"; sem nenhuma manutenção, a ficha diz isso por extenso */
   return '<div class="pedido-card">'
-   +'<div class="pc-topo"><div class="pc-cliente">'+esc(f.nome)+'</div><span class="badge '+st[1]+'">'+st[0]+'</span></div>'
+   +'<div class="pc-topo"><div class="pc-cliente">'+esc(f.nome)+'</div>'+(prox?'<span class="badge '+st[1]+'">'+st[0]+'</span>':'')+'</div>'
    +'<div class="pc-pag">'+esc(f.tipo||'—')+'</div>'
    +'<div class="pc-ficha">'
-    +'<div><span>Próxima</span><b'+(st[0]==='Vencida'?' style="color:var(--danger)"':'')+'>'+fmtD(prox)+'</b></div>'
+    +(f.ult?'<div><span>Próxima</span><b'+(st[0]==='Vencida'?' style="color:var(--danger)"':'')+'>'+fmtD(prox)+'</b></div>'
     +'<div><span>Última</span>'+fmtD(f.ult)+'</div>'
+    :'<div class="fer-sem-reg">Sem manutenção registrada</div>')
     +'<div><span>Intervalo</span>'+(f.int?f.int+' dias':'—')+'</div>'
    +'</div>'
    +(f.obs?'<div class="pc-itens-lista"><div class="pc-item">'+esc(f.obs)+'</div></div>':'')
@@ -7895,21 +8212,32 @@ function importarExtratoOfx(ev){const file=ev.target.files[0];ev.target.value=''
     :dup?' · <span style="color:var(--warning)">já existe no financeiro</span>'
     :parecido?' · <span style="color:var(--warning)">possível duplicado de "'+esc(parecido.desc)+'" ('+fmtD(parecido.data)+')</span>':'')
     +(outro?' · <span style="color:var(--warning)">o banco repetiu o identificador de "'+esc(outro.desc)+'" ('+fmtD(outro.data)+', '+fmt(outro.val)+'): confira se é outra transação</span>':'');
-   return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer"><input type="checkbox" class="ofx-item-check" value="'+i+'" onchange="atualizarComparacaoSaldoOfx()" '+(dup||parecido?'':'checked')+' style="width:16px;height:16px;flex-shrink:0"><div style="flex:1;min-width:0"><strong>'+esc(t.desc)+'</strong><div style="font-size:11px;color:var(--text-muted)">'+fmtD(t.data)+aviso+'</div></div><span class="mono" style="font-weight:700;flex-shrink:0;color:'+(t.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+(t.tipo==='Entrada'?'+':'−')+' '+fmt(t.val)+'</span></label>';
+   return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer"><input type="checkbox" class="ofx-item-check" value="'+i+'" onchange="ofxMarcou()" '+(dup||parecido?'':'checked')+' style="width:20px;height:20px;flex-shrink:0;accent-color:var(--accent)"><div style="flex:1;min-width:0"><strong>'+esc(t.desc)+'</strong><div style="font-size:11px;color:var(--text-muted)">'+fmtD(t.data)+aviso+'</div></div><span class="mono" style="font-weight:700;flex-shrink:0;color:'+(t.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+(t.tipo==='Entrada'?'+':'−')+' '+fmt(t.val)+'</span></label>';
   }).join('');
-  atualizarComparacaoSaldoOfx();
+  ofxMarcou();
   openModal('modal-ofx');
  };
  reader.onerror=()=>toast('Não foi possível ler o arquivo.','error');
  reader.readAsText(file);}
 let OFX_SALDO_BANCO=null,OFX_DATA_SALDO_BANCO='',OFX_PERIODO={inicio:'',fim:''},OFX_CONTA='';
-function marcarTodosOfx(v){document.querySelectorAll('.ofx-item-check').forEach(c=>c.checked=v);atualizarComparacaoSaldoOfx();}
+function marcarTodosOfx(v){document.querySelectorAll('.ofx-item-check').forEach(c=>c.checked=v);ofxMarcou();}
+/* a cada marca/desmarca: refaz a conta do saldo e o botão diz quantos vão ser lançados */
+function ofxMarcou(){atualizarComparacaoSaldoOfx();pintarBotaoLancarOfx();}
+/* os marcados que vão mesmo entrar: com as colunas de origem, confirmarImportacaoOfx pula o que já está no ERP
+   (mesmo identificador do banco), então ele não conta no botão nem no saldo projetado. Sem a resposta das colunas
+   ainda, também não: ela vem antes de lançar, e só há jaNoErp quando o banco devolve o identificador */
+function ofxMarcadosQueEntram(){return [...document.querySelectorAll('.ofx-item-check:checked')].map(c=>OFX_ITENS[Number(c.value)]).filter(t=>!(t.jaNoErp&&(FIN_LIGACAO_NO_BANCO||!FIN_LIGACAO_CONFERIDA)));}
+function pintarBotaoLancarOfx(){const b=$('ofx-btn-lancar');if(!b)return;
+ const n=ofxMarcadosQueEntram().length;
+ /* sem nada marcado o botão ainda confere com o banco e iguala o saldo do ERP ao do extrato
+    (dá para desfazer), quando o arquivo traz esse saldo */
+ b.textContent=n?'✔ Lançar '+n+(n===1?' lançamento':' lançamentos'):(OFX_SALDO_BANCO!==null?'✔ Conferir e igualar o saldo':'Nenhum lançamento novo marcado');}
 /* Recalcula a cada marca/desmarca: mostra o saldo atual do ERP, o que ele
    ficaria depois de lancar os itens marcados, e o que o banco diz que a
    conta tem -- avisando quando os dois nao batem. */
 function atualizarComparacaoSaldoOfx(){
  const alvo=$('ofx-saldo-comparacao');if(!alvo)return;
- const marcados=[...document.querySelectorAll('.ofx-item-check:checked')].map(c=>OFX_ITENS[Number(c.value)]);
+ const marcados=ofxMarcadosQueEntram();
  const somaMarcados=marcados.reduce((s,t)=>s+(t.tipo==='Entrada'?1:-1)*t.val,0);
  const saldoAtual=saldoFin();
  const saldoProjetado=saldoAtual+somaMarcados;
@@ -8010,7 +8338,8 @@ async function confirmarImportacaoOfx(){if(!guard())return;
   {origem:'extrato',fitid:OFX_ITENS[i].fitid||'',conta:OFX_CONTA,descBanco:OFX_ITENS[i].desc,loteOfx:lote}));
  if(novos.length){
   const {error}=await supa.from('financeiro').insert(novos.map(n=>financeiroParaSupabase(n)));
-  if(error){toast('Erro ao importar no Supabase: '+error.message+(error.code==='23505'?' — algum item deste extrato já está no ERP (talvez importado em outro aparelho). Recarregue o ERP e importe de novo: os repetidos aparecem como já existentes.':''),'error',error.code==='23505'?10000:undefined);return;}
+  if(error){const jaNoErp='algum item deste extrato já está no ERP (talvez importado em outro aparelho). Recarregue o ERP e importe de novo: os repetidos aparecem como já existentes.';
+   toast(error.code==='23505'?paraAdmin('Erro ao importar no Supabase: '+error.message+' — '+jaNoErp,'Erro ao importar: '+jaNoErp):'Erro ao importar no Supabase: '+error.message,'error',error.code==='23505'?10000:undefined);return;}
   DB.financeiro=novos.concat(DB.financeiro);}
  DB.config.ultimaImportacaoOfx=new Date().toLocaleString('pt-BR');
  commit(novos.length?'criar':'editar','Financeiro',novos.length?(novos.length+' lançamento(s) importado(s) do extrato OFX'):'Extrato conferido, sem lançamentos novos');
@@ -8043,7 +8372,8 @@ function renderFinanceiro(){const ym=today().slice(0,7);
     cada 30 s (cada filtro também passa por aqui) */
  if(!FIN_LIGACAO_CONFERIDA&&!FIN_LIGACAO_CONFERINDO&&!redeRuimAgora()&&Date.now()-FIN_LIGACAO_TENTOU>30000)verificarColunaLigacaoFin();
  const pagos=DB.financeiro.filter(f=>f.status==='Pago');
- $('fin-saldo').textContent=fmtK(saldoFin());
+ /* saldo em cor neutra; vermelho e com "−" só quando a conta fica negativa */
+ const saldo=saldoFin();$('fin-saldo').textContent=fmtSinal(saldo);$('fin-saldo').style.color=corSinal(saldo);
  $('fin-ent').textContent=fmtK(pagos.filter(f=>f.tipo==='Entrada'&&String(f.data).slice(0,7)===ym).reduce((s,f)=>s+Number(f.val),0));
  $('fin-sai').textContent=fmtK(pagos.filter(f=>f.tipo==='Saída'&&String(f.data).slice(0,7)===ym).reduce((s,f)=>s+Number(f.val),0));
  $('fin-pend').textContent=DB.financeiro.filter(f=>f.status==='Pendente').length;
@@ -8129,7 +8459,12 @@ function encherSelectCC(){const el=$('fin-cc');if(!el)return;const atual=el.valu
  el.innerHTML='<option value="">— Não classificado —</option>'
   +SETORES_FIXOS.map(x=>'<option>'+esc(x)+'</option>').join('');
  el.value=atual;}
-function openFin(){encherSelectCC();$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';fillFinPedidoSelect('');$('fin-cc').value='';$('fin-val').value='';encherSelectLista('fin-st',FIN_STATUS,'Pago');$('fin-obs').value='';$('mf-title').textContent='Novo Lançamento';openModal('modal-financeiro');}
+/* novo lançamento: o status acompanha a data até a pessoa escolher à mão.
+   Data futura ainda não aconteceu (Pendente); hoje ou antes, já foi (Pago).
+   Na edição nada muda sozinho. */
+function sugerirStatusFin(){const st=$('fin-st');if(!st||$('fin-id').value||st.dataset.manual)return;
+ const d=$('fin-data').value;st.value=d&&d>today()?'Pendente':'Pago';}
+function openFin(){encherSelectCC();$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';fillFinPedidoSelect('');$('fin-cc').value='';$('fin-val').value='';encherSelectLista('fin-st',FIN_STATUS,'Pago');$('fin-st').dataset.manual='';sugerirStatusFin();$('fin-obs').value='';$('mf-title').textContent='Novo Lançamento';openModal('modal-financeiro');}
 function editFin(id){encherSelectCC();if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
  $('fin-id').value=f.id;$('fin-tipo').value=f.tipo;$('fin-data').value=f.data;$('fin-desc').value=f.desc;fillFinPedidoSelect(f.cat||'');encherSelectLista('fin-cc',SETORES_FIXOS,f.centroCusto,'— Não classificado —');$('fin-val').value=f.val;encherSelectLista('fin-st',FIN_STATUS,f.status);$('fin-obs').value=f.obs||'';$('mf-title').textContent='Editar Lançamento';openModal('modal-financeiro');}
 async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').value.trim();if(!desc||num('fin-val')<=0){toast('Informe descrição e valor.','error');return;}
@@ -8173,18 +8508,23 @@ function renderFornecedoresCards(base){const alvo=$('fornecedores-cards');if(!al
  if(!fonte.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">'+fcMsgVazia('for','Nenhum fornecedor cadastrado')+'</div>';return;}
  const comprasDe={};DB.compras.forEach(c=>{if(c.status!=='Cancelado'&&c.forId)comprasDe[c.forId]=(comprasDe[c.forId]||0)+1;});
  alvo.innerHTML=fonte.slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR')).map(f=>{
-  const tel=String(f.tel||'').replace(/\D/g,''),wa=linkWhatsapp(f.tel),nc=comprasDe[f.id];
+  const tel=String(f.tel||'').replace(/\D/g,''),wa=linkWhatsapp(f.tel),nc=comprasDe[f.id],ocTxt=nc?'📦 '+nc+(nc>1?' ordens':' ordem')+' de compra':'';
   const links=[tel?'<a class="pc-link" href="tel:'+tel+'">📞 Ligar</a>':'',wa?'<a class="pc-link" href="'+wa+'" target="_blank" rel="noopener">💬 WhatsApp</a>':'',
    f.email?'<a class="pc-link" href="mailto:'+esc(f.email)+'">✉️ E-mail</a>':''].filter(Boolean).join('');
   const detalhe=[f.tel,f.cidade].filter(Boolean).map(esc).join(' · ');
   return '<div class="pedido-card">'
-   +'<div class="pc-topo"><div class="pc-cliente">'+esc(f.nome)+'</div><span class="badge '+(f.status==='Ativo'?'badge-success':'badge-muted')+'">'+esc(f.status||'—')+'</span></div>'
+   /* "Ativo" é o normal e se repetia em todo cartão: o selo só aparece quando foge disso (Inativo) */
+   +'<div class="pc-topo"><div class="pc-cliente">'+esc(f.nome)+'</div>'+(f.status&&f.status!=='Ativo'?'<span class="badge badge-muted">'+esc(f.status)+'</span>':'')+'</div>'
    +(detalhe?'<div class="pc-pag">'+detalhe+'</div>':'')
    +(f.email||f.cnpj?'<div class="pc-pag">'+[f.email,f.cnpj].filter(Boolean).map(esc).join(' · ')+'</div>':'')
-   +(nc?'<div class="pc-pag">📦 '+nc+' ordem'+(nc>1?'s':'')+' de compra</div>':'')
+   +(nc?(podeVer('compras')?'<button type="button" class="pc-link for-compras" onclick="comprasDoFornecedor(\''+f.id+'\')">'+ocTxt+' ›</button>':'<div class="pc-pag">'+ocTxt+'</div>'):'')
    +(links?'<div class="pc-links">'+links+'</div>':'')
    +(canEdit()?'<div class="pc-acoes">'+actionBtns("editFornecedor('"+f.id+"')","delFornecedor('"+f.id+"')")+'</div>':'')
    +'</div>';}).join('');}
+/* tocar em "N ordens de compra" abre Compras já filtrado por esse fornecedor ("Limpar filtros" volta a mostrar todas) */
+function comprasDoFornecedor(id){const f=DB.fornecedores.find(x=>x.id===id);if(!f)return;
+ const c=FC_REG.oc;c.estado=fcVazio(c.cols);c.estado.forn=f.nome||'';
+ navigate('compras');}
 /* ================= DOCUMENTOS =================
    A seção mostra só os MODELOS dos documentos do ERP, em branco: serve para conferir o layout.
    Os PDFs gerados vão direto para a pasta de downloads e não são guardados no Supabase —
@@ -8212,12 +8552,19 @@ function pedidoModelo(){return{id:'__modelo',num:0,cliId:'',data:'',pag:'—',st
   {prodId:null,desc:'Descrição do item',qty:1,preco:0},
   {prodId:null,desc:'Descrição do item',qty:1,preco:0}],
  total:0,baixa:false};}
-/* o menu tem um item por documento; os dois usam a mesma seção, trocando só o modo */
-function abrirDocumento(modo){DOC_MODO=modo;navigate('documentos');
+/* o menu tem um item por documento; todos usam a mesma seção, trocando só o modo */
+function abrirDocumento(modo){DOC_MODO=modo;navigate('documentos');marcarMenuDocumento();}
+/* as abas no topo da tela trocam o modelo ali mesmo, sem precisar voltar ao menu */
+function trocarDocumento(modo){if(modo===DOC_MODO)return;DOC_MODO=modo;marcarMenuDocumento();
+ document.querySelector('#page-title .titulo-longo').textContent=tituloDocumento();verModeloDocumento();}
+function marcarMenuDocumento(){
  document.querySelectorAll('.nav-item').forEach(n=>{const o=n.getAttribute('onclick')||'';
-  if(o.indexOf('abrirDocumento')>-1)n.classList.toggle('active',o.indexOf("'"+modo+"'")>-1);});}
+  if(o.indexOf('abrirDocumento')>-1)n.classList.toggle('active',o.indexOf("'"+DOC_MODO+"'")>-1);});}
+function tituloDocumento(){return 'Documentos — '+(DOC_MODO==='ficha'?'Modelo de Ficha Técnica':DOC_MODO==='contrato'?'Modelo de Contrato':DOC_MODO==='recibo'?'Modelo do Recibo':'Modelo do Orçamento');}
 async function verModeloDocumento(){
  const aviso=$('doc-modelo-aviso'),frame=$('doc-modelo-frame');if(!aviso)return;
+ document.querySelectorAll('#doc-abas .per-tab').forEach(b=>{const ativa=b.dataset.modo===DOC_MODO;
+  b.classList.toggle('active',ativa);b.setAttribute('aria-selected',ativa?'true':'false');});
  const recibo=DOC_MODO==='recibo',contrato=DOC_MODO==='contrato',ficha=DOC_MODO==='ficha';
  $('doc-modelo-titulo').textContent=ficha?'📐 Modelo de Ficha Técnica':contrato?'📝 Modelo de Contrato':recibo?'🧾 Modelo do Recibo do Pedido':'📄 Modelo do Orçamento';
  $('doc-modelo-sub').textContent=ficha
@@ -8243,12 +8590,21 @@ function renderDocumentos(){verModeloDocumento();}
    Quem recebe comissão (arquiteto, indicação, parceiro...) com o percentual combinado.
    Fica em config (campo "comissionados"), como os serviços terceirizados — sem tabela nova no banco. */
 const listaComissionados=()=>DB.config.comissionados||(DB.config.comissionados=[]);
+/* o contato é texto livre ("telefone, e-mail..."): o telefone vira Ligar/WhatsApp e o e-mail vira link, como no cartão do cliente.
+   Com mais de um telefone no campo, os números se misturam: aí fica só o texto. Número escrito com +55 leva o "+" no Ligar. */
+function linksContato(txt){const s=String(txt||'');
+ const email=(s.match(/[^\s,;\/<>()"']+@[^\s,;\/<>()"']+\.[a-z]{2,}/i)||[''])[0];
+ const tel=s.replace(email,'').replace(/\D/g,''),telOk=tel.length>=8&&tel.length<=13;
+ const wa=telOk?linkWhatsapp(tel):'',discar=(tel.length>11&&tel.startsWith('55')?'+':'')+tel;
+ return [telOk?'<a class="pc-link" href="tel:'+discar+'">📞 Ligar</a>':'',wa?'<a class="pc-link" href="'+wa+'" target="_blank" rel="noopener">💬 WhatsApp</a>':'',
+  email?'<a class="pc-link" href="mailto:'+esc(email)+'">✉️ E-mail</a>':''].filter(Boolean).join('');}
 function renderComissoesCards(lista){const alvo=$('comissoes-cards');if(!alvo)return;
  if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Ninguém cadastrado para receber comissão</div>';return;}
  alvo.innerHTML=lista.map(c=>'<div class="pedido-card">'
   +'<div class="pc-topo"><div class="pc-cliente">'+esc(c.nome)+'</div><span class="badge badge-muted">'+esc(c.papel||'—')+'</span></div>'
   +'<div class="pc-valor"><span class="pc-total">'+fmtN(Number(c.pct)||0,(Number(c.pct)||0)%1?1:0)+'%</span></div>'
   +(c.contato?'<div class="pc-pag">'+esc(c.contato)+'</div>':'')
+  +(linksContato(c.contato)?'<div class="pc-links">'+linksContato(c.contato)+'</div>':'')
   +(c.obs?'<div class="pc-itens-lista"><div class="pc-item">'+esc(c.obs)+'</div></div>':'')
   +(canEdit()?'<div class="pc-acoes">'+actionBtns("editComissionado('"+c.id+"')","delComissionado('"+c.id+"')")+'</div>':'')
   +'</div>').join('');}
@@ -8288,15 +8644,17 @@ async function delComissionado(id){if(!guard())return;const lista=listaComission
    Catálogo do que é feito fora (estofamento, pintura, corte a laser...) com prestador e valor de referência.
    Fica em config (campo "servicos"), como os tipos de mão de obra — não precisa de tabela própria no banco. */
 const SERV_UNIDADES=['Por peça','Por hora','Diária','Por m²','Por metro linear','Por projeto'];
+/* "Por m²" vira "m²" para ir ao lado do valor no cartão: "R$ 180,00 / m²" */
+const unidadeServCurta=u=>String(u||'').replace(/^por\s+/i,'').trim().toLowerCase();
 function encherUnidadesServ(){const s=$('serv-unidade');if(!s||s.options.length===SERV_UNIDADES.length)return;
  s.innerHTML=SERV_UNIDADES.map(u=>'<option>'+esc(u)+'</option>').join('');}
 const listaServicos=()=>DB.config.servicos||(DB.config.servicos=[]);
 function renderServicosCards(lista){const alvo=$('servicos-cards');if(!alvo)return;
  if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum serviço terceirizado cadastrado</div>';return;}
  alvo.innerHTML=lista.map(sv=>'<div class="pedido-card">'
-  +'<div class="pc-topo"><div class="pc-cliente">'+esc(sv.nome)+'</div><span class="badge badge-muted">'+esc(sv.unidade||'—')+'</span></div>'
+  +'<div class="pc-topo"><div class="pc-cliente">'+esc(sv.nome)+'</div></div>'
   +'<div class="pc-pag">'+esc(sv.fornId?fornName(sv.fornId):'Prestador não definido')+'</div>'
-  +'<div class="pc-valor"><span class="pc-total">'+fmt(sv.valor)+'</span></div>'
+  +'<div class="pc-valor"><span class="pc-total">'+fmt(sv.valor)+(sv.unidade?'<span class="sv-unid"> / '+esc(unidadeServCurta(sv.unidade))+'</span>':'')+'</span></div>'
   +(sv.obs?'<div class="pc-itens-lista"><div class="pc-item">'+esc(sv.obs)+'</div></div>':'')
   +(canEdit()?'<div class="pc-acoes">'+actionBtns("editServico('"+sv.id+"')","delServico('"+sv.id+"')")+'</div>':'')
   +'</div>').join('');}
@@ -8377,6 +8735,15 @@ async function carregarComprasSupabase(){
  DB.compras=(data||[]).map(compraDeSupabase);saveDB();
  if(CUR==='compras')renderCompras();}
 const COMPRA_STB={'Pendente':'badge-warning','Confirmado':'badge-info','Recebido':'badge-success','Cancelado':'badge-danger'};
+/* a dica da NF ensina uma vez: fechada no X, não volta mais neste aparelho
+   (o botão Importar NF continua no lugar) */
+const DICA_NF_KEY='mabe_dica_nf';
+function aplicarDicaNf(){const d=$('compras-dica-nf');if(!d)return;
+ let fechada=false;try{fechada=localStorage.getItem(DICA_NF_KEY)==='fechada';}catch(e){}
+ d.style.display=fechada?'none':'';}
+function fecharDicaNf(){try{localStorage.setItem(DICA_NF_KEY,'fechada');}catch(e){}
+ const d=$('compras-dica-nf');if(d)d.style.display='none';}
+aplicarDicaNf();
 function renderComprasCards(base){const alvo=$('compras-cards');if(!alvo)return;const fonte=base||DB.compras;
  if(!fonte.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">'+fcMsgVazia('oc','Nenhuma ordem de compra')+'</div>';return;}
  alvo.innerHTML=fonte.map(c=>{
@@ -10336,13 +10703,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-17.1';
+const APP_VERSAO='2026-10-17.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=312;
+const APP_ATUALIZACAO=313;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
@@ -10392,13 +10759,20 @@ async function descobrirVersaoNova(){
   if(j>=0)ATUALIZACAO_NOVA=parseInt(txt.slice(j+mn.length,j+mn.length+8),10)||0;}catch(e){}
  return VERSAO_NOVA;}
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(!el)return;
- escreverVersoesAviso();el.style.display='flex';
+ escreverVersoesAviso();el.style.display='flex';ajustarToastsAoAviso();
  descobrirVersaoNova().then(v=>{
-  if(v&&v===APP_VERSAO){el.style.display='none';return;}
-  escreverVersoesAviso();});}
+  if(v&&v===APP_VERSAO){fecharAvisoAtualizacao();return;}
+  escreverVersoesAviso();ajustarToastsAoAviso();});}
+/* enquanto o aviso de versão está aberto, os toasts ficam logo acima dele; a altura muda com o texto */
+function ajustarToastsAoAviso(){const el=$('aviso-atualizacao');
+ const aberto=!!el&&el.style.display!=='none';
+ document.body.classList.toggle('com-aviso-versao',aberto);
+ if(aberto)document.documentElement.style.setProperty('--aviso-versao-h',el.offsetHeight+'px');}
+function fecharAvisoAtualizacao(){const el=$('aviso-atualizacao');if(el)el.style.display='none';ajustarToastsAoAviso();}
+window.addEventListener('resize',()=>{if(document.body.classList.contains('com-aviso-versao'))ajustarToastsAoAviso();});
 let TROCA_PEDIDA=false;
 function aplicarAtualizacao(){const esperando=SW_REG&&SW_REG.waiting;
- if(esperando){TROCA_PEDIDA=true;esperando.postMessage({tipo:'ATUALIZAR'});$('aviso-atualizacao').style.display='none';}
+ if(esperando){TROCA_PEDIDA=true;esperando.postMessage({tipo:'ATUALIZAR'});fecharAvisoAtualizacao();}
  else location.reload();}
 async function procurarAtualizacao(){
  if(!SW_REG){toast('Este navegador não guarda o app para uso offline.','info');return;}
