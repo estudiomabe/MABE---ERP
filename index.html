@@ -1474,7 +1474,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
             <div class="config-card" style="margin:0"><div class="config-title">📊 Impostos, Comissão & Markup</div><div class="form-grid form-2">
               <div class="form-group"><label class="form-label">Imposto (%)</label><input type="number" class="form-control" id="orc-imposto" step="0.1" oninput="calcOrc()"></div>
               <div class="form-group"><label class="form-label">Taxa da máquina (%)</label><input type="number" class="form-control" id="orc-maquina" step="0.5" min="0" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Percentual do valor total do item para o uso das máquinas — entra no preço, como o imposto</div></div>
-              <div class="form-group"><label class="form-label">Comissão (%)</label><input type="number" class="form-control" id="orc-comissao" step="0.5" min="0" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Entra no preço, como o imposto — não sai do seu lucro</div></div><div class="form-group"><label class="form-label">Quem recebe a comissão</label><select class="form-control" id="orc-comissao-pessoa" onchange="comissaoPessoaEscolhida()"></select><input type="text" class="form-control" id="orc-comissao-nome" placeholder="Nome de quem recebe" list="comissao-sugestoes" style="display:none;margin-top:6px" oninput="calcOrc()"><datalist id="comissao-sugestoes"></datalist></div><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="orc-markup" step="any" oninput="onMargemEditada()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">% do preço final que vira lucro</div></div><div class="form-group"><label class="form-label">Frete (R$)</label><input type="number" class="form-control" id="orc-frete" step="0.01" min="0" placeholder="0,00" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Valor do frete deste item — entra no custo, como um serviço terceirizado</div></div>
+              <div class="form-group"><label class="form-label">Comissão (%)</label><input type="number" class="form-control" id="orc-comissao" step="0.5" min="0" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Entra no preço, como o imposto — não sai do seu lucro</div></div><div class="form-group"><label class="form-label">Quem recebe a comissão</label><select class="form-control" id="orc-comissao-pessoa" onchange="comissaoPessoaEscolhida()"></select><input type="text" class="form-control" id="orc-comissao-nome" placeholder="Nome de quem recebe" list="comissao-sugestoes" style="display:none;margin-top:6px" oninput="calcOrc()"><datalist id="comissao-sugestoes"></datalist></div><div class="form-group"><label class="form-label">Margem de Lucro (%)</label><input type="number" class="form-control" id="orc-markup" step="any" oninput="onMargemEditada()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">% do preço final que vira lucro</div></div><div class="form-group"><label class="form-label">Frete (R$)</label><input type="number" class="form-control" id="orc-frete" step="0.01" min="0" placeholder="0,00" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Valor do frete deste item — entra no custo, como um serviço terceirizado</div></div><div class="form-group" id="orc-desconto-grupo"><label class="form-label">Desconto (%)</label><input type="number" class="form-control" id="orc-desconto" step="0.5" min="0" max="100" placeholder="0" oninput="calcOrc()"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Sai do Preço Final. Imposto, comissão e taxa da máquina são calculados sobre o preço com desconto — o desconto sai do seu lucro</div><div id="orc-desconto-efeito" style="display:none;font-size:11px;font-weight:600;margin-top:3px"></div></div>
             </div></div>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
@@ -1501,10 +1501,11 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
                 <div id="res-frete-linha" style="display:none;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Frete</span><span id="res-frete" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="height:1px;background:rgba(255,255,255,0.1);margin:4px 0"></div>
                 <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.8)"><span>Custo Total</span><span id="res-custo" style="font-family:var(--mono)">R$ 0,00</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Imposto</span><span id="res-imposto" style="font-family:var(--mono)">R$ 0,00</span></div><div id="res-comissao-linha" style="display:none;justify-content:space-between;font-size:13px;color:#d9b978"><span id="res-comissao-lbl">Comissão</span><span id="res-comissao" style="font-family:var(--mono)">R$ 0,00</span></div><div id="res-maquina-linha" style="display:none;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span id="res-maquina-lbl">Taxa da máquina</span><span id="res-maquina" style="font-family:var(--mono)">R$ 0,00</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Imposto</span><span id="res-imposto" style="font-family:var(--mono)">R$ 0,00</span></div><div id="res-comissao-linha" style="display:none;justify-content:space-between;font-size:13px;color:#d9b978"><span id="res-comissao-lbl">Comissão</span><span id="res-comissao" style="font-family:var(--mono);white-space:nowrap">R$ 0,00</span></div><div id="res-maquina-linha" style="display:none;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span id="res-maquina-lbl">Taxa da máquina</span><span id="res-maquina" style="font-family:var(--mono)">R$ 0,00</span></div>
                 <div style="height:1px;background:rgba(255,255,255,0.1);margin:4px 0"></div>
                 <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--accent);font-weight:700" id="res-preco-lbl">Preço Final</span><div style="display:flex;align-items:center;gap:5px"><span style="color:var(--accent);font-size:13px">R$</span><input type="number" id="res-preco-input" step="0.01" min="0" oninput="onPrecoManual()" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent);background:transparent;border:none;border-bottom:1px dashed rgba(200,169,110,0.45);text-align:right;width:130px;outline:none"></div></div>
                 <div id="preco-manual-hint" style="display:none;font-size:10.5px;color:rgba(250,247,242,0.45);text-align:right;margin-top:-2px">✏️ Ajustado manualmente — <a href="#" onclick="event.preventDefault();resetPrecoManual()" style="color:var(--accent);text-decoration:underline">recalcular automático</a></div>
+                <div id="res-desconto-bloco" style="display:none;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px;color:#e89b8c"><span id="res-desconto-lbl">Desconto</span><span id="res-desconto" style="font-family:var(--mono)">− R$ 0,00</span></div><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:13px;color:var(--accent);font-weight:700" id="res-preco-desc-lbl">Preço com desconto</span><span id="res-preco-desc" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent);white-space:nowrap">R$ 0,00</span></div></div>
                 <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px"><span style="font-size:12px;color:rgba(250,247,242,0.5)" id="res-lucro-lbl">Lucro estimado</span><span id="res-lucro" style="font-family:var(--mono);font-size:14px;font-weight:700;color:#6fcf97">R$ 0,00</span></div>
                 <div id="res-qty-bloco" style="display:none;margin-top:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:13px;color:var(--accent);font-weight:700">Total do item</span><span id="res-qty-total" style="font-family:var(--mono);font-size:17px;font-weight:700;color:var(--accent);white-space:nowrap">R$ 0,00</span></div><div id="res-qty-lbl" style="font-size:11px;color:rgba(250,247,242,0.5);text-align:right;margin-top:-3px"></div><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:rgba(250,247,242,0.5)">Lucro total</span><span id="res-qty-lucro" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#6fcf97">R$ 0,00</span></div></div>
                 <div id="lucro-negativo-hint" style="display:none;font-size:10.5px;color:var(--danger);text-align:right;margin-top:-4px">⚠️ Preço abaixo do custo — prejuízo</div>
@@ -1920,6 +1921,8 @@ const valorNegativo=v=>Math.round((Number(v)||0)*100)<0;
 const fmtSinal=v=>(valorNegativo(v)?'−':'')+fmtK(Math.abs(Number(v)||0));
 const corSinal=v=>valorNegativo(v)?'var(--danger)':'';
 const fmtN=(v,d)=> (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:d===undefined?2:d,maximumFractionDigits:d===undefined?2:d});
+/* percentual com até duas casas, sem zeros sobrando: 10 → "10", 2,5 → "2,5", 2,25 → "2,25" */
+const fmtPctD=v=>(Number(v)||0).toLocaleString('pt-BR',{maximumFractionDigits:2});
 const num=id=>parseFloat($(id).value)||0;
 /* a data de hoje no relógio do aparelho (Brasília), não em UTC: com toISOString, depois das 21h
    os campos de data já vinham com o dia seguinte */
@@ -5487,8 +5490,10 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
  const tipoL={'sob_medida':'🔨 Sob medida','catalogo':'📦 Catálogo','novo_produto':'🆕 Novo produto'};
  $('tb-orc-itens').innerHTML=itens.map(it=>{
   let precoCell='<span style="font-weight:700">'+fmt(it.preco)+'</span>';
-  if(it.precoManual&&it.precoSugerido){const desvioPct=(it.preco-it.precoSugerido)/it.precoSugerido*100;
+  const cheioIt=it.precoCheio!=null?Number(it.precoCheio):Number(it.preco);
+  if(it.precoManual&&it.precoSugerido){const desvioPct=(cheioIt-it.precoSugerido)/it.precoSugerido*100;
    precoCell+='<div style="font-size:10px;margin-top:2px" title="Sugerido: '+fmt(it.precoSugerido)+'"><span class="badge '+(desvioPct<0?'badge-danger':desvioPct>0?'badge-info':'badge-muted')+'" style="font-size:9px">✏️ manual '+(desvioPct>=0?'+':'')+fmtN(desvioPct,1)+'%</span></div>';}
+  if(Number(it.descPct)>0)precoCell+='<div style="font-size:10px;margin-top:2px"'+(it.precoCheio!=null?' title="Sem desconto: '+fmt(it.precoCheio)+'"':'')+'><span class="badge badge-muted" style="font-size:9px;white-space:nowrap">desconto '+fmtPctD(it.descPct)+'%</span></div>';
   return '<tr><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong></td><td class="mono">'+(it.qty||1)+'</td><td class="mono">'+precoCell+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>';}).join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
  atualizarResumoComissaoOrc(o);$('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);
  renderLinksOrc(o);renderAnexosOrc(o);pintarBotaoLixeira();}
@@ -5705,6 +5710,7 @@ function resetOrcForm(tipo){const cf=DB.config.cf;
  $('orc-mdo').innerHTML='';
  $('orc-imposto').value=cf.imposto;$('orc-markup').value=cf.markup;$('orc-maquina').value=cf.taxaMaquina||0;
  $('orc-comissao').value=0;$('orc-comissao-nome').value='';selecionarComissaoDoItem('');
+ $('orc-desconto').value='';const gDesc=$('orc-desconto-grupo');if(gDesc)gDesc.style.display='';
  $('orc-materiais').innerHTML='';
  $('card-novo-produto').style.display=tipo==='novo_produto'?'block':'none';
  $('res-novo-produto').style.display=tipo==='novo_produto'?'block':'none';
@@ -5914,7 +5920,18 @@ function computeOrc(){const cfg=DB.config.cf;const cfT=['aluguel','iptu','agua',
   preco=precoAuto;
   impostoVal=preco*imp/100;comissaoVal=preco*com/100;maquinaVal=preco*maq/100;lucro=preco*margem/100;
  }
- return{frete,cfRat,cfHora,horasCf,horasMdo:horasTotal,mdo,mdoLinhas,mat,materiais,serv,servicos,custo,custoBase,precoAuto,impostoVal,comissaoPct:com,comissaoNome,comissaoVal,maquinaPct:maq,maquinaVal,preco,lucro,margemImplicita};}
+ /* desconto: sai do preço acima (o cheio, que segue a margem e é o que a ficha do portfólio e o produto
+    novo guardam). Imposto, comissão e taxa da máquina incidem sobre o que o cliente paga de fato, e o que
+    se abre mão sai do lucro. A ficha de preço do portfólio não tem desconto: é o preço de tabela */
+ const dDig=FICHA_PROD_ID?0:num('orc-desconto'),descPct=dDig>0&&dDig<=100?dDig:0;
+ /* em centavos, a partir do preço cheio já arredondado: Preço Final − Desconto = Preço com desconto
+    na tela, no item gravado e no PDF do detalhamento */
+ let descontoVal=0,precoFinal=preco;
+ if(descPct){const cheioC=Math.round(preco*100),finalC=Math.round(cheioC*(100-descPct)/100);
+  precoFinal=finalC/100;descontoVal=(cheioC-finalC)/100;
+  impostoVal=precoFinal*imp/100;comissaoVal=precoFinal*com/100;maquinaVal=precoFinal*maq/100;
+  lucro=precoFinal-custoBase-impostoVal-comissaoVal-maquinaVal;}
+ return{frete,cfRat,cfHora,horasCf,horasMdo:horasTotal,mdo,mdoLinhas,mat,materiais,serv,servicos,custo,custoBase,precoAuto,impostoVal,comissaoPct:com,comissaoNome,comissaoVal,maquinaPct:maq,maquinaVal,preco,lucro,margemImplicita,descPct,descontoVal,precoFinal,descFora:dDig<0||dDig>100};}
 /* Item salvo antes deste campo existir não tem horas gravadas: naqueles, o rateio
    vinha da soma da mão de obra. Para o preço não mudar sozinho ao reabrir, o campo
    nasce com aquela soma — dali em diante é um número como outro qualquer. */
@@ -5990,9 +6007,21 @@ function calcOrc(){const t=computeOrc();
  $('lucro-negativo-hint').style.display=t.lucro<0?'block':'none';
  $('res-lucro').style.color=t.lucro<0?'var(--danger)':'#6fcf97';
  $('res-imposto').textContent=fmt(t.impostoVal);$('res-lucro').textContent=fmt(t.lucro);
+ const bd=$('res-desconto-bloco'),ef=$('orc-desconto-efeito');
+ if(bd){bd.style.display=t.descPct>0?'flex':'none';
+  $('res-desconto-lbl').textContent='Desconto ('+fmtPctD(t.descPct)+'%)';
+  $('res-desconto').textContent='− '+fmt(t.descontoVal);$('res-preco-desc').textContent=fmt(t.precoFinal);
+  $('res-preco-desc-lbl').textContent=qtdItemOrc()>1?'Com desconto, por unidade':'Preço com desconto';}
+ /* quanto sobra de verdade depois do desconto: a margem do campo é a do preço cheio */
+ if(ef){ef.style.display=t.descPct>0||t.descFora?'block':'none';
+  const pu=qtdItemOrc()>1?' por unidade':'';
+  if(t.descFora){ef.textContent='O desconto vai de 0 a 100%. Confira o número digitado.';ef.style.color='var(--danger)';}
+  else if(t.descPct>0){const m=t.precoFinal>0?t.lucro/t.precoFinal*100:0,lv=fmt(t.lucro).replace(' ','\u00a0');
+   ef.textContent=t.lucro<0?'Com este desconto o item dá prejuízo ('+lv+pu+')':'Com o desconto, o lucro fica em '+fmtN(m,1)+'% do preço ('+lv+pu+')';
+   ef.style.color=t.lucro<0?'var(--danger)':'var(--text-muted)';}}
  const qty=qtdItemOrc();$('res-qty-bloco').style.display=qty>1?'flex':'none';
  $('res-preco-lbl').textContent=qty>1?'Preço por unidade':'Preço Final';$('res-lucro-lbl').textContent=qty>1?'Lucro por unidade':'Lucro estimado';
- if(qty>1){const unit=Math.round(t.preco*100)/100;$('res-qty-lbl').textContent=fmtN(qty,qty%1?2:0)+' × '+fmt(unit);
+ if(qty>1){const unit=Math.round(t.precoFinal*100)/100;$('res-qty-lbl').textContent=fmtN(qty,qty%1?2:0)+' × '+fmt(unit);
   $('res-qty-total').textContent=fmt(unit*qty);$('res-qty-lucro').textContent=fmt(t.lucro*qty);$('res-qty-lucro').style.color=t.lucro<0?'var(--danger)':'#6fcf97';}
  const lm=$('res-maquina-linha');
  if(lm){lm.style.display=t.maquinaPct>0?'flex':'none';
@@ -6016,17 +6045,21 @@ async function salvarItemCalculadoNoPedido(desc){const tipo=$('orc-tipo').value,
  let prod=null;
  if(tipo==='novo_produto'){prod=await cadastrarProdutoDoItem(desc,t);if(!prod)return;}
  const doPortfolio=prod||(ORC_ITEM_PROD_ID?DB.produtos.find(x=>x.id===ORC_ITEM_PROD_ID):null);
- voltarAoPedido({tipo:doPortfolio?'catalogo':'livre',prodId:doPortfolio?doPortfolio.id:'',desc:doPortfolio&&prod?prod.nome:desc,qty:qtdItemOrc(),preco:Math.round(t.preco*100)/100});
+ voltarAoPedido({tipo:doPortfolio?'catalogo':'livre',prodId:doPortfolio?doPortfolio.id:'',desc:doPortfolio&&prod?prod.nome:desc,qty:qtdItemOrc(),preco:Math.round(t.precoFinal*100)/100});
  toast('Item adicionado ao pedido.','success');}
 async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value.trim();if(!desc){toast('Informe a descrição.','error');return;}
  if(FICHA_PROD_ID)return salvarFichaDoProduto();
+ {const d=num('orc-desconto');
+  if(d<0||d>100){toast('O desconto vai de 0 a 100%. Confira o número digitado.','error');$('orc-desconto').focus();return;}
+  if(d===100&&!confirm('Desconto de 100%: este item vai para a proposta por R$ 0,00. Continuar?'))return;}
  if(!await garantirOrcamentoDoCabecalho())return;
  if(ITEM_PARA_PEDIDO)return salvarItemCalculadoNoPedido(desc);
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o){toast('Orçamento não encontrado.','error');return;}
  const tipo=$('orc-tipo').value;const t=computeOrc();
  if(tipo==='novo_produto'&&!await cadastrarProdutoDoItem(desc,t))return;
  const cfgAtual=DB.config.cf;const qty=qtdItemOrc();
- const item={id:ORC_ITEM_EDITANDO||uid(),tipo:ORC_ITEM_PROD_ID?'catalogo':tipo,prodId:ORC_ITEM_PROD_ID||null,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,imposto:num('orc-imposto'),maquina:t.maquinaPct,maquinaVal:t.maquinaVal*qty,comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal*qty,markup:num('orc-markup'),cfHoras:t.horasCf,frete:t.frete,margemSugerida:PRECO_MANUAL?MARGEM_SUGERIDA:null,precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto*qty,qty,custo:t.custo*qty,preco:Math.round(Math.round(t.preco*100)*qty)/100,lucro:t.lucro*qty};
+ const item={id:ORC_ITEM_EDITANDO||uid(),tipo:ORC_ITEM_PROD_ID?'catalogo':tipo,prodId:ORC_ITEM_PROD_ID||null,desc,obs:$('orc-obs').value.trim(),materiais:t.materiais,servicos:t.servicos,cf:{aluguel:cfgAtual.aluguel,iptu:cfgAtual.iptu,agua:cfgAtual.agua,energia:cfgAtual.energia,contador:cfgAtual.contador,outros:cfgAtual.outros,hmes:cfgAtual.hmes,extras:DB.config.custosFixosExtras||[]},mdo:t.mdoLinhas,imposto:num('orc-imposto'),maquina:t.maquinaPct,maquinaVal:t.maquinaVal*qty,comissao:t.comissaoPct,comissaoNome:t.comissaoNome,comissaoVal:t.comissaoVal*qty,markup:num('orc-markup'),cfHoras:t.horasCf,frete:t.frete,margemSugerida:PRECO_MANUAL?MARGEM_SUGERIDA:null,precoManual:PRECO_MANUAL,precoSugerido:t.precoAuto*qty,qty,custo:t.custo*qty,preco:Math.round(Math.round(t.precoFinal*100)*qty)/100,lucro:t.lucro*qty,
+  descPct:t.descPct,precoCheio:Math.round(Math.round(t.preco*100)*qty)/100};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
@@ -6062,12 +6095,13 @@ function editarItemOrc(itemId){if(!guard())return;const o=DB.orcamentos.find(x=>
  aplicarHorasCf(it.cfHoras,it.mdo);$('orc-frete').value=Number(it.frete)||'';
  $('orc-imposto').value=it.imposto;$('orc-markup').value=it.markup;
  $('orc-maquina').value=it.maquina||0;
+ $('orc-desconto').value=Number(it.descPct)||'';
  $('orc-comissao').value=it.comissao||0;$('orc-comissao-nome').value=it.comissaoNome||'';selecionarComissaoDoItem(it.comissaoNome||'');
  $('orc-materiais').innerHTML='';(it.materiais||[]).forEach(m=>addMaterial(m.mode||'livre',m));
  $('orc-servicos').innerHTML='';(it.servicos||[]).forEach(sv=>addServico(sv));
  $('orc-form-title').textContent='Editar Item';
  if(it.precoManual){PRECO_MANUAL=true;MARGEM_SUGERIDA=it.margemSugerida!=null?Number(it.margemSugerida):Number(it.markup);
-  $('res-preco-input').value=(Number(it.preco)/(it.qty||1)).toFixed(2);$('preco-manual-hint').style.display='block';}
+  $('res-preco-input').value=(Number(it.precoCheio!=null?it.precoCheio:it.preco)/(it.qty||1)).toFixed(2);$('preco-manual-hint').style.display='block';}
  calcOrc();
  ORC_ITEM_EDITANDO=itemId;ORC_VOLTAR='detalhe';orcShow('form');}
 /* ---- FICHA DE PREÇO DO PORTFÓLIO ----
@@ -6135,12 +6169,13 @@ function preencherFormComFicha(f){
  aplicarHorasCf(f.cfHoras,f.mdo);$('orc-frete').value=Number(f.frete)||'';
  $('orc-imposto').value=f.imposto||0;$('orc-markup').value=f.markup||0;
  $('orc-maquina').value=f.maquina||0;
+ $('orc-desconto').value=Number(f.descPct)||'';
  $('orc-comissao').value=f.comissao||0;$('orc-comissao-nome').value=f.comissaoNome||'';selecionarComissaoDoItem(f.comissaoNome||'');
  $('orc-materiais').innerHTML='';(f.materiais||[]).forEach(m=>addMaterial(m.mode||'livre',m));
  $('orc-servicos').innerHTML='';(f.servicos||[]).forEach(sv=>addServico(sv));}
 function aplicarPrecoManualDaFicha(f,qty){if(!f.precoManual)return;
  PRECO_MANUAL=true;MARGEM_SUGERIDA=f.margemSugerida!=null?Number(f.margemSugerida):Number(f.markup)||0;
- $('res-preco-input').value=(Number(f.preco||0)/(qty||1)).toFixed(2);$('preco-manual-hint').style.display='block';}
+ $('res-preco-input').value=(Number((f.precoCheio!=null?f.precoCheio:f.preco)||0)/(qty||1)).toFixed(2);$('preco-manual-hint').style.display='block';}
 /* a tela é emprestada: estes dois dizem para quem vai o que for salvo */
 function prepararTelaFicha(titulo,legenda,rotuloBotao){
  $('orc-form-title').textContent=titulo;$('orc-tipo-badge').textContent=legenda;
@@ -6149,7 +6184,8 @@ function prepararTelaFicha(titulo,legenda,rotuloBotao){
  $('orc-desc').readOnly=!!FICHA_PROD_ID;
  const btnCad=$('btn-cadastro-prod');if(btnCad)btnCad.style.display=FICHA_PROD_ID?'inline-flex':'none';
  /* a ficha técnica é do produto do portfólio: não aparece em item de orçamento */
- const btnTec=$('btn-ficha-tecnica');if(btnTec)btnTec.style.display=FICHA_PROD_ID?'inline-flex':'none';}
+ const btnTec=$('btn-ficha-tecnica');if(btnTec)btnTec.style.display=FICHA_PROD_ID?'inline-flex':'none';
+ const gDesc=$('orc-desconto-grupo');if(gDesc)gDesc.style.display=FICHA_PROD_ID?'none':'';}
 /* folha de execução do produto aberto: vai para a oficina em branco, só com a peça identificada */
 async function gerarFichaTecnicaProduto(){if(!FICHA_PROD_ID)return;
  const prod=DB.produtos.find(x=>x.id===FICHA_PROD_ID);if(!prod)return;
@@ -6197,11 +6233,11 @@ async function salvarFichaDoProduto(){
  toast('Ficha salva. Preço '+fmt(ficha.preco)+' · custo '+fmt(ficha.custo),'success');
  navigate('portfolio');}
 /* produto do portfólio escolhido dentro de um orçamento: entra com a ficha preenchida */
-function abrirFichaDoPortfolioNoItem(prod,qty,f,obs){
+function abrirFichaDoPortfolioNoItem(prod,qty,f,obs,descPct){
  resetOrcForm('sob_medida');
  ORC_ITEM_PROD_ID=prod.id;
  preencherFormComFicha(fichaComCustosDeHoje(f));
- $('orc-desc').value=prod.nome;$('orc-qty').value=qty||1;$('orc-obs').value=obs||'';
+ $('orc-desc').value=prod.nome;$('orc-qty').value=qty||1;$('orc-obs').value=obs||'';$('orc-desconto').value=Number(descPct)||'';
  prepararTelaFicha('Item do portfólio — '+prod.nome,
   'Ficha do portfólio, recalculada com os custos de hoje. Preço cadastrado: '+fmt(prod.preco)+'. Ajuste o que mudar neste orçamento e salve.',
   '💾 Salvar Item');
@@ -6696,7 +6732,7 @@ async function salvarItemCatalogo(){if(!guard())return;const c=calcCatalogo();if
  if(!ITEM_PARA_PEDIDO&&!await garantirOrcamentoDoCabecalho())return;
  /* produto com ficha: em vez de entrar só com o preço de tabela, abre a composição preenchida */
  const fichaProd=fichaDoProduto(c.p.id);
- if(fichaProd&&!ORC_ITEM_EDITANDO)return abrirFichaDoPortfolioNoItem(c.p,c.qty,fichaProd,$('orc-cat-obs').value.trim());
+ if(fichaProd&&!ORC_ITEM_EDITANDO)return abrirFichaDoPortfolioNoItem(c.p,c.qty,fichaProd,$('orc-cat-obs').value.trim(),c.pct);
  if(ITEM_PARA_PEDIDO){voltarAoPedido({tipo:'catalogo',prodId:c.p.id,desc:c.p.nome,qty:c.qty,preco:Math.round((c.total/c.qty)*100)/100});
   toast('Item adicionado ao pedido.','success');return;}
  const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o){toast('Orçamento não encontrado.','error');return;}
@@ -7611,7 +7647,9 @@ function composicaoDoItem(it){
  return {cf,cfT,hmes,cfHora,horasCf,horasMdo,mdoLinhas,mdo,mat,serv,frete,cfRat,qty,
   custoUnit,precoUnit,lucroUnit,impostoVal,comissaoVal,maquinaVal,
   imposto,maquina,comissao,comissaoNome:it.comissaoNome||'',
-  markup:Number(it.markup)||0,precoManual:!!it.precoManual};}
+  markup:Number(it.markup)||0,precoManual:!!it.precoManual,
+  descPct:(it.precoCheio!=null?Number(it.descPct)>0:Number(it.descPct)>0&&Number(it.descPct)<100)?Number(it.descPct):0,
+  precoCheioUnit:it.precoCheio!=null&&qty?Number(it.precoCheio)/qty:(Number(it.descPct)>0&&Number(it.descPct)<100?precoUnit/(1-Number(it.descPct)/100):precoUnit)};}
 function montarPdfDetalhamentoOrc(o){
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
@@ -7683,6 +7721,8 @@ function montarPdfDetalhamentoOrc(o){
   linhas.push(['Imposto'+(c.imposto?' ('+pct(c.imposto)+')':''),fmt(c.impostoVal),0]);
   if(c.comissao||c.comissaoVal)linhas.push(['Comissão'+(c.comissao?' ('+pct(c.comissao)+')':'')+(c.comissaoNome?' — '+lp(c.comissaoNome):''),fmt(c.comissaoVal),2]);
   if(c.maquina||c.maquinaVal)linhas.push(['Taxa da máquina'+(c.maquina?' ('+pct(c.maquina)+')':''),fmt(c.maquinaVal),0]);
+  if(c.descPct){linhas.push(['--','',0]);linhas.push(['Preço sem desconto',fmt(c.precoCheioUnit),0]);
+   linhas.push(['Desconto ('+fmtPctD(c.descPct)+'%)','- '+fmt(c.precoCheioUnit-c.precoUnit),0]);}
   linhas.push(['--','',0]);
   const multi=c.qty>1;
   const alt=9.5+linhas.length*4.5+13+(c.precoManual?3.6:0)+(multi?14:0)+5;
@@ -7698,7 +7738,7 @@ function montarPdfDetalhamentoOrc(o){
    doc.setTextColor(...(tipo===2?ACCENT:tipo===1?CLARO:CLARO_FRACO));
    doc.text(rot,x+4,yy);doc.text(val,x+larg-4,yy,{align:'right'});yy+=4.5;});
   doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...ACCENT);
-  doc.text(multi?'Preço por unidade':'Preço Final',x+4,yy+2.5);
+  doc.text(c.descPct?(multi?'Com desconto, por unidade':'Preço com desconto'):(multi?'Preço por unidade':'Preço Final'),x+4,yy+2.5);
   doc.setFontSize(13);doc.text(fmt(c.precoUnit),x+larg-4,yy+3,{align:'right'});yy+=9;
   if(c.precoManual){doc.setFont('helvetica','normal');doc.setFontSize(6.2);doc.setTextColor(...CLARO_FRACO);
    doc.text('Ajustado manualmente',x+larg-4,yy+1.4,{align:'right'});yy+=3.6;}
@@ -7761,6 +7801,7 @@ function montarPdfDetalhamentoOrc(o){
   yl=tituloCard(X1,yl,COLW,'IMPOSTOS, COMISSÃO & MARKUP');
   const linhasPct=[['Imposto',pct(c.imposto)],['Taxa da máquina',pct(c.maquina)],['Comissão',pct(c.comissao)]];
   if(c.comissaoNome)linhasPct.push(['Quem recebe a comissão',lp(c.comissaoNome)]);
+  if(c.descPct)linhasPct.push(['Desconto',fmtPctD(c.descPct)+'%']);
   linhasPct.push(['Margem de Lucro',pct(c.markup)+(c.precoManual?' (preço à mão)':'')]);
   linhasPct.push(['Frete',fmt(c.frete)]);
   yl=tabelaCol(X1,yl,COLW,null,linhasPct,{0:{cellWidth:COLW-32},1:Object.assign({cellWidth:32},dir)});
@@ -10160,7 +10201,7 @@ function renderRelatorios(){syncPerBar('rel-per',REL);
  $('rel-margem').textContent=margens.length?fmtN(margens.reduce((a,b)=>a+b,0)/margens.length,1)+'%':'0%';
  const desviosLinhas=[];
  DB.orcamentos.filter(o=>matchPer(o.data,REL)).forEach(o=>{itensOrc(o).forEach(it=>{
-  if(it.precoManual&&it.precoSugerido){desviosLinhas.push({orcNum:o.num,itemDesc:it.desc,sugerido:Number(it.precoSugerido),final:Number(it.preco)});}});});
+  if(it.precoManual&&it.precoSugerido){desviosLinhas.push({orcNum:o.num,itemDesc:it.desc,sugerido:Number(it.precoSugerido),final:Number(it.precoCheio!=null?it.precoCheio:it.preco)});}});});
  const desvioTotal=desviosLinhas.reduce((s,d)=>s+(d.final-d.sugerido),0);
  $('rel-desvio').textContent=(desvioTotal<0?'- ':'')+fmtK(Math.abs(desvioTotal));
  $('rel-desvio').style.color=desvioTotal<0?'var(--danger)':desvioTotal>0?'var(--success)':'';
@@ -10216,7 +10257,7 @@ async function gerarPdfRelatorio(){
  const margemMedia=margens.length?margens.reduce((a,b)=>a+b,0)/margens.length:0;
  const desviosLinhas=[];
  DB.orcamentos.filter(o=>matchPer(o.data,REL)).forEach(o=>{itensOrc(o).forEach(it=>{
-  if(it.precoManual&&it.precoSugerido){desviosLinhas.push({orcNum:o.num,itemDesc:it.desc,sugerido:Number(it.precoSugerido),final:Number(it.preco)});}});});
+  if(it.precoManual&&it.precoSugerido){desviosLinhas.push({orcNum:o.num,itemDesc:it.desc,sugerido:Number(it.precoSugerido),final:Number(it.precoCheio!=null?it.precoCheio:it.preco)});}});});
  const desvioTotal=desviosLinhas.reduce((s,d)=>s+(d.final-d.sugerido),0);
  const orcRealizados=DB.orcamentos.filter(o=>matchPer(o.data,REL)).slice().sort((a,b)=>b.num-a.num);
  const orcAprovados=DB.orcamentos.filter(o=>(o.status==='Aprovado'||o.status==='Concluído')&&matchPer(o.data,REL)).slice().sort((a,b)=>b.num-a.num);
@@ -12063,13 +12104,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-18.1';
+const APP_VERSAO='2026-10-18.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=314;
+const APP_ATUALIZACAO=315;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
