@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 18/10/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 20/10/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -227,6 +227,32 @@ Abertura vigiada:
   banco (cargasDoBanco). Cada carga que chega agenda um redesenho da tela
   aberta (agendarRedesenho), juntando as que caem na mesma janela de
   250 ms — e sem redesenhar Configurações enquanto alguém digita ali.
+- O servidor devolve no máximo 1.000 linhas por leitura, sem avisar. O
+  Financeiro é lido inteiro por lerTudoSupabase(tabela, opções): páginas
+  de 1.000 pela chave primária (id maior que o último lido, em ordem
+  crescente; o total contado na 1ª página garante que nada fica de fora
+  mesmo com um limite menor no servidor), com 20 s de prazo por página e
+  60 s no total (o tempo com o ERP escondido não conta, e a página cujo
+  prazo venceu com ele escondido é lida de novo). Qualquer página que
+  falhe é erro de carga, e a lista do aparelho fica como estava (nunca
+  pela metade). A ordem da tela (data mais nova primeiro, o id
+  desempatando) é aplicada no aparelho, e só a carga mais recente do
+  Financeiro vale (CARGA_FIN_SEQ): a que deixou de valer para no fim da
+  página, e as pedidas no mesmo passo (abrir o app no Financeiro) são
+  uma só. Uma gravação deste aparelho no Financeiro durante a
+  leitura (contarEscritaFin, na fila de envio) faz a leitura ser
+  refeita, senão uma página lida antes dela traria o valor velho de
+  volta. Também a gravação que passa de 30 s (esperando a fila de envio
+  numa rede lenta): ela deixa de segurar a carga, mas, quando termina,
+  a leitura feita no meio é refeita. E a mudança feita na linha ou no
+  modal vai para o lançamento da lista de agora (finDaListaAgora): uma
+  carga pode ter trocado os objetos durante a gravação. A leitura só
+  para com uma página incompleta. A leitura igual à lista do aparelho não muda nem redesenha nada. A mesma leitura
+  serve à releitura do ajuste do saldo (que, com alteração do
+  Financeiro na fila de envio, não troca a lista e não ajusta nada) e
+  ao histórico do backup. As
+  outras tabelas ainda são lidas de uma vez: estão longe das 1.000
+  linhas.
 - Erro de JavaScript não tratado (window error / unhandledrejection) vira
   uma faixa vermelha "Erro interno" no topo, com ✕, em vez de uma tela
   parada sem pista.
@@ -330,7 +356,9 @@ Rolagem entre telas:
 
 Busca global (handleSearch, campo da topbar):
 - Filtra na hora as linhas (ou os cartões) da tela aberta, sem acento e
-  sem diferenciar maiúsculas.
+  sem diferenciar maiúsculas. No Financeiro, que desenha só uma parte, a
+  busca filtra a lista de lançamentos (os dados, pelo texto que a linha
+  mostra), 250 ms depois da última letra.
 - A partir de 2 letras, abre uma lista de resultados de todos os
   cadastros que o nível enxerga (fontesBusca: comissões, serviços,
   clientes, orçamentos, pedidos, produção, portfólio, material/insumo,
@@ -343,7 +371,9 @@ Busca global (handleSearch, campo da topbar):
 Ordenação e filtro por coluna:
 - Clicar no título de uma coluna ordena a tabela (prepararOrdenacao e
   ordenarTabela, direto no DOM, reconhecendo data, número e valor; as
-  linhas de subitem andam junto da linha-mãe).
+  linhas de subitem andam junto da linha-mãe). No Financeiro a ordem é
+  aplicada na lista (ordenarListaFin, mesma regra; Pedido e Centro pelo
+  escolhido) e continua depois de redesenhar.
 - Um funil em cada título abre uma janelinha só com o filtro daquela
   coluna (texto, opções, intervalo de datas ou faixa de valor); o funil
   fica dourado enquanto o filtro está ligado, e um resumo mostra quantos
@@ -813,6 +843,25 @@ e não numera nada.
     mostra. Sem as colunas de origem no banco, os selos, a aba Conferir
     com o banco e o saldo dividido não aparecem, e o Financeiro funciona
     como antes.
+  - A lista: totais, filtros, filtros por coluna, busca do topo, ordem
+    pelo título, contador, resumo, Conferir com o banco e exportações usam
+    todos os lançamentos; só o desenho é parcial. Desenha só a vista que
+    aparece (cartões até 860 px, tabela acima; girar o celular ou mudar a
+    janela redesenha), 100 por vez, com "Ver mais" no fim, que acrescenta
+    os 100 seguintes. O seletor de Pedido da linha vem só com "— Nenhum —",
+    o valor antigo e o escolhido, e recebe os outros pedidos no toque, no
+    clique ou no foco (encherPedidoFin). Na tabela, uma linha invisível
+    no rodapé (tfoot, visibility:collapse, linhaMedidaFin) leva o conteúdo
+    mais largo de cada coluna da lista inteira, e as colunas ficam com a
+    largura de quando tudo era desenhado. Quantos aparecem volta para 100 quando a
+    lista muda (filtro, busca, ordem, abrir a tela, trocar de aba);
+    editar uma linha, a volta da carga e salvar pelo modal mantêm a
+    quantidade, a rolagem e o foco (a observação que estava sendo escrita
+    continua no campo). Cada desenho troca só as linhas que mudaram
+    (atualizarLinhasFin): com centenas à mostra, classificar uma linha
+    não redesenha as outras. As sugestões de mescla ficam guardadas
+    enquanto os dados não mudam, e os cartões fora da tela não são
+    calculados pelo navegador (content-visibility).
   - Importação do OFX (parseOfx): cada linha entra como Pago e guarda o
     FITID, a conta do arquivo (BANKID/ACCTID), o texto original do banco
     e o lote. A mesma transação (mesmo FITID na conta, mesma data, valor
@@ -1307,7 +1356,8 @@ sequências.
 
 O histórico do backup vem completo: a tela guarda os 400 registros mais
 recentes, mas na hora de montar o backup o sistema busca a tabela inteira
-no Supabase, paginada.
+no Supabase (lerTudoSupabase, em páginas pela chave). Se ela não vier
+inteira, o backup leva os registros guardados no aparelho e avisa.
 
 O que NÃO entra no backup do ERP: os arquivos anexados (fotos e PDFs de
 referência e os comprovantes de pagamento), que ficam no Supabase
@@ -1437,4 +1487,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 18/10/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 20/10/2026.

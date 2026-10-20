@@ -707,6 +707,29 @@ body.sem-valores .lix-valor { display:none; }
 body.sem-origem .campo-origem { display:none; }
 body.sem-fin-obs .fin-obs { display:none; }
 .fin-obs-campo { font-size:11.5px;padding:3px 6px;min-width:140px; }
+/* "Ver mais" no fim da lista do Financeiro, que desenha 100 por vez */
+.fin-ver-mais { display:flex;flex-direction:column;align-items:center;gap:5px;margin:14px 0 4px; }
+.fin-ver-mais[hidden] { display:none; }
+.fin-ver-mais-n { font-size:11px;color:var(--text-muted); }
+@media (max-width:860px) { .fin-ver-mais .btn { min-height:44px;min-width:180px;justify-content:center;font-size:14px; } }
+/* a linha de medida da tabela do Financeiro (linhaMedidaFin): conta na largura das colunas, sem aparecer nem ocupar altura */
+.fin-medida tr { visibility:collapse; }
+.fin-medida td { padding-top:0;padding-bottom:0;border:0;height:0;line-height:0; }
+.fin-medida .fin-medida-c { height:0;overflow:hidden;visibility:hidden;pointer-events:none; }
+/* os cartões do Financeiro fora da tela não passam por estilo, layout e pintura (content-visibility): cada desenho e
+   cada "Ver mais" calculavam os 100 ou mais cartões, e só uns 4 aparecem na tela do celular. A altura de reserva é a
+   de um cartão comum; depois de aparecer uma vez, ele guarda a altura de verdade (auto). A reserva é só do conteúdo:
+   o cartão comum mede uns 317 px por fora, menos 13+13 de padding e 1+1 de borda. Com 315 px de reserva, o cartão
+   nunca mostrado ficava com 343 px, e um redesenho inteiro com a pessoa no meio da lista (um lançamento novo no topo)
+   fazia a tela voltar uns 15 cartões */
+.fin-card { content-visibility:auto;contain-intrinsic-size:auto 289px; }
+/* os campos da lista do Financeiro não animam a borda ao receber o foco: na tabela do computador, cada quadro da
+   animação recompunha a tabela inteira (centenas de ms por toque num computador lento) */
+#tb-financeiro .form-control, #financeiro-cards .form-control { transition:none; }
+/* a tabela do Financeiro num contexto de empilhamento próprio (isolation), sem mudar nada na tela: cada repintura
+   pequena (foco num campo, o seletor de Pedido enchendo as opções) recompunha a tabela inteira dentro da área com
+   rolagem lateral (no computador lento, uns 300 ms por toque; com isto, uns 50 ms) */
+#financeiro-tabela table { isolation:isolate; }
 /* selo de origem do lançamento (Banco, Pedido, Manual, Compra, NF): contornado e sem caixa-alta,
    para não competir com os selos de status e de tipo. O do banco leva o dourado da casa */
 .selo-origem { display:inline-flex;align-items:center;padding:1px 7px;border-radius:20px;border:1px solid var(--surface3);background:var(--surface);color:var(--text-muted);font-size:11px;font-weight:600;line-height:1.45;letter-spacing:0.2px;white-space:nowrap; }
@@ -1173,7 +1196,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <div class="stat-box num-atalho" role="button" tabindex="0" title="Ver só os lançamentos pendentes" onclick="atalhoPendencias()"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
       </div>
       <div id="fin-lista-view">
-      <div class="period-bar"><select class="form-control" id="fin-tipo-filter" style="width:auto;min-width:140px" onchange="renderFinanceiro()"><option value="">Entradas e saídas</option><option>Entrada</option><option>Saída</option></select><select class="form-control" id="fin-status-filter" style="width:auto;min-width:150px" onchange="renderFinanceiro()"><option value="">Todos os status</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><span id="ofx-ultima-atualizacao" style="font-size:10.5px;color:var(--text-muted)"></span></div><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"><span id="fin-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div id="financeiro-cards"></div><div class="table-wrapper" id="financeiro-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Pedido</th><th>Centro de Custo</th><th class="fin-obs">Observações</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody></table></div>
+      <div class="period-bar"><select class="form-control" id="fin-tipo-filter" style="width:auto;min-width:140px" onchange="renderFinanceiro()"><option value="">Entradas e saídas</option><option>Entrada</option><option>Saída</option></select><select class="form-control" id="fin-status-filter" style="width:auto;min-width:150px" onchange="renderFinanceiro()"><option value="">Todos os status</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><span id="ofx-ultima-atualizacao" style="font-size:10.5px;color:var(--text-muted)"></span></div><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"><span id="fin-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div id="financeiro-cards"></div><div class="table-wrapper" id="financeiro-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Pedido</th><th>Centro de Custo</th><th class="fin-obs">Observações</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody><tfoot id="tf-financeiro" class="fin-medida" aria-hidden="true"></tfoot></table></div><div class="fin-ver-mais" id="fin-ver-mais" hidden><button type="button" class="btn btn-ghost btn-sm" id="fin-ver-mais-btn" onclick="verMaisFin()">Ver mais</button><span class="fin-ver-mais-n" id="fin-ver-mais-n"></span></div>
       </div>
       <div id="fin-conferir-view" style="display:none">
         <div class="cb-intro">O extrato do banco é a referência. Quando um lançamento seu (do pedido, à mão ou da compra) é o mesmo dinheiro de uma linha do banco, <strong>Mesclar</strong> deixa só a linha do banco: ela fica com a data e o valor do banco e recebe o seu nome, o pedido, o centro de custo e a observação. O seu sai das listas e das contas. Nada é mesclado sozinho, e <strong>Separar</strong> desfaz.</div>
@@ -1913,7 +1936,10 @@ async function libPronta(nome){const ok=await carregarLib(nome);
 /* ================= HELPERS ================= */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+/* o formatador de reais é criado uma vez (o toLocaleString com opções monta um a cada chamada: com milhares de
+   lançamentos, só formatar os valores levava centenas de ms). O texto é o mesmo */
+const FMT_REAIS=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt=v=>'R$ '+FMT_REAIS.format(Number(v)||0);
 const fmtK=v=>{v=Number(v)||0;return v>=100000?'R$ '+(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k':fmt(v);};
 /* saldo e resultado: positivo na cor do texto; negativo em vermelho e com "−"
    na frente, para não depender só da cor (o "-" do toLocaleString some no meio) */
@@ -1938,7 +1964,8 @@ const addDays=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+
 let ERRO_CARGA_TIMER=null,ERRO_CARGA_LISTA=[],ERRO_CARGA_REDE=false;
 function erroDeCarga(entidade,error){
  const msg=String((error&&error.message)||error||"");
- if(/failed to fetch|networkerror|load failed|network request failed/i.test(msg))ERRO_CARGA_REDE=true;
+ /* "tempo esgotado": o prazo de uma leitura (lerTudoSupabase) também é falta de rede, e entra no aviso único */
+ if(/failed to fetch|networkerror|load failed|network request failed|tempo esgotado/i.test(msg))ERRO_CARGA_REDE=true;
  ERRO_CARGA_LISTA.push(entidade);
  clearTimeout(ERRO_CARGA_TIMER);
  ERRO_CARGA_TIMER=setTimeout(()=>{
@@ -2002,7 +2029,14 @@ function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=nul
  if(!DB.config.folhaPagamento)DB.config.folhaPagamento=[];
  if(!DB.config.empresa)DB.config.empresa={endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''};
  ['endereco','bairro','cep','cidade','estado','telefone','email','site'].forEach(k=>{if(DB.config.empresa[k]===undefined)DB.config.empresa[k]='';});}
-function saveDB(){localStorage.setItem(DKEY,JSON.stringify(DB));}
+/* o espaço do navegador para a cópia local é limitado (uns 5 milhões de caracteres): cheio, o setItem dá erro. Antes o
+   erro parava quem chamou (a carga trocava a lista e não desenhava). Agora avisa uma vez e segue: o servidor continua
+   sendo gravado, e o aparelho fica com a última cópia que coube. A fila de envio usa o mesmo espaço: o que for feito
+   sem internet pode não caber (o gravarFila avisa), e o aviso diz isso */
+let AVISO_SEM_ESPACO=false;
+function saveDB(){try{localStorage.setItem(DKEY,JSON.stringify(DB));}
+ catch(e){console.error('saveDB:',e);if(AVISO_SEM_ESPACO)return;AVISO_SEM_ESPACO=true;
+  try{toast('Não consegui guardar a cópia dos dados neste aparelho ('+(/quota/i.test(String(e&&(e.name||e.message)))?'o espaço do navegador acabou':String(e&&e.message||e))+'). O ERP continua funcionando e gravando no servidor, mas o que for feito sem internet pode não ficar guardado neste aparelho: sem sinal, não feche o ERP antes de as alterações subirem.','error',12000);}catch(x){}}}
 function log(acao,modulo,detalhe){const h={id:uid(),dt:new Date().toLocaleString('pt-BR'),user:USER?USER.nome:'—',usuario:USER?USER.nome:'—',login:USER?USER.login:'',acao,modulo,detalhe};DB.historico.unshift(h);if(DB.historico.length>400)DB.historico.length=400;syncSheets('historico','upsert',h);
  supa.from('historico').insert(historicoParaSupabase(h)).then(({error})=>{if(error)console.error('Erro ao salvar histórico no Supabase:',error.message);});}
 function historicoParaSupabase(h){return{dt:h.dt,user_nome:h.user||h.usuario||null,acao:h.acao,modulo:h.modulo,detalhe:h.detalhe};}
@@ -2389,6 +2423,9 @@ function gruposDaTabela(tbody){
   else grupos.push({mae:tr,filhas:[]});});
  return grupos;}
 function ordenarTabela(th){
+ /* a tabela do Financeiro mostra só uma parte da lista: ordena a LISTA (ordenarFinPeloTitulo), e a ordem continua
+    depois de redesenhar */
+ if(th.closest('#financeiro-tabela')){ordenarFinPeloTitulo(th);return;}
  const table=th.closest('table'),tbody=table.tBodies[0];
  if(!tbody||!tbody.rows.length)return;
  const idx=[...th.parentElement.children].indexOf(th);
@@ -2458,6 +2495,8 @@ function navigate(sec){
  /* tocar de novo na aba aberta: dentro de um orçamento/pedido volta para a lista (onde estava); já na lista, sobe ao topo */
  const mesmaAba=sec===CUR,naLista=!(sec in VISTA)||VISTA[sec]==='lista';
  CUR=sec;ITEM_PARA_PEDIDO=null;FICHA_PROD_ID='';ORC_ITEM_PROD_ID='';
+ /* abrir o Financeiro vindo de outra tela começa de novo pelos 100 primeiros da lista (ver desenharListaFin) */
+ if(sec==='financeiro'&&!mesmaAba)FIN_MOSTRAR=FIN_PASSO;
  try{localStorage.setItem(LASTSEC_KEY,sec);}catch(e){}
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
  const el=$('section-'+sec); if(el)el.classList.add('active');
@@ -2514,7 +2553,7 @@ function fontesBusca(){return [
  /* no portfólio, abrir é a ficha de preço, como o ✏️ da lista */
  {sec:'portfolio',grupo:'Portfólio',itens:DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio'),cod:p=>'',txt:p=>p.nome,sub:p=>p.cat||'',extra:p=>[p.cat],abrir:p=>abrirFichaProduto(p.id),pode:podeAbrirComValores},
  {sec:'insumos',grupo:'Material/Insumo',itens:DB.produtos.filter(p=>p.tipo==='Insumo'),cod:p=>'',txt:p=>p.nome,sub:p=>p.cat||'',extra:p=>[p.cat],abrir:p=>editProduto(p.id),pode:podeAbrirComValores},
- {sec:'financeiro',grupo:'Financeiro',itens:finVisiveis(),cod:f=>f.tipo==='Entrada'?'↑':'↓',txt:f=>f.desc,sub:f=>fmt(f.val),extra:f=>[f.centroCusto,f.status],abrir:f=>editFin(f.id)},
+ {sec:'financeiro',grupo:'Financeiro',itens:finVisiveis(),cod:f=>f.tipo==='Entrada'?'↑':'↓',txt:f=>f.desc,sub:f=>fmt(f.val),extra:f=>[f.centroCusto,f.status],abrir:f=>editFin(f.id),alvo:f=>alvoBuscaTopoFin(f)},
  {sec:'fornecedores',grupo:'Fornecedores',itens:DB.fornecedores,cod:f=>'',txt:f=>f.nome,sub:f=>f.cidade||'',extra:f=>[f.cnpj,f.email,f.tel],abrir:f=>editFornecedor(f.id)},
  {sec:'ferramentas',grupo:'Máquinas',itens:DB.ferramentas,cod:f=>'',txt:f=>f.nome,sub:f=>f.tipo||'',extra:f=>[f.obs],abrir:f=>editFerramenta(f.id)}
 ];}
@@ -2523,12 +2562,25 @@ let BUSCA_ITENS=[],BUSCA_SEL=-1;
    computador e os cartões no celular (lá a tabela fica escondida, e filtrar só
    as linhas deixava a lista inteira na tela) */
 function filtrarSecaoBusca(sec,alvo){
+ /* a lista de lançamentos do Financeiro desenha só uma parte: a busca filtra os DADOS e redesenha (agendarBuscaFin) */
+ if(sec==='financeiro'&&!(FIN_VISTA==='conferir'&&FIN_LIGACAO_NO_BANCO)){agendarBuscaFin(alvo);return;}
  document.querySelectorAll('#section-'+sec+' tbody tr, #section-'+sec+' .pedido-card')
   .forEach(el=>{el.style.display=norm(el.textContent).includes(alvo)?'':'none';});}
+/* o texto em que a busca do topo procura um lançamento (o de sempre: seta, descrição, valor, centro e status),
+   guardado enquanto ele não muda: com milhares de lançamentos, montar e normalizar o texto de todos a cada letra
+   atrasava a digitação */
+const ALVO_BUSCA_FIN=new WeakMap();
+function alvoBuscaTopoFin(f){const k=[f.tipo,f.desc,f.val,f.centroCusto,f.status].join('\u0001');
+ const c=ALVO_BUSCA_FIN.get(f);if(c&&c.k===k)return c.t;
+ const t=norm([f.tipo==='Entrada'?'↑':'↓',f.desc,fmt(f.val),f.centroCusto,f.status].join(' '));ALVO_BUSCA_FIN.set(f,{k,t});return t;}
 function handleSearch(v){
  /* comportamento antigo: filtra o que está na tela */
  const alvo=norm(v);
- filtrarSecaoBusca(CUR,alvo);
+ /* no Financeiro a lista é redesenhada 250 ms depois da última letra (agendarBuscaFin): a espera começa depois de
+    montar os resultados abaixo da busca, senão uma letra demorada já encontrava a espera vencida */
+ const finDepois=CUR==='financeiro'&&!(FIN_VISTA==='conferir'&&FIN_LIGACAO_NO_BANCO);
+ if(!finDepois)filtrarSecaoBusca(CUR,alvo);
+ try{
  if(CUR==='pcp')document.querySelectorAll('#pcp-kanban .kanban-card').forEach(c=>{c.style.display=norm(c.textContent).includes(alvo)?'':'none';});
  const cx=$('busca-resultados');if(!cx)return;
  if(alvo.length<2){cx.hidden=true;cx.innerHTML='';BUSCA_ITENS=[];BUSCA_SEL=-1;return;}
@@ -2537,6 +2589,7 @@ function handleSearch(v){
  fontesBusca().forEach(f=>{
   if(!podeVer(f.sec))return;
   const achados=(f.itens||[]).filter(x=>{
+   if(f.alvo)return f.alvo(x).includes(alvo);
    const campos=[f.cod(x),f.txt(x),f.sub(x)].concat(f.extra(x)||[]);
    return norm(campos.join(' ')).includes(alvo);}).slice(0,6);
   if(!achados.length)return;
@@ -2549,7 +2602,8 @@ function handleSearch(v){
     +'<span class="bg-txt">'+esc(f.txt(x)||'—')+'</span>'
     +(f.sub(x)?'<span class="bg-sub">'+esc(f.sub(x))+'</span>':'')+'</div>';});});
  cx.innerHTML=html||'<div class="bg-vazio">Nada encontrado para "'+esc(v)+'"</div>';
- cx.hidden=false;}
+ cx.hidden=false;
+ }finally{if(finDepois)filtrarSecaoBusca(CUR,alvo);}}
 function irParaResultado(i){
  const r=BUSCA_ITENS[i];if(!r)return;
  fecharBusca();
@@ -2878,6 +2932,8 @@ function abrirFinanceiroFiltrado(f){if(!podeVer('financeiro'))return;
  fc.estado.data=datasDoPeriodo(f.periodo);
  ['tipo','cc','status'].forEach(k=>{if(f[k])fc.estado[k]=f[k];});
  $('fin-tipo-filter').value='';$('fin-status-filter').value='';
+ /* a busca do topo também filtra a lista: o texto que estava nela faria a lista não bater com o número */
+ const gb=$('global-search');if(gb&&gb.value){gb.value='';fecharBusca();}clearTimeout(FIN_BUSCA_T);FIN_BUSCA_T=null;
  renderFinanceiro();
  /* no celular a lista começa abaixo dos contadores: leva até o filtro ligado e a lista */
  const c=$('content'),alvo=$('fin-fc-barra')||$('fin-tipo-filter');if(!c||!alvo)return;
@@ -2989,7 +3045,7 @@ async function gerarPdfDashboard(){if(!guardValores())return;
 const SUPA_URL='https://fzlkuceflazohljpnkgi.supabase.co';
 const SUPA_KEY='sb_publishable_R_Az0yk8mfqTUs_8uoK70Q_yNg8-TAU';
 function supaStub(){const err={message:'Supabase indisponível — o script não carregou (verifique sua internet, bloqueador de anúncios/extensões, ou recarregue a página).'};
- const chain={select(){return chain;},insert(){return chain;},update(){return chain;},upsert(){return chain;},delete(){return chain;},eq(){return chain;},gte(){return chain;},order(){return chain;},limit(){return chain;},single(){return Promise.resolve({data:null,error:err});},then(res,rej){return Promise.resolve({data:null,error:err}).then(res,rej);}};
+ const chain={select(){return chain;},insert(){return chain;},update(){return chain;},upsert(){return chain;},delete(){return chain;},eq(){return chain;},gte(){return chain;},gt(){return chain;},order(){return chain;},limit(){return chain;},range(){return chain;},single(){return Promise.resolve({data:null,error:err});},then(res,rej){return Promise.resolve({data:null,error:err}).then(res,rej);}};
  return {from(){return chain;}};}
 let supa;
 try{ if(!window.supabase)throw new Error('supabase-js não carregou'); supa=window.supabase.createClient(SUPA_URL,SUPA_KEY); }
@@ -3009,7 +3065,16 @@ let FILA=lerLista(FILA_KEY),FILA_FALHAS=lerLista(FILA_FALHAS_KEY),SEM_REDE=false
 /* logo depois de uma falha, não adianta cada Salvar esperar o prazo da rede de novo: vai direto para a fila */
 const redeRuimAgora=()=>navigator.onLine===false||(SEM_REDE&&Date.now()-ULTIMA_FALHA_REDE<20000);
 const marcarSemRede=()=>{SEM_REDE=true;ULTIMA_FALHA_REDE=Date.now();};
-function gravarFila(){try{localStorage.setItem(FILA_KEY,JSON.stringify(FILA));localStorage.setItem(FILA_FALHAS_KEY,JSON.stringify(FILA_FALHAS));}catch(e){}
+/* sem espaço no navegador, a fila guardada no aparelho fica para trás: a alteração feita sem internet existe só na
+   memória e se perde se o ERP for fechado (ou o Android fechar a aba) antes de subir. Antes isso acontecia calado, e a
+   tela ainda dizia "salvo"; agora avisa (uma vez, até a fila voltar a caber) */
+let AVISO_FILA_SEM_ESPACO=false;
+function gravarFila(){try{localStorage.setItem(FILA_KEY,JSON.stringify(FILA));localStorage.setItem(FILA_FALHAS_KEY,JSON.stringify(FILA_FALHAS));AVISO_FILA_SEM_ESPACO=false;}
+ catch(e){console.error('gravarFila:',e);
+  if(FILA.length&&!AVISO_FILA_SEM_ESPACO){AVISO_FILA_SEM_ESPACO=true;
+   try{toast('Sem espaço neste aparelho: '+(FILA.length===1
+    ?'a alteração feita sem internet não ficou guardada nele. Ela sobe sozinha quando o sinal voltar, mas não feche o ERP antes disso, senão ela se perde.'
+    :'as '+FILA.length+' alterações feitas sem internet não ficaram guardadas nele. Elas sobem sozinhas quando o sinal voltar, mas não feche o ERP antes disso, senão elas se perdem.'),'error',15000);}catch(x){}}}
  atualizarAvisoFila();}
 const MSG_PRECISA_REDE='sem conexão com a internet. Criar este documento precisa de conexão, porque é o servidor que dá o número (ORC, V, OP, OC). As demais alterações continuam funcionando e são enviadas quando o sinal voltar.';
 const ESCRITAS=['insert','update','upsert','delete'];
@@ -3024,6 +3089,56 @@ function comPrazoRede(consulta,ms){
  return Promise.race([
   Promise.resolve(consulta).then(r=>r,e=>({__semResposta:true,error:{message:String(e&&e.message||e)},status:0})),
   new Promise(r=>setTimeout(()=>r({__semResposta:true,error:{message:'tempo esgotado'},status:0}),ms))]);}
+/* ================= LEITURA COMPLETA DE UMA TABELA =================
+   O servidor (o PostgREST do Supabase) devolve no máximo 1.000 linhas por leitura, sem avisar: um select('*') de uma
+   tabela maior volta cortado e, na ordem por data, somem justamente os lançamentos MAIS ANTIGOS (o saldo fica errado,
+   os relatórios e o backup saem sem eles, o extrato antigo parece novo). lerTudoSupabase lê a tabela inteira em
+   páginas pela chave primária (id maior que o último lido, em ordem crescente) e não pela posição (.range): um
+   lançamento criado, apagado ou com a data mudada em outro aparelho no meio da leitura não faz pular nem repetir
+   outro. A ordem da tela é aplicada no fim, aqui no aparelho (opc.ordenar).
+   Devolve {data,error,status} como o supabase-js, e só com a tabela INTEIRA: qualquer página que falhe (rede, prazo,
+   recusa do servidor) devolve {data:null,error}, nunca uma lista pela metade. Cada página tem prazo (opc.prazo, 20 s)
+   e a leitura inteira também (opc.prazoTotal, 60 s): uma conexão pendurada não deixa a carga esperando para sempre
+   (o prazo só para de esperar; a resposta que chegar depois é ignorada). O total contado na 1ª página protege contra
+   um limite menor que 1.000 configurado no servidor: a leitura continua até juntar o total */
+const PAGINA_SUPA=1000;
+/* tempo com o ERP escondido (outro app na frente, tela apagada): o celular congela a página, e esse tempo não conta nos
+   prazos da leitura. Antes, voltar do WhatsApp depois de 1 minuto dava "tempo esgotado" com a página já recebida, a
+   carga era jogada fora e aparecia um falso "Sem conexão" */
+let OCULTO_MS=0,OCULTO_DESDE=document.hidden?Date.now():null;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(OCULTO_DESDE===null)OCULTO_DESDE=Date.now();}
+ else if(OCULTO_DESDE!==null){OCULTO_MS+=Date.now()-OCULTO_DESDE;OCULTO_DESDE=null;}});
+const tempoOculto=()=>OCULTO_MS+(OCULTO_DESDE!==null?Date.now()-OCULTO_DESDE:0);
+async function lerTudoSupabase(tabela,opc){opc=opc||{};
+ const chave=opc.chave||'id',passo=opc.passo||PAGINA_SUPA,prazo=opc.prazo||20000,fim=Date.now()+(opc.prazoTotal||60000),oculto0=tempoOculto();
+ const falha=(error,status)=>({data:null,error:error||{message:'o servidor respondeu sem a lista'},status:status||0});
+ const linhas=[];let ultimo=null,total=null,repetidas=0;
+ try{
+  for(let volta=0;;volta++){
+   const resta=fim+(tempoOculto()-oculto0)-Date.now();
+   if(resta<=0||volta>=500)return falha({message:'tempo esgotado'},0);
+   /* quem pediu já não quer esta leitura (veio outra mais nova): para no fim da página */
+   if(volta>0&&opc.parar&&opc.parar())return falha({message:'leitura substituída por outra mais nova'},0);
+   let q=supa.from(tabela).select(opc.select||'*',ultimo===null?{count:'exact'}:undefined);
+   if(ultimo!==null)q=q.gt(chave,ultimo);
+   const ocultoP=tempoOculto();
+   const r=await comPrazoRede(q.order(chave,{ascending:true}).limit(passo),Math.min(prazo,resta));
+   /* o prazo desta página venceu com o ERP escondido (a página congelada no meio da leitura): pede a mesma página de
+      novo, em vez de dar a leitura por perdida */
+   if(r.__semResposta&&r.error&&r.error.message==='tempo esgotado'&&tempoOculto()>ocultoP&&repetidas<3){repetidas++;continue;}
+   if(r.error||!Array.isArray(r.data))return falha(r.error,r.status);
+   if(total===null&&typeof r.count==='number')total=r.count;
+   if(!r.data.length)break;
+   for(const l of r.data)linhas.push(l);
+   ultimo=r.data[r.data.length-1][chave];
+   if(ultimo==null)return falha({message:'a leitura veio sem a coluna '+chave},0);
+   /* para só com a página incompleta (e, com o total contado na 1ª página, já juntado). Parar pelo total com a página
+      cheia economizava uma leitura vazia quando o total é múltiplo de 1.000, mas deixava de fora um lançamento que já
+      existia quando outro, criado sem rede em outro aparelho (o id cai no meio da ordem), chegava durante a leitura */
+   if(r.data.length<passo&&(total===null||linhas.length>=total))break;}
+ }catch(e){return falha({message:String(e&&e.message||e)},0);}
+ if(opc.ordenar)linhas.sort(opc.ordenar);
+ return {data:linhas,error:null,status:200};}
 function montarConsulta(item){let q=supaFromDireto(item.tabela);for(const [m,a] of item.passos)q=q[m](...(a||[]));return q;}
 async function executarEscrita(item){
  const precisaResposta=item.passos.some(([m])=>m==='select');
@@ -3039,9 +3154,23 @@ async function executarEscrita(item){
 function enfileirar(item){
  FILA.push({id:uid(),tabela:item.tabela,passos:JSON.parse(JSON.stringify(item.passos)),quando:new Date().toISOString(),quem:USER?USER.nome:''});
  gravarFila();}
+/* gravações do Financeiro feitas por este aparelho: FIN_ESCRITA_SEQ muda quando uma começa e quando termina, e
+   FIN_ESCRITAS_PEND conta as que estão a caminho. A carga do Financeiro, que lê em várias páginas, confere que nenhuma
+   aconteceu durante a leitura: uma página lida antes da gravação traria de volta o valor velho, e salvar depois pelo
+   modal gravaria esse valor velho no servidor (ver carregarFinanceiroSupabase). Uma gravação pendurada deixa de
+   contar como a caminho depois de 30 s (a carga para de esperar por ela), mas o fim de verdade, quando chega, ainda
+   muda FIN_ESCRITA_SEQ: a carga que leu nesse meio tempo é refeita. Antes, a gravação que esperava a fila de envio
+   numa rede lenta passava dos 30 s, e a carga lida no meio dela valia */
+let FIN_ESCRITA_SEQ=0,FIN_ESCRITAS_PEND=0;
+function contarEscritaFin(p){FIN_ESCRITA_SEQ++;FIN_ESCRITAS_PEND++;let solta=false;
+ const soltar=()=>{if(solta)return;solta=true;FIN_ESCRITAS_PEND=Math.max(0,FIN_ESCRITAS_PEND-1);};
+ const t=setTimeout(soltar,30000);
+ const fim=()=>{clearTimeout(t);FIN_ESCRITA_SEQ++;soltar();};
+ p.then(fim,fim);return p;}
+async function esperarEscritasFin(){const t0=Date.now();while(FIN_ESCRITAS_PEND>0&&Date.now()-t0<35000)await new Promise(r=>setTimeout(r,60));}
 /* registra a cadeia de chamadas (.update(...).eq(...)) para poder executar agora ou guardar e repetir depois */
 function escritaGravavel(tabela,passos){
- let promessa=null;const executar=()=>promessa||(promessa=executarEscrita({tabela,passos}));
+ let promessa=null;const executar=()=>promessa||(promessa=tabela==='financeiro'?contarEscritaFin(executarEscrita({tabela,passos})):executarEscrita({tabela,passos}));
  const api=new Proxy({},{get(_,prop){
   if(prop==='then')return (ok,falha)=>executar().then(ok,falha);
   if(prop==='catch')return f=>executar().catch(f);
@@ -3056,7 +3185,8 @@ async function enviarFila(){
   const tabelas=new Set();let enviados=0,recusados=0,jaEstavam=0;
   while(FILA.length){
    const item=FILA[0];
-   const r=await comPrazoRede(montarConsulta(item),15000);
+   /* a consulta vira uma promessa só (a do servidor executa a cada then): a contagem do Financeiro a acompanha */
+   const r=await comPrazoRede(item.tabela==='financeiro'?contarEscritaFin(Promise.resolve(montarConsulta(item))):montarConsulta(item),15000);
    if(ehFalhaDeRede(r)){marcarSemRede();break;}
    SEM_REDE=false;
    const args=item.passos[0][0]==='insert'?item.passos[0][1]||[]:null,lote=args&&Array.isArray(args[0])?args[0]:null;
@@ -8519,11 +8649,23 @@ async function relerParaAjusteFin(){
  const falhou=r=>{toast('Não consegui conferir no servidor ('+(r.error&&r.error.message||'sem resposta')+'). Nada foi mudado.','error',8000);return false;};
  const rc=await comPrazoRede(supa.from('config').select('campo,valor').in('campo',['saldoInicial','saldoBancoOfx']),12000);
  if(rc.error||!Array.isArray(rc.data))return falhou(rc);
- const rf=await comPrazoRede(supa.from('financeiro').select('*').order('data',{ascending:false}),20000);
- if(rf.error||!Array.isArray(rf.data))return falhou(rf);
- /* o servidor devolve no máximo 1.000 linhas por leitura: com isso, as mais antigas ficariam de fora e o ajuste
-    gravaria um saldo inicial que as contém */
- if(rf.data.length>=1000){toast('O Financeiro passou de 1.000 lançamentos e a leitura do servidor vem cortada: o ajuste do saldo fica desligado até o ERP ler em partes. Nada foi mudado.','error',10000);return false;}
+ /* o Financeiro INTEIRO, em páginas (lerTudoSupabase): o ajuste grava um saldo inicial calculado sobre ele, então uma
+    lista cortada (o servidor devolve no máximo 1.000 linhas por leitura) ou com uma linha pulada daria um saldo
+    errado. Qualquer página que falhe é falha da releitura, e nada é mudado. Uma carga comum que ainda esteja a caminho
+    não sobrescreve depois esta leitura (CARGA_FIN_SEQ). O prazo total (45 s) fica abaixo da válvula da trava dos
+    botões (120 s) */
+ CARGA_FIN_SEQ++;
+ /* uma gravação deste aparelho no Financeiro durante a leitura deixaria uma página antiga: lê de novo (uma vez) */
+ let rf=null;
+ for(let vez=0;vez<2&&!rf;vez++){await esperarEscritasFin();const marca=FIN_ESCRITA_SEQ;
+  const x=await lerTudoSupabase('financeiro',{ordenar:ordemFin,prazo:20000,prazoTotal:45000});
+  if(x.error)return falhou(x);
+  if(FIN_ESCRITA_SEQ===marca&&!FIN_ESCRITAS_PEND)rf=x;}
+ if(!rf)return falhou({error:{message:'o Financeiro foi alterado neste aparelho durante a leitura; tente de novo'}});
+ /* com alteração do Financeiro ainda na fila de envio (o envio falhou por rede e a leitura funcionou), a lista do
+    servidor não a tem: trocar a lista do aparelho a tiraria da tela até a fila subir, e salvar o lançamento pelo
+    modal nesse meio tempo regravaria o valor velho. Como na carga comum, a lista não é trocada, e nada é feito */
+ if(FILA.some(i=>i.tabela==='financeiro'))return falhou({error:{message:'há alterações do Financeiro guardadas neste aparelho esperando envio; tente de novo quando forem enviadas'}});
  rc.data.forEach(({campo,valor})=>{if(campo==='saldoInicial')DB.config.cf.saldoInicial=Number(valor)||0;
   else if(campo==='saldoBancoOfx'){try{const o=JSON.parse(valor);if(o&&typeof o==='object')DB.config.saldoBancoOfx=o;}catch(e){}}});
  DB.financeiro=rf.data.map(financeiroDeSupabase);saveDB();return true;}
@@ -8663,10 +8805,44 @@ async function confirmarImportacaoOfx(){if(!guard())return;
  renderFinanceiro();
  toast((novos.length?novos.length+' lançamento(s) importado(s). ':'Extrato conferido. ')+(an.porOrigem?'No banco':'Saldo do ERP')+': '+fmt(saldoBaseOfx())+'.'+avisoRep,'success',6000);
  mostrarConciliacaoOfx(an,false);}
-async function carregarFinanceiroSupabase(){
- const {data,error}=await supa.from('financeiro').select('*').order('data',{ascending:false});
- if(error){erroDeCarga('financeiro',error);return;}
- DB.financeiro=(data||[]).map(financeiroDeSupabase);saveDB();
+/* a ordem que a lista sempre teve (data mais nova primeiro, como o .order('data',{ascending:false}) do servidor, que
+   põe a data vazia antes), com o id desempatando os do mesmo dia: a lista sai igual a cada carga */
+const cmpTxt=(x,y)=>x<y?-1:x>y?1:0;
+const ordemFin=(a,b)=>cmpTxt(String(b.data||'\uffff'),String(a.data||'\uffff'))||cmpTxt(String(b.id),String(a.id));
+/* a carga lê o Financeiro INTEIRO, em páginas (lerTudoSupabase). Falhou alguma página: erro de carga, e a lista do
+   aparelho (a da última carga completa) fica como está. Com várias páginas a leitura demora mais, e cargas sobrepostas
+   (login, abrir a tela, puxar para atualizar, a fila de envio) podem chegar fora de ordem: só vale a última pedida
+   (CARGA_FIN_SEQ), senão uma leitura velha sobrescreveria a nova.
+   A carga que já não vale para de ler no fim da página em que está (antes lia todas as páginas para nada). E as
+   pedidas juntas, no mesmo passo (abrir o app no Financeiro: a tela e as cargas do login), são uma só: a tabela
+   inteira era lida duas vezes. Pedida depois, mesmo com uma a caminho, é outra leitura (pode ter mudado algo).
+   Uma gravação deste aparelho no Financeiro durante a leitura (classificar logo ao abrir a tela) deixaria uma página
+   lida antes dela: a tela voltaria ao valor velho, e salvar pelo modal gravaria esse valor velho no servidor. Então a
+   leitura é refeita (até 3 vezes; gravando sem parar, a lista do aparelho fica, já com as gravações, e a próxima
+   carga atualiza). Com alteração ainda na fila de envio, a lista do aparelho também fica.
+   A leitura igual à lista do aparelho não muda nada (nem desenha de novo) */
+let CARGA_FIN_SEQ=0,CARGA_FIN_EM_CURSO=null;
+function carregarFinanceiroSupabase(){const c=CARGA_FIN_EM_CURSO;
+ if(c&&c.seq===CARGA_FIN_SEQ&&c.mesmoPasso)return c.p;
+ const seq=++CARGA_FIN_SEQ;
+ const p=cargaFinanceiroFin(seq).finally(()=>{if(CARGA_FIN_EM_CURSO&&CARGA_FIN_EM_CURSO.seq===seq)CARGA_FIN_EM_CURSO=null;});
+ const nova={seq,p,mesmoPasso:true};CARGA_FIN_EM_CURSO=nova;Promise.resolve().then(()=>{nova.mesmoPasso=false;});
+ return p;}
+const mesmosLancamentosFin=(a,b)=>{if(!Array.isArray(b)||a.length!==b.length)return false;try{return JSON.stringify(a)===JSON.stringify(b);}catch(e){return false;}};
+async function cargaFinanceiroFin(seq){
+ let r=null;
+ for(let vez=0;vez<3;vez++){
+  await esperarEscritasFin();if(seq!==CARGA_FIN_SEQ)return;
+  const marca=FIN_ESCRITA_SEQ;
+  const x=await lerTudoSupabase('financeiro',{ordenar:ordemFin,parar:()=>seq!==CARGA_FIN_SEQ});
+  if(seq!==CARGA_FIN_SEQ)return;
+  if(x.error||(FIN_ESCRITA_SEQ===marca&&!FIN_ESCRITAS_PEND)){r=x;break;}}
+ if(!r)return;
+ if(r.error){if(ehFalhaDeRede(r)){marcarSemRede();atualizarAvisoFila();}erroDeCarga('financeiro',r.error);return;}
+ if(FILA.some(i=>i.tabela==='financeiro'))return;
+ const novo=r.data.map(financeiroDeSupabase);
+ if(mesmosLancamentosFin(novo,DB.financeiro))return;
+ DB.financeiro=novo;saveDB();
  if(CUR==='financeiro')renderFinanceiro();
  if(CUR==='centrocustos')renderCentroCustos();
  if(CUR==='dashboard')renderDashboard();}
@@ -8692,78 +8868,289 @@ function renderFinanceiro(){const ym=today().slice(0,7);
  try{pintarAbasFin();
   if(FIN_VISTA==='conferir'&&FIN_LIGACAO_NO_BANCO){renderConferirBancoFin();return;}}
  finally{SUGESTOES_FIN_MEMO=null;CONF_SALDO_FIN_MEMO=null;}
- const pedidos=pedidosOrdenados();
  const fTipo=$('fin-tipo-filter')?$('fin-tipo-filter').value:'';
  const fSt=$('fin-status-filter')?$('fin-status-filter').value:'';
  /* "Mesclados" no filtro de Status mostra também os que foram mesclados */
  const base=fcAtivo('fin','mesclados')?DB.financeiro:visiveis;
- const listaFin=base.filter(f=>(!fTipo||f.tipo===fTipo)&&(!fSt||f.status===fSt)&&fcPassa('fin',f));
+ /* a busca do topo também filtra a lista (os dados), e a ordem escolhida no título vale na tabela */
+ const busca=buscaFinAtual(),tabela=!ehCelular();FIN_BUSCA_DESENHADA=busca;
+ let listaFin=base.filter(f=>(!fTipo||f.tipo===fTipo)&&(!fSt||f.status===fSt)&&fcPassa('fin',f)&&(!busca||textoBuscaFin(f).includes(busca)));
+ if(tabela&&FIN_ORDENS.length)listaFin=ordenarListaFin(listaFin);
  if($('fin-filtro-label'))$('fin-filtro-label').textContent=listaFin.length===base.length?(base.length+' lançamento(s)'):(listaFin.length+' de '+base.length+' lançamento(s)');
  /* o mesclado (com "Mesclados" ligado) e o preso numa mesclagem pela metade aparecem só para consulta: os
     seletores e a observação gravariam neles */
  const soLer=f=>!canEdit()||!!f.mescladoCom;
- $('tb-financeiro').innerHTML=listaFin.map(f=>{const stB={'Pago':'badge-success','Pendente':'badge-warning','Cancelado':'badge-muted'}[f.status]||'badge-muted';
-  const ccCell=!soLer(f)?('<select class="form-control" style="font-size:11px;padding:3px 5px;min-width:150px;'+(f.centroCusto?'':'border-color:var(--danger);color:var(--danger)')+'" onchange="setCentroCustoInline(\''+f.id+'\',this.value)">'+opcoesLista(SETORES_FIXOS,f.centroCusto,'⚠ Não classificado')+'</select>'):(f.centroCusto?esc(f.centroCusto):'<span class="badge badge-danger">Não classificado</span>');
-  const pedLabels=pedidos.map(pedidoLabel);
-  const legado=f.cat&&!pedLabels.includes(f.cat)?'<option value="'+esc(f.cat)+'" selected>'+esc(f.cat)+'</option>':'';
-  const catCell=!soLer(f)?('<select class="form-control" style="font-size:11px;padding:3px 5px;min-width:170px" onchange="setPedidoInline(\''+f.id+'\',this.value)"><option value=""'+(!f.cat?' selected':'')+'>— Nenhum —</option>'+legado+pedidos.map(v=>'<option value="'+esc(pedidoLabel(v))+'"'+(f.cat===pedidoLabel(v)?' selected':'')+'>'+esc(pedidoLabel(v))+'</option>').join('')+'</select>'):esc(f.cat||'—');
-  return '<tr><td class="mono">'+fmtD(f.data)+'</td><td>'+esc(f.desc)+extrasDescFin(f)+'</td><td>'+catCell+'</td><td>'+ccCell+'</td><td class="fin-obs">'+campoObsFin(f,soLer(f))+'</td><td>'+tipoComOrigemFin(f)+'</td><td class="mono" style="font-weight:700;color:'+(f.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+fmt(f.val)+'</td><td><span class="badge '+stB+'">'+f.status+'</span></td><td>'+actionBtns("editFin('"+f.id+"')","delFin('"+f.id+"')")+'</td></tr>';}).join('')||emptyRow(9,fcMsgVazia('fin','Nenhum lançamento'));
- renderFinanceiroCards(listaFin,pedidos,soLer);fcPintar('fin',listaFin);}
+ desenharListaFin(listaFin,soLer,assinaturaFin(fTipo,fSt,busca,tabela),tabela);fcPintar('fin',listaFin);}
 /* mesma informacao da tabela, empilhada. Os dois seletores continuam
    editaveis no cartao: classificar lancamento e o trabalho desta tela. */
 /* a observação é escrita na própria linha (ou no cartão), sem abrir o lançamento */
 function campoObsFin(f,soLer){
  if(soLer||!canEdit())return f.obs?'<span style="font-size:12px;color:var(--text-muted)">'+esc(f.obs)+'</span>':'<span style="color:var(--text-muted)">—</span>';
- return '<input type="text" class="form-control fin-obs-campo" value="'+esc(f.obs||'')+'" placeholder="Anotar..." title="'+esc(f.obs||'')+'" onchange="setObsFin(\''+f.id+'\',this.value)">';}
+ return '<input type="text" class="form-control fin-obs-campo" data-fin="'+esc(f.id)+'" data-campo="obs" value="'+esc(f.obs||'')+'" placeholder="Anotar..." title="'+esc(f.obs||'')+'" onchange="setObsFin(\''+f.id+'\',this.value)">';}
 async function setObsFin(id,valor){if(!guard())return;
- const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
+ let f=DB.financeiro.find(x=>x.id===id);if(!f)return;
  if(f.mescladoCom){toast(finAbsorvido(f)?'Este lançamento está mesclado numa linha do banco: só para consulta.':'Este lançamento ficou preso numa mesclagem pela metade: use Restaurar em Conferir com o banco.','info',6000);renderFinanceiro();return;}
  const antes=f.obs||'';const novo=String(valor||'').trim();
  if(novo===antes)return;
  f.obs=novo;
  const {error}=await supa.from('financeiro').update({obs:novo||null}).eq('id',id);
  if(error){f.obs=antes;toast('Erro ao salvar a observação: '+error.message,'error');renderFinanceiro();return;}
- saveDB();log('editar','Financeiro','Observação em "'+f.desc+'"');syncSheets('financeiro','upsert',f);}
-function renderFinanceiroCards(lista,pedidos,soLer){soLer=soLer||(()=>!canEdit());
- const alvo=$('financeiro-cards');if(!alvo)return;
- if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">Nenhum lançamento</div>';return;}
- const pedLabels=pedidos.map(pedidoLabel);
- alvo.innerHTML=lista.map(f=>{
-  const ent=f.tipo==='Entrada';
-  const stB={'Pago':'badge-success','Pendente':'badge-warning','Cancelado':'badge-muted'}[f.status]||'badge-muted';
-  const selCC=!soLer(f)
-   ?'<select class="form-control'+(f.centroCusto?'':' pendente')+'" onchange="setCentroCustoInline(\''+f.id+'\',this.value)">'
-    +opcoesLista(SETORES_FIXOS,f.centroCusto,'⚠ Não classificado')+'</select>'
-   :'<span style="font-size:12.5px">'+(f.centroCusto?esc(f.centroCusto):'<span class="badge badge-danger">Não classificado</span>')+'</span>';
-  const legado=f.cat&&!pedLabels.includes(f.cat)?'<option value="'+esc(f.cat)+'" selected>'+esc(f.cat)+'</option>':'';
-  const selPed=!soLer(f)
-   ?'<select class="form-control" onchange="setPedidoInline(\''+f.id+'\',this.value)">'
-    +'<option value=""'+(!f.cat?' selected':'')+'>— Nenhum —</option>'+legado
-    +pedidos.map(v=>'<option value="'+esc(pedidoLabel(v))+'"'+(f.cat===pedidoLabel(v)?' selected':'')+'>'+esc(pedidoLabel(v))+'</option>').join('')+'</select>'
-   :'<span style="font-size:12.5px">'+esc(f.cat||'—')+'</span>';
-  const acoes=actionBtns("editFin('"+f.id+"')","delFin('"+f.id+"')");
-  /* o selo de origem vai ao lado da data */
-  const selo=seloOrigemFin(f),dataC='<span class="pc-data">'+fmtD(f.data)+'</span>';
-  return '<div class="pedido-card fin-card '+(ent?'ent':'sai')+'">'
-   +'<div class="pc-topo">'+(selo?'<span class="pc-topo-esq">'+dataC+selo+'</span>':dataC)+'<span class="badge '+stB+'">'+f.status+'</span></div>'
-   +'<div class="fc-desc">'+esc(f.desc)+extrasDescFin(f)+'</div>'
-   +'<div class="fc-valor '+(ent?'ent':'sai')+'">'+(ent?'↑':'↓')+' '+fmt(f.val)+'</div>'
-   +'<div class="fc-campos">'
-    +'<div class="fc-campo"><label>Pedido</label>'+selPed+'</div>'
-    +'<div class="fc-campo"><label>Centro</label>'+selCC+'</div>'
-    +'<div class="fc-campo fin-obs" style="grid-column:1 / -1"><label>Observações</label>'+campoObsFin(f,soLer(f))+'</div>'
-   +'</div>'
-   +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
-   +'</div>';}).join('');}
-async function setCentroCustoInline(id,valor){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
+ /* uma carga pode ter trocado a lista durante a gravação (finDaListaAgora): o lançamento de agora recebe o texto, e a
+    linha é redesenhada se ainda mostrava o de antes. Sem troca, nada muda aqui (o texto já foi posto antes de gravar,
+    e um texto escrito depois, ainda a caminho, não é desfeito) */
+ const g=finDaListaAgora(id,f),trocou=g!==f&&g.obs!==novo;if(trocou)g.obs=novo;f=g;
+ saveDB();log('editar','Financeiro','Observação em "'+f.desc+'"');syncSheets('financeiro','upsert',f);
+ if(trocou)renderFinanceiro();
+ /* o campo na tela passa a ter o texto gravado como o seu (e a dica com o texto inteiro): a lista só troca as linhas
+    que mudaram, e uma carga igual nem redesenha */
+ document.querySelectorAll('#fin-lista-view input[data-campo="obs"]').forEach(e=>{if(e.dataset.fin===id&&e.value.trim()===novo){e.defaultValue=e.value;e.title=novo;}});}
+/* ----- a lista do Financeiro: os dados inteiros, o desenho em partes -----
+   Com centenas de lançamentos, desenhar a lista inteira (as duas vistas, e em cada linha um seletor com TODOS os
+   pedidos) levava de 5 a 30 s num celular médio a cada filtro ou edição, e a reimportação do extrato aumenta a lista.
+   Agora a LISTA (filtros, filtros por coluna, busca do topo, ordem pelo título, contador, totais, resumo, Conferir com
+   o banco, exportações) continua sendo calculada sobre todos os lançamentos; só o DESENHO é parcial:
+   - só a vista que aparece: cartões até 860 px, tabela acima (girar o celular ou mudar a janela redesenha);
+   - 100 por vez (FIN_PASSO), com "Ver mais" no fim, que acrescenta os 100 seguintes sem redesenhar os de cima;
+   - o seletor de Pedido da linha vem só com "— Nenhum —", o valor antigo e o escolhido: os outros pedidos entram
+     quando ele recebe o toque, o clique ou o foco (encherPedidoFin), antes de a lista de opções abrir.
+   Quantos ficam à mostra volta para 100 quando a lista muda de verdade (filtro, busca, ordem, abrir a tela, trocar de
+   aba); editar uma linha, a volta da carga e salvar pelo modal mantêm a quantidade, e o foco volta ao campo onde
+   estava (a observação que estava sendo escrita continua no campo). */
+const FIN_PASSO=100;
+let FIN_MOSTRAR=FIN_PASSO,FIN_ASSIN=null,FIN_ORDENS=[],FIN_DESENHO=null,FIN_BUSCA_T=null,FIN_BUSCA_DESENHADA='';
+/* o que define "a mesma lista": seletores do topo, filtros por coluna, busca e (na tabela) a ordem */
+/* a ordem entra nas duas vistas (os cartões não ordenam, mas girar o celular com a tabela ordenada não pode voltar a
+   quantidade para 100) */
+const assinaturaFin=(fTipo,fSt,busca,tabela)=>[fTipo,fSt,JSON.stringify(FC_REG.fin.estado),busca,FIN_ORDENS.map(o=>o.idx+(o.asc?'+':'-')).join(',')].join('|');
+/* os rótulos "V-0000 — Cliente" uma vez por desenho, com o mesmo texto de pedidoLabel (antes cada linha montava os
+   de todos os pedidos de novo, procurando o nome em toda a lista de clientes) */
+function rotulosPedidosFin(){const nomes=new Map();DB.clientes.forEach(c=>{if(!nomes.has(c.id))nomes.set(c.id,c.nome);});
+ const rot=pedidosOrdenados().map(v=>'V-'+pad(v.num)+' — '+(nomes.has(v.cliId)?nomes.get(v.cliId):'—'));
+ return {rot,set:new Set(rot)};}
+/* opções do seletor de Pedido da linha. Antes do toque: "— Nenhum —", o valor antigo que não é um pedido (ex.:
+   "Extrato bancário") e o pedido escolhido; o seletor fechado mostra o mesmo de sempre. cheio: todos os pedidos */
+function opcoesPedidoFin(f,ctx,cheio){const ehPed=!!f.cat&&ctx.set.has(f.cat);
+ const legado=f.cat&&!ehPed?'<option value="'+esc(f.cat)+'" selected>'+esc(f.cat)+'</option>':'';
+ return '<option value=""'+(!f.cat?' selected':'')+'>— Nenhum —</option>'+legado
+  +(cheio?ctx.rot.map(l=>'<option value="'+esc(l)+'"'+(f.cat===l?' selected':'')+'>'+esc(l)+'</option>').join('')
+   :ehPed?'<option value="'+esc(f.cat)+'" selected>'+esc(f.cat)+'</option>':'');}
+const ATRIB_ENCHER_PED=' onpointerdown="encherPedidoFin(this)" onmousedown="encherPedidoFin(this)" onfocus="encherPedidoFin(this)" onkeydown="encherPedidoFin(this)"';
+/* enche o seletor de Pedido da linha com todos os pedidos, guardando o escolhido. O toque (pointerdown) chega antes
+   de a lista de opções abrir; o foco e a tecla (que chega antes de a seta mudar a opção) cobrem o teclado. O foco
+   devolvido pelo próprio ERP depois de redesenhar não enche (FIN_DEVOLVENDO_FOCO): a tecla enche se for preciso */
+let FIN_DEVOLVENDO_FOCO=false;
+function encherPedidoFin(sel){if(!sel||sel.dataset.cheio||FIN_DEVOLVENDO_FOCO)return;
+ const atual=sel.value,ctx=rotulosPedidosFin();
+ const legado=atual&&!ctx.set.has(atual)?'<option value="'+esc(atual)+'">'+esc(atual)+'</option>':'';
+ sel.innerHTML='<option value="">— Nenhum —</option>'+legado+ctx.rot.map(l=>'<option value="'+esc(l)+'">'+esc(l)+'</option>').join('');
+ sel.value=atual;sel.dataset.cheio='1';}
+const BADGE_ST_FIN={'Pago':'badge-success','Pendente':'badge-warning','Cancelado':'badge-muted'};
+/* a tabela mede as colunas pelo que está desenhado: com 100 de N, a coluna Status, por exemplo, ficaria mais estreita
+   sem um "Cancelado" lá embaixo, e o "Ver mais" faria as colunas pularem. Esta linha invisível (no tfoot, com
+   visibility:collapse: não aparece nem ocupa altura, mas conta na largura das colunas) leva o conteúdo mais largo de
+   cada coluna da lista INTEIRA, inclusive um seletor de Pedido com todos os pedidos: as colunas ficam com as larguras
+   de antes, quando todas as linhas eram desenhadas */
+function linhaMedidaFin(lista,soLer,ctx){
+ const longas=[],tipos=new Map(),stats=new Set(),extras=[];
+ let palavra='',banco='',maxVal=0,cat='',obs='',semCC=false,cc='',edita=false;
+ for(const f of lista){const d=String(f.desc||'');
+  if(longas.length<3||d.length>longas[longas.length-1].length){longas.push(d);longas.sort((a,b)=>b.length-a.length);if(longas.length>3)longas.pop();}
+  for(const w of d.split(/\s+/))if(w.length>palavra.length)palavra=w;
+  const b=String(f.descBanco||'');if(b.length>banco.length&&b.trim()!==d.trim())banco=b;
+  const v=Math.abs(Number(f.val)||0);if(v>maxVal)maxVal=v;
+  const k=f.tipo+'|'+origemFin(f);if(!tipos.has(k))tipos.set(k,f);
+  stats.add(f.status);
+  if(extras.length<2&&(f.mescladoCom||finMesclou(f)))extras.push(extrasDescFin(f));
+  if(soLer(f)){if(String(f.cat||'').length>cat.length)cat=String(f.cat||'');if(String(f.obs||'').length>obs.length)obs=String(f.obs||'');
+   if(!f.centroCusto)semCC=true;else if(String(f.centroCusto).length>cc.length)cc=String(f.centroCusto);}
+  else edita=true;}
+ const c=h=>'<td><div class="fin-medida-c">'+h+'</div></td>';
+ return '<tr>'+'<td class="mono"><div class="fin-medida-c">'+fmtD(lista[0]&&lista[0].data)+'</div></td>'
+  +c(longas.concat([palavra]).map(t=>'<div>'+esc(t)+'</div>').join('')+(banco?'<div class="fin-desc-banco">'+esc(banco)+'</div>':'')+extras.join(''))
+  +c((edita?'<select class="form-control" tabindex="-1" style="font-size:11px;padding:3px 5px;min-width:170px">'+opcoesPedidoFin({cat:''},ctx,true)+'</select>':'')+(cat?'<div>'+esc(cat)+'</div>':''))
+  +c((edita?'<select class="form-control" tabindex="-1" style="font-size:11px;padding:3px 5px;min-width:150px">'+opcoesLista(SETORES_FIXOS,'','⚠ Não classificado')+'</select>':'')+(cc?'<div>'+esc(cc)+'</div>':'')+(semCC?'<span class="badge badge-danger">Não classificado</span>':''))
+  +'<td class="fin-obs"><div class="fin-medida-c">'+(edita?'<input type="text" class="form-control fin-obs-campo" tabindex="-1">':'')+(obs?'<span style="font-size:12px">'+esc(obs)+'</span>':'')+'</div></td>'
+  +c([...tipos.values()].map(f=>'<div>'+tipoComOrigemFin(f)+'</div>').join(''))
+  +'<td class="mono" style="font-weight:700"><div class="fin-medida-c">'+fmt(maxVal)+'</div></td>'
+  +c([...stats].map(s=>'<div><span class="badge '+(BADGE_ST_FIN[s]||'badge-muted')+'">'+esc(s)+'</span></div>').join(''))
+  +c(actionBtns('void 0','void 0'))+'</tr>';}
+/* uma linha da tabela (computador) */
+function linhaTabelaFin(f,ctx,soLer){const ro=soLer(f),stB=BADGE_ST_FIN[f.status]||'badge-muted',id=esc(f.id);
+ const ccCell=!ro?('<select class="form-control" data-fin="'+id+'" data-campo="cc" style="font-size:11px;padding:3px 5px;min-width:150px;'+(f.centroCusto?'':'border-color:var(--danger);color:var(--danger)')+'" onchange="setCentroCustoInline(\''+f.id+'\',this.value)">'+opcoesLista(SETORES_FIXOS,f.centroCusto,'⚠ Não classificado')+'</select>'):(f.centroCusto?esc(f.centroCusto):'<span class="badge badge-danger">Não classificado</span>');
+ const catCell=!ro?('<select class="form-control" data-fin="'+id+'" data-campo="ped" style="font-size:11px;padding:3px 5px;min-width:170px"'+ATRIB_ENCHER_PED+' onchange="setPedidoInline(\''+f.id+'\',this.value)">'+opcoesPedidoFin(f,ctx)+'</select>'):esc(f.cat||'—');
+ return '<tr><td class="mono">'+fmtD(f.data)+'</td><td>'+esc(f.desc)+extrasDescFin(f)+'</td><td>'+catCell+'</td><td>'+ccCell+'</td><td class="fin-obs">'+campoObsFin(f,ro)+'</td><td>'+tipoComOrigemFin(f)+'</td><td class="mono" style="font-weight:700;color:'+(f.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+fmt(f.val)+'</td><td><span class="badge '+stB+'">'+f.status+'</span></td><td>'+actionBtns("editFin('"+f.id+"')","delFin('"+f.id+"')")+'</td></tr>';}
+/* um cartão (celular): a mesma informação da tabela, empilhada; os seletores continuam editáveis */
+function cartaoFin(f,ctx,soLer){const ro=soLer(f),ent=f.tipo==='Entrada',stB=BADGE_ST_FIN[f.status]||'badge-muted',id=esc(f.id);
+ const selCC=!ro
+  ?'<select class="form-control'+(f.centroCusto?'':' pendente')+'" data-fin="'+id+'" data-campo="cc" onchange="setCentroCustoInline(\''+f.id+'\',this.value)">'
+   +opcoesLista(SETORES_FIXOS,f.centroCusto,'⚠ Não classificado')+'</select>'
+  :'<span style="font-size:12.5px">'+(f.centroCusto?esc(f.centroCusto):'<span class="badge badge-danger">Não classificado</span>')+'</span>';
+ const selPed=!ro
+  ?'<select class="form-control" data-fin="'+id+'" data-campo="ped"'+ATRIB_ENCHER_PED+' onchange="setPedidoInline(\''+f.id+'\',this.value)">'+opcoesPedidoFin(f,ctx)+'</select>'
+  :'<span style="font-size:12.5px">'+esc(f.cat||'—')+'</span>';
+ const acoes=actionBtns("editFin('"+f.id+"')","delFin('"+f.id+"')");
+ /* o selo de origem vai ao lado da data */
+ const selo=seloOrigemFin(f),dataC='<span class="pc-data">'+fmtD(f.data)+'</span>';
+ return '<div class="pedido-card fin-card '+(ent?'ent':'sai')+'">'
+  +'<div class="pc-topo">'+(selo?'<span class="pc-topo-esq">'+dataC+selo+'</span>':dataC)+'<span class="badge '+stB+'">'+f.status+'</span></div>'
+  +'<div class="fc-desc">'+esc(f.desc)+extrasDescFin(f)+'</div>'
+  +'<div class="fc-valor '+(ent?'ent':'sai')+'">'+(ent?'↑':'↓')+' '+fmt(f.val)+'</div>'
+  +'<div class="fc-campos">'
+   +'<div class="fc-campo"><label>Pedido</label>'+selPed+'</div>'
+   +'<div class="fc-campo"><label>Centro</label>'+selCC+'</div>'
+   +'<div class="fc-campo fin-obs" style="grid-column:1 / -1"><label>Observações</label>'+campoObsFin(f,ro)+'</div>'
+  +'</div>'
+  +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
+  +'</div>';}
+/* o campo da lista que estava com o foco (seletor ou observação), para devolver depois de redesenhar: antes, mudar o
+   Pedido ou o Centro deixava o foco no nada, e a volta da carga apagava a observação que estava sendo escrita.
+   sujo: a pessoa escreveu e ainda não saiu do campo (o valor difere do que veio desenhado) */
+function focoNaListaFin(){const a=document.activeElement;
+ if(!a||!a.dataset||!a.dataset.fin||!a.closest||!a.closest('#fin-lista-view'))return null;
+ const sujo=a.tagName==='INPUT'&&a.value!==a.defaultValue;
+ return {el:a,id:a.dataset.fin,campo:a.dataset.campo,sujo,valor:a.value,ini:sujo?a.selectionStart:null,fim:sujo?a.selectionEnd:null};}
+/* procura só na vista desenhada (a outra está vazia), sem medir nada na tela: o layout fica para o quadro */
+function devolverFocoFin(o){const box=$(FIN_DESENHO&&FIN_DESENHO.tabela?'tb-financeiro':'financeiro-cards');
+ const el=box&&[...box.querySelectorAll('[data-campo="'+o.campo+'"]')].find(e=>e.dataset.fin===o.id);
+ /* a linha não foi trocada (só as que mudaram são redesenhadas): o campo continua com o foco e o texto */
+ if(!el||el===o.el)return;
+ /* campo de texto: o Chrome segura a rolagem pelo campo de texto com foco (âncora de rolagem); focado antes de ter
+    posição na tela, a rolagem pularia. Só neste caso (a carga voltando enquanto se escreve) a tela é medida antes */
+ if(el.tagName==='INPUT')void el.offsetHeight;
+ /* o campo novo nasce sem a cor de foco e a animaria (transition do .form-control): a borda piscaria e a tela seria
+    repintada a cada quadro da animação. Ele recebe o foco já com a cor final */
+ el.style.transition='none';
+ FIN_DEVOLVENDO_FOCO=true;
+ try{el.focus({preventScroll:true});}catch(e){}finally{FIN_DEVOLVENDO_FOCO=false;}
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.transition='';}));
+ /* o texto ainda não gravado volta ao campo. O navegador não avisa (change) a mudança feita por código: ao sair do
+    campo, a observação é gravada como se tivesse sido escrita aqui (se a pessoa ainda escrever, o change dela vem
+    antes, e setObsFin não grava o mesmo texto duas vezes) */
+ if(o.sujo){el.value=o.valor;try{if(o.ini!=null)el.setSelectionRange(o.ini,o.fim);}catch(e){}
+  el.addEventListener('blur',()=>{if(el.isConnected&&el.value!==el.defaultValue)el.dispatchEvent(new Event('change'));},{once:true});}}
+/* a linha (ou o cartão) que está na tela, mas não serve como está: um seletor ou a observação mexidos e não gravados
+   (a observação que tem o foco, sendo escrita, serve), o seletor de Pedido já cheio, ou escondida pela busca antiga */
+function linhaMexidaFin(el){if(!el||el.hasAttribute('style'))return true;
+ for(const c of el.querySelectorAll('select,input')){
+  if(c.tagName==='INPUT'){if(c.value!==c.defaultValue&&c!==document.activeElement)return true;continue;}
+  if(c.dataset.cheio)return true;
+  let pad=0;for(let i=0;i<c.options.length;i++)if(c.options[i].defaultSelected)pad=i;
+  if(c.selectedIndex!==pad)return true;}
+ return false;}
+/* põe na caixa as linhas novas (html, ids) mexendo só no que mudou desde o último desenho: as do começo que continuam
+   as mesmas (mesmo lançamento, mesmo HTML) ficam como estão, as que mudaram são trocadas uma a uma, e do primeiro
+   lançamento diferente em diante a lista é refeita. Com centenas à mostra ("Ver mais" várias vezes), classificar uma
+   linha redesenhava todas: segundos por toque no celular. Muitas trocas: um desenho só sai mais barato */
+function atualizarLinhasFin(box,html,ids,vazio){const d=FIN_DESENHO,filhos=box.children;
+ if(!html.length){box.innerHTML=vazio;return;}
+ if(d&&d.box===box&&Array.isArray(d.ids)&&d.ids.length===filhos.length){
+  let k=0;const lim=Math.min(d.ids.length,ids.length);while(k<lim&&d.ids[k]===ids[k])k++;
+  const trocar=[];for(let i=0;i<k&&trocar.length<=30;i++)if(d.html[i]!==html[i]||linhaMexidaFin(filhos[i]))trocar.push(i);
+  if(k>0&&trocar.length<=30){
+   trocar.forEach(i=>{filhos[i].outerHTML=html[i];});
+   if(k<filhos.length){const r=document.createRange();r.setStartBefore(filhos[k]);r.setEndAfter(filhos[filhos.length-1]);r.deleteContents();}
+   if(k<html.length)box.insertAdjacentHTML('beforeend',html.slice(k).join(''));
+   return;}}
+ box.innerHTML=html.join('');}
+let FIN_MEDIDA_HTML='';
+/* desenha a parte da lista que aparece: a vista do tamanho da tela e os FIN_MOSTRAR primeiros */
+function desenharListaFin(lista,soLer,assin,tabela){
+ if(assin!==FIN_ASSIN){FIN_ASSIN=assin;FIN_MOSTRAR=FIN_PASSO;}
+ const n=Math.min(lista.length,Math.max(FIN_MOSTRAR,FIN_PASSO));
+ const ctx=rotulosPedidosFin(),foco=focoNaListaFin();
+ const tb=$('tb-financeiro'),cards=$('financeiro-cards'),tf=$('tf-financeiro');
+ const parte=lista.slice(0,n),ids=parte.map(f=>f.id),html=parte.map(f=>tabela?linhaTabelaFin(f,ctx,soLer):cartaoFin(f,ctx,soLer));
+ const box=tabela?tb:cards;
+ if(tabela){if(cards&&cards.firstChild)cards.innerHTML='';
+  if(tb)atualizarLinhasFin(tb,html,ids,emptyRow(9,fcMsgVazia('fin','Nenhum lançamento')));
+  /* a linha de medida só faz falta quando há mais do que o desenhado (e só é trocada quando muda) */
+  const m=lista.length>n?linhaMedidaFin(lista,soLer,ctx):'';
+  if(tf&&(m!==FIN_MEDIDA_HTML||!tf.firstChild!==!m)){tf.innerHTML=m;FIN_MEDIDA_HTML=m;}}
+ else{if(tb&&tb.firstChild)tb.innerHTML='';if(tf&&tf.firstChild)tf.innerHTML='';FIN_MEDIDA_HTML='';
+  if(cards)atualizarLinhasFin(cards,html,ids,'<div class="table-wrapper pc-vazio">Nenhum lançamento</div>');}
+ FIN_DESENHO={lista,soLer,ctx,tabela,n,dados:DB.financeiro,assin,box,html,ids};
+ pintarVerMaisFin();
+ if(foco)devolverFocoFin(foco);}
+function pintarVerMaisFin(){const box=$('fin-ver-mais');if(!box)return;const d=FIN_DESENHO;
+ const total=d?d.lista.length:0,mostra=d?d.n:0,resta=total-mostra;
+ box.hidden=resta<=0;if(resta<=0)return;
+ $('fin-ver-mais-btn').textContent='Ver mais '+Math.min(resta,FIN_PASSO);
+ $('fin-ver-mais-n').textContent='Mostrando '+mostra+' de '+total+' lançamentos';}
+/* "Ver mais": acrescenta os 100 seguintes da mesma lista, sem redesenhar os de cima (a rolagem e o foco ficam). Se a
+   lista da tela já não vale (os dados, os filtros ou a vista mudaram), redesenha com 100 a mais */
+function verMaisFin(){const d=FIN_DESENHO,tabela=!ehCelular();
+ const assin=assinaturaFin($('fin-tipo-filter')?$('fin-tipo-filter').value:'',$('fin-status-filter')?$('fin-status-filter').value:'',buscaFinAtual(),tabela);
+ if(!d||d.dados!==DB.financeiro||d.tabela!==tabela||d.assin!==assin){FIN_MOSTRAR=(d?d.n:FIN_MOSTRAR)+FIN_PASSO;renderFinanceiro();return;}
+ const ate=Math.min(d.lista.length,d.n+FIN_PASSO);if(ate<=d.n)return;
+ const novos=d.lista.slice(d.n,ate),html=novos.map(f=>d.tabela?linhaTabelaFin(f,d.ctx,d.soLer):cartaoFin(f,d.ctx,d.soLer));
+ const alvo=$(d.tabela?'tb-financeiro':'financeiro-cards');if(alvo)alvo.insertAdjacentHTML('beforeend',html.join(''));
+ /* o registro do desenho acompanha o que foi acrescentado (o próximo desenho compara linha a linha) */
+ if(alvo===d.box&&Array.isArray(d.html)){novos.forEach((f,i)=>{d.ids.push(f.id);d.html.push(html[i]);});}else{d.ids=null;d.html=null;}
+ d.n=ate;FIN_MOSTRAR=ate;pintarVerMaisFin();}
+/* a busca do topo no Financeiro: o texto que a linha mostra (data, descrição, texto do banco, pedido, centro,
+   observação, tipo, origem, valor e status), guardado por lançamento enquanto ele não muda. Antes ela filtrava o que
+   estava desenhado, e o nome de um cliente casava com as opções escondidas do seletor de Pedido de todas as linhas */
+const TXT_BUSCA_FIN=new WeakMap();
+/* o selo de mesclado que a linha mostra (extrasDescFin), com o mesmo texto */
+function seloBuscaFin(f){if(finMesclou(f))return '🔗 Mesclado';if(!f.mescladoCom)return '';
+ if(!finAbsorvido(f))return '⚠ Mesclagem pela metade';
+ const w=DB.financeiro.find(x=>x.id===f.mescladoCom);return '🔗 Mesclado no banco'+(w?' de '+fmtD(w.data):'');}
+function textoBuscaFin(f){const selo=seloBuscaFin(f),ed=canEdit()&&!f.mescladoCom,k=[f.data,f.desc,f.descBanco,f.cat,f.centroCusto,f.obs,f.tipo,f.origem,f.val,f.status,selo,ed].join('\u0001');
+ const c=TXT_BUSCA_FIN.get(f);if(c&&c.k===k)return c.t;
+ /* o vazio como a linha mostra: no seletor (linha editável) "— Nenhum —" e "⚠ Não classificado"; só para ler, "—" e
+    "Não classificado". E a seta do tipo e do valor (o resultado "Financeiro" da busca usa a seta como termo) */
+ const t=norm([fmtD(f.data),f.desc,f.descBanco||'',selo,f.cat||(ed?'— Nenhum —':'—'),f.centroCusto||(ed?'⚠ Não classificado':'Não classificado'),f.obs||'',(f.tipo==='Entrada'?'↑ ':'↓ ')+f.tipo,ORIGEM_FIN[origemFin(f)]||'',fmt(f.val),f.status].join(' '));
+ TXT_BUSCA_FIN.set(f,{k,t});return t;}
+/* o termo da busca do topo vale enquanto o Financeiro está aberto (abrir uma tela limpa o campo) */
+function buscaFinAtual(){if(CUR!=='financeiro')return '';const g=$('global-search');return g?norm(g.value):'';}
+/* espera a pessoa parar de digitar (250 ms) para redesenhar; o termo já desenhado não redesenha de novo (o
+   irParaResultado reaplica a busca a cada mudança da tela por 4 s) */
+function agendarBuscaFin(alvo){clearTimeout(FIN_BUSCA_T);FIN_BUSCA_T=null;
+ if(alvo===FIN_BUSCA_DESENHADA)return;
+ FIN_BUSCA_T=setTimeout(()=>{FIN_BUSCA_T=null;if(CUR==='financeiro'&&buscaFinAtual()!==FIN_BUSCA_DESENHADA)renderFinanceiro();},250);}
+/* a ordem pelo título da tabela, com a mesma regra do ordenarTabela (valorOrdenacao: data e valor como número, o vazio
+   no fim, estável) sobre o mesmo texto que ele lia na célula (a descrição com a etiqueta de mesclado, o tipo com a
+   seta e o selo de origem), mas Pedido e Centro pelo escolhido, e não pelo texto de todas as opções do seletor, e a
+   Observação pelo texto escrito. Como antes, cada clique ordena em cima da ordem do anterior (Valor e depois Status deixa
+   cada status ordenado por valor): FIN_ORDENS guarda os cliques, um por coluna (um clique mais antigo na mesma coluna
+   já não muda nada), e a ordem agora continua depois de redesenhar */
+const COL_ORD_FIN=[f=>fmtD(f.data),f=>f.desc+(finMesclou(f)?'🔗 Mesclado':''),f=>f.cat||'',f=>f.centroCusto||'',f=>f.obs||'',
+ f=>(f.tipo==='Entrada'?'↑':'↓')+' '+f.tipo+(ORIGEM_FIN[origemFin(f)]||''),f=>fmt(f.val),f=>f.status];
+function ordenarListaFin(lista){return FIN_ORDENS.reduce(ordenarFinPor,lista);}
+function ordenarFinPor(lista,o){const tx=COL_ORD_FIN[o.idx];if(!tx)return lista;
+ const g=lista.map((f,i)=>({f,i,k:valorOrdenacao(tx(f))}));
+ g.sort((a,b)=>{
+  if(a.k.tipo==='vazio'&&b.k.tipo!=='vazio')return 1;
+  if(b.k.tipo==='vazio'&&a.k.tipo!=='vazio')return -1;
+  let r;
+  if(a.k.tipo==='num'&&b.k.tipo==='num')r=a.k.v-b.k.v;
+  else r=String(a.k.v).localeCompare(String(b.k.v),'pt-BR',{numeric:true});
+  return (o.asc?r:-r)||(a.i-b.i);});
+ return g.map(x=>x.f);}
+function ordenarFinPeloTitulo(th){const ths=[...th.parentElement.children],idx=ths.indexOf(th),asc=!th.classList.contains('sort-asc');
+ ths.forEach(o=>o.classList.remove('sort-asc','sort-desc'));th.classList.add(asc?'sort-asc':'sort-desc');
+ FIN_ORDENS=FIN_ORDENS.filter(o=>o.idx!==idx).concat([{idx,asc}]);renderFinanceiro();}
+/* girar o celular (a paisagem do S25 passa de 860 px) ou mudar a janela troca a vista: desenha a que passou a aparecer */
+(function(){if(!window.matchMedia)return;const mq=window.matchMedia('(max-width:860px)');
+ const mudou=()=>{if(USER&&CUR==='financeiro'&&!(FIN_VISTA==='conferir'&&FIN_LIGACAO_NO_BANCO))renderFinanceiro();};
+ if(mq.addEventListener)mq.addEventListener('change',mudou);else if(mq.addListener)mq.addListener(mudou);})();
+/* depois de esperar o servidor, a mudança vai para o lançamento da lista de AGORA: uma carga que chegue durante a
+   gravação troca DB.financeiro por objetos novos, e a mudança posta no objeto de antes se perdia (a tela e o aparelho
+   ficavam com o valor velho, apesar do "Classificado!", e salvar depois pelo modal gravava esse valor velho no
+   servidor). Sem o lançamento na lista (apagado em outro aparelho), fica o objeto de antes, fora da lista */
+function finDaListaAgora(id,f){return DB.financeiro.find(x=>x.id===id)||f;}
+async function setCentroCustoInline(id,valor){if(!guard())return;let f=DB.financeiro.find(x=>x.id===id);if(!f)return;
  if(f.mescladoCom){toast(finAbsorvido(f)?'Este lançamento está mesclado numa linha do banco: só para consulta.':'Este lançamento ficou preso numa mesclagem pela metade: use Restaurar em Conferir com o banco.','info',6000);renderFinanceiro();return;}
  const {error}=await supa.from('financeiro').update({centro_custo:valor||null}).eq('id',id);
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');renderFinanceiro();return;}
- f.centroCusto=valor;saveDB();syncSheets('financeiro','upsert',f);
+ f=finDaListaAgora(id,f);f.centroCusto=valor;saveDB();syncSheets('financeiro','upsert',f);
  renderFinanceiro();toast(valor?'Classificado em "'+valor+'"!':'Marcado como não classificado.','success');}
-async function setPedidoInline(id,valor){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
- if(f.mescladoCom){toast(finAbsorvido(f)?'Este lançamento está mesclado numa linha do banco: só para consulta.':'Este lançamento ficou preso numa mesclagem pela metade: use Restaurar em Conferir com o banco.','info',6000);renderFinanceiro();return;}
+async function setPedidoInline(id,valor){if(!guard())return;
+ /* a conferência das colunas de origem (até 3 s com sinal fraco) vem antes de pegar o lançamento: nessa espera nada
+    está sendo gravado, e uma carga que termine nela troca a lista */
  await ligacaoFin();
+ let f=DB.financeiro.find(x=>x.id===id);if(!f)return;
+ if(f.mescladoCom){toast(finAbsorvido(f)?'Este lançamento está mesclado numa linha do banco: só para consulta.':'Este lançamento ficou preso numa mesclagem pela metade: use Restaurar em Conferir com o banco.','info',6000);renderFinanceiro();return;}
  /* o pedido escolhido vale também na ligação (venda_id); a origem do lançamento não muda. Trocou ou tirou o
     pedido: a linha de pagamento (pag_id, parcela) era do pedido de antes e sai junto */
  const mud={cat:valor||null},vendaId=vendaIdDoRotulo(valor),lig={};
@@ -8771,7 +9158,7 @@ async function setPedidoInline(id,valor){if(!guard())return;const f=DB.financeir
   if(vendaId!==(f.vendaId||'')){Object.assign(lig,SEM_LINHA_PAG_FIN);Object.assign(mud,{pag_id:null,parcela:null,parcelas:null});}}
  const {error}=await supa.from('financeiro').update(mud).eq('id',id);
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');renderFinanceiro();return;}
- f.cat=valor;Object.assign(f,lig);saveDB();syncSheets('financeiro','upsert',f);
+ f=finDaListaAgora(id,f);f.cat=valor;Object.assign(f,lig);saveDB();syncSheets('financeiro','upsert',f);
  renderFinanceiro();toast(valor?'Direcionado para "'+valor+'"!':'Pedido removido.','success');}
 function fillFinPedidoSelect(sel){const pedidos=pedidosOrdenados();const labels=pedidos.map(pedidoLabel);
  const legado=sel&&!labels.includes(sel)?'<option value="'+esc(sel)+'" selected>'+esc(sel)+'</option>':'';
@@ -8824,12 +9211,16 @@ async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').valu
    if(trocouPedido||virouSaida){Object.assign(lig,SEM_LINHA_PAG_FIN);Object.assign(reg,{pag_id:null,parcela:null,parcelas:null});}}
   const {error}=await supa.from('financeiro').update(reg).eq('id',id);
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
-  Object.assign(f2,lig);commit('editar','Financeiro',desc);syncSheets('financeiro','upsert',f2);
+  /* a carga que trocou a lista durante a gravação: o lançamento de agora recebe o que o modal gravou */
+  const f3=finDaListaAgora(id,f2);if(f3!==f2)Object.assign(f3,o);
+  Object.assign(f3,lig);commit('editar','Financeiro',desc);syncSheets('financeiro','upsert',f3);
  } else {
   const f2=comLigacaoFin(Object.assign({id:uid()},o),{origem:'manual',vendaId:vendaIdDoRotulo(o.cat)});
   const {error}=await supa.from('financeiro').insert(financeiroParaSupabase(f2));
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
-  DB.financeiro.unshift(f2);commit('criar','Financeiro',desc);syncSheets('financeiro','upsert',f2);
+  /* a carga lida depois de o lançamento chegar ao servidor (gravação de mais de 30 s) já o trouxe: não entra duas vezes */
+  const ja=DB.financeiro.findIndex(x=>x.id===f2.id);if(ja>=0)DB.financeiro[ja]=f2;else DB.financeiro.unshift(f2);
+  commit('criar','Financeiro',desc);syncSheets('financeiro','upsert',f2);
  }
  closeModal('modal-financeiro');toast('Lançamento salvo!','success');atualizarGastosDoPedidoAberto();}
 async function delFin(id){if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
@@ -9286,7 +9677,16 @@ function sugerirMesclasFin(lista,ctx){
  return {semDuvida:semDuvida.sort(porData),confira:confira.sort(porBancoOrd),antigos:antigos.sort(porData),porBanco};}
 /* SUGESTOES_FIN_MEMO: só enquanto renderFinanceiro desenha (nada muda no meio) */
 let SUGESTOES_FIN_MEMO=null;
-function sugestoesFinAgora(){return SUGESTOES_FIN_MEMO||sugerirMesclasFin(DB.financeiro,{hoje:today(),vendas:DB.vendas,clientes:DB.clientes});}
+/* e entre um desenho e outro: o cálculo custa centenas de ms com milhares de lançamentos e era refeito a cada filtro,
+   busca, aba e "Ver mais". Vale enquanto os dados de que ele depende (os lançamentos, os pedidos, os clientes e o dia)
+   forem os mesmos, conferidos pelo conteúdo (um texto JSON, bem mais barato que o cálculo) e pelos mesmos objetos */
+let SUGESTOES_FIN_CACHE=null;
+function sugestoesFinAgora(){if(SUGESTOES_FIN_MEMO)return SUGESTOES_FIN_MEMO;
+ const hoje=today(),lista=DB.financeiro,c=SUGESTOES_FIN_CACHE;let chave=null;
+ try{chave=JSON.stringify([hoje,lista,DB.vendas,DB.clientes]);}catch(e){}
+ if(c&&chave!==null&&c.chave===chave&&c.lista===lista&&c.itens.length===lista.length&&c.itens.every((f,i)=>f===lista[i]))return c.s;
+ const s=sugerirMesclasFin(lista,{hoje,vendas:DB.vendas,clientes:DB.clientes});
+ SUGESTOES_FIN_CACHE=chave===null?null:{chave,lista,itens:lista.slice(),s};return s;}
 
 /* ----- o que o Mesclar muda na linha do banco (pura: recebe tudo pronto) -----
    m: {em, por, hoje, comObs, vendaId, rotuloPedido}. Devolve {antes, depois, mesclagem}: depois são os campos que
@@ -9749,7 +10149,7 @@ function pedirAjusteSaldoBancoFin(){const c=conferirSaldoBancoFin();if(!c||!c.po
  return ajustarSaldoBancoFin();}
 
 /* ----- telas ----- */
-function trocarVistaFin(v){FIN_VISTA=v==='conferir'?'conferir':'lista';irAoTopo();renderFinanceiro();
+function trocarVistaFin(v){FIN_VISTA=v==='conferir'?'conferir':'lista';irAoTopo();FIN_MOSTRAR=FIN_PASSO;renderFinanceiro();
  if(FIN_VISTA==='conferir'&&FIN_LIGACAO_NO_BANCO)conferirProblemasNoServidorFin();}
 /* mesclagem pela metade que só este aparelho vê (a resposta de uma gravação se perdeu): ao abrir Conferir com o
    banco, relê do servidor os lançamentos envolvidos e mostra como estão de fato */
@@ -10641,15 +11041,13 @@ async function carregarConfigSupabase(){
 let HISTORICO_BACKUP=null;
 const historicoDoBackup=()=>HISTORICO_BACKUP||DB.historico||[];
 async function comHistoricoCompleto(montar){
- try{
-  const linhas=[];const passo=1000;
-  for(let de=0;de<50000;de+=passo){
-   const {data,error}=await supa.from('historico').select('*').order('id',{ascending:false}).range(de,de+passo-1);
-   if(error||!data||!data.length)break;
-   linhas.push.apply(linhas,data.map(historicoDeSupabase));
-   if(data.length<passo)break;}
-  if(linhas.length)HISTORICO_BACKUP=linhas;
- }catch(e){/* sem rede, o backup segue com o que a tela tem */}
+ /* a tabela inteira, em páginas pela chave (lerTudoSupabase): ou vem toda, ou não vem. Antes, uma página que falhasse
+    no meio deixava o backup com o histórico pela metade, sem aviso, e uma gravação de outro aparelho entre duas
+    páginas repetia uma linha. Sem ela, o backup leva os registros guardados neste aparelho e avisa. A ordem (o mais
+    novo primeiro) vem dos dados crus, porque historicoDeSupabase troca o id */
+ const r=await lerTudoSupabase('historico',{ordenar:(a,b)=>Number(b.id)-Number(a.id)});
+ if(!r.error){if(r.data.length)HISTORICO_BACKUP=r.data.map(historicoDeSupabase);}
+ else toast('O histórico completo não veio do servidor ('+(ehFalhaDeRede(r)?'sem conexão com o servidor':semJargaoDeRede(r.error.message))+'): o backup leva só os '+(DB.historico||[]).length+' registros mais recentes deste aparelho.','info',8000);
  try{return await montar();}
  finally{HISTORICO_BACKUP=null;}}
 /* mesma montagem usada pelo backup em .zip */
@@ -11544,6 +11942,32 @@ Abertura vigiada:
   banco (cargasDoBanco). Cada carga que chega agenda um redesenho da tela
   aberta (agendarRedesenho), juntando as que caem na mesma janela de
   250 ms — e sem redesenhar Configurações enquanto alguém digita ali.
+- O servidor devolve no máximo 1.000 linhas por leitura, sem avisar. O
+  Financeiro é lido inteiro por lerTudoSupabase(tabela, opções): páginas
+  de 1.000 pela chave primária (id maior que o último lido, em ordem
+  crescente; o total contado na 1ª página garante que nada fica de fora
+  mesmo com um limite menor no servidor), com 20 s de prazo por página e
+  60 s no total (o tempo com o ERP escondido não conta, e a página cujo
+  prazo venceu com ele escondido é lida de novo). Qualquer página que
+  falhe é erro de carga, e a lista do aparelho fica como estava (nunca
+  pela metade). A ordem da tela (data mais nova primeiro, o id
+  desempatando) é aplicada no aparelho, e só a carga mais recente do
+  Financeiro vale (CARGA_FIN_SEQ): a que deixou de valer para no fim da
+  página, e as pedidas no mesmo passo (abrir o app no Financeiro) são
+  uma só. Uma gravação deste aparelho no Financeiro durante a
+  leitura (contarEscritaFin, na fila de envio) faz a leitura ser
+  refeita, senão uma página lida antes dela traria o valor velho de
+  volta. Também a gravação que passa de 30 s (esperando a fila de envio
+  numa rede lenta): ela deixa de segurar a carga, mas, quando termina,
+  a leitura feita no meio é refeita. E a mudança feita na linha ou no
+  modal vai para o lançamento da lista de agora (finDaListaAgora): uma
+  carga pode ter trocado os objetos durante a gravação. A leitura só
+  para com uma página incompleta. A leitura igual à lista do aparelho não muda nem redesenha nada. A mesma leitura
+  serve à releitura do ajuste do saldo (que, com alteração do
+  Financeiro na fila de envio, não troca a lista e não ajusta nada) e
+  ao histórico do backup. As
+  outras tabelas ainda são lidas de uma vez: estão longe das 1.000
+  linhas.
 - Erro de JavaScript não tratado (window error / unhandledrejection) vira
   uma faixa vermelha "Erro interno" no topo, com ✕, em vez de uma tela
   parada sem pista.
@@ -11647,7 +12071,9 @@ Rolagem entre telas:
 
 Busca global (handleSearch, campo da topbar):
 - Filtra na hora as linhas (ou os cartões) da tela aberta, sem acento e
-  sem diferenciar maiúsculas.
+  sem diferenciar maiúsculas. No Financeiro, que desenha só uma parte, a
+  busca filtra a lista de lançamentos (os dados, pelo texto que a linha
+  mostra), 250 ms depois da última letra.
 - A partir de 2 letras, abre uma lista de resultados de todos os
   cadastros que o nível enxerga (fontesBusca: comissões, serviços,
   clientes, orçamentos, pedidos, produção, portfólio, material/insumo,
@@ -11660,7 +12086,9 @@ Busca global (handleSearch, campo da topbar):
 Ordenação e filtro por coluna:
 - Clicar no título de uma coluna ordena a tabela (prepararOrdenacao e
   ordenarTabela, direto no DOM, reconhecendo data, número e valor; as
-  linhas de subitem andam junto da linha-mãe).
+  linhas de subitem andam junto da linha-mãe). No Financeiro a ordem é
+  aplicada na lista (ordenarListaFin, mesma regra; Pedido e Centro pelo
+  escolhido) e continua depois de redesenhar.
 - Um funil em cada título abre uma janelinha só com o filtro daquela
   coluna (texto, opções, intervalo de datas ou faixa de valor); o funil
   fica dourado enquanto o filtro está ligado, e um resumo mostra quantos
@@ -12130,6 +12558,25 @@ e não numera nada.
     mostra. Sem as colunas de origem no banco, os selos, a aba Conferir
     com o banco e o saldo dividido não aparecem, e o Financeiro funciona
     como antes.
+  - A lista: totais, filtros, filtros por coluna, busca do topo, ordem
+    pelo título, contador, resumo, Conferir com o banco e exportações usam
+    todos os lançamentos; só o desenho é parcial. Desenha só a vista que
+    aparece (cartões até 860 px, tabela acima; girar o celular ou mudar a
+    janela redesenha), 100 por vez, com "Ver mais" no fim, que acrescenta
+    os 100 seguintes. O seletor de Pedido da linha vem só com "— Nenhum —",
+    o valor antigo e o escolhido, e recebe os outros pedidos no toque, no
+    clique ou no foco (encherPedidoFin). Na tabela, uma linha invisível
+    no rodapé (tfoot, visibility:collapse, linhaMedidaFin) leva o conteúdo
+    mais largo de cada coluna da lista inteira, e as colunas ficam com a
+    largura de quando tudo era desenhado. Quantos aparecem volta para 100 quando a
+    lista muda (filtro, busca, ordem, abrir a tela, trocar de aba);
+    editar uma linha, a volta da carga e salvar pelo modal mantêm a
+    quantidade, a rolagem e o foco (a observação que estava sendo escrita
+    continua no campo). Cada desenho troca só as linhas que mudaram
+    (atualizarLinhasFin): com centenas à mostra, classificar uma linha
+    não redesenha as outras. As sugestões de mescla ficam guardadas
+    enquanto os dados não mudam, e os cartões fora da tela não são
+    calculados pelo navegador (content-visibility).
   - Importação do OFX (parseOfx): cada linha entra como Pago e guarda o
     FITID, a conta do arquivo (BANKID/ACCTID), o texto original do banco
     e o lote. A mesma transação (mesmo FITID na conta, mesma data, valor
@@ -12624,7 +13071,8 @@ sequências.
 
 O histórico do backup vem completo: a tela guarda os 400 registros mais
 recentes, mas na hora de montar o backup o sistema busca a tabela inteira
-no Supabase, paginada.
+no Supabase (lerTudoSupabase, em páginas pela chave). Se ela não vier
+inteira, o backup leva os registros guardados no aparelho e avisa.
 
 O que NÃO entra no backup do ERP: os arquivos anexados (fotos e PDFs de
 referência e os comprovantes de pagamento), que ficam no Supabase
@@ -13079,13 +13527,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-18.3';
+const APP_VERSAO='2026-10-20.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=316;
+const APP_ATUALIZACAO=317;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
