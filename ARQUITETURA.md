@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 20/10/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 21/10/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -277,8 +277,10 @@ Fila de envio (caixa de saída) — instalarFilaDeEnvio():
 - Gravação que precisa da resposta do banco (com .select) não entra na
   fila. As ações que dependem do servidor — criar e aprovar orçamento,
   importar nota ou extrato e, no Financeiro, mesclar, separar, restaurar,
-  ajustar o saldo inicial e mudar ou excluir uma linha do banco — passam
-  antes por exigeConexao(), que testa o servidor, esvazia a fila e, sem
+  ajustar o saldo inicial e mudar ou excluir uma linha do banco; anexar
+  ou excluir comprovante; excluir pedido com linha do banco ou
+  comprovante; as ações da linha de pagamento e o assistente "Ligar
+  pagamentos antigos" — passam antes por exigeConexao(), que testa o servidor, esvazia a fila e, sem
   conexão, recusa com um aviso claro; o resto continua funcionando.
 - Enquanto uma tabela tem alteração na fila, a carga dela não sobrescreve
   a lista local; quando a fila esvazia, as tabelas mexidas são buscadas
@@ -420,8 +422,27 @@ abaixo é o resumo em português.
    - pags: as linhas de pagamento, [{id, forma, valor, parcelas, data
      (vencimento), status (situação), local (local de recebimento, texto
      livre que sugere os já usados), comprovantes: [{path, nome, url}]}].
-     O id da linha é o pag_id dos lançamentos do Financeiro. Pedido sem
-     pags (antigo) remonta as linhas a partir do texto de pag;
+     O id da linha é o pag_id dos lançamentos do Financeiro: cada linha é
+     uma conta lá (o cartão, uma por parcela; ver "Pagamentos do pedido e
+     Financeiro" na seção 7). comprovantes é a lista única do pagamento:
+     o lançamento ligado à linha mostra a mesma, sem cópia. Três campos
+     opcionais guardam a combinação com o Financeiro: sinc ({valor, data,
+     forma, parcelas, status, taxa, em}, a foto do que o Financeiro
+     recebeu da última vez; taxa é a % do cartão usada nas parcelas),
+     finPendente ({em, por, origem, decisao, conf}: a atualização do
+     Financeiro desta linha começou e não foi confirmada, com a resposta
+     que o dono deu; conf guarda a resposta de conflito, "mudar" ou
+     "deixar", com o valor que ele viu no Financeiro) e semFinanceiro
+     ({em, por, motivo}: a linha ficou sem lançamento de propósito). A
+     linha do pedido duplicado nasce com duplicada: true (conta como
+     linha nova: o Salvar cria a conta sem perguntar; a marca sai com a
+     foto). Pedido sem pags (antigo) remonta as linhas a partir do texto
+     de pag, só na tela: abrir e salvar sem mexer não as grava, e mexendo
+     nelas o Salvar oferece ligar os pagamentos antigos antes (o
+     assistente monta as linhas a partir do Financeiro). Sem pags e sem
+     nenhuma conta no Financeiro, o Salvar grava as linhas e pergunta se
+     cria as contas (o padrão é não criar: elas ficam "sem lançamento",
+     com o botão Criar);
    - horas: as horas trabalhadas no pedido, [{data, tipoId (tipo de mão
      de obra), horas, valor, obs}], gravadas no Salvar Pedido;
    - lixeira: itens tirados do pedido, [{item, pos, em, por}] (o item, a
@@ -478,7 +499,16 @@ abaixo é o resumo em português.
    listas, contas, relatórios e planilha. Só conta como mesclado quando a
    linha do banco o guarda na mesclagem dela; senão a aba mostra
    "Precisa de atenção". nao_juntar (na linha do banco) guarda os pares
-   marcados como "não é o mesmo".
+   marcados como "não é o mesmo". comprovantes: a lista própria
+   [{path, nome, url}] de quem não é pagamento de pedido (linha do banco
+   sem pedido, à mão, compra, NF); começa vazia ([]). O lançamento que o
+   pedido cria nasce com id fixo p-<pag_id>-<parcela> (ou
+   p-<pag_id>-<parcela>-2, -3… quando o id já foi usado por outro
+   lançamento; repetir a gravação dá "já existe", e não uma conta em
+   dobro), e o índice
+   financeiro_um_por_parcela faz o banco recusar uma segunda conta ativa
+   do pedido na mesma linha e parcela (o aviso diz qual é a outra conta,
+   e o lançamento fica como estava).
 10. fornecedores — nome, cnpj, tel, email, cidade, status (os
     prestadores dos serviços de terceiros também ficam aqui)
 11. compras (Ordens de Compra) — num sequencial, for_id, data, total,
@@ -513,20 +543,30 @@ abaixo é o resumo em português.
 
 Storage (arquivos): existe um bucket "orcamentos-anexos" no Supabase
 Storage, com uma pasta por orçamento e outra por pedido (os comprovantes
-de pagamento ficam junto dos arquivos do pedido); o nome do arquivo
-ganha um id na frente. Aceita PNG, JPEG ou PDF de até 10 MB. No banco,
-as tabelas guardam só a lista de cada arquivo ({path, nome, url}): na
-coluna "anexos" do orçamento e do pedido, e em comprovantes, dentro de
-vendas.pags. O pedido gerado na aprovação herda os anexos do orçamento
-sem copiar o arquivo; tirar o anexo do pedido não apaga o arquivo que o
-orçamento ainda usa.
+dos pagamentos do pedido ficam junto dos arquivos do pedido, em
+pedidos/<id>/comprovantes/) e uma pasta financeiro/<id>/comprovantes/
+por lançamento do Financeiro que não é pagamento de pedido; o nome do
+arquivo ganha um id na frente. Aceita PNG, JPEG ou PDF de até 10 MB. No
+banco, as tabelas guardam só a lista de cada arquivo ({path, nome,
+url}): na coluna "anexos" do orçamento e do pedido, em comprovantes,
+dentro de vendas.pags, e na coluna comprovantes do financeiro. O pedido
+gerado na aprovação herda os anexos do orçamento sem copiar o arquivo;
+tirar o anexo do pedido não apaga o arquivo que o orçamento ainda usa.
+O comprovante de um pagamento de pedido fica guardado uma vez, na linha
+de pagamento: o lançamento ligado a ela mostra a mesma lista, sem
+cópia. Um arquivo de comprovante só sai do Storage por
+apagarArquivosSeNinguemUsa, e só quando nenhum lançamento (inclusive o
+escondido numa mesclagem, que divide os seus com a linha do banco),
+linha de pagamento, pedido ou orçamento o usa.
 
 Colunas que nasceram depois: algumas colunas foram acrescentadas à mão no
 Supabase depois da primeira versão: orcamentos.origem e vendas.origem,
 financeiro.obs, vendas.anexos, vendas.horas, vendas.pags,
 vendas.lixeira, orcamentos.links, orcamentos.lixeira e as de origem e
 ligação do financeiro (estas pelo arquivo
-supabase/migracao-financeiro-origem.sql); em usuarios, ultimo e auth_id
+supabase/migracao-financeiro-origem.sql) e financeiro.comprovantes (pelo
+supabase/migracao-financeiro-comprovantes.sql, que cria também o índice
+financeiro_um_por_parcela); em usuarios, ultimo e auth_id
 são opcionais. Como o app não roda DDL, ele detecta em tempo de execução
 se a coluna existe (em geral, uma leitura mínima da coluna, com limit 1)
 antes de gravar — assim continua funcionando mesmo
@@ -534,6 +574,11 @@ num banco que ainda não a tenha: o campo some ou o botão fica desligado
 e, para o administrador, a tela mostra a linha de SQL que cria a coluna.
 No financeiro, só a resposta "a coluna não existe" (código 42703)
 desliga a origem e a ligação; sem rede, a conferência fica para depois.
+A coluna comprovantes do financeiro é conferida do mesmo jeito, à parte
+(uma leitura completa da tabela também responde: a linha lida traz a
+coluna ou não). vendas.pags também só desliga com essa resposta, e a
+última resposta positiva fica no aparelho: o pedido salvo sem rede não
+sai sem as linhas de pagamento.
 
 Convenção de nomes: no banco os campos usam "snake_case" (ex: cli_id,
 centro_custo, for_id) e no JavaScript usam "camelCase" (ex: cliId,
@@ -542,7 +587,9 @@ centroCusto, forId) — cada módulo tem duas pequenas funções de conversão
 para o outro. produtos, madeiras e fornecedores usam os nomes do banco
 direto, sem conversão. No financeiro, a conversão só manda o campo de
 origem/ligação que o lançamento traz, para um registro antigo (ou de um
-backup de antes das colunas) não apagar o que o banco já tem.
+backup de antes das colunas) não apagar o que o banco já tem; a lista de
+comprovantes vai só com a coluna no banco, e o modal do lançamento não a
+regrava (ela é gravada na hora de anexar ou excluir).
 
 Numeração: o número (coluna num de orcamentos, vendas, producao e
 compras) vem do próprio banco, de uma sequência na coluna: o app insere
@@ -708,7 +755,11 @@ e não numera nada.
   e Status PCP, que é a etapa da OP do pedido), resumo de quantidade e
   soma e "Limpar filtros"; clicar na linha abre o pedido, e ⧉ duplica
   (a cópia nasce Pendente, com data de hoje, sem baixa de estoque e sem
-  lançamento no financeiro). Status: Pendente, Confirmado, Enviado,
+  lançamento no financeiro: as contas entram quando o pedido novo é
+  aberto e salvo). O pedido com pagamento ainda não confirmado no
+  Financeiro mostra o selo "Financeiro pendente", e um aviso acima da
+  lista conta os pedidos com pagamentos antigos para ligar, com "Ligar
+  agora". Status: Pendente, Confirmado, Enviado,
   Entregue, Cancelado. A ficha do pedido é uma página com:
   - itens de catálogo ou livres; "+ Adicionar Item ao Pedido" usa a mesma
     tela de composição de preço dos orçamentos;
@@ -718,11 +769,17 @@ e não numera nada.
     recebido), local de recebimento (texto livre que sugere os locais já
     usados em outros pedidos, para o nome não variar) e os comprovantes
     da linha (PNG, JPEG ou PDF até 10 MB, enviados na hora para a pasta
-    do pedido no Storage, só depois de o pedido existir). Num pedido novo
-    as linhas precisam somar o total dos itens e cada uma vira conta a
-    receber (o cartão, uma por parcela, já com a taxa); num pedido já
-    salvo, mudar as linhas regrava as linhas (pags) e o texto do
-    pagamento, mas as contas a receber ficam como estão no Financeiro;
+    do pedido no Storage, só depois de a linha estar salva no pedido;
+    são os mesmos do 📎 do lançamento no Financeiro). Cada linha é uma
+    conta no Financeiro (o cartão, uma por parcela, já com a taxa): num
+    pedido novo as linhas precisam somar o total dos itens; num pedido
+    salvo a diferença só é avisada, e linha nova entra, linha mudada muda
+    lá e linha tirada sai (ver "Pagamentos do pedido e Financeiro",
+    abaixo). No fim de cada linha, uma etiqueta diz o que o Financeiro
+    tem dela (no banco, a receber, recebido fora do banco, sem
+    lançamento, ou "Financeiro não atualizado" com "Tentar de novo") e os
+    botões que valem (Criar, Ligar ao banco, Juntar com o banco, Ajustar
+    a linha ao banco ou ao Financeiro, desligar do Financeiro);
   - lixeira de itens: o ✕ manda o item para a lixeira da ficha, que vai
     para a coluna vendas.lixeira no Salvar Pedido (item, posição, quando
     e quem); Restaurar devolve a linha ao lugar de onde saiu;
@@ -755,10 +812,98 @@ e não numera nada.
   aprovação de um orçamento, mostra antes o que sai junto e o que fica:
   saem as contas a receber ainda pendentes e a OP que segue em
   Planejamento (não concluída, sem etapa começada e sem entrega); ficam
-  os recebimentos já pagos, as saídas ligadas ao pedido, a OP já
-  começada ou concluída, as entregas e o orçamento. O pedido é apagado
-  primeiro e só depois o estoque volta (se teve baixa) e saem as contas
-  e a OP, para um erro do banco não devolver estoque à toa.
+  os recebimentos já pagos, as linhas do banco (desligadas do pedido
+  antes de ele sair, com a coluna Pedido de volta a "Extrato
+  bancário"), as saídas ligadas ao pedido, a OP já começada ou
+  concluída, as entregas e o orçamento. Os comprovantes das linhas de
+  pagamento passam para a lista própria da linha do banco ligada à
+  linha ou, sem ela, do recebido que fica (no pedido antigo, sem linha
+  ligada, o recebido do pedido de mesmo valor); os que não têm onde
+  ficar saem junto (a pergunta lista). Com linhas de pagamento, linha do
+  banco ou comprovante, excluir precisa de internet: antes da pergunta o
+  ERP relê no servidor os lançamentos do pedido (lerEstadoPedido), porque
+  o Financeiro do aparelho pode estar atrasado em relação a outro
+  aparelho. O pedido é apagado depois disso e só
+  então o estoque volta (se teve baixa) e saem as contas e a OP, para um
+  erro do banco não devolver estoque à toa.
+
+  Pagamentos do pedido e Financeiro — um pagamento, um lançamento:
+  - Cada linha de pagamento corresponde ao(s) seu(s) lançamento(s),
+    ligados por venda_id + pag_id + parcela. Só
+    sincronizarFinanceiroDoPedido cria, muda, apaga ou cancela lançamento
+    de pedido e liga ou desliga linha do banco a uma linha; só
+    gravarPagsDoPedido regrava vendas.pags fora do Salvar (relê no
+    servidor, muda e grava com resposta). Uma atualização por pedido de
+    cada vez (comFilaDaVenda).
+  - Pelo estado, não pela diferença da tela: o que existe no Financeiro
+    é lido do servidor na hora (lerEstadoPedido: pelo pedido, pelas
+    linhas e pelos ids fixos), e cada linha guarda a foto (sinc) do que
+    foi combinado da última vez. planoSincronizacao (uma função pura)
+    decide por linha: a nova cria; a mudada muda o lançamento do pedido
+    (valor ou data mudados também no Financeiro viram pergunta, com o
+    padrão de deixar o Financeiro); a situação só anda para a frente (A
+    receber → Já recebido); o cartão recalcula só as parcelas a receber,
+    com a taxa da foto; a tirada apaga o pendente, cancela o recebido
+    (fica como histórico) e só desliga a linha do banco, e os
+    comprovantes dela passam para a linha do banco, para o recebido
+    cancelado ou (pedido antigo, só com o par único) para o recebido do
+    pedido de mesmo valor ainda sem linha — sem nenhum, saem, e a janela
+    avisa antes; o lançamento juntado a uma linha do banco sai do pedido
+    junto (um Separar depois o devolve cancelado), e a linha do banco
+    desligada volta com o texto do banco; o pedido
+    Cancelado não cria e pergunta se apaga as contas pendentes. O
+    lançamento excluído, cancelado ou passado para outro pedido no
+    Financeiro não volta sozinho: a linha mostra "sem lançamento" e o
+    botão Criar. A conta apagada pelo ERP que tem comprovante próprio
+    passa ele antes para a linha do pagamento (ou para quem fica com os
+    da linha tirada).
+  - Nunca duplica: o lançamento novo nasce com id fixo
+    p-<pag_id>-<parcela> (repetir dá "já existe"), cada gravação vai com
+    condição e resposta, e a marca finPendente vai junto com o pedido
+    antes de mexer no Financeiro e sai só no fim: sem rede, com o app
+    fechado ou com falha no meio, a nova tentativa (ao abrir a ficha,
+    quando a fila de envio esvazia e depois das cargas) termina o que
+    faltou sem perguntar de novo. A foto do fim é a da linha que a
+    reconciliação executou; se outro aparelho salvou a linha no meio, a
+    marca dele fica para a vez dele. O pedido novo usa o mesmo id em
+    todas as tentativas da ficha (resposta perdida não cria outro); sem
+    resposta (no Salvar ou na aprovação do orçamento), o id fica
+    guardado no aparelho e o próximo pedido novo confere antes se ele
+    chegou ao servidor e pergunta, sem opção marcada (abrir o que chegou
+    ou salvar este também), em vez de lançar outro. O aviso do + Novo e
+    a abertura do pedido guardado lembram que a baixa no estoque e a OP
+    dele não foram feitas.
+  - As linhas do pedido são gravadas sempre juntando com o servidor: o
+    Salvar relê pags na fila do pedido e aplica só o que a edição mudou
+    (os comprovantes e as linhas criadas em outro lugar ficam); sem
+    rede, a fila de envio guarda de qual versão a edição partiu e junta
+    no envio (depois de cada alteração enviada, a seguinte parte do que
+    ela deixou no aparelho; o pedido que não tinha linhas e ganhou as de
+    outro aparelho no meio fica com as de lá, com aviso). O Salvar espera o
+    comprovante em andamento, e o Anexar espera o Salvar.
+  - O extrato manda: a linha do banco nunca muda valor, data, tipo,
+    situação ou texto por causa do pedido; dela o pedido só usa a
+    ligação. A linha "Já recebido" de PIX, transferência ou boleto
+    procura antes a linha do banco que pode ser o mesmo dinheiro
+    (irmaoNoBanco, o critério de Conferir com o banco) e pergunta se liga
+    a ela em vez de criar outro lançamento; dinheiro e maquininha nunca
+    procuram, e o cartão cria as parcelas como sempre.
+  - Antes de gravar, a janela "Antes de salvar" (perguntarAntes) mostra
+    o que vai mudar no Financeiro e faz as perguntas; nada é gravado até
+    a confirmação. As perguntas ficam fora da trava de gravação.
+  - Pedido antigo (de antes da ligação, com lançamentos sem linha): as
+    linhas sem foto não criam nada, e o assistente "Ligar pagamentos
+    antigos" (na ficha, no aviso da lista de pedidos e no 📎 do
+    lançamento) sugere os pares — forma, valor exato, situação e data —
+    e grava só o que for confirmado (ligar, criar, juntar, dividir,
+    cancelar o repetido, tirar do pedido). Se um passo cai no meio, as
+    linhas voltam a ser as de antes (as já ligadas ficam) e nada é
+    criado sozinho, salvo o resto de uma divisão já gravada (a linha
+    dele ganha a marca logo depois da divisão; se nem a marca nem o
+    desfazer gravam, o aviso diz o valor que ficou fora e manda abrir o
+    assistente de novo, ou tocar Salvar quando o pedido já não é
+    antigo). "desligar do
+    Financeiro", na linha, desfaz a ligação.
 - Produção (PCP) — 7 etapas fixas: Planejamento, Corte & Usinagem,
   Montagem, Acabamento, Retrabalho, Pronto, Entregue. Dois modos de
   visualização, escolhidos num seletor e gravados no aparelho: Kanban
@@ -832,6 +977,14 @@ e não numera nada.
   no mês, Pago no mês e Pendências (tocar abre a lista só com os
   pendentes). O saldo aparece dividido em No banco (saldo inicial +
   extrato), Fora do banco e, quando há, o pago com data futura.
+  - Período: acima dos números, o mesmo seletor de Pedidos e Orçamentos
+    (Mês, Ano ou Tudo; PER_FIN, começa em Tudo) filtra a lista e o
+    contador junto com os outros filtros e a busca do topo, e leva
+    Recebido e Pago para o mês ou o ano escolhido (em Tudo, o mês
+    corrente); Saldo Atual, o saldo dividido e Pendências não mudam, a
+    barra some na aba Conferir com o banco, e os atalhos que abrem o
+    Financeiro filtrado (Pendências, A Receber, Sem centro) voltam o
+    período para Tudo.
   - Origem: cada lançamento guarda de onde veio (origem = extrato,
     pedido, manual, compra ou nf) e mostra um selo junto do tipo (Banco,
     Pedido, Manual, Compra, NF). O filtro Origem fica no funil da coluna
@@ -862,6 +1015,36 @@ e não numera nada.
     não redesenha as outras. As sugestões de mescla ficam guardadas
     enquanto os dados não mudam, e os cartões fora da tela não são
     calculados pelo navegador (content-visibility).
+  - Comprovantes: cada lançamento tem um 📎 junto de editar e excluir,
+    com a quantidade quando há ("📎 2"); sem comprovante, na tabela, ele
+    aparece com o mouse na linha, como editar e excluir. Ele abre a
+    janela Comprovantes, com o nome e o valor do lançamento, os arquivos
+    (tocar abre; ✕ exclui) e "📎 Anexar" (PNG, JPEG ou PDF até 10 MB,
+    vários de uma vez); o modal do lançamento tem a mesma seção. O
+    lançamento ligado a uma linha de pagamento do pedido (as parcelas do
+    cartão, a linha do banco que recebeu o pagamento) mostra a lista
+    dessa linha: anexar ali grava na linha do pedido, excluir some dos
+    dois lados e a contagem é a mesma. Abrir o Financeiro recarrega
+    também os pedidos, e a conta de um pedido que ainda não está na lista
+    do aparelho (lançado em outro aparelho) faz o 📎 e o Anexar lerem o
+    pedido no servidor antes de decidir onde gravar. Os outros têm a lista própria
+    (coluna comprovantes, arquivos em financeiro/<id>/comprovantes/); o
+    lançamento do pedido ainda sem linha avisa e oferece "Ligar
+    pagamentos do pedido". Gravar precisa de internet: o ERP relê a lista
+    no servidor, muda e grava com resposta, só naquele registro; se a
+    gravação falha, o arquivo enviado sai do Storage. Mesclar passa a
+    lista própria do outro para a linha do banco (sem repetir arquivo) e
+    Separar tira dela só os que vieram dele; o mesclado, escondido, não
+    tem 📎. Excluir o lançamento avisa quantos comprovantes só dele
+    existem e, depois de ele sair do banco, apaga os arquivos que
+    ninguém mais usa. Sem a coluna comprovantes no banco, o 📎 dos
+    lançamentos que não são de pedido fica desligado com o aviso (para o
+    Administrador, com o SQL); o dos pagamentos de pedido funciona.
+  - Lançamento ligado a uma linha de pagamento do pedido: o modal avisa
+    que mudar ali não muda o pedido (a linha mostra a diferença);
+    excluir, trocar o pedido ou virar Saída pergunta antes e deixa a
+    linha "sem lançamento" (ele não volta sozinho); os comprovantes
+    ficam no pedido.
   - Importação do OFX (parseOfx): cada linha entra como Pago e guarda o
     FITID, a conta do arquivo (BANKID/ACCTID), o texto original do banco
     e o lote. A mesma transação (mesmo FITID na conta, mesma data, valor
@@ -893,12 +1076,14 @@ e não numera nada.
     e mesmo valor (até R$ 0,01); a linha do banco a até 3 dias do
     lançamento (do pedido: de 30 dias antes a 7 depois; a conta pendente
     aceita até hoje, mas então vai para Confira); um para um, o par mais
-    parecido primeiro. O nome é comparado sem os termos que todo extrato
+    parecido primeiro; a linha do banco já ligada a uma linha de
+    pagamento só casa com o lançamento dessa mesma linha. O nome é comparado sem os termos que todo extrato
     repete, nomes de banco, palavras de empresa e cidades; o CPF/CNPJ do
     texto do banco decide quando o cadastro também o tem. Dinheiro,
     maquininha e cartão a receber nunca entram.
   - Mesclar, Separar e Restaurar precisam de internet: releem os
-    lançamentos do servidor e gravam com condição (a linha do banco só
+    lançamentos do servidor (e o Mesclar, o pedido ligado que ainda não
+    está na lista do aparelho) e gravam com condição (a linha do banco só
     se ainda não tem mesclagem, o outro só se ainda não foi mesclado),
     para dois aparelhos não mexerem no mesmo par; se a segunda gravação
     falha, a linha do banco volta como estava. O lançamento mesclado só
@@ -1114,10 +1299,15 @@ Na caixa de aprovação o usuário informa:
   data da aprovação e o resto na data de entrega. Boleto vence, por
   padrão, na entrega. As linhas precisam somar, em centavos, o total dos
   itens marcados — senão a aprovação não segue;
-- se o primeiro pagamento já caiu no extrato: aí escolhe o lançamento
-  (entradas pagas dos últimos 180 dias ainda não classificadas num
-  pedido), que vira a primeira conta em vez de criar outra; a
-  observação que ele tinha fica, e o aviso entra depois dela.
+- se o primeiro pagamento já caiu no extrato: aí escolhe a linha do
+  banco (entradas do banco pagas dos últimos 180 dias, ainda não ligadas
+  a nenhum pedido), que passa a ser o 1º pagamento em vez de criar outro
+  lançamento: a 1ª forma fica Já recebido com a data do banco, e a linha
+  do banco ganha a ligação com o pedido e a nota "Pagamento inicial do
+  pedido …" depois da observação que tinha. Vale só para a 1ª forma de
+  PIX, transferência ou boleto, com o mesmo valor (menor: "Dividir a 1ª
+  forma" separa o já recebido do resto a receber); senão Confirmar fica
+  bloqueado com o motivo.
 
 Aprovar exige conexão (exigeConexao): o pedido e a OP recebem o número
 do banco, e sem rede o fluxo pararia no meio. Ao confirmar, o sistema,
@@ -1127,11 +1317,14 @@ itens — preço unitário = preço do item ÷ quantidade, já com desconto —,
 as linhas de pagamento, os mesmos anexos do orçamento (sem copiar os
 arquivos), a origem e a observação "Gerado automaticamente do ORC-… ·
 Entrega combinada: …"; dá baixa no estoque dos itens de catálogo;
-lança as contas a receber no Financeiro — uma por linha e, no cartão,
+lança as contas a receber no Financeiro pela mesma porta do Salvar
+Pedido (sincronizarFinanceiroDoPedido) — uma por linha e, no cartão,
 uma por parcela, mês a mês, com a taxa do número de parcelas (1x a 10x)
 somada por cima e a sobra de centavos na última —, já ligadas ao pedido
-(origem pedido, venda_id, pag_id, parcela/parcelas) quando o banco tem
-essas colunas; e cria a Ordem de Produção na etapa "Planejamento", com
+(origem pedido, venda_id, pag_id, parcela/parcelas); a outra forma "Já
+recebido" que parece já estar no extrato é perguntada antes (ligar à
+linha do banco ou criar), e sem as colunas da ligação no banco as
+contas são criadas como antes; e cria a Ordem de Produção na etapa "Planejamento", com
 prazo = entrega combinada e a lista dos itens (com a descrição
 detalhada) na observação, ligada ao orçamento (orc_id na OP, op_id no
 orçamento). Orçamento aprovado que ficou sem OP mostra o botão ▶
@@ -1334,7 +1527,8 @@ configurações, uma linha de config por campo. Se o banco recusa um
 bloco por chave repetida (ex.: o mesmo FITID na mesma conta, com outro
 id), grava linha a linha e lista as que ficaram de fora. Antes, se o
 arquivo traz origem e ligações do Financeiro, confere se o banco tem
-essas colunas e avisa quando não tem. No fim recarrega tudo do banco.
+essas colunas e avisa quando não tem (o mesmo com a lista própria de
+comprovantes dos lançamentos). No fim recarrega tudo do banco.
 Nada é apagado: o que existe no banco e não está no arquivo permanece. Os
 usuários entram com a senha que tinham, de modo que as pessoas continuam
 entrando com a mesma senha de antes; usuários vindos de um backup antigo,
@@ -1360,7 +1554,8 @@ no Supabase (lerTudoSupabase, em páginas pela chave). Se ela não vier
 inteira, o backup leva os registros guardados no aparelho e avisa.
 
 O que NÃO entra no backup do ERP: os arquivos anexados (fotos e PDFs de
-referência e os comprovantes de pagamento), que ficam no Supabase
+referência e os comprovantes de pagamento, dos pedidos e dos lançamentos
+do Financeiro), que ficam no Supabase
 Storage — o backup guarda só a referência de cada um (nome e caminho).
 Os anexos de referência têm a cópia semanal no Drive descrita abaixo.
 
@@ -1371,12 +1566,13 @@ guarda também uma cópia numa pasta do Drive. A semanal (domingo, 22h)
 copia para uma subpasta dessa pasta os anexos de referência que os
 orçamentos e pedidos citam na coluna anexos: a lista sai dos dados, não
 do bucket, e a tarefa baixa só o que ainda não tem e nunca apaga (os
-comprovantes de pagamento, dentro de vendas.pags, não entram nela). O
+comprovantes de pagamento, dentro de vendas.pags, e os dos lançamentos,
+na coluna comprovantes do financeiro, não entram nela). O
 arquivo diário é a cópia crua das tabelas, no formato
 {formato: "supabase-bruto", geradoEm, tabelas: {clientes: [...], ...,
 config: [...]}}, com os nomes de coluna do banco; por isso o restauro
 grava essas linhas sem conversão (e tira delas as colunas de origem do
-Financeiro se o banco ainda não as tiver). Como no restauro do .json do
+Financeiro, e a de comprovantes, se o banco ainda não as tiver). Como no restauro do .json do
 ERP, usuários sem senha e o histórico ficam de fora.
 
 
@@ -1487,4 +1683,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 20/10/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 21/10/2026.
