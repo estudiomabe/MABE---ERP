@@ -884,6 +884,48 @@ body.sem-fin-obs .fin-obs { display:none; }
 .cb-saldo-linha .mono { font-weight:700;white-space:nowrap; }
 .cb-lista { margin:6px 0 0 18px;padding:0;display:flex;flex-direction:column;gap:4px; }
 body.sem-valores .cb-valor, body.sem-valores .fin-saldo-div, body.sem-valores .cb-saldo { display:none; }
+/* Juntar repasse: a linha do banco do repasse da maquininha guarda as vendas e a taxa */
+.fin-ent-taxa { margin-top:5px;font-size:11px;color:var(--text-muted); }
+.fin-ent-taxa:empty { display:none; }
+.rp-banco { grid-template-columns:minmax(0,1fr); }
+.cb-par.rp-par { max-width:560px; }
+.rp-sub { font-size:12px;font-weight:700;color:var(--text-muted);margin:14px 0 0; }
+.rp-lista { display:flex;flex-direction:column;gap:8px;margin-top:8px; }
+.rp-item { display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;cursor:pointer; }
+.rp-item input { width:20px;height:20px;flex-shrink:0;margin:1px 0 0;accent-color:var(--accent); }
+.rp-item.marcado { border-color:var(--accent);background:rgba(200,169,110,0.12); }
+.rp-item.off { opacity:.65;cursor:not-allowed; }
+.rp-info { flex:1;min-width:0;display:flex;flex-direction:column;gap:2px; }
+.rp-desc { font-size:13px;font-weight:600;color:var(--text);line-height:1.35;word-break:break-word; }
+.rp-desc-banco { font-family:var(--mono);font-size:12px;font-weight:500; }
+.rp-meta { font-size:11.5px;color:var(--text-muted);line-height:1.4;word-break:break-word; }
+.rp-alerta { color:var(--warning);font-weight:600; }
+.rp-val { font-family:var(--mono);font-size:13px;font-weight:700;white-space:nowrap;color:var(--success);flex-shrink:0; }
+.rp-val.sai { color:var(--danger); }
+.rp-rodape { flex-wrap:wrap;position:sticky;bottom:0;z-index:5;background:var(--surface); }
+.rp-resumo { flex:1 1 100%;display:flex;flex-direction:column;gap:3px;font-size:13px;margin-bottom:4px; }
+.rp-resumo .cb-saldo-linha .mono { font-weight:700;white-space:nowrap; }
+.rp-dica { font-size:12px;color:var(--text-muted);line-height:1.45; }
+.rp-vendas { gap:6px; }
+.rp-venda { display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12.5px;line-height:1.35; }
+.rp-venda-txt { min-width:0;word-break:break-word;color:var(--text);font-weight:600; }
+.rp-venda-txt .pc-data { font-weight:500;margin-left:4px; }
+.rp-conta { display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--text-muted);border-top:1px dashed var(--border);padding-top:4px; }
+.rp-conta + .rp-conta { border-top:none;padding-top:0; }
+.rp-conta .mono { font-weight:700;color:var(--text);white-space:nowrap; }
+.cb-trazer { margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px; }
+.cb-trazer-tit { font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px; }
+.cb-trazer .cb-secao-sub { margin-bottom:0; }
+.cb-trazer .rp-lista { margin-top:0; }
+/* o código do pedido (V-0928) não quebra no hífen: com vários no nome do repasse, "V-" ficava numa linha e o número na outra */
+.cod-v { white-space:nowrap; }
+.rp-alerta-taxa { color:var(--danger);font-weight:600; }
+body.sem-valores .rp-val, body.sem-valores .rp-resumo, body.sem-valores .fin-ent-taxa, body.sem-valores .rp-taxa, body.sem-valores .rp-conta { display:none; }
+@media (max-width:860px) {
+  .rp-item { min-height:44px;padding:11px 12px; }
+  .cb-par.rp-par { max-width:none; }
+  .rp-rodape { position:sticky; }
+}
 @media (max-width:860px) {
   .fin-abas { display:flex; }
   .fin-abas .per-tab { flex:1;justify-content:center;min-height:44px;padding:6px 4px;font-size:13px; }
@@ -1296,7 +1338,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
       <div class="stat-row">
         <div class="stat-box"><div class="stat-value" id="fin-saldo">R$0</div><div class="stat-label">Saldo Atual</div><div class="fin-saldo-div" id="fin-saldo-div" title="No banco: saldo inicial + o que veio do extrato. Fora do banco: o que foi pago ou recebido e não está numa linha do banco (dinheiro, maquininha, outra conta, ou ainda não mesclado)."></div></div>
-        <div class="stat-box"><div class="stat-value" id="fin-ent" style="color:var(--success)">R$0</div><div class="stat-label">Recebido no mês</div></div>
+        <div class="stat-box"><div class="stat-value" id="fin-ent" style="color:var(--success)">R$0</div><div class="stat-label">Recebido no mês</div><div class="fin-ent-taxa" id="fin-ent-taxa" title="A diferença entre as vendas que caíram na maquininha e o repasse que entrou no banco (Juntar repasse, em Conferir com o banco)"></div></div>
         <div class="stat-box"><div class="stat-value" id="fin-sai" style="color:var(--danger)">R$0</div><div class="stat-label">Pago no mês</div></div>
         <div class="stat-box num-atalho" role="button" tabindex="0" title="Ver só os lançamentos pendentes" onclick="atalhoPendencias()"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
       </div>
@@ -1870,6 +1912,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 <div class="modal-overlay" id="modal-conciliacao"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🧾 Conferência com o extrato</div><button class="modal-close" onclick="closeModal('modal-conciliacao')">✕</button></div><div class="modal-body" id="conc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="conc-desfazer" onclick="pedirDesfazerAjusteSaldoFin()">↩ Desfazer ajuste do saldo</button><button class="btn btn-primary" id="conc-ajustar" style="display:none" onclick="ajustarSaldoOfx()">Ajustar o saldo</button><button class="btn btn-primary" id="conc-fechar" onclick="closeModal('modal-conciliacao')">Entendi</button></div></div></div>
 <div class="modal-overlay" id="modal-comp-fin"><div class="modal"><div class="modal-header"><div class="modal-title">📎 Comprovantes</div><button class="modal-close" onclick="closeModal('modal-comp-fin')">✕</button></div><div class="modal-body"><div class="comp-fin-cab" id="comp-fin-cab"></div><div class="comp-fin" id="comp-fin-caixa" data-fin=""></div></div><div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-comp-fin')">Fechar</button></div></div></div>
 <div class="modal-overlay" id="modal-mescla"><div class="modal"><div class="modal-header"><div class="modal-title">🔗 Lançamento mesclado</div><button class="modal-close" onclick="closeModal('modal-mescla')">✕</button></div><div class="modal-body" id="mescla-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="mescla-separar">Separar</button><button class="btn btn-primary" onclick="closeModal('modal-mescla')">Fechar</button></div></div></div>
+<div class="modal-overlay" id="modal-repasse"><div class="modal" style="max-width:640px"><div class="modal-header"><div class="modal-title">💳 Juntar repasse</div><button class="modal-close" onclick="closeModal('modal-repasse')">✕</button></div><div class="modal-body" id="repasse-corpo"></div><div class="modal-footer rp-rodape"><div class="rp-resumo" id="repasse-resumo"></div><button class="btn btn-ghost" onclick="closeModal('modal-repasse')">Cancelar</button><button class="btn btn-primary" id="repasse-juntar" onclick="pedirJuntarRepasseFin()">Juntar</button></div></div></div>
 <div class="modal-overlay" id="modal-fc-filtros"><div class="modal"><div class="modal-header"><div class="modal-title" id="fc-titulo">Filtrar</div><button class="modal-close" onclick="closeModal('modal-fc-filtros')">✕</button></div><div class="modal-body" id="fc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="fcLimparTudo(FC_ATUAL);fcAbrirCel(FC_ATUAL)">Limpar</button><button class="btn btn-primary" id="fc-ver" onclick="closeModal('modal-fc-filtros')">Ver</button></div></div></div>
 <div class="modal-overlay" id="modal-lix-vnd"><div class="modal"><div class="modal-header"><div class="modal-title" id="lix-vnd-titulo">Lixeira do pedido</div><button class="modal-close" onclick="closeModal('modal-lix-vnd')">✕</button></div><div class="modal-body"><div id="lix-vnd-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div class="so-admin">A lixeira dos pedidos ainda não está ligada: falta uma coluna no banco. Até lá, tirar um item continua sendo definitivo. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists lixeira jsonb default '[]'::jsonb;</div></div><div class="so-equipe">Lixeira indisponível no momento — por enquanto, tirar um item apaga de vez. Avise o administrador.</div></div><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Itens tirados deste pedido. <strong>Restaurar</strong> devolve o item à lista. Como o resto do pedido, a mudança só fica gravada quando você clicar em <strong>Salvar Pedido</strong>.</div><div class="dup-lista" id="lix-vnd-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-lix-vnd')">Fechar</button></div></div></div>
 <div class="modal-overlay" id="modal-lix-orc"><div class="modal"><div class="modal-header"><div class="modal-title" id="lix-orc-titulo">Lixeira do orçamento</div><button class="modal-close" onclick="closeModal('modal-lix-orc')">✕</button></div><div class="modal-body"><div id="lix-orc-aviso" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div class="so-admin">A lixeira ainda não está ligada: falta uma coluna no banco. Até lá, excluir um item continua sendo definitivo. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.orcamentos add column if not exists lixeira jsonb default '[]'::jsonb;</div></div><div class="so-equipe">Lixeira indisponível no momento — por enquanto, excluir um item apaga de vez. Avise o administrador.</div></div><div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Itens excluídos deste orçamento. <strong>Restaurar</strong> devolve o item ao lugar de onde saiu, com materiais, serviços e preço.</div><div class="dup-lista" id="lix-orc-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-lix-orc')">Fechar</button></div></div></div>
@@ -3553,6 +3596,8 @@ const FUNCOES_DE_GRAVAR=[
  'saveCFConfig','saveCondPagto','saveEmpresaInfo','saveFolhaPagamento','saveMdoTipos',
  /* Conferir com o banco: mesclar e separar gravam dois lançamentos; o "todos" roda um par por vez */
  'mesclarFin','separarFin','naoJuntarFin','mesclarTodosSemDuvida','ajustarSaldoOfx','restaurarOrfaoFin','ajustarSaldoBancoFin','desfazerAjusteSaldo',
+ /* Juntar repasse grava a linha do banco e cada venda; Trazer para o ERP cria as linhas do extrato que ficaram de fora */
+ 'juntarRepasseFin','trazerParaErpFin',
  /* comprovantes pelo 📎 do Financeiro: anexar e excluir regravam a lista (da linha do pedido ou do lançamento) */
  'anexarCompFin','excluirCompFin',
  /* excluem: o pedido devolveria o estoque de novo, e a lixeira apaga pela posição */
@@ -3571,7 +3616,7 @@ const TRAVA_POR_REGISTRO=['orcParaProducao','concluirOP','duplicarVenda','duplic
  'moveOP','advEntrega','baixaMadeira','manutFeita','receberCompra','rejeitarOrcamento',
  'delOrcamento','delEntrega','delFin','delCompra','delCliente','delMadeira','delFerramenta','delFornecedor','delUsuario',
  /* pela linha do banco (1º argumento): mesclar outra linha não espera esta */
- 'mesclarFin','separarFin','naoJuntarFin','restaurarOrfaoFin',
+ 'mesclarFin','separarFin','naoJuntarFin','restaurarOrfaoFin','juntarRepasseFin',
  'acaoLinhaPag','gravarAssistentePagamentos',
  /* pelo lançamento (1º argumento): o comprovante de um lançamento não espera o de outro (as parcelas do mesmo cartão
     esperam pela chave do pedido, COMP_OCUPADO) */
@@ -4387,8 +4432,11 @@ function finEhDoPedido(f,v){const vid=vendaIdDoFin(f);if(vid)return vid===v.id;
 function finsDoPedido(v){return finVisiveis().filter(f=>finEhDoPedido(f,v));}
 /* último lançamento pago do pedido (é o que a data de Pagamento move no Financeiro) e se ainda há parcela pendente */
 function pagamentoDoPedido(v){const fins=finsDoPedido(v).filter(f=>f.tipo==='Entrada');
- const ultimoPago=fins.filter(f=>f.status==='Pago').reduce((m,f)=>(!m||f.data>m.data)?f:m,null);
- return {temLancamento:fins.length>0,ultimoPago,pendente:fins.some(f=>f.status==='Pendente')};}
+ /* a venda do pedido dentro de um repasse da maquininha foi recebida no banco: vale a linha do banco do repasse (a data
+    é a do extrato). No repasse de vários pedidos ela não tem o pedido, e a Visão Geral perdia a data do Pagamento */
+ const reps=FIN_LIGACAO_NO_BANCO?[...new Set(DB.financeiro.filter(f=>f.tipo==='Entrada'&&f.mescladoCom&&vendaIdDoFin(f)===v.id).map(f=>repasseDoFin(f)).filter(w=>w&&!fins.includes(w)))]:[];
+ const ultimoPago=fins.concat(reps).filter(f=>f.status==='Pago').reduce((m,f)=>(!m||f.data>m.data)?f:m,null);
+ return {temLancamento:fins.length+reps.length>0,ultimoPago,pendente:fins.some(f=>f.status==='Pendente')};}
 /* datas guardadas no texto de observações do pedido ("Rótulo: dd/mm/aaaa"), sem coluna nova no Supabase */
 function lerMarcaObs(obs,rotulo){const m=(obs||'').match(new RegExp(rotulo+': (\\d{2})\\/(\\d{2})\\/(\\d{4})'));return m?m[3]+'-'+m[2]+'-'+m[1]:'';}
 function marcaObs(obs,rotulo,iso){obs=obs||'';const re=new RegExp(rotulo+': \\d{2}\\/\\d{2}\\/\\d{4}');
@@ -5392,6 +5440,9 @@ function compDoPedidoExcluido(v,L){const out={banco:[],pagos:[],sem:[],semColuna
   if(w){out.banco.push({f:w,itens,pid:p.id});return;}
   const pg=L.manter.filter(f=>f.tipo==='Entrada'&&f.status==='Pago'&&f.pagId===p.id&&!L.bancos.includes(f)).sort(porData)[0];
   if(pg){out.pagos.push({f:pg,itens,pid:p.id});return;}
+  /* a venda desta linha dentro de um repasse da maquininha: os comprovantes vão para a linha do banco do repasse */
+  const wr=(L.absorvidos||[]).filter(f=>f.pagId===p.id).map(f=>repasseDoFin(f)).find(Boolean);
+  if(wr){out.banco.push({f:wr,itens,pid:p.id,repasse:true});return;}
   semLigado.push({p,itens});});
  semLigado.forEach(({p,itens})=>{const s=soltoParaComp(soltos,p,usados,v.pags);
   if(s){(L.bancos.includes(s)?out.banco:out.pagos).push({f:s,itens,pid:p.id,solto:true});return;}
@@ -5412,7 +5463,10 @@ function textoExclusaoPedido(v,L){const cod='V-'+pad(v.num),base='Pedido '+cod+'
   +(L.apagar.some(f=>/Cartão/.test(f.desc||''))?'\n   (cartão que já passou na maquininha só deixa de cair se for estornado lá)':''));
  if(L.opSai)sai.push('• a OP-'+pad(L.op.num)+', que ainda está em Planejamento');
  if(recebidos.length)fica.push('• '+recebidos.length+' recebimento(s) já pago(s), '+soma(recebidos)+': o dinheiro continua no caixa'+(C.pagos.length?'; os comprovantes passam para eles':'')+'. Se for refazer o pedido, o pedido novo lança esse valor outra vez: depois de salvar, apague no Financeiro a entrada repetida. Se devolveu ao cliente, lance a devolução como Saída');
- if((L.bancos||[]).length)fica.push('• '+L.bancos.length+' linha(s) do banco ('+soma(L.bancos)+'): continuam no banco, sem pedido'+(C.banco.length?'; os comprovantes dos pagamentos passam para elas':'')
+ /* os comprovantes que vão para a linha do banco de um repasse da maquininha que não é do pedido (repasse de vários) */
+ const compRep=C.banco.filter(x=>x.repasse&&!(L.bancos||[]).includes(x.f));
+ if(compRep.length)fica.push('• os comprovantes de '+(compRep.length===1?'1 pagamento passam':compRep.length+' pagamentos passam')+' para a linha do banco do repasse da maquininha ('+[...new Set(compRep.map(x=>fmtD(x.f.data)))].join(', ')+')');
+ if((L.bancos||[]).length)fica.push('• '+L.bancos.length+' linha(s) do banco ('+soma(L.bancos)+'): continuam no banco, sem pedido'+(C.banco.some(x=>L.bancos.includes(x.f))?'; os comprovantes dos pagamentos passam para elas':'')
   +((L.absorvidos||[]).length?'; os lançamentos do pedido juntados a elas saem do pedido (se forem separados depois, voltam cancelados)':''));
  if(C.semColuna)fica.push('• '+C.total+' comprovante(s) de pagamento: ficam guardados no servidor, mas sem aparecer em lugar nenhum (falta uma coluna no banco: avise o administrador)');
  if(saidas.length)fica.push('• '+saidas.length+' saída(s) ligada(s) ao pedido, '+soma(saidas)+(aPagar?' ('+aPagar+' ainda a pagar)':''));
@@ -7202,17 +7256,21 @@ function vendaIdDoFinEm(f,vendas){if(!f)return '';if(!f.vendaId)return vendaIdPe
  const c=String(f.cat||'').trim();if(!c)return '';
  const m=c.match(/^V-(\d+)(?: |$)/);if(!m)return f.vendaId;
  const v=(vendas||[]).find(x=>x.id===f.vendaId);return v&&Number(v.num)===Number(m[1])?f.vendaId:'';}
-/* por linha: X (ativos ligados), Xb (do banco), Xp (do pedido), abs (absorvidos numa linha do banco), canc
+/* por linha: X (ativos ligados), Xb (do banco), Xp (do pedido), abs (absorvidos numa linha do banco; Xr: os que estão
+   num repasse da maquininha, que contam como a conta da parcela, recebida no banco), canc
    (cancelados à mão). Soltos: entradas ativas do pedido sem linha (pag_id vazio ou de linha que não existe). Pedido
    com solto é "antigo": enquanto for, linha sem foto não cria nada (o assistente liga os pagamentos antigos) */
 function classificarFinPedido(v,fins,pids,ctx){
  const ids=new Set(pids||[]),por={},soltos=[],ped=[];
- const vazio=()=>({X:[],Xb:[],Xp:[],abs:[],canc:[],todos:[],estr:[]});
+ const vazio=()=>({X:[],Xb:[],Xp:[],abs:[],Xr:[],canc:[],todos:[],estr:[]});
  if(v&&v.id)(fins||[]).forEach(f=>{if(vendaIdDoFinEm(f,ctx.vendas)!==v.id)return;ped.push(f);if(f.tipo!=='Entrada')return;
+  /* a linha do banco de um repasse da maquininha não é a conta de nenhuma linha (as vendas dentro dela são): não é
+     "solta" do pedido, senão o pedido viraria antigo e o assistente a ofereceria */
+  if(ehRepasseFin(f))return;
   const abs=finAbsorvidoNa(f,ctx.porId);
   if(f.pagId&&ids.has(f.pagId)){const c=por[f.pagId]||(por[f.pagId]=vazio());c.todos.push(f);
    if(ativoFinPed(f)){c.X.push(f);(origemConfFin(f)==='extrato'?c.Xb:c.Xp).push(f);}
-   else if(abs)c.abs.push(f);else if(f.status==='Cancelado'&&!f.mescladoCom)c.canc.push(f);}
+   else if(abs){c.abs.push(f);if(repasseDoFin(f,ctx.porId))c.Xr.push(f);}else if(f.status==='Cancelado'&&!f.mescladoCom)c.canc.push(f);}
   else if(ativoFinPed(f)&&!abs)soltos.push(f);});
  /* "estranhos": o lançamento ativo com a linha desta linha de pagamento, mas que a coluna Pedido diz ser de outro
     pedido (o app de antes da etapa 4 trocava só a coluna). Não conta como desta linha, e o plano não cria outro */
@@ -7418,7 +7476,10 @@ function planoSincronizacao(estado,linhasAlvo,ctx){
   const taxa=taxaDaLinha(L,foto,ctx);pl.taxa=taxa;
   /* troca entre cartão e outra forma: sem nada recebido, refaz; com algo recebido, não mexe */
   if(base.forma&&cartA!==cartB){
-   if(Xp.some(f=>f.status==='Pago')||c.Xb.length){bloqueio(pl,L,'já há parcela recebida e a forma mudou');return;}
+   /* a parcela juntada numa linha do banco (Mesclar, ou dentro de um repasse da maquininha) também já entrou: refazer
+      criaria o pagamento inteiro de novo e o dinheiro dela contaria duas vezes (antes só o Mesclar 1:1 bloqueava) */
+   if(Xp.some(f=>f.status==='Pago')||c.Xb.length||c.abs.length){bloqueio(pl,L,c.Xr.length&&!c.Xb.length&&!Xp.some(f=>f.status==='Pago')
+    ?'já há parcela recebida no banco (dentro do repasse da maquininha) e a forma mudou':'já há parcela recebida e a forma mudou');return;}
    /* nenhuma conta é apagada sem aparecer na janela "Antes de salvar" */
    if(Xp.length)out.avisos.push({chave:'apaga:'+pl.pid,titulo:titulo(pl,L)+' · a forma mudou',
     texto:Xp.map(f=>'• Apaga '+(cartB?'a parcela '+(Number(f.parcela)||1)+' de '+fmt(f.val):'a conta a receber de '+fmt(f.val))+' ('+(PAG_LABELS[base.forma]||base.forma)+').').join('\n')
@@ -7438,14 +7499,14 @@ function planoSincronizacao(estado,linhasAlvo,ctx){
    /* apaga antes de criar: a parcela 1 nova e a velha não podem estar ativas ao mesmo tempo (índice único) */
    Xp.forEach(f=>op(pl,{tipo:'apagar',ordem:1.5,id:f.id,f,compParaLinha:pl.pid}));
    const N=estruturaPag(L).length,vals=cartA?parcelasDoCartao(L.valor,N,taxa,[]):{1:r2c(L.valor)};
-   estruturaPag(L).forEach(k=>op(pl,{tipo:'criar',ordem:2,k,linha:L,taxa,val:vals[k]}));
+   estruturaPag(L).filter(k=>!c.abs.some(f=>(Number(f.parcela)||1)===k)).forEach(k=>op(pl,{tipo:'criar',ordem:2,k,linha:L,taxa,val:vals[k]}));
    pl.reestruturou=true;return;}
   if(cartA){
    const N=Math.max(1,Number(L.parcelas)||1),semBase=base.valor===undefined;
    const valorMudou=!semBase&&!quaseIgual(L.valor,base.valor),parcMudou=!semBase&&Number(base.parcelas||1)!==N;
    const dataMudou=semBase||String(base.data||'')!==String(L.data||'');
    /* as recebidas: as do pedido e a parcela que está no banco (ela também já entrou) */
-   const pagas=Xp.filter(f=>f.status==='Pago').concat(c.Xb);
+   const pagas=Xp.filter(f=>f.status==='Pago').concat(c.Xb,c.Xr);
    const taxaFoto=base.taxa!=null?Number(base.taxa):taxa;
    const sufAntes=k=>sufixoDescPag({forma:'cartao',parcelas:Number(base.parcelas||N)},k,taxaFoto),sufAgora=k=>sufixoDescPag({forma:'cartao',parcelas:N},k,taxa);
    if(valorMudou||parcMudou||semBase){
@@ -7474,11 +7535,11 @@ function planoSincronizacao(estado,linhasAlvo,ctx){
        2 apagada lá e a linha passada para 2x apagava a 3, e o Financeiro ficava com uma parcela só). Se o plano apaga
        parcela ou diminui o que havia e o Financeiro fica abaixo do total da linha: nada muda nesta linha (I-BLOQUEIO) */
     const ksNovas=ksACriar(L,c,foto,d,pl.criarAgora),novoVal=new Map(novas.filter(o=>o.campos.val!==undefined).map(o=>[o.id,o.campos.val]));
-    const somaAntesF=r2c(Xp.concat(c.Xb).reduce((t,f)=>t+(Number(f.val)||0),0));
-    const somaDepoisF=r2c(Xp.concat(c.Xb).filter(f=>!tiradas.includes(f)).reduce((t,f)=>t+(novoVal.has(f.id)?novoVal.get(f.id):Number(f.val)||0),0)
+    const somaAntesF=r2c(Xp.concat(c.Xb,c.Xr).reduce((t,f)=>t+(Number(f.val)||0),0));
+    const somaDepoisF=r2c(Xp.concat(c.Xb,c.Xr).filter(f=>!tiradas.includes(f)).reduce((t,f)=>t+(novoVal.has(f.id)?novoVal.get(f.id):Number(f.val)||0),0)
      +ksNovas.reduce((t,k)=>t+(Number(vals[k])||0),0));
     if(somaDepoisF<total-0.02&&(tiradas.length||somaDepoisF<somaAntesF-0.005)){
-     const faltam=estruturaPag(L).filter(k=>!c.X.some(f=>(Number(f.parcela)||1)===k)&&!ksNovas.includes(k));
+     const faltam=estruturaPag(L).filter(k=>!c.X.concat(c.Xr).some(f=>(Number(f.parcela)||1)===k)&&!ksNovas.includes(k));
      bloqueio(pl,L,(faltam.length?'no Financeiro '+(faltam.length>1?'faltam as parcelas '+listaE(faltam)+' (apagadas ou canceladas lá)':'falta a parcela '+faltam[0]+' (apagada ou cancelada lá)')+', que o ERP não cria de novo sozinho, e ':'')
       +'com esta mudança'+(tiradas.length?' (que apagaria '+tiradas.map(f=>'a parcela '+(Number(f.parcela)||1)+' de '+fmt(f.val)).join(' e ')+')':'')
       +' as parcelas no Financeiro somariam '+fmt(somaDepoisF)+', menos que o total da linha ('+fmt(total)+')');
@@ -7499,7 +7560,7 @@ function planoSincronizacao(estado,linhasAlvo,ctx){
    if(dec['dataVG:'+pl.pid]&&p1&&p1.status==='Pago'&&String(p1.data||'').slice(0,10)!==L.data)op(pl,{tipo:'mudar',ordem:1,id:p1.id,campos:{data:L.data},esperado:{data:p1.data},f:p1});
    /* a situação só anda para a frente, e só na 1ª parcela (as outras são do repasse da maquininha) */
    if((base.status||'Pendente')!=='Pago'&&L.status==='Pago'&&p1&&p1.status==='Pendente')op(pl,{tipo:'marcarPago',ordem:6,id:p1.id,f:p1});
-   else if(!autom&&(base.status||'Pendente')!=='Pago'&&L.status==='Pago'&&!p1&&!c.Xb.some(f=>(Number(f.parcela)||1)===1))
+   else if(!autom&&(base.status||'Pendente')!=='Pago'&&L.status==='Pago'&&!p1&&!c.Xb.concat(c.Xr).some(f=>(Number(f.parcela)||1)===1))
     out.avisos.push({chave:'p1:'+pl.pid,titulo:titulo(pl,L),texto:'A parcela 1 deste cartão não está no Financeiro (apagada ou cancelada lá): nada é marcado como recebido. As outras parcelas continuam a receber.'});
    return;}
   /* PIX, transferência, boleto, dinheiro: valor e data. Igual à foto no Financeiro → recebe a linha; igual à linha →
@@ -7551,7 +7612,10 @@ function planoSincronizacao(estado,linhasAlvo,ctx){
   /* o lançamento juntado a uma linha do banco (Juntar, Mesclar) sai do pedido junto: senão ele continuava apontando
      para o pagamento que sumiu, e um Separar depois trazia de volta uma conta a receber que não existe mais */
   c.abs.forEach(f=>r.ops.push({tipo:'soltarAbsorvido',id:f.id,f,wId:f.mescladoCom,pid:pl.pid,nota:'Saiu do pedido '+cod+' em '+hoje5+' (o pagamento foi tirado)'}));
-  if(r.comp.length){let dest=c.Xb[0]||c.Xp.find(f=>f.status==='Pago')||null,solto=false;
+  /* a venda dentro de um repasse da maquininha: os comprovantes vão para a linha do banco do repasse (no Mesclar 1:1
+     eles já iam para a linha do banco; antes, no repasse, eram excluídos) */
+  const wRep=c.Xr.length?ctx.porId.get(c.Xr[0].mescladoCom)||null:null;
+  if(r.comp.length){let dest=c.Xb[0]||wRep||c.Xp.find(f=>f.status==='Pago')||null,solto=false;
    /* sem lançamento ligado (pedido antigo): o dinheiro da linha pode estar no Financeiro ainda sem linha. O recebido
       do pedido de mesmo valor fica com os comprovantes, em vez de eles saírem */
    if(!dest){dest=soltoParaComp(cls.soltos,L,out.usadosComp||(out.usadosComp=new Set()),srvLinhas.concat(alvoL.filter(a=>!srv.has(a.id))));solto=!!dest;}
@@ -7568,7 +7632,7 @@ function planoSincronizacao(estado,linhasAlvo,ctx){
   if(r.comp.length){const k=r.comp.length;
    if(!colunaCompFinPronta())ls.push(FIN_COMP_CONFERIDA?'• O(s) '+k+' comprovante(s) fica(m) guardado(s) no servidor, mas sem aparecer em lugar nenhum (falta uma coluna no banco: avise o administrador).'
     :'• O(s) '+k+' comprovante(s) ainda não tem(têm) para onde ir: a conferência dos comprovantes no servidor não terminou (salve de novo em instantes).');
-   else if(r.destinoComp&&r.destinoComp.banco)ls.push('• O(s) '+k+' comprovante(s) passa(m) para a linha do banco de '+fmtD(r.destinoComp.f.data)+'.');
+   else if(r.destinoComp&&r.destinoComp.banco)ls.push('• O(s) '+k+' comprovante(s) passa(m) para a linha do banco de '+fmtD(r.destinoComp.f.data)+(ehRepasseFin(r.destinoComp.f)?' (o repasse da maquininha)':'')+'.');
    else if(r.destinoComp&&r.destinoComp.solto)ls.push('• O(s) '+k+' comprovante(s) passa(m) para o lançamento recebido de '+fmtD(r.destinoComp.f.data)+' ('+fmt(r.destinoComp.f.val)+'), do pedido e ainda sem linha.');
    else if(r.destinoComp)ls.push('• O(s) '+k+' comprovante(s) passa(m) para o lançamento cancelado.');
    else ls.push('• Exclui o(s) comprovante(s): '+r.comp.map(x=>x.nome).join(', ')+'.');}
@@ -7588,7 +7652,8 @@ function planoSincronizacao(estado,linhasAlvo,ctx){
      recusaria, e sem ele seria uma conta em dobro. A linha fica "sem lançamento (passado para outro pedido)" */
   if(!c.X.length&&!c.abs.length&&c.estr.length){pl.caso='T3m';pl.novaFoto='alvo';if(!M||M.motivo!=='movido')pl.marcarM={motivo:'movido'};pl.limparP=!!P;return;}
   if(M&&!c.X.length&&!P){pl.caso='T3';if(!foto||mudouDaFoto(A).length)pl.novaFoto='alvo';return;}
-  if(!foto&&!P&&c.X.length){pl.caso='T4a';pl.novaFoto='adotar';pl.tirarM=!!M;return;}
+  /* a venda dentro de um repasse da maquininha (Xr) também é o lançamento da linha: adota, sem perguntar se cria */
+  if(!foto&&!P&&(c.X.length||c.Xr.length)){pl.caso='T4a';pl.novaFoto='adotar';pl.tirarM=!!M;return;}
   if(!foto&&!P&&cls.antigo){pl.caso='T4b';return;}
   /* a linha do pedido duplicado conta como nova: ele acabou de nascer, e o aviso do Duplicar promete as contas */
   if(!foto&&!P&&(!S||S.duplicada)){pl.caso='T4c';
@@ -7634,7 +7699,16 @@ function planoSincronizacao(estado,linhasAlvo,ctx){
    if(!pl.bloqueio&&!pl.reestruturou&&!pl.pendente)criarFaltantes(pl,A,c,foto,undefined);
    if(pl.ops.length||pl.decisao!==undefined||out.perguntas.some(it=>it.chave.split(':')[1]===pid))pl.efeito=true;
    return;}
-  pl.caso='T6d';pl.novaFoto='alvo';});
+  pl.caso='T6d';pl.novaFoto='alvo';
+  /* a venda (ou as parcelas) desta linha está num repasse da maquininha: o Financeiro não muda com a linha. Se o valor
+     novo deixou de bater com o que está no repasse, a janela avisa (antes a diferença sumia sem aviso nem conta) */
+  if(c.Xr.length&&c.Xr.length===c.abs.length&&(D.includes('valor')||D.includes('parcelas'))&&!(A.forma==='cartao'&&foto&&foto.taxa==null)){
+   const somaR=r2c(c.Xr.reduce((s,f)=>s+(Number(f.val)||0),0)),tx=A.forma==='cartao'?taxaDaLinha(A,foto,ctx):0,alvoR=r2c((Number(A.valor)||0)*(1+tx/100));
+   if(Math.abs(somaR-alvoR)>0.02){const ws=[...new Set(c.Xr.map(f=>ctx.porId.get(f.mescladoCom)).filter(Boolean))];
+    out.avisos.push({chave:'rep:'+pid,alerta:true,titulo:titulo(pl,A)+' · está no repasse da maquininha',
+     texto:'O Financeiro não muda: '+(c.Xr.length===1?'a venda deste pagamento já está':'as '+c.Xr.length+' parcelas deste pagamento já estão')+' no repasse'
+      +(ws.length?' de '+ws.map(w=>fmtD(w.data)).join(', '):'')+' ('+fmt(somaR)+'), e a linha fica com '+fmt(alvoR)+(tx?' (com a taxa do cartão)':'')
+      +'. Para corrigir, desfaça o repasse (Separar, em Conferir com o banco) e junte de novo, ou lance a diferença no Financeiro.'});}}});
  /* ---- o pedido inteiro ---- */
  if(out.semContas&&dec.__semContas===undefined&&!out.perguntas.some(x=>x.chave==='__semContas')){const ls=out.semContas,k=ls.length;
   const irm=out.perguntas.some(it=>ls.some(x=>it.chave==='irmao:'+x.pl.pid));
@@ -7764,7 +7838,8 @@ async function executarOpSinc(o,ex){const F='financeiro';
   const nota=o.aprovacao?'Pagamento inicial do pedido '+rot+', recebido antes de o pedido ser lançado.':'Ligado ao pagamento do pedido '+rot+' em '+fmtD(today()).slice(0,5)+'.';
   const mud={venda_id:ex.vid,pag_id:o.pid,parcela:1,parcelas:1,cat:rot};
   if(FIN_OBS_NO_BANCO)mud.obs=[String(w.obs||'').trim(),nota].filter(Boolean).join(' · ');
-  let q=supa.from(F).update(mud).eq('id',w.id).is('pag_id',null).is('mesclado_com',null);
+  /* .is('mesclagem',null): o repasse (ou o Mesclar) de outro aparelho nesta linha do banco no meio não deixa ligar */
+  let q=supa.from(F).update(mud).eq('id',w.id).is('pag_id',null).is('mesclado_com',null).is('mesclagem',null);
   q=w.vendaId?q.eq('venda_id',ex.vid):q.is('venda_id',null);
   const r=await q.select('id');
   const ligou=x=>{Object.assign(x,{vendaId:ex.vid,pagId:o.pid,parcela:1,parcelas:1,cat:rot},mud.obs!==undefined?{obs:mud.obs}:{});saveDB();syncSheets('financeiro','upsert',x);
@@ -8304,10 +8379,25 @@ function coberturaDaLinha(v,L,cls,info){
   if(ehCartao){if(somaB<Number(L.valor)-0.005)out.texto2='Banco recebeu '+fmt(somaB)+' (taxa da maquininha ~'+fmtN((1-somaB/Number(L.valor))*100,1)+'%)';}
   else if(!quaseIgual(somaB,L.valor)){out.texto2='⚠ Banco: '+fmtD(w.data)+' · '+fmt(somaB)+' — Linha: '+fmt(L.valor);out.botoes.push({acao:'ajustarBanco',rotulo:'Ajustar a linha ao banco'});}
   else if(L.status!=='Pago'||(c.Xb.length===1&&String(w.data).slice(0,10)!==L.data)){out.texto2='⚠ Banco: '+fmtD(w.data)+' · recebido — Linha: '+(L.status!=='Pago'?'a receber · ':'')+fmtD(L.data);out.botoes.push({acao:'ajustarBanco',rotulo:'Ajustar a linha ao banco'});}}
- else if(!c.X.length&&c.abs.length){const w=info.porId.get(c.abs[0].mescladoCom);out.classe='ok';out.texto='✔ No banco (junto com outro lançamento)'+(w?' · '+fmtD(w.data):'');}
+ else if(!c.X.length&&c.abs.length){const w=info.porId.get(c.abs[0].mescladoCom);out.classe='ok';
+  /* dentro de um repasse da maquininha (Juntar repasse): a data de cada repasse (as parcelas podem estar em mais de um) */
+  const reps=[...new Set(c.Xr.map(f=>info.porId.get(f.mescladoCom)).filter(Boolean))].sort((a,b)=>dataFin(a).localeCompare(dataFin(b)));
+  out.texto=reps.length?'✔ No banco · '+(reps.length===1?'repasse de ':'repasses de ')+reps.map(x=>fmtD(x.data)).join(', ')
+   :'✔ No banco (junto com outro lançamento)'+(w?' · '+fmtD(w.data):'');
+  /* a linha contra o que está no repasse: o valor (no cartão, o total com a taxa; o cartão ligado pelo assistente não é
+     conferido, como acima) e a situação. Antes ficava só "No banco", com a linha a receber ou com outro valor, e a
+     diferença sumia sem conta a receber */
+  if(c.Xr.length&&c.Xr.length===c.abs.length){const somaR=r2c(c.Xr.reduce((s,f)=>s+(Number(f.val)||0),0));
+   let dif='';
+   if(!(ehCartao&&foto&&foto.taxa==null)){const tx=ehCartao?taxaDaLinha(L,foto,{taxa:taxaParcela}):0,alvoR=r2c((Number(L.valor)||0)*(1+tx/100));
+    if(Math.abs(somaR-alvoR)>0.02)dif='⚠ No repasse: '+fmt(somaR)+' — Linha: '+fmt(alvoR)+(tx?' (com a taxa do cartão)':'');}
+   if(!dif&&L.status!=='Pago'&&(!ehCartao||c.Xr.some(f=>(Number(f.parcela)||1)===1)))
+    dif='⚠ No banco'+(reps.length?' (repasse de '+fmtD(reps[0].data)+')':'')+': recebido — Linha: a receber · '+fmtD(L.data);
+   if(dif){out.texto2=dif;out.botoes.push({acao:'ajustarFin',rotulo:'Ajustar a linha ao repasse'});}}}
  else if(c.Xp.length||cartaoMisto){
-  if(ehCartao){const todas=c.X,p=todas.filter(f=>f.status==='Pago').length,q=todas.length-p,N=Ncart;
-   out.texto='• No Financeiro: '+todas.length+' parcela(s) · '+p+' recebida(s)'+(c.Xb.length?' ('+c.Xb.length+' no banco)':'')+' · '+q+' a receber';
+  /* as parcelas dentro de um repasse da maquininha (Xr) contam como recebidas no banco */
+  if(ehCartao){const todas=c.X.concat(c.Xr),p=todas.filter(f=>f.status==='Pago'||c.Xr.includes(f)).length,q=todas.length-p,N=Ncart,nb=c.Xb.length+c.Xr.length;
+   out.texto='• No Financeiro: '+todas.length+' parcela(s) · '+p+' recebida(s)'+(nb?' ('+nb+' no banco)':'')+' · '+q+' a receber';
    const ksF=todas.map(f=>Number(f.parcela)||1),faltaK=estruturaPag(L).filter(k=>!ksF.includes(k)),alemK=ksF.filter(k=>k>N);
    if(todas.length!==N||faltaK.length||alemK.length){const nt=[];
     if(faltaK.length)nt.push((faltaK.length>1?'faltam as parcelas ':'falta a parcela ')+faltaK.join(', '));
@@ -8436,7 +8526,7 @@ const temFinPendente=v=>!!v&&(v.pags||[]).some(p=>p&&p.finPendente);
 const seloFinPendente=v=>temFinPendente(v)&&!modo317()?'<span class="badge badge-warning selo-fin-pend" title="Um pagamento deste pedido ainda não foi confirmado no Financeiro: abra o pedido para tentar de novo">Financeiro pendente</span>':'';
 function pedidosAntigosFin(){if(modo317()||!FIN_LIGACAO_NO_BANCO)return [];
  const porId=new Map(DB.financeiro.map(f=>[f.id,f])),porV=new Map(DB.vendas.map(v=>[v.id,v])),antigos=new Set();
- DB.financeiro.forEach(f=>{if(f.tipo!=='Entrada'||!ativoFinPed(f))return;
+ DB.financeiro.forEach(f=>{if(f.tipo!=='Entrada'||!ativoFinPed(f)||ehRepasseFin(f))return;
   const vid=vendaIdDoFinEm(f,DB.vendas);if(!vid||antigos.has(vid))return;const v=porV.get(vid);if(!v)return;
   if(f.pagId&&(v.pags||[]).some(p=>p&&p.id===f.pagId))return;
   if(finAbsorvidoNa(f,porId))return;antigos.add(vid);});
@@ -8458,27 +8548,34 @@ function ajustarLinhaPag(pid,acao){const l=[...document.querySelectorAll('#vnd-p
  const s={};
  if(acao==='ajustarBanco'&&c.Xb.length){s.valor=r2c(c.Xb.reduce((t,f)=>t+(Number(f.val)||0),0));s.data=String(c.Xb[0].data).slice(0,10);s.status='Pago';
   if(L.forma==='cartao')delete s.valor;}
- else if(acao==='ajustarFin'&&(c.Xp.length||(L.forma==='cartao'&&c.X.length))){const lst=L.forma==='cartao'?c.X:c.Xp,f1=lst.find(f=>(Number(f.parcela)||1)===1)||lst[0];
+ else if(acao==='ajustarFin'&&(c.Xp.length||(L.forma==='cartao'&&c.X.length)||c.Xr.length)){
+  /* as vendas dentro de um repasse da maquininha (Xr) contam como recebidas no banco: no cartão entram com as outras
+     parcelas; fora dele, sem conta do pedido, a linha fica com o valor delas, recebida. Antes o cartão com a parcela 1
+     no repasse ia a um valor errado (ela contava como faltando) */
+  const rec=f=>c.Xr.includes(f),stDe=f=>rec(f)?'Pago':f.status;
+  const lst=L.forma==='cartao'?c.X.concat(c.Xr):c.Xp.length?c.Xp:c.Xr,f1=lst.find(f=>(Number(f.parcela)||1)===1)||lst[0];
   const cart=L.forma==='cartao',k1=cart?Number(f1.parcela)||1:1;
   /* no cartão sem a parcela 1 (apagada lá): a data da linha é a da 1ª que ficou, voltada os meses que faltam, e a
      situação da linha fica (ela é a da parcela 1) */
   s.data=k1>1?addMonths(String(f1.data).slice(0,10),-(k1-1)):String(f1.data).slice(0,10);
-  if(k1===1)s.status=f1.status==='Pago'?'Pago':'Pendente';
+  if(k1===1)s.status=stDe(f1)==='Pago'?'Pago':'Pendente';
+  /* fora do cartão, a venda que entrou a receber no repasse foi recebida com ele: a data é a do repasse */
+  if(!cart&&rec(f1)&&!(f1.mesclagem&&f1.mesclagem.statusAnterior==='Pago')){const wr=DB.financeiro.find(x=>x.id===f1.mescladoCom);if(wr)s.data=String(wr.data).slice(0,10);}
   if(cart){
    /* o número de parcelas é o da maior parcela que está lá, e não quantas estão: com a 2 de 3 apagada no Financeiro,
       a linha ia para 2x e o Salvar apagava a 3. A parcela que falta não tem como aparecer na linha: o valor é o que
       deixa cada parcela que ficou com o valor que tem (as a receber dividem o total com a que falta) */
    const N=Math.max(1,...lst.map(f=>Number(f.parcela)||1));s.parcelas=N;
-   const pg=lst.filter(f=>f.status==='Pago'||origemConfFin(f)==='extrato'),pend=lst.filter(f=>!pg.includes(f));
+   const pg=lst.filter(f=>f.status==='Pago'||origemConfFin(f)==='extrato'||rec(f)),pend=lst.filter(f=>!pg.includes(f));
    const soma=a=>r2c(a.reduce((t,f)=>t+(Number(f.val)||0),0));
    const alvo=pend.length?r2c(soma(pg)+soma(pend)/pend.length*(N-pg.length)):soma(lst);
    const txLinha=taxaDaLinha(Object.assign({},L,{parcelas:N}),(l._pag||{}).sinc,{taxa:taxaParcela}),tx=Number(taxaParcela(N))||0;
    if(Math.abs(r2c(L.valor*(1+txLinha/100))-alvo)>0.02)s.valor=r2c(alvo/(1+tx/100));}
-  else s.valor=r2c(f1.val);}
+  else s.valor=rec(f1)?r2c(c.Xr.reduce((t,f)=>t+(Number(f.val)||0),0)):r2c(f1.val);}
  else return;
  const novo=Object.assign({},L,s);
  if(Number(novo.parcelas||1)===Number(L.parcelas||1)&&quaseIgual(novo.valor,L.valor)&&String(novo.data||'')===String(L.data||'')&&novo.status===L.status){
-  const ks=acao==='ajustarFin'&&L.forma==='cartao'?c.X.map(f=>Number(f.parcela)||1):[],faltam=estruturaPag(L).filter(k=>ks.length&&!ks.includes(k));
+  const ks=acao==='ajustarFin'&&L.forma==='cartao'?c.X.concat(c.Xr).map(f=>Number(f.parcela)||1):[],faltam=estruturaPag(L).filter(k=>ks.length&&!ks.includes(k));
   toast(faltam.length?'No Financeiro '+(faltam.length>1?'faltam as parcelas '+faltam.join(', ')+' deste cartão (apagadas':'falta a parcela '+faltam[0]+' deste cartão (apagada')+' ou cancelada'+(faltam.length>1?'s':'')+' lá). A linha não tem como mostrar uma parcela que falta e o ERP não a cria de novo sozinho: a linha fica como está.'
    :'A linha já está como o Financeiro.','info',8000);return;}
  escreverCamposLinhaPag(l,novo);recalcularPagamentos(l);
@@ -8622,7 +8719,8 @@ const rotuloLancAssist=f=>fmt(f.val)+' · '+situacaoA(f.status)+' · '+fmtD(f.da
 /* monta o modelo do assistente a partir do estado lido no servidor (pura, salvo o uid das linhas montadas) */
 function montarAssistente(estado,ctx){
  const v=estado.v,pags=clonePags(v.pags),abs=f=>finAbsorvidoNa(f,ctx.porId);
- const ped=estado.fins.filter(f=>f.tipo==='Entrada'&&vendaIdDoFinEm(f,ctx.vendas)===v.id&&!abs(f));
+ /* a linha do banco de um repasse da maquininha fica de fora: ela guarda as vendas, não é a conta de uma linha */
+ const ped=estado.fins.filter(f=>f.tipo==='Entrada'&&vendaIdDoFinEm(f,ctx.vendas)===v.id&&!abs(f)&&!ehRepasseFin(f));
  const ids=new Set(pags.map(p=>p.id)),livre=f=>!f.pagId||!ids.has(f.pagId),canc=f=>f.status==='Cancelado'&&!f.mescladoCom;
  const ehB=f=>origemConfFin(f)==='extrato';
  const pedAtivos=ped.filter(f=>!ehB(f)&&livre(f)&&ativoFinPed(f)),pedCanc=ped.filter(f=>!ehB(f)&&livre(f)&&canc(f));
@@ -8634,10 +8732,14 @@ function montarAssistente(estado,ctx){
  const usados=new Set();
  const linha=o=>Object.assign({id:'',n:0,forma:'pix',valor:0,parcelas:1,data:'',status:'Pendente',local:'',salva:false,ligada:false,montada:false,
   orig:null,ops:[],sug:-1,selo:'sp',motivo:'',notas:[]},o);
+ /* a linha cuja conta já está juntada numa linha do banco (Mesclar, ou dentro de um repasse da maquininha) já está
+    ligada, mesmo sem a foto (app antigo): senão o assistente sugeria outro lançamento para ela e o mesmo dinheiro
+    contava duas vezes (a venda absorvida não segura o índice único). O lançamento que sobrar vai para "Sobraram" */
+ const jaNoBanco=pid=>estado.fins.some(f=>f.tipo==='Entrada'&&f.pagId===pid&&vendaIdDoFinEm(f,ctx.vendas)===v.id&&abs(f));
  /* ---- as linhas ---- */
  if(pags.length){
   pags.forEach((p,i)=>A.linhas.push(linha({id:p.id,n:i+1,forma:p.forma,valor:r2c(p.valor),parcelas:Math.max(1,Number(p.parcelas)||1),
-   data:String(p.data||'').slice(0,10),status:p.status==='Pago'?'Pago':'Pendente',local:p.local||'',salva:true,ligada:!!p.sinc,orig:p})));}
+   data:String(p.data||'').slice(0,10),status:p.status==='Pago'?'Pago':'Pendente',local:p.local||'',salva:true,ligada:!!p.sinc||jaNoBanco(p.id),orig:p})));}
  else{
   /* parcelas "i/N" do cartão viram uma linha Nx; cada outro lançamento ativo, uma linha; o cancelado à mão que tem
      uma linha do banco paga de mesmo valor vira uma linha Já recebido com o valor e a data do banco, já ligada a ela */
@@ -8747,7 +8849,10 @@ function montarAssistente(estado,ctx){
  if(sug)A.linhas.forEach(l=>{const o=l.sug>=0?l.ops[l.sug]:null;if(!o||o.tipo!=='lanc')return;const f=fin(o.ids[0]);if(!f||f.status!=='Pendente')return;
   const par=sug.semDuvida.concat(sug.confira).find(x=>x.l.id===f.id&&!bancosSug.has(x.w.id));
   if(par)l.notas.push('Em Conferir com o banco há uma linha do banco que pode ser este pagamento ('+fmtD(par.w.data)+' · '+fmt(par.w.val)+').');});
- A.fins=ped;return A;}
+ A.fins=ped;
+ /* as vendas do pedido dentro de um repasse da maquininha: contam no resumo "No Financeiro" (são a conta da parcela) */
+ A.noRepasse=estado.fins.filter(f=>f.tipo==='Entrada'&&vendaIdDoFinEm(f,ctx.vendas)===v.id&&!!repasseDoFin(f,ctx.porId));
+ return A;}
 async function abrirAssistentePagamentos(vid,opc){opc=opc||{};
  if(!guard())return;
  if(modo317()){toast(paraAdmin('A ligação dos pagamentos com o Financeiro precisa das colunas de origem no banco.','A ligação dos pagamentos ainda não está disponível — avise o administrador.'),'error',8000);return;}
@@ -8766,7 +8871,7 @@ function pintarAssistente(){const A=ASSIST;if(!A)return;
   const prox=(A.fila||[]).filter(id=>id!==A.vid&&pedidosAntigosFin().some(v=>v.id===id));
   $('assist-rodape').innerHTML='<button class="btn btn-ghost" onclick="fecharAssistente()">Fechar</button>'+(prox.length?'<button class="btn btn-primary" onclick="proximoAssistente()">Próximo pedido</button>':'');return;}
  const somaL=r2c(A.linhas.filter(l=>!(A.escolha[l.id]>=0&&l.ops[A.escolha[l.id]].tipo==='tirar')).reduce((s,l)=>s+l.valor,0));
- const somaF=r2c(A.fins.filter(f=>ativoFinPed(f)).reduce((s,f)=>s+(Number(f.val)||0),0));
+ const somaF=r2c(A.fins.filter(f=>ativoFinPed(f)).concat(A.noRepasse||[]).reduce((s,f)=>s+(Number(f.val)||0),0));
  let h='<p class="as-intro">Este pedido é de antes da ligação com o Financeiro. Para cada pagamento, escolha qual lançamento do Financeiro é ele. Nada é gravado até você tocar em Gravar.</p>'
   +'<div class="as-resumo">Pedido '+fmt(A.total)+' · Linhas '+fmt(somaL)+' · No Financeiro '+fmt(somaF)+'</div>';
  const dif=r2c(A.total-somaL);
@@ -11300,6 +11405,10 @@ async function ajustarSaldoOfx(){if(!guard())return;
  renderFinanceiro();
  mostrarConciliacaoOfx(an2,true);
  toast('Saldo ajustado. '+(an2.porOrigem?'No banco':'Saldo do ERP')+': '+fmt(saldoBaseOfx()),'success',6000);}
+/* a linha do banco que a importação do extrato cria; a mesma para "Trazer para o ERP" (as linhas do extrato que
+   ficaram de fora). t: {tipo, data, desc, val, fitid} da linha do arquivo */
+function linhaDoExtratoFin(t,conta,lote){return comLigacaoFin(Object.assign({id:uid()},{tipo:t.tipo,data:t.data,desc:t.desc,cat:'Extrato bancário',val:t.val,status:'Pago'}),
+ {origem:'extrato',fitid:t.fitid||'',conta,descBanco:t.desc,loteOfx:lote});}
 async function confirmarImportacaoOfx(){if(!guard())return;
  const idxs=Array.from(document.querySelectorAll('.ofx-item-check:checked')).map(c=>Number(c.value));
  /* nada marcado (extrato já todo lançado) ainda vale a pena: confere o saldo e aponta as diferenças */
@@ -11322,8 +11431,7 @@ async function confirmarImportacaoOfx(){if(!guard())return;
  const repetido=i=>FIN_LIGACAO_NO_BANCO&&!!OFX_ITENS[i].fitid&&(!!OFX_ITENS[i].jaNoErp||jaTem.has(OFX_CONTA+'|'+OFX_ITENS[i].fitid));
  const repetidos=idxs.filter(repetido).length;
  const avisoRep=repetidos?' '+repetidos+' item(ns) marcado(s) já estava(m) no ERP (mesmo identificador do banco) e não entrou(aram) de novo.':'';
- const novos=idxs.filter(i=>!repetido(i)).map(i=>comLigacaoFin(Object.assign({id:uid()},{tipo:OFX_ITENS[i].tipo,data:OFX_ITENS[i].data,desc:OFX_ITENS[i].desc,cat:'Extrato bancário',val:OFX_ITENS[i].val,status:'Pago'}),
-  {origem:'extrato',fitid:OFX_ITENS[i].fitid||'',conta:OFX_CONTA,descBanco:OFX_ITENS[i].desc,loteOfx:lote}));
+ const novos=idxs.filter(i=>!repetido(i)).map(i=>linhaDoExtratoFin(OFX_ITENS[i],OFX_CONTA,lote));
  if(novos.length){
   const {error}=await supa.from('financeiro').insert(novos.map(n=>financeiroParaSupabase(n)));
   if(error){const jaNoErp='algum item deste extrato já está no ERP (talvez importado em outro aparelho). Recarregue o ERP e importe de novo: os repetidos aparecem como já existentes.';
@@ -11409,6 +11517,7 @@ function renderFinanceiro(){pintarPeriodoFin();const ym=today().slice(0,7);
  const saldo=saldoFin();$('fin-saldo').textContent=fmtSinal(saldo);$('fin-saldo').style.color=corSinal(saldo);
  pintarSaldoDivididoFin();
  $('fin-ent').textContent=fmtK(pagos.filter(f=>f.tipo==='Entrada'&&noPeriodoCartoesFin(f.data,ym)).reduce((s,f)=>s+Number(f.val),0));
+ pintarTaxasRepasseFin(pagos,ym);
  $('fin-sai').textContent=fmtK(pagos.filter(f=>f.tipo==='Saída'&&noPeriodoCartoesFin(f.data,ym)).reduce((s,f)=>s+Number(f.val),0));
  $('fin-pend').textContent=visiveis.filter(f=>f.status==='Pendente').length;
  if($('ofx-ultima-atualizacao'))$('ofx-ultima-atualizacao').textContent=DB.config.ultimaImportacaoOfx?('Última atualização: '+DB.config.ultimaImportacaoOfx):'Nenhuma importação de extrato ainda';
@@ -11532,7 +11641,7 @@ function linhaMedidaFin(lista,soLer,ctx){
 function linhaTabelaFin(f,ctx,soLer){const ro=soLer(f),stB=BADGE_ST_FIN[f.status]||'badge-muted',id=esc(f.id);
  const ccCell=!ro?('<select class="form-control" data-fin="'+id+'" data-campo="cc" style="font-size:11px;padding:3px 5px;min-width:150px;'+(f.centroCusto?'':'border-color:var(--danger);color:var(--danger)')+'" onchange="setCentroCustoInline(\''+f.id+'\',this.value)">'+opcoesLista(SETORES_FIXOS,f.centroCusto,'⚠ Não classificado')+'</select>'):(f.centroCusto?esc(f.centroCusto):'<span class="badge badge-danger">Não classificado</span>');
  const catCell=!ro?('<select class="form-control" data-fin="'+id+'" data-campo="ped" style="font-size:11px;padding:3px 5px;min-width:170px"'+ATRIB_ENCHER_PED+' onchange="setPedidoInline(\''+f.id+'\',this.value)">'+opcoesPedidoFin(f,ctx)+'</select>'):esc(f.cat||'—');
- return '<tr><td class="mono">'+fmtD(f.data)+'</td><td>'+esc(f.desc)+extrasDescFin(f)+'</td><td>'+catCell+'</td><td>'+ccCell+'</td><td class="fin-obs">'+campoObsFin(f,ro)+'</td><td>'+tipoComOrigemFin(f)+'</td><td class="mono" style="font-weight:700;color:'+(f.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+fmt(f.val)+'</td><td>'+celulaStatusFin(f,stB,ro)+'</td><td>'+acoesLinhaFin(f,ro)+'</td></tr>';}
+ return '<tr><td class="mono">'+fmtD(f.data)+'</td><td>'+(ehRepasseFin(f)?escCodV(f.desc):esc(f.desc))+extrasDescFin(f)+'</td><td>'+catCell+'</td><td>'+ccCell+'</td><td class="fin-obs">'+campoObsFin(f,ro)+'</td><td>'+tipoComOrigemFin(f)+'</td><td class="mono" style="font-weight:700;color:'+(f.tipo==='Entrada'?'var(--success)':'var(--danger)')+'">'+fmt(f.val)+'</td><td>'+celulaStatusFin(f,stB,ro)+'</td><td>'+acoesLinhaFin(f,ro)+'</td></tr>';}
 /* a situação na tabela: o selo e, embaixo dele, o 📎 dos comprovantes. Na coluna de ações, no fim da linha, ele ficava
    fora da tela no computador de 1366 px (a tabela é mais larga que a área e rola de lado) */
 function celulaStatusFin(f,stB,ro){return '<div class="fin-st"><span class="badge '+stB+'">'+f.status+'</span>'+botaoCompFin(f,ro)+'</div>';}
@@ -11551,7 +11660,7 @@ function cartaoFin(f,ctx,soLer){const ro=soLer(f),ent=f.tipo==='Entrada',stB=BAD
  const selo=seloOrigemFin(f),dataC='<span class="pc-data">'+fmtD(f.data)+'</span>';
  return '<div class="pedido-card fin-card '+(ent?'ent':'sai')+'">'
   +'<div class="pc-topo">'+(selo?'<span class="pc-topo-esq">'+dataC+selo+'</span>':dataC)+'<span class="badge '+stB+'">'+f.status+'</span></div>'
-  +'<div class="fc-desc">'+esc(f.desc)+extrasDescFin(f)+'</div>'
+  +'<div class="fc-desc">'+(ehRepasseFin(f)?escCodV(f.desc):esc(f.desc))+extrasDescFin(f)+'</div>'
   +'<div class="fc-valor '+(ent?'ent':'sai')+'">'+(ent?'↑':'↓')+' '+fmt(f.val)+'</div>'
   +'<div class="fc-campos">'
    +'<div class="fc-campo"><label>Pedido</label>'+selPed+'</div>'
@@ -11758,8 +11867,9 @@ async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').valu
   const catAntes=atual.cat||'',vendaAntes=atual.vendaId||'',tipoAntes=atual.tipo;
   /* a linha do banco que absorveu outro lançamento: cancelá-la (ou deixá-la pendente) faria o dinheiro sumir,
      porque o outro já está cancelado. Primeiro separa; depois dá para cancelar */
-  if(finMesclou(atual)&&o.status!==atual.status){
-   if(confirm('Esta linha do banco, de '+fmtD(atual.data)+' ('+fmt(atual.val)+'), recebeu "'+nomesAbsorvidosFin(atual)+'" (mesclado). Mudar a situação dela agora faria esse dinheiro sumir das contas.\n\nSeparar os dois primeiro? Depois, abra o lançamento de novo e mude a situação, se ainda quiser.')){
+  /* virar Saída também (o dinheiro do repasse viraria saída com as vendas ainda escondidas dentro dela) */
+  if(finMesclou(atual)&&(o.status!==atual.status||o.tipo!==atual.tipo)){
+   if(confirm('Esta linha do banco, de '+fmtD(atual.data)+' ('+fmt(atual.val)+'), '+recebeuTxtFin(atual)+'. Mudar '+(o.tipo!==atual.tipo?'o tipo':'a situação')+' dela agora faria esse dinheiro sumir das contas.\n\n'+(ehRepasseFin(atual)?'Desfazer o repasse primeiro?':'Separar os dois primeiro?')+' Depois, abra o lançamento de novo e mude '+(o.tipo!==atual.tipo?'o tipo':'a situação')+', se ainda quiser.')){
     closeModal('modal-financeiro');await separarFin(id,{});}
    return;}
   if(finAbsorvido(atual)||finOrfao(atual)){toast(finAbsorvido(atual)?'Este lançamento está mesclado numa linha do banco. Separe antes de mudar.':'Este lançamento ficou preso numa mesclagem pela metade: use Restaurar em Conferir com o banco.','error',7000);return;}
@@ -11821,10 +11931,10 @@ async function delFin(id){if(!guard())return;const f=DB.financeiro.find(x=>x.id=
  /* mesclados não se excluem direto: a linha do banco levaria junto o dinheiro do outro (que está cancelado), e o
     absorvido apagado deixaria o Separar sem ter o que devolver */
  if(finMesclou(f)){
-  if(confirm('A linha do banco de '+fmtD(f.data)+' ('+fmt(f.val)+') recebeu "'+nomesAbsorvidosFin(f)+'" (mesclado). Não dá para excluir direto: o dinheiro sumiria das contas.\n\nSeparar os dois agora? Depois, se ainda quiser, exclua ou cancele.'))await separarFin(id,{});
+  if(confirm('A linha do banco de '+fmtD(f.data)+' ('+fmt(f.val)+') '+recebeuTxtFin(f)+'. Não dá para excluir direto: o dinheiro sumiria das contas.\n\n'+(ehRepasseFin(f)?'Desfazer o repasse agora (as vendas voltam a valer)?':'Separar os dois agora?')+' Depois, se ainda quiser, exclua ou cancele.'))await separarFin(id,{});
   return;}
  if(finAbsorvido(f)){const w=DB.financeiro.find(x=>x.id===f.mescladoCom);
-  if(confirm('"'+f.desc+'" está mesclado na linha do banco'+(w?' "'+w.desc+'" de '+fmtD(w.data):'')+'. Não dá para excluir direto.\n\nSeparar os dois agora?')&&w)await separarFin(w.id,{});
+  if(confirm('"'+f.desc+'" está '+(w&&ehRepasseFin(w)?'no repasse da maquininha':'mesclado na linha do banco')+(w?' "'+w.desc+'" de '+fmtD(w.data):'')+'. Não dá para excluir direto.\n\n'+(w&&ehRepasseFin(w)?'Desfazer o repasse agora (todas as vendas dele voltam a valer)?':'Separar os dois agora?'))&&w)await separarFin(w.id,{});
   return;}
  const lig=linhaPagDoFin(f),ehBancoF=FIN_LIGACAO_NO_BANCO&&origemConfFin(f)==='extrato';
  /* a lista própria do lançamento sai junto (a pergunta diz quantos); os comprovantes da linha do pedido ficam lá */
@@ -12788,7 +12898,7 @@ async function separarFin(wId,opc){opc=opc||{};if(!guard())return false;
  const lidos=await relerFinanceiroFin([wId].concat(((w0&&w0.mesclagem&&w0.mesclagem.de)||[]).map(d=>d.id)));if(!lidos)return false;
  const w=lidos[wId];
  if(!w||!finMesclou(w)){toast('Este lançamento não está mais mesclado (talvez tenha sido separado em outro aparelho).','info',7000);renderFinanceiro();return false;}
- const m=w.mesclagem,faltam=m.de.map(d=>d&&d.id).filter(id=>id&&!(id in lidos));
+ const m=w.mesclagem,faltam=m.de.map(d=>d&&d.id).filter(id=>id&&!(id in lidos)),rep=m.tipo==='repasse';
  if(faltam.length){const mais=await relerFinanceiroFin(faltam);if(!mais)return false;Object.assign(lidos,mais);}
  const norm=v=>v===undefined||v===null?'':String(v);
  const volta={},mantidos=[];
@@ -12855,10 +12965,11 @@ async function separarFin(wId,opc){opc=opc||{};if(!guard())return false;
    +(est?'':' '+AVISO_SEM_CONFERIR_FIN),'error',11000);
   renderFinanceiro();return false;}
  saveDB();syncSheets('financeiro','upsert',w);voltaram.forEach(l=>syncSheets('financeiro','upsert',l));
- commit('editar','Financeiro','Separado: "'+voltaram.map(l=>l.desc).join('", "')+'" da linha do banco de '+fmtD(w.data)+(opc.naoSugerir?' (não sugerir de novo)':''));
+ commit('editar','Financeiro',(rep?'Repasse desfeito: ':'Separado: ')+'"'+voltaram.map(l=>l.desc).join('", "')+'" da linha do banco de '+fmtD(w.data)+(opc.naoSugerir?' (não sugerir de novo)':''));
  atualizarGastosDoPedidoAberto();closeModal('modal-mescla');
  if(presos.length){toast('Separado em parte: "'+presos.map(l=>l.desc).join('", "')+'" não voltou e ficou escondido. Em Conferir com o banco, "Precisa de atenção", toque em Restaurar.','error',11000);return true;}
- toast('Separado.'+(voltaram.length?' "'+voltaram[0].desc+'" voltou a valer'+(voltaram[0].status==='Pendente'?' (a receber)':'')+'.':'')
+ toast((rep?'Repasse desfeito.'+(voltaram.length?' '+(voltaram.length===1?'"'+voltaram[0].desc+'" voltou':'As '+voltaram.length+' vendas voltaram')+' a valer, como eram.':'')
+  :'Separado.'+(voltaram.length?' "'+voltaram[0].desc+'" voltou a valer'+(voltaram[0].status==='Pendente'?' (a receber)':'')+'.':''))
   +(mantidos.length?' O que você mudou depois na linha do banco ficou como está.':''),'success',7000);
  return true;}
 /* Restaurar: o lançamento escondido como mesclado numa linha do banco que não o guarda (mesclagem pela metade, ou
@@ -12967,6 +13078,10 @@ function naoEhOMesmoFin(btn){const c=btn.closest('.cb-par');if(!c)return;
  if(!confirm('Não é o mesmo dinheiro?\n\nBanco: '+linhaBancoTxtFin(w)+'\nSeu lançamento: '+linhaSeuTxtFin(l)+'\n\nEstes dois não serão sugeridos de novo (o aviso seguinte tem Desfazer).'))return;
  return naoJuntarFin(w.id,l.id);}
 function pedirSepararFin(wId){const w=DB.financeiro.find(f=>f.id===wId);if(!w||!finMesclou(w))return;
+ /* o repasse volta inteiro: a linha do banco como era e cada venda com o status que tinha */
+ if(ehRepasseFin(w)){const n=w.mesclagem.de.length;
+  if(!confirm('Desfazer o repasse de '+fmtD(w.data)+' ('+fmt(w.val)+')?\n\n'+(n===1?'A venda volta':'As '+n+' vendas voltam')+' a valer como eram ("'+nomesAbsorvidosFin(w)+'"), e a linha do banco volta a ser só a do banco, sem a taxa.'))return;
+  return separarFin(wId,{});}
  if(!confirm('Separar "'+nomesAbsorvidosFin(w)+'" da linha do banco de '+fmtD(w.data)+' ('+fmt(w.val)+')?\n\nOs dois voltam a ser lançamentos separados, como eram antes de mesclar.'))return;
  const naoSugerir=confirm('Não sugerir de novo?\n\nOK: estes dois não aparecem mais em Conferir com o banco.\nCancelar: podem ser sugeridos de novo.');
  return separarFin(wId,{naoSugerir});}
@@ -13002,9 +13117,15 @@ function bloqueiosAjusteFin(ref,faltando,somaFaltando,extras,falt,conta){const o
  if(Array.isArray(falt)&&falt.length&&ant.length){const doAntigo=t=>ant.some(a=>casaLinhaFin(t,a.w));
   if(falt.some(doAntigo)){falt=falt.filter(t=>!doAntigo(t));faltando=falt.length;
    somaFaltando=falt.reduce((s,t)=>s+(t.tipo==='Entrada'?1:-1)*Number(t.val),0);}}
+ /* as que estão na lista "Linhas do extrato fora do ERP" (Trazer para o ERP), logo abaixo do aviso */
+ const sTz=DB.config.saldoBancoOfx,tz=FIN_LIGACAO_NO_BANCO&&canEdit()&&sTz?new Set(faltandoGuardadasFin(sTz).filter(t=>daContaFin(t,conta)).map(chaveFaltaFin)):null;
+ const nTz=tz&&Array.isArray(falt)?falt.filter(t=>tz.has(chaveFaltaFin(t))).length:0;
  if(faltando>0)out.push(faltando+' linha(s) do extrato até '+fmtD(ref)+' não valem no ERP ('+sinalR(somaFaltando)
   +(falt&&falt.length?'; '+falt.slice(0,3).map(t=>fmtD(t.data)+' · '+String(t.desc||'').slice(0,40)).join('; ')+(falt.length>3?'; …':''):'')
-  +'): ficaram desmarcadas na importação (desta vez ou num extrato anterior), ou foram excluídas, canceladas ou tiveram a data ou o valor mudados depois. Importe o arquivo de novo com elas marcadas, ou reative a que foi cancelada; se forem o mesmo dinheiro de um lançamento seu, use Mesclar em Conferir com o banco (não exclua nem cancele a linha do banco).');
+  +'): ficaram desmarcadas na importação (desta vez ou num extrato anterior), ou foram excluídas, canceladas ou tiveram a data ou o valor mudados depois. '
+  +(nTz?(nTz>=faltando?'Traga-as aqui embaixo (Trazer para o ERP)':'As da lista aqui embaixo, traga (Trazer para o ERP); as outras, importe o arquivo de novo com elas marcadas')
+   :'Importe o arquivo de novo com elas marcadas')
+  +', ou reative a que foi cancelada; se forem o mesmo dinheiro de um lançamento seu, '+(nTz?'depois ':'')+'use Mesclar em Conferir com o banco (não exclua nem cancele a linha do banco).');
  if(extras&&extras.length)out.push(extras.length+' linha(s) do banco no ERP até '+fmtD(ref)+' não estão no extrato ('+sinalR(extras.reduce((s,f)=>s+sinalFin(f),0))+'; '
   +extras.slice(0,3).map(f=>fmtD(f.data)+' · '+String(f.descBanco||f.desc||'').slice(0,40)).join('; ')+(extras.length>3?'; …':'')+'): podem estar em dobro, ter a data ou o valor mudados, ou ser de outra conta. Confira cada uma antes de ajustar.');
  if(ant.length)out.push(ant.length+' caso(s) antigo(s) em Conferir com o banco (inverter muda o "No banco" em '+sinalR(ant.reduce((s,a)=>s+sinalFin(a.w),0))+'): a linha do banco está cancelada e o seu lançamento ficou no lugar dela. Inverta-os (Mesclar) antes de ajustar.');
@@ -13130,9 +13251,13 @@ function pintarAbasFin(){const abas=$('fin-abas');if(!abas)return;
 /* embaixo do nome: o texto do banco, quando é outro, e a etiqueta de mesclado */
 function extrasDescFin(f){let h='';
  if(f.descBanco&&String(f.descBanco).trim()!==String(f.desc||'').trim())h+='<div class="fin-desc-banco" title="Texto do banco">'+esc(f.descBanco)+'</div>';
- if(finMesclou(f))h+='<button type="button" class="fin-mescla-chip" title="Recebeu outro lançamento: ver ou separar" onclick="abrirMesclaFin(\''+f.id+'\')">🔗 Mesclado</button>';
+ /* o repasse da maquininha: quantas vendas e a taxa */
+ if(ehRepasseFin(f)){const n=f.mesclagem.de.length;
+  h+='<button type="button" class="fin-mescla-chip" title="Repasse da maquininha: ver as vendas ou separar" onclick="abrirMesclaFin(\''+f.id+'\')">💳 Repasse · '+(n===1?'1 venda':n+' vendas')+'<span class="rp-taxa"> · '+(taxaRepasseFin(f)<0?'⚠ ':'')+'taxa '+fmt(taxaRepasseFin(f))+'</span></button>';}
+ else if(finMesclou(f))h+='<button type="button" class="fin-mescla-chip" title="Recebeu outro lançamento: ver ou separar" onclick="abrirMesclaFin(\''+f.id+'\')">🔗 Mesclado</button>';
  else if(finAbsorvido(f)){const w=DB.financeiro.find(x=>x.id===f.mescladoCom);
-  h+='<button type="button" class="fin-mescla-chip abs" title="Está dentro de uma linha do banco: ver ou separar" onclick="abrirMesclaFin(\''+f.id+'\')">🔗 Mesclado no banco'+(w?' de '+fmtD(w.data):'')+'</button>';}
+  h+=w&&ehRepasseFin(w)?'<button type="button" class="fin-mescla-chip abs" title="Está dentro de um repasse da maquininha: ver ou separar" onclick="abrirMesclaFin(\''+f.id+'\')">💳 No repasse de '+fmtD(w.data)+'</button>'
+   :'<button type="button" class="fin-mescla-chip abs" title="Está dentro de uma linha do banco: ver ou separar" onclick="abrirMesclaFin(\''+f.id+'\')">🔗 Mesclado no banco'+(w?' de '+fmtD(w.data):'')+'</button>';}
  else if(finOrfao(f))h+='<button type="button" class="fin-mescla-chip abs" title="A mesclagem ficou pela metade: veja em Conferir com o banco" onclick="trocarVistaFin(\'conferir\')">⚠ Mesclagem pela metade</button>';
  return h?'<div>'+h+'</div>':'';}
 const ST_BADGE_FIN={'Pago':'badge-success','Pendente':'badge-warning','Cancelado':'badge-muted'};
@@ -13160,7 +13285,7 @@ function cartaoParFin(s,tipo){const l=s.l,alts=tipo==='cf'?s.alternativas:[];
  return '<div class="cb-par" data-tipo="'+tipo+'" data-l="'+esc(l.id)+'" data-w="'+esc(w.id)+'">'
   +'<div class="cb-lados">'+ladoBancoFin(w,sel)+'<div class="cb-igual" aria-hidden="true">=</div>'+ladoSeuFin(l)+'</div>'
   +motivosHtmlFin(motivos)+botoes+'</div>';}
-function cartaoMescladoFin(w,semAcoes){const m=w.mesclagem||{};
+function cartaoMescladoFin(w,semAcoes){if(ehRepasseFin(w))return cartaoRepasseFin(w,semAcoes);const m=w.mesclagem||{};
  const ls=(m.de||[]).map(d=>DB.financeiro.find(x=>x.id===d.id)).filter(Boolean);
  return '<div class="cb-par" data-w="'+esc(w.id)+'">'
   +'<div class="cb-lados">'+ladoBancoFin(w,'<div class="cb-ped">Agora se chama: '+esc(w.desc)+'</div>')+'<div class="cb-igual" aria-hidden="true">=</div>'
@@ -13177,6 +13302,16 @@ function cartaoProblemaFin(p){const acao=(rot,fn)=>canEdit()?'<div class="cb-aco
  const txt=p.tipo==='semPago'
   ?'A linha do banco está '+esc(String(p.w.status||'').toLowerCase())+', mas recebeu o seu lançamento: esse dinheiro não conta em lugar nenhum. Separar devolve o seu lançamento.'
   :'A linha do banco guarda "'+esc(p.l.desc)+'" como mesclado, mas ele '+(p.l.mescladoCom?'está mesclado em outra linha':'continua valendo')+' (o mesmo dinheiro conta duas vezes). Separar desfaz a marca na linha do banco.';
+ /* o repasse da maquininha: as vendas numa coluna só, debaixo da conta (com 2 ou mais, a 2ª caía embaixo do Banco) */
+ if(ehRepasseFin(p.w)){const n=ls.length;
+  const tr=p.tipo==='semPago'?'A linha do banco está '+esc(String(p.w.status||'').toLowerCase())+', mas guarda as vendas do repasse: esse dinheiro não conta em lugar nenhum. Separar desfaz o repasse inteiro (as vendas voltam como eram).'
+   :'O repasse guarda "'+esc(p.l.desc)+'" como uma das vendas dele, mas ela '+(p.l.mescladoCom?'está mesclada em outra linha':'continua valendo')+' (o mesmo dinheiro conta duas vezes). Separar desfaz o repasse inteiro (as vendas voltam como eram).';
+  return '<div class="cb-par"><div class="cb-lados">'+ladoBancoFin(p.w)+'<div class="cb-igual" aria-hidden="true">≠</div>'
+   +'<div class="cb-lado cb-seu rp-vendas"><div class="cb-rot"><span class="cb-rot-txt">'+(n===1?'1 venda':n+' vendas')+'</span></div>'
+   +(n?ls.map(l=>'<div class="rp-venda"><span class="rp-venda-txt">'+escCodV(l.desc)+'<span class="pc-data">'+fmtD(l.data)+'</span>'
+     +(l.mescladoCom===p.w.id?'':' <span class="badge '+(ST_BADGE_FIN[l.status]||'badge-muted')+'">'+esc(l.status)+'</span>')+'</span><span class="rp-val">'+fmt(l.val)+'</span></div>').join('')
+    :'<div class="cb-texto">As vendas não existem mais.</div>')+'</div></div>'
+   +'<div class="cb-meta">'+tr+'</div>'+acao('Separar',"pedirSepararFin('"+p.w.id+"')")+'</div>';}
  return '<div class="cb-par"><div class="cb-lados">'+ladoBancoFin(p.w)+'<div class="cb-igual" aria-hidden="true">≠</div>'
   +(ls.length?ls.map(l=>ladoSeuFin(l)).join(''):'<div class="cb-lado cb-seu"><div class="cb-texto">O lançamento mesclado não existe mais.</div></div>')+'</div>'
   +'<div class="cb-meta">'+txt+'</div>'+acao('Separar',"pedirSepararFin('"+p.w.id+"')")+'</div>';}
@@ -13195,21 +13330,25 @@ function blocoSaldoBancoFin(){const c=conferirSaldoBancoFin();
    +(c.cautela.n?' <strong>Atenção:</strong> '+esc(textoCautelaAjusteFin(c.cautela)):'')+'</div>';}
  const botoes=canEdit()?[c.pode?'<button type="button" class="btn '+(c.cautela.n?'btn-ghost':'btn-primary')+'" onclick="pedirAjusteSaldoBancoFin()">Ajustar o saldo</button>':'',
   desfazerDisponivelFin()?'<button type="button" class="btn btn-ghost" onclick="pedirDesfazerAjusteSaldoFin()">↩ Desfazer o ajuste</button>':''].filter(Boolean).join(''):'';
- return '<div class="cb-secao cb-saldo">'+tit+'<div class="cb-par">'+h+(botoes?'<div class="cb-acoes">'+botoes+'</div>':'')+'</div></div>';}
+ return '<div class="cb-secao cb-saldo">'+tit+'<div class="cb-par">'+h+(botoes?'<div class="cb-acoes">'+botoes+'</div>':'')+blocoTrazerFin(c)+'</div></div>';}
 /* a aba Conferir com o banco: Precisa de atenção, Sem dúvida, Confira, Casos antigos, Saldo do banco e Mesclados */
 function renderConferirBancoFin(){const alvo=$('fin-conferir-corpo');if(!alvo)return;
  const s=sugestoesFinAgora(),probs=problemasMesclaFin(),LIM=CB_LIM_FIN;
  const mesclados=DB.financeiro.filter(finMesclou).sort((a,b)=>String((b.mesclagem||{}).em||'').localeCompare(String((a.mesclagem||{}).em||'')));
  const mais=n=>n>LIM?'<div class="cb-mais">+ '+(n-LIM)+' — resolva os de cima para ver os próximos.</div>':'';
- const secao=(tit,lista,sub,cartao,cab)=>'<div class="cb-secao"><div class="cb-secao-cab"><div class="cb-secao-tit">'+tit+'<span class="cb-n">'+lista.length+'</span></div>'+(cab||'')+'</div>'
-  +'<div class="cb-secao-sub">'+sub+'</div>'+lista.slice(0,LIM).map(cartao).join('')+mais(lista.length)+'</div>';
+ /* as linhas do banco que parecem repasse da maquininha, e as vendas fora do banco (para dizer quantas podem estar nelas) */
+ const reps=repassesParaJuntarFin().filter(temVendaParaRepasseFin),livresR=reps.length?finVisiveis().filter(vendaParaRepasseFin):[];
+ const secao=(tit,lista,sub,cartao,cab,maisF)=>'<div class="cb-secao"><div class="cb-secao-cab"><div class="cb-secao-tit">'+tit+'<span class="cb-n">'+lista.length+'</span></div>'+(cab||'')+'</div>'
+  +'<div class="cb-secao-sub">'+sub+'</div>'+lista.slice(0,LIM).map(cartao).join('')+(maisF||mais)(lista.length)+'</div>';
  let h='';
  if(probs.length)h+=secao('⚠ Precisa de atenção',probs,'Mesclagens que ficaram pela metade (a internet caiu no meio, ou um aparelho com o ERP antigo mexeu nelas). Resolva estas primeiro.',cartaoProblemaFin);
- if(!s.semDuvida.length&&!s.confira.length&&!s.antigos.length)h+='<div class="cb-secao"><div class="cb-vazio">✔ Nada para conferir agora. Quando um lançamento seu parecer o mesmo dinheiro de uma linha do banco, ele aparece aqui.</div></div>';
+ if(!s.semDuvida.length&&!s.confira.length&&!s.antigos.length&&!reps.length)h+='<div class="cb-secao"><div class="cb-vazio">✔ Nada para conferir agora. Quando um lançamento seu parecer o mesmo dinheiro de uma linha do banco, ele aparece aqui.</div></div>';
  if(s.semDuvida.length)h+=secao('Sem dúvida',s.semDuvida,'Seu lançamento já está como Pago, ele e a linha do banco só têm um ao outro, as datas ficam a até 3 dias e o banco traz o nome (ou parte dele) ou o CPF/CNPJ do lançamento. Se ele foi pago em dinheiro, no cartão de crédito ou por outra conta, não é o mesmo dinheiro: toque em "Não é o mesmo".',x=>cartaoParFin(x,'sd'),
   canEdit()?'<button type="button" class="btn btn-primary" onclick="pedirMesclarTodosFin()">'+textoMesclarTodosFin(Math.min(s.semDuvida.length,LIM))+'</button>':'');
  if(s.confira.length)h+=secao('Confira',s.confira,'Conta ainda pendente (mesclar dá a baixa nela), mais de uma possibilidade, data longe, nome diferente ou que não aparece no banco, ou cartão. Se for o mesmo dinheiro, mescle (o ERP pergunta antes); quando houver mais de uma linha do banco possível, escolha qual.',x=>cartaoParFin(x,'cf'));
  if(s.antigos.length)h+=secao('Casos antigos',s.antigos,'Antes, você cancelou a linha do banco e manteve o seu lançamento. Agora o banco manda: Mesclar faz a linha do banco voltar a valer, com o seu nome, e o seu fica mesclado nela. Um de cada vez; Separar desfaz.',x=>cartaoParFin(x,'an'));
+ if(reps.length)h+=secao('Repasses da maquininha',reps,'Linhas do banco que parecem o repasse da maquininha (o texto traz o nome ou o CNPJ do estúdio, ou o nome de uma maquininha) e que têm venda de cartão ou de maquininha no período. Toque em Juntar vendas e marque as vendas que vieram neste depósito: fica a linha do banco, e a diferença fica guardada como a taxa. Se não for repasse, deixe como está. Para outra linha do banco, abra o lançamento: lá também tem Juntar vendas.',x=>cartaoParaJuntarFin(x,livresR),'',
+  n=>n>LIM?'<div class="cb-mais">+ '+(n-LIM)+' mais antigas. Para juntar uma delas, abra o lançamento (lá também tem Juntar vendas).</div>':'');
  h+=blocoSaldoBancoFin();
  if(mesclados.length)h+=secao('Mesclados',mesclados,'O que já foi mesclado. Separar desfaz e devolve o seu lançamento.',x=>cartaoMescladoFin(x,false));
  alvo.innerHTML=h;}
@@ -13217,7 +13356,9 @@ function renderConferirBancoFin(){const alvo=$('fin-conferir-corpo');if(!alvo)re
 function abrirMesclaFin(id){const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
  const w=finAbsorvido(f)?DB.financeiro.find(x=>x.id===f.mescladoCom):f;
  if(!w||!finMesclou(w)){if(finOrfao(f)){trocarVistaFin('conferir');return;}toast('A linha do banco deste lançamento não está carregada. Recarregue o Financeiro.','info',7000);return;}
- $('mescla-corpo').innerHTML='<div class="cb-intro">A linha do banco ficou, com a data e o valor do banco e o nome do seu lançamento. O seu lançamento está guardado dentro dela e não conta nas listas nem no saldo. Separar desfaz.</div>'
+ const rep=ehRepasseFin(w),tit=document.querySelector('#modal-mescla .modal-title');if(tit)tit.textContent=rep?'💳 Repasse da maquininha':'🔗 Lançamento mesclado';
+ $('mescla-corpo').innerHTML=(rep?'<div class="cb-intro">A linha do banco ficou, com a data e o valor do banco. As vendas estão guardadas dentro dela e não contam nas listas nem no saldo; a diferença entre elas e o que caiu no banco é a taxa da maquininha. Separar desfaz o repasse inteiro.</div>'
+  :'<div class="cb-intro">A linha do banco ficou, com a data e o valor do banco e o nome do seu lançamento. O seu lançamento está guardado dentro dela e não conta nas listas nem no saldo. Separar desfaz.</div>')
   +cartaoMescladoFin(w,true);
  const b=$('mescla-separar');b.style.display=canEdit()?'':'none';
  b.onclick=()=>{closeModal('modal-mescla');pedirSepararFin(w.id);};
@@ -13231,13 +13372,406 @@ function prepararAvisoBancoFin(f){const banco=!!f&&origemConfFin(f)==='extrato';
  let h='';
  if(linhaPag)h+='<div class="fba-linha"><span>🔗 Este lançamento é o '+esc(rotLinhaPagFin(linhaPag))+'. Mudar aqui não muda o pedido: a linha do pedido mostra a diferença.</span></div>';
  if(banco)h+='<div class="fba-linha fba-trava"><span>🔒 Data, valor e tipo vêm do extrato do banco.</span>'+(canEdit()?'<button type="button" class="btn btn-ghost btn-sm" onclick="destravarBancoFin()">Editar mesmo assim</button>':'')+'</div>';
- if(finMesclou(f))h+='<div class="fba-linha"><span>🔗 Recebeu "'+esc(nomesAbsorvidosFin(f))+'" (mesclado).</span>'+(canEdit()?'<button type="button" class="btn btn-ghost btn-sm" onclick="closeModal(\'modal-financeiro\');pedirSepararFin(\''+f.id+'\')">Separar</button>':'')+'</div>';
+ if(ehRepasseFin(f)){const m=f.mesclagem,n=m.de.length;
+  h+='<div class="fba-linha"><span>💳 Repasse da maquininha: '+(n===1?'1 venda':n+' vendas')+' ("'+escCodV(nomesAbsorvidosFin(f))+'")<span class="rp-taxa">, bruto '+fmt(m.bruto)+', taxa '+fmt(taxaRepasseFin(f))+(taxaRepasseFin(f)<0?' ⚠ (a linha do banco ficou maior que as vendas)':'')+'</span>.</span>'+(canEdit()?'<button type="button" class="btn btn-ghost btn-sm" onclick="closeModal(\'modal-financeiro\');pedirSepararFin(\''+f.id+'\')">Separar</button>':'')+'</div>';}
+ else if(finMesclou(f))h+='<div class="fba-linha"><span>🔗 Recebeu "'+esc(nomesAbsorvidosFin(f))+'" (mesclado).</span>'+(canEdit()?'<button type="button" class="btn btn-ghost btn-sm" onclick="closeModal(\'modal-financeiro\');pedirSepararFin(\''+f.id+'\')">Separar</button>':'')+'</div>';
+ /* qualquer linha do banco de entrada pode ser o repasse da maquininha (também a que o texto não denuncia) */
+ if(banco&&FIN_LIGACAO_NO_BANCO&&canEdit()&&bancoParaRepasseFin(f))h+='<div class="fba-linha"><span>💳 É o repasse da maquininha (uma ou mais vendas num depósito só)?</span><button type="button" class="btn btn-ghost btn-sm" onclick="closeModal(\'modal-financeiro\');abrirJuntarRepasseFin(\''+f.id+'\')">Juntar vendas (repasse)</button></div>';
  if(f.descBanco&&String(f.descBanco).trim()!==String(f.desc||'').trim())h+='<div style="font-size:11.5px;color:var(--text-muted)">Texto do banco: <span class="mono">'+esc(f.descBanco)+'</span></div>';
  av.innerHTML=h;av.style.display='';}
 function destravarBancoFin(){
  if(!confirm('Data, valor e tipo desta linha vieram do extrato do banco. Mudar faz o ERP deixar de bater com o banco.\n\nEditar mesmo assim?'))return;
  ['fin-tipo','fin-data','fin-val'].forEach(id=>{const el=$(id);if(el)el.disabled=false;});
  const t=document.querySelector('#fin-banco-aviso .fba-trava');if(t)t.innerHTML='<span>🔓 Liberado: confira antes de salvar.</span>';}
+
+/* ================= JUNTAR REPASSE (etapa 5) =================
+   O repasse da maquininha: a linha do banco que a maquininha (Stone, Cielo...) manda, muitas vezes com o nome ou o
+   CNPJ do próprio estúdio, é a soma de uma ou mais vendas que caíram nela (cartão, PIX na maquininha, débito) menos a
+   taxa. Mesmo princípio do Mesclar (o extrato manda): fica a linha do banco (W), com a data e o valor do banco; as
+   vendas ficam guardadas dentro dela (Cancelado, mesclado_com = W, com o status que tinham) e somem das listas e das
+   contas; a diferença fica guardada como a taxa. W.mesclagem = {tipo:'repasse', em, por, de:[{id, statusAnterior}],
+   antes, depois, bruto, taxa}. W não recebe pag_id: cada venda continua ligada à sua linha de pagamento do pedido e,
+   no pedido, conta como a conta daquela parcela (como no Mesclar). Separar (separarFin) desfaz o repasse inteiro.
+   Nada é juntado sozinho: Conferir com o banco mostra as linhas que parecem repasse, e você marca as vendas */
+function ehRepasseFin(f){return finMesclou(f)&&f.mesclagem.tipo==='repasse';}
+/* esc() com o código do pedido (V-0928) num pedaço que não quebra no hífen (só na tela: o banco guarda o texto normal) */
+const escCodV=t=>esc(t).replace(/\bV-\d{2,}\b/g,m=>'<span class="cod-v">'+m+'</span>');
+/* a linha do banco do repasse que guarda este lançamento, ou null. porId: o índice pronto, se houver */
+function repasseDoFin(f,porId){if(!f||!f.mescladoCom||!finAbsorvidoNa(f,porId))return null;
+ const w=porId?porId.get(f.mescladoCom):DB.financeiro.find(x=>x.id===f.mescladoCom);return w&&ehRepasseFin(w)?w:null;}
+/* a taxa é o bruto (a soma das vendas) menos o valor de agora da linha do banco: corrigido o valor dela depois
+   ("Editar mesmo assim"), a taxa acompanha (antes ficava a guardada no dia do Juntar) */
+function taxaRepasseFin(w){if(!ehRepasseFin(w))return 0;const b=Number(w.mesclagem.bruto);
+ return Number.isFinite(b)?Math.round((b-(Number(w.val)||0))*100)/100:Number(w.mesclagem.taxa)||0;}
+/* o que a linha do banco recebeu, para as perguntas */
+function recebeuTxtFin(w){const n=((w&&w.mesclagem&&w.mesclagem.de)||[]).length;
+ return ehRepasseFin(w)?'é o repasse da maquininha de '+(n===1?'1 venda':n+' vendas')+' ("'+nomesAbsorvidosFin(w)+'")':'recebeu "'+nomesAbsorvidosFin(w)+'" (mesclado)';}
+/* parece repasse: o texto do banco traz o CNPJ do estúdio (dados da empresa, nas Configurações), o nome do estúdio ou
+   o nome de uma maquininha */
+const MAQUININHA_FIN=/\b(stone|cielo|rede|getnet|pagseguro|pagbank|infinite ?pay|sum ?up|mercado ?pago|ton)\b/;
+const NOME_ESTUDIO_FIN=/\bmabe\b/;
+function pareceRepasseFin(w){const t=String(w.descBanco||w.desc||''),s=semAcento(t);
+ /* devolução ou estorno de um PIX que o estúdio mandou não é repasse (vinha pelo nome do estúdio) */
+ if(/\bdevolu|\bestorn|\breembols/.test(s))return false;
+ const cnpj=String(((DB.config||{}).empresa||{}).cnpj||'').replace(/\D/g,'');
+ return (cnpj.length===14&&nivelDocFin(docBancoFin(t),cnpj)==='igual')||NOME_ESTUDIO_FIN.test(s)||MAQUININHA_FIN.test(s);}
+/* o que impede a linha do banco de ser um repasse (texto do aviso), ou '' */
+function problemaBancoRepasseFin(w){
+ if(!w)return 'a linha do banco não existe mais. Recarregue o Financeiro.';
+ if(origemConfFin(w)!=='extrato')return 'a linha escolhida não veio do extrato do banco.';
+ if(w.tipo!=='Entrada')return 'a linha do banco é uma saída, e o repasse é uma entrada.';
+ if(w.mescladoCom)return 'esta linha do banco já está mesclada em outra.';
+ if(finMesclou(w))return ehRepasseFin(w)?'esta linha do banco já é um repasse juntado (Separar desfaz).':'esta linha do banco já recebeu outro lançamento (Separar desfaz).';
+ if(w.status!=='Pago')return 'a linha do banco não está como paga (agora: '+(w.status||'sem status')+'; mudou em outro aparelho?).';
+ if(w.pagId)return 'esta linha do banco já é o pagamento de um pedido.';
+ if(!(Number(w.val)>0))return 'a linha do banco está sem valor.';
+ return '';}
+const bancoParaRepasseFin=w=>!problemaBancoRepasseFin(w);
+/* a venda que pode entrar num repasse: entrada de fora do banco, paga ou a receber (a parcela antecipada pode estar a
+   receber), sem mesclagem */
+function vendaParaRepasseFin(l){return !!l&&l.tipo==='Entrada'&&origemConfFin(l)!=='extrato'&&(l.status==='Pago'||l.status==='Pendente')&&!l.mescladoCom&&!finMesclou(l)&&Number(l.val)>0;}
+/* as linhas do banco que parecem repasse e ainda não foram juntadas (a mais recente primeiro) */
+function repassesParaJuntarFin(){return DB.financeiro.filter(w=>bancoParaRepasseFin(w)&&pareceRepasseFin(w))
+ .sort((a,b)=>dataFin(b).localeCompare(dataFin(a))||String(a.id).localeCompare(String(b.id)));}
+/* a venda de um pedido que ainda não está ligada a uma linha de pagamento dele (pedido de antes da etapa 4): sem a
+   ligação, o pedido não saberia que esse pagamento está no repasse, e o Salvar dele perguntaria se cria a conta de
+   novo. "Ligar pagamentos antigos", na ficha do pedido, liga antes. Devolve o pedido, ou null */
+function pedidoSemLigacaoFin(l,vendas){if(!PAGS_VENDA_NO_BANCO||modo317())return null;
+ const vid=vendaIdDoFinEm(l,vendas);if(!vid)return null;const v=vendas.find(x=>x.id===vid);if(!v)return null;
+ return l.pagId&&(v.pags||[]).some(p=>p&&p.id===l.pagId)?null:v;}
+/* as contas do repasse em centavos: o bruto (a soma das vendas), o repasse (a linha do banco) e a taxa (a diferença) */
+function contaRepasseFin(w,ls){const brutoC=ls.reduce((s,l)=>s+Math.round((Number(l&&l.val)||0)*100),0),wC=Math.round((Number(w&&w.val)||0)*100);
+ return {brutoC,wC,taxaC:brutoC-wC,bruto:brutoC/100,taxa:(brutoC-wC)/100,pct:brutoC>0?(brutoC-wC)/brutoC*100:0};}
+/* o que impede este repasse (texto do aviso), ou '' */
+function problemaRepasseFin(w,ls){const pw=problemaBancoRepasseFin(w);if(pw)return pw;
+ if(!ls.length)return 'marque ao menos uma venda.';
+ if(ls.some(l=>!l))return 'uma das vendas não existe mais. Recarregue o Financeiro.';
+ if(new Set(ls.map(l=>l.id)).size!==ls.length)return 'a mesma venda foi escolhida duas vezes.';
+ for(const l of ls){const q='"'+l.desc+'" ';
+  if(l.id===w.id||origemConfFin(l)==='extrato')return q+'é uma linha do banco: duas linhas do banco não se juntam.';
+  if(l.tipo!=='Entrada')return q+'é uma saída.';
+  if(l.mescladoCom)return q+'já foi mesclado (ou já está em outro repasse).';
+  if(finMesclou(l))return q+'recebeu outro lançamento.';
+  if(l.status!=='Pago'&&l.status!=='Pendente')return q+'está '+String(l.status||'sem status').toLowerCase()+'.';
+  if(!(Number(l.val)>0))return q+'está sem valor.';}
+ if(contaRepasseFin(w,ls).taxaC<0)return 'o repasse é maior que as vendas escolhidas: falta escolher venda.';
+ return '';}
+/* o nome curto das vendas, para a descrição do repasse: "V-0101 Ana Souza", "V-0102 + V-0103 Bruno Lima"; a
+   venda sem pedido entra pela descrição. vendaDe: o pedido de cada venda */
+function rotuloVendasRepasseFin(ls,vendaDe){const grupos=[],porCli=new Map(),soltos=[];
+ ls.forEach(l=>{const v=vendaDe(l);
+  if(!v){const t=String(l.desc||'').trim().slice(0,40);if(t&&!soltos.includes(t))soltos.push(t);return;}
+  const k=v.cliId||'';let g=porCli.get(k);if(!g){g={nome:v.cliId?cliName(v.cliId):'',nums:[]};porCli.set(k,g);grupos.push(g);}
+  if(!g.nums.includes(Number(v.num)))g.nums.push(Number(v.num));});
+ const partes=grupos.map(g=>g.nums.sort((a,b)=>a-b).map(n=>'V-'+pad(n)).join(' + ')+(g.nome&&g.nome!=='—'?' '+g.nome:'')).concat(soltos);
+ let r=(partes.length>3?partes.slice(0,2).join(' + ')+' e mais '+(partes.length-2):partes.join(' + '))||'vendas';
+ /* muitos pedidos (de até 3 clientes) faziam um nome de 150 letras: passando de 70, fica o 1º pedido, quantos mais e os
+    clientes ("V-0960 + 6 pedidos — 3 clientes") */
+ const P=grupos.reduce((s,g)=>s+g.nums.length,0);
+ if(r.length>70&&P){const nomes=grupos.filter(g=>g.nome&&g.nome!=='—'),resto=P-1+soltos.length;
+  r='V-'+pad(grupos[0].nums[0])+(resto?' + '+resto+' '+(soltos.length?(resto===1?'venda':'vendas'):(resto===1?'pedido':'pedidos')):'')
+   +(nomes.length===1?' '+nomes[0].nome:nomes.length>1?' — '+nomes.length+' clientes':'');}
+ return r;}
+/* o que o Juntar repasse muda na linha do banco (pura: recebe tudo pronto, como planoMesclaFin). m: {em, por, hoje,
+   comObs, rotulo, vendaId, rotuloPedido, centroCusto}. Devolve {antes, depois, mesclagem}: depois são os campos que o
+   repasse põe em W e antes como eles estavam, para o Separar devolver */
+function planoRepasseFin(w,ls,m){const antes={},depois={};
+ const norm=v=>v===undefined||v===null?'':String(v);
+ const por=(k,v)=>{if(norm(w[k])===norm(v))return;antes[k]=w[k]===undefined?null:w[k];depois[k]=v;};
+ /* linha do banco gravada por um app antigo (sem origem): continua do banco com o nome novo */
+ if(!w.origem)por('origem','extrato');
+ /* o texto do banco fica guardado antes de o nome mudar */
+ if(!w.descBanco)por('descBanco',w.desc||'');
+ por('desc','Repasse da maquininha — '+m.rotulo);
+ /* todas do mesmo pedido: a coluna Pedido leva o rótulo dele e a ligação (venda_id); senão "Pedidos", sem ligação. O
+    pag_id não vem: cada venda continua com a sua linha de pagamento */
+ por('cat',m.rotuloPedido||'Pedidos');
+ por('vendaId',m.vendaId||'');
+ if(!w.centroCusto&&m.centroCusto)por('centroCusto',m.centroCusto);
+ const c=contaRepasseFin(w,ls);
+ if(m.comObs){const nota='Repasse juntado em '+fmtD(m.hoje).slice(0,5)+': '+(ls.length===1?'1 venda':ls.length+' vendas')+', bruto '+fmt(c.bruto)+', taxa '+fmt(c.taxa)+' ('+fmtN(c.pct,1)+'%)';
+  por('obs',[String(w.obs||'').trim(),nota].filter(Boolean).join(' · '));}
+ return {antes,depois,mesclagem:{tipo:'repasse',em:m.em,por:m.por,de:ls.map(l=>({id:l.id,statusAnterior:l.status})),antes,depois,bruto:c.bruto,taxa:c.taxa}};}
+/* Juntar repasse: a linha do banco (wId) absorve as vendas (lIds). Como o Mesclar: precisa de internet, relê tudo do
+   servidor, grava primeiro a linha do banco (só se ainda não tem mesclagem) e depois cada venda (só se ainda não foi
+   mesclada). Se uma venda não for, desfaz o que já foi (as vendas e depois a linha do banco); sem saber como ficou
+   (sem resposta), nada é desfeito às cegas: Conferir com o banco mostra em "Precisa de atenção". opc.visto: a situação
+   e o valor que a janela mostrou */
+async function juntarRepasseFin(wId,lIds,opc){opc=opc||{};if(!guard())return false;
+ if(!FIN_LIGACAO_NO_BANCO){toast(paraAdmin('Juntar repasse precisa das colunas de origem no banco (supabase/migracao-financeiro-origem.sql).','Juntar repasse ainda não está disponível — avise o administrador.'),'error',8000);return false;}
+ lIds=[...new Set((lIds||[]).filter(Boolean))];
+ if(!await exigeConexao('juntar o repasse','porque o ERP confere no servidor se outro aparelho já mexeu nesta linha do banco ou nestas vendas'))return false;
+ const todosIds=[wId].concat(lIds);
+ const lidos=await relerFinanceiroFin(todosIds);if(!lidos)return false;
+ const w=lidos[wId],ls=lIds.map(id=>lidos[id]);
+ const sair=msg=>{toast('Não juntado: '+msg,'error',9000);renderFinanceiro();if(janelaRepasseAbertaFin(wId))abrirJuntarRepasseFin(wId,true);return false;};
+ let prob=problemaRepasseFin(w,ls);
+ if(!prob&&opc.visto){const vl=opc.visto.ls||{};
+  const mudou=ls.find(l=>vl[l.id]&&(vl[l.id].st!==l.status||Math.abs(vl[l.id].val-Number(l.val))>0.004));
+  if(mudou)prob='"'+mudou.desc+'" mudou em outro aparelho (agora: '+mudou.status+', '+fmt(mudou.val)+'). Confira de novo.';
+  else if(opc.visto.w!==undefined&&Math.abs(Number(opc.visto.w)-Number(w.val))>0.004)prob='o valor da linha do banco mudou em outro aparelho (agora: '+fmt(w.val)+'). Confira de novo.';}
+ if(prob)return sair(prob);
+ /* o pedido de cada venda: o que não está na lista do aparelho vem do servidor (como no Mesclar) */
+ const ped=pedidosCitadosFin(ls);
+ if(ped.ids.length||ped.nums.length){const t=await trazerPedidosDoServidor(ped.ids,ped.nums);
+  if(t===null)return sair('não deu para conferir no servidor o pedido das vendas. Nada mudou: tente de novo quando o sinal melhorar.');}
+ const semLig=ls.map(l=>[l,pedidoSemLigacaoFin(l,DB.vendas)]).find(x=>x[1]);
+ if(semLig)return sair('"'+semLig[0].desc+'" ainda não está ligado a um pagamento do pedido V-'+pad(semLig[1].num)+'. Abra o pedido e use "Ligar pagamentos antigos" antes de juntar.');
+ const vendaDe=l=>vendaDoFinConf(l,DB.vendas),vs=ls.map(vendaDe);
+ const um=vs[0]&&vs.every(v=>v&&v.id===vs[0].id)?vs[0]:null;
+ const ccs=[...new Set(ls.map(l=>String(l.centroCusto||'').trim()).filter(Boolean))];
+ const stAnt={};ls.forEach(l=>{stAnt[l.id]=l.status;});
+ const plano=planoRepasseFin(w,ls,{em:new Date().toISOString(),por:USER?USER.nome:'',hoje:today(),comObs:FIN_OBS_NO_BANCO,
+  rotulo:rotuloVendasRepasseFin(ls,vendaDe),vendaId:um?um.id:'',rotuloPedido:um?pedidoLabel(um):'',centroCusto:ccs.length===1?ccs[0]:''});
+ const em=plano.mesclagem.em,wNosso=x=>!!x&&!!x.mesclagem&&x.mesclagem.em===em;
+ /* 1) a linha do banco, só se ainda não tem mesclagem no servidor e continua sem pagamento de pedido (o "Ligar ao banco"
+    de outro aparelho no meio: antes as duas gravações passavam e ela ficava repasse e conta de outro pagamento) */
+ let q1=supa.from('financeiro').update(finParaColunas(Object.assign({},plano.depois,{mesclagem:plano.mesclagem}))).eq('id',w.id).is('mesclagem',null).is('pag_id',null).is('mesclado_com',null);
+ q1=w.vendaId?q1.eq('venda_id',w.vendaId):q1.is('venda_id',null);
+ const r1=await q1.select('id');
+ if(!gravouFin(r1)){
+  const est=recusouFin(r1)?null:await relerFinanceiroFin(todosIds,true);
+  if(!(est&&wNosso(est[w.id]))){
+   if(recusouFin(r1))await relerFinanceiroFin(todosIds,true);
+   toast('Não consegui juntar o repasse: '+(recusouFin(r1)?'outro aparelho acabou de mexer nesta linha do banco':erroGravFin(r1))+'. '+(est||recusouFin(r1)?'Nada mudou.':AVISO_SEM_CONFERIR_FIN),'error',9000);
+   renderFinanceiro();return false;}}
+ /* 2) cada venda, só se ainda não foi mesclada. Ela guarda o status que tinha (Separar e Restaurar) */
+ const feitos=[];let falhou=null;
+ for(const l of ls){
+  const r2=await supa.from('financeiro').update({status:'Cancelado',mesclado_com:w.id,mesclagem:{absorvidoPor:w.id,statusAnterior:stAnt[l.id],em}}).eq('id',l.id).is('mesclado_com',null).select('id');
+  if(gravouFin(r2)){feitos.push(l);continue;}
+  if(!recusouFin(r2)){
+   /* a resposta pode ter se perdido com a gravação feita: relê (de novo, se a 1ª leitura falhar) */
+   let est=await relerFinanceiroFin([l.id],true);
+   if(!est){await new Promise(r=>setTimeout(r,1500));est=await relerFinanceiroFin([l.id],true);}
+   if(!est){falhou={l,msg:erroGravFin(r2),incerto:true};break;}
+   if(est[l.id]&&est[l.id].mescladoCom===w.id){feitos.push(l);continue;}}
+  falhou={l,msg:recusouFin(r2)?'"'+l.desc+'" já foi mesclado em outro aparelho':erroGravFin(r2)};break;}
+ const absorver=l=>Object.assign(l,{status:'Cancelado',mescladoCom:w.id,mesclagem:{absorvidoPor:w.id,statusAnterior:stAnt[l.id],em}});
+ if(falhou&&falhou.incerto){
+  /* sem saber se a venda entrou, a linha do banco fica como repasse: se faltar venda nela, Conferir com o banco mostra
+     em "Precisa de atenção", e Separar desfaz tudo */
+  Object.assign(w,plano.depois,{mesclagem:plano.mesclagem});feitos.forEach(absorver);saveDB();
+  toast('Não consegui confirmar o repasse: '+falhou.msg+'. Não deu para conferir no servidor se "'+falhou.l.desc+'" entrou nele. Quando o sinal voltar, abra Conferir com o banco de novo: se o repasse aparecer em "Precisa de atenção", toque em Separar e junte de novo.','error',12000);
+  closeModal('modal-repasse');renderFinanceiro();return false;}
+ if(falhou){
+  /* uma venda não foi: as que foram voltam como eram, e só então a linha do banco (se alguma não voltar, a linha do
+     banco fica como repasse: Separar, em "Precisa de atenção", desfaz tudo de uma vez) */
+  let voltaram=true;
+  for(const l of feitos.slice().reverse()){
+   const r=await supa.from('financeiro').update({status:stAnt[l.id],mesclado_com:null,mesclagem:null}).eq('id',l.id).eq('mesclado_com',w.id).select('id');
+   if(!gravouFin(r))voltaram=false;}
+  const rW=voltaram?await supa.from('financeiro').update(finParaColunas(Object.assign({},plano.antes,{mesclagem:null}))).eq('id',w.id).select('id'):null;
+  const est=await relerFinanceiroFin(todosIds,true);
+  const limpo=est?!wNosso(est[w.id])&&ls.every(l=>!est[l.id]||est[l.id].mescladoCom!==w.id):voltaram&&gravouFin(rW);
+  if(!est){if(limpo)Object.assign(w,plano.antes,{mesclagem:null});else{Object.assign(w,plano.depois,{mesclagem:plano.mesclagem});feitos.forEach(absorver);}saveDB();}
+  toast('Não consegui juntar o repasse: '+falhou.msg+'. '+(limpo?'Nada mudou: a linha do banco e as vendas continuam como estavam.'
+   :'Ficou pela metade: em Conferir com o banco, "Precisa de atenção", toque em Separar.')+(est?'':' '+AVISO_SEM_CONFERIR_FIN),'error',11000);
+  if(limpo&&est&&janelaRepasseAbertaFin(w.id))abrirJuntarRepasseFin(w.id,true);else closeModal('modal-repasse');
+  renderFinanceiro();return false;}
+ Object.assign(w,plano.depois,{mesclagem:plano.mesclagem});ls.forEach(absorver);
+ saveDB();syncSheets('financeiro','upsert',w);ls.forEach(l=>syncSheets('financeiro','delete',{id:l.id}));
+ log('editar','Financeiro','Repasse juntado: a linha do banco de '+fmtD(w.data)+' ('+fmt(w.val)+') recebeu '+(ls.length===1?'1 venda':ls.length+' vendas')+' ("'+ls.map(l=>l.desc).join('", "')+'"): bruto '+fmt(plano.mesclagem.bruto)+', taxa '+fmt(plano.mesclagem.taxa));
+ closeModal('modal-repasse');REPASSE_ABERTO=null;
+ renderSection(CUR);updateBadges();atualizarGastosDoPedidoAberto();
+ toast('Repasse juntado: a linha do banco de '+fmtD(w.data)+' ficou com '+(ls.length===1?'1 venda':ls.length+' vendas')+' e a taxa de '+fmt(plano.mesclagem.taxa)+'. Separar desfaz.','success',8000);
+ return true;}
+/* ----- a janela Juntar repasse ----- */
+let REPASSE_ABERTO=null;   /* {wId, itens}: a linha do banco e as vendas que a janela mostra */
+/* a janela deste repasse está aberta na tela (só então ela é redesenhada depois de uma recusa) */
+const janelaRepasseAbertaFin=wId=>!!REPASSE_ABERTO&&REPASSE_ABERTO.wId===wId&&!!$('modal-repasse')&&$('modal-repasse').classList.contains('open');
+/* as vendas que podem estar no repasse w: as entradas de fora do banco, pagas ou a receber, ainda não juntadas, de 45
+   dias antes a 3 dias depois dele; e, do cartão parcelado cuja parcela 1 está nessa janela, as parcelas seguintes que
+   ficam depois dela, juntas num item só (a maquininha antecipou tudo). Primeiro o cartão, a maquininha e o pagamento
+   com local de maquininha; depois a data mais perto. Cada item: {chave, ls, data, val, maq, dias, grupo, venda, semLig} */
+function candidatasRepasseFin(w){const dw=dataFin(w),ini=addDays(dw,-45),fim=addDays(dw,3);
+ const cacheV=new Map(),vDe=f=>{if(!cacheV.has(f.id))cacheV.set(f.id,vendaDoFinConf(f,DB.vendas));return cacheV.get(f.id);};
+ const forma=f=>formaRecebFin(f,vDe(f));
+ const ehMaq=f=>{const r=forma(f),loc=semAcento(r.local);return r.forma==='cartao'||r.forma==='maquininha'||/\bdebito\b|maquin/.test(semAcento(f.desc))||MAQUININHA_FIN.test(loc)||/maquin/.test(loc);};
+ /* a parcela do cartão: pela ligação (parcela/parcelas) ou pela descrição ("Parcela 2/3") */
+ const parc=f=>{const x=formaDaDescFin(f.desc),ligada=!!f.pagId&&Number(f.parcelas)>0;
+  return {k:ligada?Number(f.parcela)||1:x.forma==='cartao'?x.i||1:1,n:ligada?Number(f.parcelas):x.forma==='cartao'?x.n||1:1};};
+ const grupoDe=f=>{const p=parc(f);if(p.n<2||forma(f).forma!=='cartao')return '';
+  return f.pagId?'p|'+f.pagId:'d|'+((vDe(f)||{}).id||'')+'|'+p.n+'|'+String(f.desc||'').replace(/Parcela \d+\/\d+/i,'').trim();};
+ const livres=finVisiveis().filter(f=>f.id!==w.id&&vendaParaRepasseFin(f)),idsLivres=new Set(livres.map(f=>f.id));
+ const naJanela=f=>{const d=dataFin(f);return d>=ini&&d<=fim;};
+ const item=(ls,grupo)=>{const d=grupo?grupo.d1:dataFin(ls[0]),v=vDe(ls[0]);
+  return {chave:ls.map(l=>l.id).join(','),ls,data:d,val:ls.reduce((s,l)=>s+Math.round(Number(l.val)*100),0)/100,maq:ls.some(ehMaq),
+   dias:diasEntreFin(d,dw),grupo:grupo||null,venda:v||null,semLig:ls.map(l=>pedidoSemLigacaoFin(l,DB.vendas)).find(Boolean)||null};};
+ const itens=livres.filter(naJanela).map(l=>item([l]));
+ /* as parcelas futuras do cartão cuja parcela 1 está na janela (a parcela 1 pode já estar recebida ou juntada) */
+ const grupos=new Map();
+ DB.financeiro.forEach(f=>{if(f.tipo!=='Entrada'||origemConfFin(f)==='extrato')return;const g=grupoDe(f);if(!g)return;
+  if(!grupos.has(g))grupos.set(g,{d1:'',fut:[]});const x=grupos.get(g),p=parc(f);
+  if(p.k===1){if(f.status!=='Cancelado'||f.mescladoCom)x.d1=dataFin(f);}
+  else if(idsLivres.has(f.id)&&dataFin(f)>fim)x.fut.push(f);});
+ grupos.forEach(x=>{if(!x.d1||x.d1<ini||x.d1>fim||!x.fut.length)return;
+  x.fut.sort((a,b)=>parc(a).k-parc(b).k);
+  itens.push(item(x.fut,{d1:x.d1,ks:x.fut.map(f=>parc(f).k),n:parc(x.fut[0]).n}));});
+ return itens.sort((a,b)=>(a.maq?0:1)-(b.maq?0:1)||Math.abs(a.dias)-Math.abs(b.dias)||String(a.data).localeCompare(String(b.data))||(a.grupo?1:0)-(b.grupo?1:0)||a.chave.localeCompare(b.chave));}
+/* um item da janela: a caixa, o nome, a data, a situação, a forma e o valor */
+function itemRepasseHtml(it,i){const l=it.ls[0],off=!!it.semLig,stTxt=f=>f.status==='Pago'?'recebido':'a receber';
+ let titulo,meta;
+ if(it.grupo){const n=it.ls.length;
+  titulo='+ '+(n===1?'1 parcela futura':n+' parcelas futuras')+' do cartão (antecipação)';
+  meta=it.ls.map((f,j)=>it.grupo.ks[j]+'/'+it.grupo.n+' de '+fmtD(f.data)+' ('+stTxt(f)+')').join(' · ')+(it.venda?' · '+pedidoLabel(it.venda):'');}
+ else{const r=formaRecebFin(l,it.venda);titulo=l.desc;
+  meta=[fmtD(l.data),stTxt(l),[PAG_LABELS[r.forma]||(r.forma==='maquininha'?'Maquininha':''),r.local].filter(Boolean).join(' · '),'repasse '+textoDiasFin(it.dias)].filter(Boolean).join(' · ');}
+ return '<label class="rp-item'+(off?' off':'')+'"><input type="checkbox" class="rp-chk" data-i="'+i+'"'+(off?' disabled':'')+' onchange="marcarRepasseFin()">'
+  +'<div class="rp-info"><div class="rp-desc">'+esc(titulo)+'</div><div class="rp-meta">'+esc(meta)+'</div>'
+  +(off?'<div class="rp-meta rp-alerta">'+esc('Ainda não ligada ao pagamento do pedido V-'+pad(it.semLig.num)+': na ficha do pedido, use "Ligar pagamentos antigos" antes.')+'</div>':'')+'</div>'
+  +'<span class="rp-val">'+fmt(it.val)+'</span></label>';}
+/* abre a janela (manter: redesenha a mesma janela, depois de uma recusa) */
+function abrirJuntarRepasseFin(wId,manter){if(!manter&&!guard())return;
+ if(!FIN_LIGACAO_NO_BANCO){toast(paraAdmin('Juntar repasse precisa das colunas de origem no banco (supabase/migracao-financeiro-origem.sql).','Juntar repasse ainda não está disponível — avise o administrador.'),'error',8000);return;}
+ const w=DB.financeiro.find(f=>f.id===wId),prob=problemaBancoRepasseFin(w);
+ if(prob){if(!manter)toast('Esta linha do banco não pode receber um repasse: '+prob,'error',8000);closeModal('modal-repasse');return;}
+ const itens=candidatasRepasseFin(w),dw=dataFin(w);REPASSE_ABERTO={wId,itens};
+ $('repasse-corpo').innerHTML='<div class="cb-intro">Marque as vendas que caíram na maquininha e vieram neste depósito. Fica a linha do banco, com as vendas guardadas dentro dela (elas saem das listas e das contas), e a diferença fica guardada como a taxa da maquininha. Separar desfaz.</div>'
+  +'<div class="cb-lados rp-banco">'+ladoBancoFin(w)+'</div>'
+  +'<div class="rp-sub">Vendas fora do banco de '+fmtD(addDays(dw,-45))+' a '+fmtD(addDays(dw,3))+(itens.some(it=>it.grupo)?', e as parcelas seguintes do cartão vendido nesse período':'')+'</div>'
+  +(itens.length?'<div class="rp-lista">'+itens.map(itemRepasseHtml).join('')+'</div>'
+   :'<div class="cb-vazio" style="margin-top:8px">Nenhuma venda fora do banco nesse período (paga ou a receber, ainda não juntada). Se a venda não está no Financeiro, lance-a antes; se já foi mesclada com outra linha do banco, separe antes.</div>');
+ resumoRepasseFin();
+ if(!$('modal-repasse').classList.contains('open'))openModal('modal-repasse');}
+/* a cada marca: a soma das marcadas, o repasse e a taxa (em R$ e %) */
+function marcarRepasseFin(){resumoRepasseFin();}
+function vendasMarcadasRepasseFin(){const st=REPASSE_ABERTO;if(!st)return [];
+ return [...document.querySelectorAll('#repasse-corpo .rp-chk')].filter(c=>c.checked&&!c.disabled).map(c=>st.itens[Number(c.dataset.i)]).filter(Boolean).flatMap(it=>it.ls);}
+function resumoRepasseFin(){const st=REPASSE_ABERTO,el=$('repasse-resumo');if(!st||!el)return;
+ const w=DB.financeiro.find(f=>f.id===st.wId);if(!w)return;
+ document.querySelectorAll('#repasse-corpo .rp-chk').forEach(c=>{const lb=c.closest('.rp-item');if(lb)lb.classList.toggle('marcado',c.checked);});
+ const ls=vendasMarcadasRepasseFin(),c=contaRepasseFin(w,ls);
+ const linha=(rot,v,cor)=>'<div class="cb-saldo-linha"'+(cor?' style="color:'+cor+'"':'')+'><span>'+rot+'</span><span class="mono">'+v+'</span></div>';
+ if(!ls.length){el.innerHTML='<div class="rp-dica">Nada marcado. Repasse: <span class="mono">'+fmt(w.val)+'</span>. Marque as vendas que vieram nele.</div>';return;}
+ let h=linha((ls.length===1?'1 venda marcada':ls.length+' vendas marcadas'),fmt(c.bruto))+linha('Repasse (caiu no banco)',fmt(w.val));
+ if(c.taxaC<0)h+=linha('Falta escolher venda',fmt(-c.taxa),'var(--danger)');
+ else h+=linha('Taxa da maquininha',fmt(c.taxa)+' ('+fmtN(c.pct,1)+'%)',c.taxaC>0.2*c.brutoC?'var(--danger)':'');
+ const pend=ls.filter(l=>l.status==='Pendente').length;
+ if(pend)h+='<div class="rp-dica">'+(pend===1?'1 marcada está a receber: juntando, ela passa':pend+' marcadas estão a receber: juntando, elas passam')+' a contar como recebida'+(pend===1?'':'s')+' por este repasse.</div>';
+ el.innerHTML=h;}
+/* o botão Juntar: as perguntas ficam fora da função travada (um confirm aberto não pode segurar a trava) */
+function pedirJuntarRepasseFin(){const st=REPASSE_ABERTO;if(!st)return;
+ const w=DB.financeiro.find(f=>f.id===st.wId);if(!w)return;
+ const ls=vendasMarcadasRepasseFin();
+ if(!ls.length){toast('Marque ao menos uma venda deste repasse.','info',5000);return;}
+ const c=contaRepasseFin(w,ls);
+ if(c.taxaC<0){toast('Não juntado: o repasse é maior que as vendas escolhidas: falta escolher venda (faltam '+fmt(-c.taxa)+').','error',8000);return;}
+ if(c.taxaC>0.2*c.brutoC&&!confirm('A taxa fica em '+fmt(c.taxa)+' ('+fmtN(c.pct,1)+'% das vendas marcadas), mais do que a maquininha costuma cobrar.\n\nVendas marcadas: '+fmt(c.bruto)+'\nRepasse (caiu no banco): '+fmt(w.val)+'\n\nConfira se marcou só as vendas deste repasse. Juntar mesmo assim?'))return;
+ const visto={w:Number(w.val),ls:{}};ls.forEach(l=>{visto.ls[l.id]={st:l.status,val:Number(l.val)};});
+ return juntarRepasseFin(w.id,ls.map(l=>l.id),{visto});}
+/* a seção Repasses da maquininha mostra só a linha do banco que tem ao menos uma venda de cartão ou de maquininha no
+   período da janela (as linhas do nome do estúdio sem venda nenhuma para juntar ficavam lá para sempre, e "Nada para
+   conferir" não voltava). As outras continuam com Juntar vendas na ficha do lançamento */
+function temVendaParaRepasseFin(w){return candidatasRepasseFin(w).some(it=>it.maq);}
+/* o cartão de Repasses da maquininha (Conferir com o banco): a linha do banco e quantas vendas podem estar nela */
+function cartaoParaJuntarFin(w,livres){const dw=dataFin(w),ini=addDays(dw,-45),fim=addDays(dw,3);
+ const n=livres.filter(f=>{const d=dataFin(f);return d>=ini&&d<=fim;}).length,per=fmtD(ini).slice(0,5)+' a '+fmtD(fim).slice(0,5);
+ return '<div class="cb-par rp-par" data-w="'+esc(w.id)+'"><div class="cb-lados rp-banco">'+ladoBancoFin(w)+'</div>'
+  +'<div class="cb-meta">'+(n?(n===1?'1 venda fora do banco':n+' vendas fora do banco')+' de '+per+' pode'+(n===1?'':'m')+' estar neste repasse.':'Nenhuma venda fora do banco de '+per+'.')+'</div>'
+  +(canEdit()?'<div class="cb-acoes"><button type="button" class="btn btn-primary" onclick="abrirJuntarRepasseFin(\''+w.id+'\')">Juntar vendas</button></div>':'')+'</div>';}
+/* o repasse em Mesclados e no 🔗: a linha do banco, as vendas, o bruto e a taxa */
+function cartaoRepasseFin(w,semAcoes){const m=w.mesclagem||{};
+ const ds=(m.de||[]).map(d=>({d,l:DB.financeiro.find(x=>x.id===d.id)}));
+ const tx=taxaRepasseFin(w),pct=Number(m.bruto)>0?fmtN(tx/Number(m.bruto)*100,1):'0';
+ return '<div class="cb-par" data-w="'+esc(w.id)+'">'
+  +'<div class="cb-lados">'+ladoBancoFin(w,'<div class="cb-ped">Agora se chama: '+escCodV(w.desc)+'</div>')+'<div class="cb-igual" aria-hidden="true">=</div>'
+  +'<div class="cb-lado cb-seu rp-vendas"><div class="cb-rot"><span class="cb-rot-txt">'+(ds.length===1?'1 venda':ds.length+' vendas')+'</span></div>'
+   +ds.map(({l})=>l?'<div class="rp-venda"><span class="rp-venda-txt">'+escCodV(l.desc)+'<span class="pc-data">'+fmtD(l.data)+'</span></span><span class="rp-val">'+fmt(l.val)+'</span></div>'
+    :'<div class="rp-venda"><span class="rp-venda-txt">Lançamento apagado</span></div>').join('')
+   +'<div class="rp-conta"><span>Bruto (as vendas)</span><span class="mono">'+fmt(m.bruto)+'</span></div>'
+   +'<div class="rp-conta"><span>Taxa da maquininha</span><span class="mono">'+fmt(tx)+' ('+pct+'%)</span></div>'
+   +(tx<0?'<div class="rp-conta rp-alerta-taxa"><span>⚠ A linha do banco ficou maior que as vendas (o valor dela mudou depois de juntar?): confira; Separar desfaz.</span></div>':'')+'</div></div>'
+  +'<div class="cb-meta">Repasse juntado'+(m.em?' em '+fmtDataHora(m.em):'')+(m.por?' por '+esc(m.por):'')+'</div>'
+  +(canEdit()&&!semAcoes?'<div class="cb-acoes"><button type="button" class="btn btn-ghost" onclick="pedirSepararFin(\''+w.id+'\')">Separar</button></div>':'')+'</div>';}
+/* debaixo do Recebido (segue o período): a taxa da maquininha dos repasses juntados no período */
+function pintarTaxasRepasseFin(pagos,ym){const el=$('fin-ent-taxa');if(!el)return;
+ const t=pagos.filter(f=>f.tipo==='Entrada'&&ehRepasseFin(f)&&noPeriodoCartoesFin(f.data,ym)).reduce((s,f)=>s+Math.max(0,taxaRepasseFin(f)),0);
+ el.textContent=t>=0.005?'taxas da maquininha: '+fmt(t):'';}
+
+/* ----- Trazer para o ERP: as linhas do extrato que ficaram de fora -----
+   Na importação, a linha que parecia já estar no ERP ("possível duplicado") vem desmarcada; as que ficam de fora são
+   guardadas com o saldo do banco (config saldoBancoOfx.faltandoLinhas) e travam o ajuste do saldo. Trazer cria cada
+   uma como linha do banco igual à importação (linhaDoExtratoFin), com a mesma conferência do identificador do banco
+   (único na conta; a cópia cancelada não entra de novo: reative-a). Depois ela entra nas sugestões de Conferir com o
+   banco: se for o mesmo dinheiro de um lançamento seu, Mesclar */
+/* a cópia que já está no ERP (mesmo identificador do banco na conta, data, valor e tipo), mas não paga */
+function gemeaNoErpFin(t){const fb=t.fb||t.fitid||'';if(!fb)return null;
+ return DB.financeiro.find(f=>f.fitid&&(f.conta||'')===(t.conta||'')&&(f.fitid===t.fitid||f.fitid===fb||f.fitid.indexOf(fb+'|')===0)
+  &&f.tipo===t.tipo&&Math.abs(Number(f.val)-Number(t.val))<0.005&&dataFin(f)===t.data)||null;}
+/* a mesma transação do banco (o mesmo identificador na conta) já está no ERP, com a data, o valor ou o tipo mudados à
+   mão depois da importação: trazer de novo poria o mesmo dinheiro duas vezes. (O identificador que o banco reaproveitou
+   para outra transação a importação já guardou com a chave longa, e essa não casa aqui) */
+function mesmoIdNoErpFin(t){if(!t||!t.fitid)return null;
+ return DB.financeiro.find(f=>f.fitid&&(f.conta||'')===(t.conta||'')&&f.fitid===t.fitid)||null;}
+function blocoTrazerFin(c){if(!c||!FIN_LIGACAO_NO_BANCO)return '';
+ const falt=faltandoGuardadasFin(c.s).filter(t=>daContaFin(t,c.conta)).sort((a,b)=>String(a.data).localeCompare(String(b.data)));
+ if(!falt.length)return '';
+ const pode=canEdit();
+ return '<div class="cb-trazer"><div class="cb-trazer-tit">Linhas do extrato fora do ERP<span class="cb-n">'+falt.length+'</span></div>'
+  +'<div class="cb-secao-sub">Ficaram desmarcadas na importação (pareciam já estar no ERP). Se o dinheiro entrou ou saiu mesmo da conta, marque e traga: cada uma entra como linha do banco, igual à importação do extrato. Se for o mesmo dinheiro de um lançamento seu, depois ela aparece aqui em cima para mesclar.</div>'
+  +'<div class="rp-lista">'+falt.map(t=>{const g=gemeaNoErpFin(t),o=g?null:mesmoIdNoErpFin(t),ent=t.tipo==='Entrada',off=!!g||!!o||!pode;
+   return '<label class="rp-item'+(off?' off':'')+'"><input type="checkbox" class="tz-chk" value="'+esc(chaveFaltaFin(t))+'"'+(off?' disabled':'')+' onchange="marcarTrazerFin()">'
+    +'<div class="rp-info"><div class="rp-desc rp-desc-banco">'+esc(t.desc||'(sem texto)')+'</div><div class="rp-meta">'+fmtD(t.data)+' · '+(ent?'entrada':'saída')+'</div>'
+    +(g?'<div class="rp-meta rp-alerta">'+esc('Já está no ERP como '+String(g.status||'sem status').toLowerCase()+' ("'+(g.desc||'')+'"): reative-a no Financeiro em vez de trazer de novo.')+'</div>':'')
+    +(o?'<div class="rp-meta rp-alerta">'+esc('Já está no ERP com o mesmo identificador do banco, mas com outra data ou valor ('+fmtD(o.data)+' · '+fmt(o.val)+', '+String(o.status||'sem status').toLowerCase()+'): é a mesma transação, mudada depois da importação. Confira essa linha no Financeiro em vez de trazer de novo.')+'</div>':'')+'</div>'
+    +'<span class="rp-val'+(ent?'':' sai')+'">'+(ent?'+ ':'− ')+fmt(t.val)+'</span></label>';}).join('')+'</div>'
+  +(pode?'<div class="cb-acoes"><button type="button" class="btn btn-primary" onclick="pedirTrazerFin()">Trazer para o ERP</button></div>':'')+'</div>';}
+function marcarTrazerFin(){document.querySelectorAll('#fin-conferir-corpo .tz-chk').forEach(c=>{const lb=c.closest('.rp-item');if(lb)lb.classList.toggle('marcado',c.checked);});}
+function pedirTrazerFin(){const chaves=[...document.querySelectorAll('#fin-conferir-corpo .tz-chk')].filter(c=>c.checked&&!c.disabled).map(c=>c.value);
+ if(!chaves.length){toast('Marque ao menos uma linha do extrato.','info',5000);return;}
+ const ts=faltandoGuardadasFin(DB.config.saldoBancoOfx).filter(t=>chaves.includes(chaveFaltaFin(t)));
+ if(!ts.length){renderFinanceiro();return;}
+ const soma=ts.reduce((a,t)=>a+(t.tipo==='Entrada'?1:-1)*Number(t.val),0);
+ if(!confirm((ts.length===1?'Trazer esta linha do extrato para o ERP?':'Trazer estas '+ts.length+' linhas do extrato para o ERP?')+'\n\n'
+  +ts.map(t=>fmtD(t.data)+' · '+(t.tipo==='Entrada'?'+':'−')+' '+fmt(t.val)+' · '+String(t.desc||'').slice(0,50)).join('\n')
+  +'\n\nCada uma entra como linha do banco (paga), igual à importação do extrato: o "No banco" muda em '+(soma>=0?'+':'−')+fmt(Math.abs(soma))+'. Se alguma for o mesmo dinheiro de um lançamento seu, ela aparece em Conferir com o banco para mesclar.'))return;
+ return trazerParaErpFin(chaves);}
+/* chaves: as linhas (chaveFaltaFin) marcadas. Precisa de internet: relê do servidor os lançamentos desses dias antes */
+async function trazerParaErpFin(chaves){if(!guard())return false;
+ if(!FIN_LIGACAO_NO_BANCO){toast(paraAdmin('Trazer para o ERP precisa das colunas de origem no banco (supabase/migracao-financeiro-origem.sql).','Trazer para o ERP ainda não está disponível — avise o administrador.'),'error',8000);return false;}
+ if(!await exigeConexao('trazer as linhas do extrato','porque o ERP confere no servidor o que já foi importado, também por outro aparelho'))return false;
+ const s=DB.config.saldoBancoOfx,qual=()=>faltandoGuardadasFin(s).filter(t=>chaves.includes(chaveFaltaFin(t)));
+ const ts0=qual();
+ if(!ts0.length){toast('Estas linhas já estão no ERP.','info');renderFinanceiro();return false;}
+ /* outro aparelho pode ter importado ou trazido as mesmas linhas: relê os lançamentos desses dias */
+ const r=await comPrazoRede(supa.from('financeiro').select('*').in('data',[...new Set(ts0.map(t=>t.data))]),12000);
+ if(r.error||!Array.isArray(r.data)){toast('Não consegui conferir no servidor ('+(r.error&&r.error.message||'sem resposta')+'). Nada foi trazido: tente de novo quando o sinal melhorar.','error',9000);return false;}
+ notarColunaCompFin(r.data);
+ r.data.forEach(row=>{const f=financeiroDeSupabase(row),i=DB.financeiro.findIndex(x=>x.id===f.id);if(i>=0)Object.assign(DB.financeiro[i],f);else DB.financeiro.push(f);});
+ saveDB();
+ const ts=qual();
+ /* como na importação: o identificador do banco é único na conta. A cópia que já está (cancelada) não entra de novo, e
+    o identificador que o banco reaproveitou para outra transação ganha a chave longa */
+ const itens=ts.map(t=>({data:t.data,val:Number(t.val),tipo:t.tipo,desc:String(t.desc||''),fitid:t.fitid||'',fitidBanco:t.fb||t.fitid||'',conta:t.conta||''}));
+ [...new Set(itens.map(x=>x.conta))].forEach(ct=>conferirFitidOfx(itens.filter(x=>x.conta===ct),ct));
+ const jaTem=new Set(DB.financeiro.filter(f=>f.fitid).map(f=>(f.conta||'')+'|'+f.fitid));
+ /* o identificador já está no ERP com outra data ou valor (fitidDeOutro): é a mesma transação, mudada à mão depois da
+    importação. A linha guardada com o identificador que o banco reaproveitou já tem a chave longa e não cai aqui */
+ const mudada=x=>!x.jaNoErp&&!!x.fitidDeOutro;
+ const repetido=x=>!!x.fitid&&(!!x.jaNoErp||mudada(x)||jaTem.has(x.conta+'|'+x.fitid));
+ const reps=itens.filter(x=>repetido(x)&&!mudada(x)),muds=itens.filter(mudada),lote=uid();
+ const novos=itens.filter(x=>!repetido(x)).map(x=>linhaDoExtratoFin(x,x.conta,lote));
+ const nJa=ts0.length-ts.length;
+ const avisoRep=(nJa?' '+(nJa===1?'1 já estava':nJa+' já estavam')+' no ERP.':'')
+  +(reps.length?' '+(reps.length===1?'1 já está':reps.length+' já estão')+' no ERP com o mesmo identificador do banco, mas não como paga ('+reps.map(x=>fmtD(x.data)+' · '+fmt(x.val)).join('; ')+'): reative no Financeiro em vez de trazer de novo.':'')
+  +(muds.length?' '+(muds.length===1?'1 já está':muds.length+' já estão')+' no ERP com o mesmo identificador do banco e outra data ou valor ('+muds.map(x=>fmtD(x.data)+' · '+fmt(x.val)).join('; ')+'): é a mesma transação, mudada depois da importação; confira no Financeiro em vez de trazer de novo.':'');
+ if(!novos.length){toast('Nada foi trazido.'+avisoRep,'info',10000);renderFinanceiro();return false;}
+ const rI=await supa.from('financeiro').insert(novos.map(n=>financeiroParaSupabase(n))).select('id');
+ if(!gravouFin(rI)){
+  if(rI&&rI.error&&rI.error.code==='23505'){const ja='alguma destas linhas já está no ERP (talvez trazida ou importada em outro aparelho). Recarregue o ERP e confira.';
+   toast(paraAdmin('Não consegui trazer: '+rI.error.message+' — '+ja,'Não consegui trazer: '+ja),'error',10000);renderFinanceiro();return false;}
+  /* sem resposta: a gravação (de uma vez, todas ou nenhuma) pode ter chegado. Confere no servidor */
+  const est=await relerFinanceiroFin(novos.map(n=>n.id),true);
+  const chegou=!!est&&novos.every(n=>est[n.id]);
+  if(!chegou){toast('Não consegui trazer: '+erroGravFin(rI)+'. '+(est?'Nada foi trazido.':AVISO_SEM_CONFERIR_FIN),'error',10000);renderFinanceiro();return false;}}
+ const ids=new Set(DB.financeiro.map(f=>f.id));
+ DB.financeiro=novos.filter(n=>!ids.has(n.id)).concat(DB.financeiro);
+ commit('criar','Financeiro',(novos.length===1?'1 linha do extrato trazida':novos.length+' linhas do extrato trazidas')+' para o ERP (tinham ficado de fora na importação): '
+  +novos.map(n=>fmtD(n.data)+' '+(n.tipo==='Entrada'?'+':'−')+fmt(n.val)+' '+String(n.desc||'').slice(0,40)).join('; '));
+ novos.forEach(n=>syncSheets('financeiro','upsert',n));
+ toast((novos.length===1?'1 linha trazida':novos.length+' linhas trazidas')+' para o ERP. Se alguma for o mesmo dinheiro de um lançamento seu, ela aparece em Conferir com o banco para mesclar.'+avisoRep,'success',9000);
+ return true;}
 
 /* ================= FORNECEDORES & COMPRAS ================= */
 async function carregarFornecedoresSupabase(){
@@ -15775,6 +16309,24 @@ e não numera nada.
     no bloco Saldo do banco, sem importar de novo. Antes de gravar, o ERP
     relê do servidor o saldo inicial e o Financeiro e refaz a conta;
     nenhum lançamento é criado ou apagado, e dá para desfazer.
+  - Juntar repasse (etapa 5): a linha do banco que é o repasse da
+    maquininha (o texto traz o nome ou o CNPJ do estúdio, ou o nome de uma
+    maquininha; ou qualquer linha do banco de entrada, pela ficha) absorve
+    uma ou mais vendas que caíram na maquininha (cartão, PIX na
+    maquininha, débito; pagas ou a receber; de 45 dias antes a 3 depois,
+    mais as parcelas seguintes do cartão antecipado). Fica a linha do
+    banco; as vendas ficam escondidas dentro dela (como no Mesclar) e a
+    diferença fica guardada como a taxa (mesclagem.tipo 'repasse', bruto
+    e taxa), que aparece debaixo do Recebido. Recusa quando as vendas
+    somam menos que o repasse e pergunta quando a taxa passa de 20%.
+    Cada venda continua ligada à sua linha de pagamento do pedido e conta
+    como a conta dela (o Salvar do pedido não cria outra). Separar desfaz
+    o repasse inteiro.
+  - Trazer para o ERP: as linhas do extrato que ficaram desmarcadas na
+    importação (guardadas com o saldo do banco) aparecem no bloco Saldo do
+    banco; marcadas, entram como linha do banco igual à importação (mesma
+    conferência do identificador do banco) e passam a ser sugeridas para
+    Mesclar.
 - Centro de Custos — segmentação dos lançamentos financeiros por setor
   fixo (Marketing, Vendas, Pedidos, Insumo, Folha de Pagamento,
   Administrativo, Manutenção). A lista é a constante SETORES_FIXOS, a
@@ -16693,13 +17245,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-21.1';
+const APP_VERSAO='2026-10-23.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=318;
+const APP_ATUALIZACAO=319;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

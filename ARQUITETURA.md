@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 21/10/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 23/10/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -1098,6 +1098,24 @@ e não numera nada.
     no bloco Saldo do banco, sem importar de novo. Antes de gravar, o ERP
     relê do servidor o saldo inicial e o Financeiro e refaz a conta;
     nenhum lançamento é criado ou apagado, e dá para desfazer.
+  - Juntar repasse (etapa 5): a linha do banco que é o repasse da
+    maquininha (o texto traz o nome ou o CNPJ do estúdio, ou o nome de uma
+    maquininha; ou qualquer linha do banco de entrada, pela ficha) absorve
+    uma ou mais vendas que caíram na maquininha (cartão, PIX na
+    maquininha, débito; pagas ou a receber; de 45 dias antes a 3 depois,
+    mais as parcelas seguintes do cartão antecipado). Fica a linha do
+    banco; as vendas ficam escondidas dentro dela (como no Mesclar) e a
+    diferença fica guardada como a taxa (mesclagem.tipo 'repasse', bruto
+    e taxa), que aparece debaixo do Recebido. Recusa quando as vendas
+    somam menos que o repasse e pergunta quando a taxa passa de 20%.
+    Cada venda continua ligada à sua linha de pagamento do pedido e conta
+    como a conta dela (o Salvar do pedido não cria outra). Separar desfaz
+    o repasse inteiro.
+  - Trazer para o ERP: as linhas do extrato que ficaram desmarcadas na
+    importação (guardadas com o saldo do banco) aparecem no bloco Saldo do
+    banco; marcadas, entram como linha do banco igual à importação (mesma
+    conferência do identificador do banco) e passam a ser sugeridas para
+    Mesclar.
 - Centro de Custos — segmentação dos lançamentos financeiros por setor
   fixo (Marketing, Vendas, Pedidos, Insumo, Folha de Pagamento,
   Administrativo, Manutenção). A lista é a constante SETORES_FIXOS, a
@@ -1683,4 +1701,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 21/10/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 23/10/2026.
