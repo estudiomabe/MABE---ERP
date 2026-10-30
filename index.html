@@ -5273,10 +5273,16 @@ function atualizarPagamentosVenda(){
  const aviso=$('vnd-pags-aviso');
  if(aviso)aviso.textContent=textoAvisoPags(formas);
  agendarEtiquetasPag();}
+/* o que as formas geram no Financeiro, separando o já recebido do que fica a receber: "3 lançamentos no Financeiro:
+   R$ 3.100,00 já recebidos e R$ 1.700,00 a receber". forte: os valores em <strong> (o resumo do Aprovar) */
+function textoGeraFin(lancs,forte){const r2=v=>Math.round(v*100)/100,b=t=>forte?'<strong>'+t+'</strong>':t;
+ const rec=r2(lancs.filter(l=>l.status==='Pago').reduce((s,l)=>s+l.val,0)),pend=r2(lancs.filter(l=>l.status!=='Pago').reduce((s,l)=>s+l.val,0));
+ const partes=[];if(rec>0.005)partes.push(b(fmt(rec))+' já recebido'+(lancs.filter(l=>l.status==='Pago').length>1?'s':''));if(pend>0.005)partes.push(b(fmt(pend))+' a receber');
+ return b(lancs.length)+' lançamento'+(lancs.length>1?'s':'')+' no Financeiro'+(partes.length?': '+partes.join(' e '):'');}
 /* o aviso abaixo das formas: pedido novo diz quantas contas gera; o salvo, que cada linha é uma conta (o antigo deixa
    o quadro falar); sem a ligação no banco, o texto de antes */
 function textoAvisoPags(formas){const lancs=lancamentosDasFormas(formas||formasPagamentoDe('vnd-pags'),'Pedido');
- if(!$('vnd-id').value)return lancs.length?'Ao salvar, gera '+lancs.length+' conta(s) a receber no Financeiro.':'';
+ if(!$('vnd-id').value)return lancs.length?'Ao salvar, gera '+textoGeraFin(lancs)+'.':'';
  if(modo317())return 'Pedido já salvo: mudar as formas aqui troca só o texto do pagamento — as contas a receber ficam como estão no Financeiro.';
  if(VND_SEM_CONTAS_TELA)return 'Este pedido ainda não tem contas no Financeiro'+((formas||formasPagamentoDe('vnd-pags')).some(igualRemontada)?' e as linhas acima foram tiradas do texto do pedido':'')+'. Ao salvar, o ERP pergunta se cria as contas destas linhas.';
  return VND_ANTIGO_TELA?'':'Pedido já salvo: cada linha é uma conta no Financeiro. Ao salvar, linha nova entra, linha mudada muda lá e linha tirada sai — o ERP mostra antes o que vai mudar.';}
@@ -9261,7 +9267,7 @@ function atualizarPreviewAprov(){const o=DB.orcamentos.find(x=>x.id===$('aprv-or
  else{
   const totalLanc=Math.round(lancs.reduce((s2,l)=>s2+l.val,0)*100)/100;
   html=lancs.map(l=>(l.status==='Pago'?'✔':'⏳')+' '+fmtD(l.data)+' · <strong>'+fmt(l.val)+'</strong> · '+esc(l.desc.replace('Pedido — ',''))+(l.status==='Pago'?' <span style="color:var(--success)">(já recebido)</span>':'')).join('<br>');
-  html+='<br>→ Gera <strong>'+lancs.length+'</strong> conta(s) a receber, somando <strong>'+fmt(totalLanc)+'</strong>';
+  html+='<br>→ Gera '+textoGeraFin(lancs,true);
   html+=totalLanc>totalSel+0.005?' (os '+fmt(totalLanc-totalSel)+' a mais são os juros do cartão).':'.';
   const dAp=$('aprv-data')?$('aprv-data').value:'';
   if(dAp)html+='<br>📄 O pedido será criado com a data de <strong>'+fmtD(dAp)+'</strong>.';}
@@ -17245,13 +17251,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-23.1';
+const APP_VERSAO='2026-10-30.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=319;
+const APP_ATUALIZACAO=320;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
