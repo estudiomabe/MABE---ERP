@@ -884,6 +884,12 @@ body.sem-fin-obs .fin-obs { display:none; }
 .cb-saldo-linha .mono { font-weight:700;white-space:nowrap; }
 .cb-lista { margin:6px 0 0 18px;padding:0;display:flex;flex-direction:column;gap:4px; }
 body.sem-valores .cb-valor, body.sem-valores .fin-saldo-div, body.sem-valores .cb-saldo { display:none; }
+/* o valor do saldo no aviso do ajuste automático (toast) */
+body.sem-valores .toast-valor { display:none; }
+.toast-valor { white-space:nowrap; }
+/* no computador, com a conferência do extrato aberta, o aviso da importação (que diz o que impede o ajuste) sobe
+   acima do rodapé dela: embaixo, cobria o Entendi / Ajustar o saldo */
+@media (min-width:861px) { body:has(#modal-conciliacao.open) #toast-container { bottom:calc(5vh + 76px); } }
 /* Juntar repasse: a linha do banco do repasse da maquininha guarda as vendas e a taxa */
 .fin-ent-taxa { margin-top:5px;font-size:11px;color:var(--text-muted); }
 .fin-ent-taxa:empty { display:none; }
@@ -11199,8 +11205,10 @@ function atualizarComparacaoSaldoOfx(){
 /* ================= CONFERÊNCIA COM O EXTRATO =================
    Depois de importar, o ERP compara o seu saldo com o que o banco declara no arquivo (LEDGERBAL) e mostra onde
    estão as inconsistências que explicam a diferença. Igualar o saldo (pelo Saldo Inicial, o único lugar que
-   representa o que aconteceu fora do que o ERP conhece) não é mais automático: é uma pergunta, feita só no
-   extrato mais recente. Com a origem de cada lançamento, a conta é a do que está no banco (ver saldoBaseOfx). */
+   representa o que aconteceu fora do que o ERP conhece) é automático só no extrato mais recente, com as colunas de
+   origem e sem nenhum bloqueio (ajustarSaldoSozinhoFin, com Desfazer); com bloqueio o aviso diz o que impede, e sem
+   as colunas de origem continua uma pergunta. Com a origem de cada lançamento, a conta é a do que está no banco (ver
+   saldoBaseOfx). */
 const sinalFin=f=>(f.tipo==='Entrada'?1:-1)*Number(f.val||0);
 function analisarConciliacaoOfx(naoImportados){
  const porOrigem=ofxPorOrigem(),ref=dataRefOfx(),conta=porOrigem?OFX_CONTA:'';
@@ -11369,7 +11377,7 @@ function mostrarConciliacaoOfx(an,ajustou){
  const pergunta=!ajustou&&an.podeAjustar
   ?'<div class="conc-ajuste"><strong>Ajustar o saldo?</strong> O saldo inicial passaria de '+fmt(Number(DB.config.cf.saldoInicial)||0)+' para '+fmt(an.novoSaldoInicial)+', e o '+(an.porOrigem?'"No banco"':'saldo')+' do ERP ficaria igual ao do banco. Nenhum lançamento é criado ou apagado, e dá para desfazer.'
    +(an.cautela&&an.cautela.n?' <strong>Atenção:</strong> '+esc(textoCautelaAjusteFin(an.cautela)):'')+'</div>'
-  :!ajustou&&temDif&&an.maisRecente&&an.bloqueios&&an.bloqueios.length?'<div class="conc-ajuste"><strong>O ajuste do saldo fica para depois.</strong> Antes:<ul class="cb-lista">'+an.bloqueios.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul>'+(an.bloqueios.duasContas?'':'<span style="color:var(--text-muted)">Depois, o ajuste aparece em Conferir com o banco, em "Saldo do banco", sem importar de novo.</span>')+'</div>'
+  :!ajustou&&temDif&&an.maisRecente&&an.bloqueios&&an.bloqueios.length?'<div class="conc-ajuste"><strong>O ajuste do saldo fica para depois.</strong> Antes:<ul class="cb-lista">'+an.bloqueios.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul>'+(an.bloqueios.duasContas?'':'<span style="color:var(--text-muted)">Depois de resolver em Conferir com o banco (Trazer para o ERP, Mesclar), o saldo é ajustado sozinho, sem importar de novo; o botão Ajustar o saldo também fica lá, em "Saldo do banco".</span>')+'</div>'
   :!ajustou&&temDif&&an.conferida===false?'<div class="conc-ajuste">O ERP ainda não conseguiu conferir no servidor como separar o que está no banco (sinal fraco). Por isso o ajuste do saldo não é oferecido agora: importe o extrato de novo quando o sinal melhorar.</div>'
   :(!ajustou&&temDif&&!an.maisRecente?'<div class="conc-ajuste">O ERP já tem linhas do banco depois de '+fmtD(an.ref)+': este não é o extrato mais recente, e o saldo do banco dele é de outra data. Por isso o ajuste do saldo não é oferecido aqui; ele aparece quando você importar o extrato mais novo.</div>':'');
  $('conc-corpo').innerHTML=
@@ -11451,12 +11459,15 @@ async function confirmarImportacaoOfx(){if(!guard())return;
  if(OFX_SALDO_BANCO===null){toast(novos.length+' lançamento(s) importado(s)! Este arquivo não trouxe o saldo do banco, então não deu para conferir.'+avisoRep,'info',7000);return;}
  const naoImportados=OFX_ITENS.filter((_,i)=>!idxs.includes(i));OFX_NAO_IMPORTADOS=naoImportados;
  const an=analisarConciliacaoOfx(naoImportados);
- /* o saldo não é mais igualado sozinho: a conferência pergunta (Ajustar / Agora não), e só no extrato mais recente.
-    O saldo que o banco informou fica guardado: depois de mesclar e inverter os casos antigos, a aba Conferir com o
-    banco confere de novo e oferece o ajuste, sem importar outra vez */
- if(an.porOrigem&&an.maisRecente&&an.ref)await guardarSaldoBancoFin({valor:OFX_SALDO_BANCO,data:an.ref,inicio:an.inicio||'',conta:OFX_CONTA,
+ /* o saldo é igualado sozinho (ajustarSaldoSozinhoFin), só no extrato mais recente e sem bloqueio. O saldo que o banco
+    informou fica guardado: com bloqueio, depois de trazer, mesclar e inverter os casos antigos, a aba Conferir com o
+    banco confere de novo e ajusta (ou oferece o ajuste), sem importar outra vez */
+ let auto={};
+ if(an.porOrigem&&an.maisRecente&&an.ref){const guardou=await guardarSaldoBancoFin({valor:OFX_SALDO_BANCO,data:an.ref,inicio:an.inicio||'',conta:OFX_CONTA,
   em:new Date().toISOString(),faltando:an.faltando.length,somaFaltando:Math.round(an.somaFaltando*100)/100,
   faltandoLinhas:an.faltandoTodas,extras:an.extras.map(f=>f.id),linhas:OFX_ITENS.filter(t=>t.data<=an.ref).map(linhaFaltaFin)});
+  /* sem o saldo guardado no servidor, a releitura do ajuste traria o de antes: aí não ajusta */
+  if(guardou)auto=await ajustarSaldoSozinhoFin();}
  /* extrato mais antigo que o do saldo guardado: as linhas dele que não valem no ERP (até a data daquele saldo, na
     mesma conta) passam a travar o ajuste também, senão o ajuste esconderia esse dinheiro no saldo inicial */
  else if(an.porOrigem&&!an.maisRecente){const s=DB.config.saldoBancoOfx;
@@ -11464,7 +11475,15 @@ async function confirmarImportacaoOfx(){if(!guard())return;
    const novas=(an.faltandoDestas||[]).filter(t=>t.data<=s.data&&!ja.some(x=>chaveFaltaFin(x)===chaveFaltaFin(t)));
    if(novas.length)await guardarSaldoBancoFin(Object.assign({},s,{faltandoLinhas:ja.concat(novas)}));}}
  renderFinanceiro();
- toast((novos.length?novos.length+' lançamento(s) importado(s). ':'Extrato conferido. ')+(an.porOrigem?'No banco':'Saldo do ERP')+': '+fmt(saldoBaseOfx())+'.'+avisoRep,'success',6000);
+ const feito=novos.length?novos.length+' lançamento(s) importado(s). ':'Extrato conferido. ';
+ /* ajustado: o aviso com o Desfazer, sem a conferência (não sobra diferença para explicar) */
+ if(auto.ajustou){avisoSaldoAjustadoFin(feito,auto,avisoRep);return;}
+ const naoAjustou=auto.motivo?' O saldo não foi ajustado: '+auto.motivo
+  :auto.jaFeito?' O saldo não foi ajustado de novo: o ajuste automático deste extrato já foi feito antes. Se quiser, toque em Ajustar o saldo em Conferir com o banco → Saldo do banco.'
+  :an.porOrigem&&!an.maisRecente&&Math.abs(an.dif)>=0.01?' O saldo não foi ajustado: este não é o extrato mais recente.':'';
+ toast(feito+(an.porOrigem?'No banco':'Saldo do ERP')+': '+fmt(saldoBaseOfx())+'.'+avisoRep+naoAjustou,naoAjustou?'info':'success',naoAjustou?12000:6000);
+ /* gravação sem confirmação: o aviso do próprio ajuste fica na tela, e a conferência não pergunta de novo */
+ if(auto.pendente)return;
  mostrarConciliacaoOfx(an,false);}
 /* a ordem que a lista sempre teve (data mais nova primeiro, como o .order('data',{ascending:false}) do servidor, que
    põe a data vazia antes), com o id desempatando os do mesmo dia: a lista sai igual a cada carga */
@@ -13057,7 +13076,7 @@ function pedirMesclarTodosFin(){const sd=sugestoesFinAgora().semDuvida;if(!sd.le
   +'\n\nSe algum destes foi pago em dinheiro, no cartão de crédito ou por outra conta, ele não é o mesmo dinheiro: toque em "Não é o mesmo" nele antes.'
   +'\n\nDá para desfazer um a um com Separar.'
   +(resto>0?'\n\nOs outros '+resto+' aparecem depois, para você conferir antes.':'')))return;
- return mesclarTodosSemDuvida(tela.map(s=>s.w.id+'|'+s.l.id));}
+ return depoisDestravarFin(()=>mesclarTodosSemDuvida(tela.map(s=>s.w.id+'|'+s.l.id)));}
 /* o par em uma linha, para as perguntas */
 const linhaBancoTxtFin=w=>fmtD(w.data)+' · '+(w.tipo==='Entrada'?'+':'−')+' '+fmt(w.val)+' · '+String(w.descBanco||w.desc||'');
 const linhaSeuTxtFin=l=>'"'+l.desc+'" ('+fmtD(l.data)+', '+l.status+')';
@@ -13078,7 +13097,7 @@ function pedirMesclarFin(btn){const c=btn.closest('.cb-par');if(!c)return;
    +(outros.length?'\n\nEsta linha do banco também pode ser de: '+outros.map(linhaSeuTxtFin).join('; ')+'.':'')
    +(l.status==='Pendente'?'\n\nA conta "'+l.desc+'" está pendente: mesclando, ela passa a contar como paga por esta linha do banco e sai do "'+(l.tipo==='Entrada'?'a receber':'a pagar')+'".':'')
    +'\n\nFica a linha do banco, com o seu nome; o seu sai das listas e das contas. Separar desfaz.'))return;}
- return mesclarFin(wId,lId,{antigo:tipo==='an',sd:tipo==='sd',visto:tipo==='cf'?{l:l.status,w:w.status}:null});}
+ return depoisDestravarFin(()=>mesclarFin(wId,lId,{antigo:tipo==='an',sd:tipo==='sd',visto:tipo==='cf'?{l:l.status,w:w.status}:null}));}
 function naoEhOMesmoFin(btn){const c=btn.closest('.cb-par');if(!c)return;
  const w=DB.financeiro.find(f=>f.id===c.dataset.w),l=DB.financeiro.find(f=>f.id===c.dataset.l);if(!w||!l)return;
  if(!confirm('Não é o mesmo dinheiro?\n\nBanco: '+linhaBancoTxtFin(w)+'\nSeu lançamento: '+linhaSeuTxtFin(l)+'\n\nEstes dois não serão sugeridos de novo (o aviso seguinte tem Desfazer).'))return;
@@ -13087,10 +13106,10 @@ function pedirSepararFin(wId){const w=DB.financeiro.find(f=>f.id===wId);if(!w||!
  /* o repasse volta inteiro: a linha do banco como era e cada venda com o status que tinha */
  if(ehRepasseFin(w)){const n=w.mesclagem.de.length;
   if(!confirm('Desfazer o repasse de '+fmtD(w.data)+' ('+fmt(w.val)+')?\n\n'+(n===1?'A venda volta':'As '+n+' vendas voltam')+' a valer como eram ("'+nomesAbsorvidosFin(w)+'"), e a linha do banco volta a ser só a do banco, sem a taxa.'))return;
-  return separarFin(wId,{});}
+  return depoisDestravarFin(()=>separarFin(wId,{}));}
  if(!confirm('Separar "'+nomesAbsorvidosFin(w)+'" da linha do banco de '+fmtD(w.data)+' ('+fmt(w.val)+')?\n\nOs dois voltam a ser lançamentos separados, como eram antes de mesclar.'))return;
  const naoSugerir=confirm('Não sugerir de novo?\n\nOK: estes dois não aparecem mais em Conferir com o banco.\nCancelar: podem ser sugeridos de novo.');
- return separarFin(wId,{naoSugerir});}
+ return depoisDestravarFin(()=>separarFin(wId,{naoSugerir}));}
 function pedirRestaurarFin(lId){const l=DB.financeiro.find(f=>f.id===lId);if(!l||!finOrfao(l))return;
  if(!confirm('Restaurar "'+l.desc+'" ('+fmtD(l.data)+', '+fmt(l.val)+')?\n\nEle ficou escondido como mesclado, mas a linha do banco não o guarda. Ele volta a valer como '+statusRestaurarFin(l)+'. Se for o mesmo dinheiro de uma linha do banco, aparece de novo aqui para mesclar.'))return;
  return restaurarOrfaoFin(lId);}
@@ -13139,6 +13158,17 @@ function bloqueiosAjusteFin(ref,faltando,somaFaltando,extras,falt,conta){const o
     mudaria o "No banco" da outra (e o extrato da outra pediria para voltar) */
  const contas=new Set(DB.financeiro.filter(f=>f.conta&&f.status==='Pago'&&origemConfFin(f)==='extrato').map(f=>f.conta));if(conta)contas.add(conta);
 if(contas.size>1){out.duasContas=true;out.push('O ERP tem linhas do banco de mais de uma conta ('+[...contas].join(', ')+') e o saldo inicial é um só: ajustá-lo pelo extrato de uma conta mudaria o "No banco" da outra. O ajuste não é oferecido enquanto o ERP não tiver saldo por conta; confira a diferença de cada conta à mão.');}
+ /* em poucas palavras, para o aviso da importação quando o ajuste automático não acontece: o que impede e onde
+    resolver (motivoCurtoAjusteFin) */
+ const cs=[];
+ if(faltando>0)cs.push({txt:faltando===1?'1 linha do extrato ficou fora do ERP':faltando+' linhas do extrato ficaram fora do ERP',
+  onde:nTz&&nTz>=faltando?'Abra Conferir com o banco → Saldo do banco e toque em Trazer para o ERP.':'Veja em Conferir com o banco → Saldo do banco o que fazer com elas.'});
+ if(extras&&extras.length)cs.push({txt:extras.length===1?'1 linha do banco no ERP não está no extrato':extras.length+' linhas do banco no ERP não estão no extrato',
+  onde:'Confira-as em Conferir com o banco → Saldo do banco.'});
+ if(ant.length)cs.push({txt:ant.length===1?'1 caso antigo está por inverter':ant.length+' casos antigos estão por inverter',
+  onde:'Abra Conferir com o banco → Casos antigos e toque em Mesclar.'});
+ if(out.duasContas)cs.push({txt:'o ERP tem linhas do banco de mais de uma conta (o saldo inicial é um só)',onde:'Confira a diferença de cada conta à mão.'});
+ out.curtos=cs;
  return out;}
 /* as linhas de extrato que ficaram de fora do ERP (guardadas com o saldo do banco): cada uma sai da conta quando
    entra no ERP (mesmo identificador do banco na conta, ou mesma data, valor, tipo e texto) */
@@ -13181,7 +13211,8 @@ function textoCautelaAjusteFin(c){return c.n?c.n+' pago(s) fora do banco até '+
 /* guarda o saldo que o banco informou no extrato mais recente (config saldoBancoOfx) */
 async function guardarSaldoBancoFin(info){DB.config.saldoBancoOfx=info;saveDB();
  const {error}=await supa.from('config').upsert({campo:'saldoBancoOfx',valor:JSON.stringify(info)});
- if(error)toast('Não consegui guardar o saldo do banco: '+error.message,'error');}
+ if(error)toast('Não consegui guardar o saldo do banco: '+error.message,'error');
+ return !error;}
 /* a conferência com o saldo guardado: {s, noBanco, dif, maisRecente, bloqueios, cautela, novoSaldoInicial, pode}. Só a
    conta do extrato (as linhas de outra conta ficam fora); as linhas que faltaram e as que sobraram no ERP vêm da lista
    guardada, conferida com o ERP de agora */
@@ -13214,26 +13245,89 @@ function conferirSaldoBancoFinAgora(){const s=DB.config.saldoBancoOfx;if(!s||s.v
  const outrasContas=conta?DB.financeiro.filter(f=>f.status==='Pago'&&origemConfFin(f)==='extrato'&&f.conta&&f.conta!==conta).length:0;
  return {s,ref,conta,outrasContas,noBanco,dif,maisRecente,bloqueios,cautela,novoSaldoInicial:Math.round(((Number(DB.config.cf.saldoInicial)||0)-dif)*100)/100,
   pode:Math.abs(dif)>=0.01&&maisRecente&&!bloqueios.length&&FIN_LIGACAO_CONFERIDA};}
-/* relê do servidor antes de gravar e refaz a conferência: se os números mudaram, não ajusta */
-async function ajustarSaldoBancoFin(){if(!guard())return;
- const c=conferirSaldoBancoFin();if(!c||!c.pode)return;
- if(!await exigeConexao('ajustar o saldo','porque o ERP confere no servidor o saldo inicial e os lançamentos de agora'))return;
- if(!await relerParaAjusteFin())return;
+/* relê do servidor antes de gravar e refaz a conferência: se os números mudaram, não ajusta. opc.auto: o ajuste
+   automático (ajustarSaldoSozinhoFin), com a mesma gravação e o mesmo histórico, sem o aviso daqui (quem chamou avisa,
+   com o Desfazer). Devolve {valor, ref, conta, cautela} quando ajustou, null quando a gravação ficou sem confirmação
+   (o Desfazer espera ela aparecer) e false quando nada mudou */
+async function ajustarSaldoBancoFin(opc){opc=opc||{};if(!guard())return false;
+ const c=conferirSaldoBancoFin();if(!c||!c.pode)return false;
+ if(!await exigeConexao('ajustar o saldo','porque o ERP confere no servidor o saldo inicial e os lançamentos de agora'))return false;
+ if(!await relerParaAjusteFin())return false;
  const c2=conferirSaldoBancoFin();
  if(!c2||!c2.pode||Math.abs(c2.novoSaldoInicial-c.novoSaldoInicial)>=0.005){renderFinanceiro();
-  toast('Os números mudaram desde a conferência (outro aparelho mexeu no Financeiro ou no saldo). Nada foi ajustado: confira de novo.','error',9000);return;}
+  toast('Os números mudaram desde a conferência (outro aparelho mexeu no Financeiro ou no saldo). Nada foi ajustado: confira de novo.','error',9000);return false;}
  const antes=Number(DB.config.cf.saldoInicial)||0;
  const gravou=await gravarSaldoInicial(c2.novoSaldoInicial);
- if(gravou===null){AJUSTE_SALDO_PENDENTE=true;AJUSTE_SALDO_ANTERIOR=antes;AJUSTE_SALDO_GRAVADO=c2.novoSaldoInicial;renderFinanceiro();return;}
- if(!gravou)return;
+ if(gravou===null){AJUSTE_SALDO_PENDENTE=true;AJUSTE_SALDO_ANTERIOR=antes;AJUSTE_SALDO_GRAVADO=c2.novoSaldoInicial;renderFinanceiro();return null;}
+ if(!gravou)return false;
  AJUSTE_SALDO_PENDENTE=false;AJUSTE_SALDO_ANTERIOR=antes;AJUSTE_SALDO_GRAVADO=c2.novoSaldoInicial;
  log('editar','Financeiro','Saldo igualado ao banco ('+fmt(c2.s.valor)+' em '+fmtD(c2.ref)+'): saldo inicial de '+fmt(antes)+' para '+fmt(DB.config.cf.saldoInicial));
  renderFinanceiro();
- toast('Saldo ajustado. No banco: '+fmt(saldoNoBancoFin(c2.ref,c2.conta))+'.','success',6000);}
+ if(!opc.auto)toast('Saldo ajustado. No banco: '+fmt(saldoNoBancoFin(c2.ref,c2.conta))+'.','success',6000);
+ return {valor:Number(c2.s.valor),ref:c2.ref,conta:c2.conta,cautela:c2.cautela};}
 function pedirAjusteSaldoBancoFin(){const c=conferirSaldoBancoFin();if(!c||!c.pode)return;
  if(!confirm('Ajustar o saldo?\n\nO saldo inicial passa de '+fmt(Number(DB.config.cf.saldoInicial)||0)+' para '+fmt(c.novoSaldoInicial)+', e o "No banco" fica igual ao que o banco informou ('+fmt(c.s.valor)+' em '+fmtD(c.ref)+'). Nenhum lançamento é criado ou apagado, e dá para desfazer.'
   +(c.cautela.n?'\n\nAtenção: '+textoCautelaAjusteFin(c.cautela):'')))return;
  return ajustarSaldoBancoFin();}
+/* ----- o ajuste automático do saldo -----
+   Pedido do dono: importou o extrato, o saldo do ERP fica o da conta. Ao terminar a importação (e depois de Trazer para
+   o ERP, Mesclar ou Separar em Conferir com o banco, quando isso destrava o ajuste), o ERP faz sozinho o mesmo ajuste
+   do botão "Ajustar o saldo" (ajustarSaldoBancoFin: relê do servidor, confere de novo, grava o saldo inicial, o mesmo
+   histórico e o mesmo Desfazer). Só com o saldo guardado do extrato mais recente, a ligação com o banco conferida,
+   internet, permissão de editar, diferença de 1 centavo ou mais e nenhum bloqueio (bloqueiosAjusteFin). Com bloqueio
+   não ajusta, e o aviso da importação diz em poucas palavras o que impede e onde resolver; o botão continua.
+   Cada saldo informado pelo banco (conta, data e valor) é ajustado sozinho uma vez só neste aparelho: depois do
+   Desfazer, nem reimportar o mesmo arquivo nem um Mesclar ajustam de novo (o botão continua lá) */
+const AJUSTE_AUTO_KEY='erp_mabe_ajuste_auto';
+const chaveAjusteAutoFin=s=>(s.conta||'')+'|'+s.data+'|'+Number(s.valor).toFixed(2);
+/* em memória também: sem o armazenamento do navegador (aba anônima, bloqueado), vale enquanto o app está aberto */
+let AJUSTES_AUTO_FIN=null;
+function ajustesAutoFin(){if(!AJUSTES_AUTO_FIN){let a=[];try{a=JSON.parse(localStorage.getItem(AJUSTE_AUTO_KEY)||'[]');}catch(e){}
+  AJUSTES_AUTO_FIN=Array.isArray(a)?a.filter(x=>typeof x==='string'):[];}
+ return AJUSTES_AUTO_FIN;}
+const ajusteAutoFeitoFin=s=>ajustesAutoFin().includes(chaveAjusteAutoFin(s));
+function marcarAjusteAutoFin(s){const a=ajustesAutoFin(),k=chaveAjusteAutoFin(s);if(a.includes(k))return;
+ a.push(k);if(a.length>30)a.splice(0,a.length-30);
+ try{localStorage.setItem(AJUSTE_AUTO_KEY,JSON.stringify(a));}catch(e){}}
+/* o que impede o ajuste, em poucas palavras, e onde resolver (bloqueiosAjusteFin guarda em .curtos) */
+function motivoCurtoAjusteFin(bl){const cs=(bl&&bl.curtos)||[];
+ if(!cs.length)return bl&&bl.length?'falta resolver o que aparece em Conferir com o banco → Saldo do banco.':'';
+ const ts=cs.map(x=>x.txt),lista=ts.length>1?ts.slice(0,-1).join(', ')+' e '+ts[ts.length-1]:ts[0];
+ return lista+'. '+(cs.length===1?cs[0].onde:'Veja em Conferir com o banco → Saldo do banco.');}
+/* devolve {ajustou, valor, ref, cautela} | {pendente} (gravação sem confirmação) | {motivo} (bloqueio) | {jaFeito} |
+   {} (nada a ajustar, ou falhou: sem internet, a releitura, os números mudaram — com o aviso do próprio ajuste) */
+async function ajustarSaldoSozinhoFin(){
+ if(!canEdit()||!FIN_LIGACAO_NO_BANCO||!FIN_LIGACAO_CONFERIDA)return {};
+ const c=conferirSaldoBancoFin();
+ if(!c||!c.maisRecente||Math.abs(c.dif)<0.01)return {};
+ if(c.bloqueios.length)return {motivo:motivoCurtoAjusteFin(c.bloqueios)};
+ if(!c.pode)return {};
+ if(ajusteAutoFeitoFin(c.s))return {jaFeito:true};
+ const r=await ajustarSaldoBancoFin({auto:true});
+ if(r===null){marcarAjusteAutoFin(c.s);return {pendente:true};}
+ if(!r||typeof r!=='object')return {};
+ marcarAjusteAutoFin(c.s);
+ return Object.assign({ajustou:true},r);}
+/* o aviso do ajuste automático, com o Desfazer de "Saldo do banco" (que pergunta antes). O valor fica escondido em
+   body.sem-valores. antes/depois: o que a importação tem a dizer junto */
+function avisoSaldoAjustadoFin(antes,r,depois){antes=antes||'';depois=depois||'';const ca=r.cautela;
+ const cau=ca&&ca.n?' Atenção: '+(ca.n===1?'1 pago fora do banco':ca.n+' pagos fora do banco')+' até '+fmtD(ca.ate)+(ca.n===1?' pode':' podem')+' ser o mesmo dinheiro de uma linha do banco; confira em Conferir com o banco.':'';
+ const t=toast(antes+'Saldo ajustado ao do banco em '+fmtD(r.ref)+'.'+depois+cau,'success',15000);
+ const tx=t&&t.querySelector?t.querySelector('.toast-txt'):null;
+ if(tx)tx.innerHTML='✅ '+esc(antes)+'Saldo ajustado ao do banco<span class="toast-valor">: '+esc(fmt(r.valor))+'</span> em '+esc(fmtD(r.ref))+'.'+esc(depois+cau);
+ if(t&&t.appendChild&&canEdit()&&desfazerDisponivelFin()){const b=document.createElement('button');b.type='button';b.className='toast-acao';b.textContent='Desfazer';
+  b.onclick=()=>{fecharToast(t);pedirDesfazerAjusteSaldoFin();};t.appendChild(b);}
+ return t;}
+/* Trazer para o ERP, Mesclar e Separar (em Conferir com o banco): o ajuste estava travado antes da ação? Se a ação o
+   destravou, o ajuste automático acontece depois dela (uma vez por saldo do banco, como na importação). A pergunta de
+   cada ação continua fora da trava: fazer() é a chamada da função travada */
+function ajusteTravadoFin(){if(!canEdit()||!FIN_LIGACAO_NO_BANCO)return false;
+ const c=conferirSaldoBancoFin();return !!c&&c.bloqueios.length>0;}
+function depoisDestravarFin(fazer){const travado=ajusteTravadoFin(),p=fazer();
+ if(!travado||!p||typeof p.then!=='function')return p;
+ return p.then(async r=>{const c=conferirSaldoBancoFin();
+  if(c&&c.pode&&!c.bloqueios.length){const a=await ajustarSaldoSozinhoFin();if(a.ajustou)avisoSaldoAjustadoFin('',a,'');}
+  return r;});}
 
 /* ----- telas ----- */
 function trocarVistaFin(v){FIN_VISTA=v==='conferir'?'conferir':'lista';irAoTopo();FIN_MOSTRAR=FIN_PASSO;renderFinanceiro();
@@ -13732,7 +13826,7 @@ function pedirTrazerFin(){const chaves=[...document.querySelectorAll('#fin-confe
  if(!confirm((ts.length===1?'Trazer esta linha do extrato para o ERP?':'Trazer estas '+ts.length+' linhas do extrato para o ERP?')+'\n\n'
   +ts.map(t=>fmtD(t.data)+' · '+(t.tipo==='Entrada'?'+':'−')+' '+fmt(t.val)+' · '+String(t.desc||'').slice(0,50)).join('\n')
   +'\n\nCada uma entra como linha do banco (paga), igual à importação do extrato: o "No banco" muda em '+(soma>=0?'+':'−')+fmt(Math.abs(soma))+'. Se alguma for o mesmo dinheiro de um lançamento seu, ela aparece em Conferir com o banco para mesclar.'))return;
- return trazerParaErpFin(chaves);}
+ return depoisDestravarFin(()=>trazerParaErpFin(chaves));}
 /* chaves: as linhas (chaveFaltaFin) marcadas. Precisa de internet: relê do servidor os lançamentos desses dias antes */
 async function trazerParaErpFin(chaves){if(!guard())return false;
  if(!FIN_LIGACAO_NO_BANCO){toast(paraAdmin('Trazer para o ERP precisa das colunas de origem no banco (supabase/migracao-financeiro-origem.sql).','Trazer para o ERP ainda não está disponível — avise o administrador.'),'error',8000);return false;}
@@ -16307,14 +16401,18 @@ e não numera nada.
     se consulta, e a linha do banco que recebeu outro precisa ser
     separada antes de ser cancelada ou excluída.
   - Linha do banco tem data, valor e tipo travados no modal ("Editar
-    mesmo assim" pergunta antes). O ajuste do saldo inicial é perguntado,
-    só no extrato mais recente, só com uma conta no banco, e só quando
-    nenhuma linha de extrato ficou fora do ERP (as que faltaram ficam
-    guardadas com o saldo do banco), nenhuma linha do banco no ERP falta
-    no extrato e nenhum caso antigo está por inverter. Ele aparece também
-    no bloco Saldo do banco, sem importar de novo. Antes de gravar, o ERP
+    mesmo assim" pergunta antes). O ajuste do saldo inicial é automático
+    ao importar o extrato, só no extrato mais recente (com o saldo
+    informado pelo banco), só com uma conta no banco, e só quando nenhuma
+    linha de extrato ficou fora do ERP (as que faltaram ficam guardadas
+    com o saldo do banco), nenhuma linha do banco no ERP falta no extrato
+    e nenhum caso antigo está por inverter; o aviso tem Desfazer. Com
+    bloqueio, o aviso diz o que impede e onde resolver, e o ajuste
+    acontece sozinho depois de Trazer para o ERP, Mesclar ou Separar,
+    quando isso destrava (uma vez por saldo do banco em cada aparelho).
+    O botão continua no bloco Saldo do banco. Antes de gravar, o ERP
     relê do servidor o saldo inicial e o Financeiro e refaz a conta;
-    nenhum lançamento é criado ou apagado, e dá para desfazer.
+    nenhum lançamento é criado ou apagado.
   - Juntar repasse (etapa 5): a linha do banco que é o repasse da
     maquininha (o texto traz o nome ou o CNPJ do estúdio, ou o nome de uma
     maquininha; ou qualquer linha do banco de entrada, pela ficha) absorve
@@ -17251,13 +17349,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-10-30.1';
+const APP_VERSAO='2026-11-03.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=320;
+const APP_ATUALIZACAO=321;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

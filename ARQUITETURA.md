@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 23/10/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 03/11/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -1090,14 +1090,18 @@ e não numera nada.
     se consulta, e a linha do banco que recebeu outro precisa ser
     separada antes de ser cancelada ou excluída.
   - Linha do banco tem data, valor e tipo travados no modal ("Editar
-    mesmo assim" pergunta antes). O ajuste do saldo inicial é perguntado,
-    só no extrato mais recente, só com uma conta no banco, e só quando
-    nenhuma linha de extrato ficou fora do ERP (as que faltaram ficam
-    guardadas com o saldo do banco), nenhuma linha do banco no ERP falta
-    no extrato e nenhum caso antigo está por inverter. Ele aparece também
-    no bloco Saldo do banco, sem importar de novo. Antes de gravar, o ERP
+    mesmo assim" pergunta antes). O ajuste do saldo inicial é automático
+    ao importar o extrato, só no extrato mais recente (com o saldo
+    informado pelo banco), só com uma conta no banco, e só quando nenhuma
+    linha de extrato ficou fora do ERP (as que faltaram ficam guardadas
+    com o saldo do banco), nenhuma linha do banco no ERP falta no extrato
+    e nenhum caso antigo está por inverter; o aviso tem Desfazer. Com
+    bloqueio, o aviso diz o que impede e onde resolver, e o ajuste
+    acontece sozinho depois de Trazer para o ERP, Mesclar ou Separar,
+    quando isso destrava (uma vez por saldo do banco em cada aparelho).
+    O botão continua no bloco Saldo do banco. Antes de gravar, o ERP
     relê do servidor o saldo inicial e o Financeiro e refaz a conta;
-    nenhum lançamento é criado ou apagado, e dá para desfazer.
+    nenhum lançamento é criado ou apagado.
   - Juntar repasse (etapa 5): a linha do banco que é o repasse da
     maquininha (o texto traz o nome ou o CNPJ do estúdio, ou o nome de uma
     maquininha; ou qualquer linha do banco de entrada, pela ficha) absorve
@@ -1701,4 +1705,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 23/10/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 03/11/2026.
