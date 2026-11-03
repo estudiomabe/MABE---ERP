@@ -1343,7 +1343,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <span id="fin-per-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span>
       </div>
       <div class="stat-row">
-        <div class="stat-box"><div class="stat-value" id="fin-saldo">R$0</div><div class="stat-label">Saldo Atual</div><div class="fin-saldo-div" id="fin-saldo-div" title="No banco: saldo inicial + o que veio do extrato. Fora do banco: o que foi pago ou recebido e não está numa linha do banco (dinheiro, maquininha, outra conta, ou ainda não mesclado)."></div></div>
+        <div class="stat-box"><div class="stat-value" id="fin-saldo">R$0</div><div class="stat-label">Saldo Atual</div><div class="fin-saldo-div" id="fin-saldo-div"></div></div>
         <div class="stat-box"><div class="stat-value" id="fin-ent" style="color:var(--success)">R$0</div><div class="stat-label">Recebido no mês</div><div class="fin-ent-taxa" id="fin-ent-taxa" title="A diferença entre as vendas que caíram na maquininha e o repasse que entrou no banco (Juntar repasse, em Conferir com o banco)"></div></div>
         <div class="stat-box"><div class="stat-value" id="fin-sai" style="color:var(--danger)">R$0</div><div class="stat-label">Pago no mês</div></div>
         <div class="stat-box num-atalho" role="button" tabindex="0" title="Ver só os lançamentos pendentes" onclick="atalhoPendencias()"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
@@ -12306,25 +12306,23 @@ function origemConfFin(f){const o=origemFin(f);if(o)return o;
 const dataFin=f=>String((f&&f.data)||'').slice(0,10);
 
 /* ----- saldo dividido -----
-   No banco = saldo inicial + linhas do extrato pagas (até a data, quando informada). Fora do banco = o resto do
-   que foi pago até hoje: dinheiro, maquininha, outra conta, ou o mesmo dinheiro ainda não mesclado. O pago com
-   data futura (parcela de cartão marcada antes da hora) ainda não está em lugar nenhum: fica à parte. Os três
-   somam o Saldo Atual */
+   No banco = saldo inicial + linhas do extrato pagas (até a data, quando informada): é o que o ajuste do saldo
+   compara com o banco. O pago com data futura (parcela de cartão marcada antes da hora) ainda não está em lugar
+   nenhum: aparece à parte debaixo do Saldo Atual */
 /* conta: só as linhas daquela conta e as sem conta (importadas antes da etapa 1); o saldo inicial é o da conta
    principal (a outra conta começa do zero) */
 const daContaFin=(f,conta)=>!conta||!f.conta||f.conta===conta;
 function saldoNoBancoFin(ate,conta){const inicial=Number(DB.config.cf.saldoInicial)||0;
  return inicial+finVisiveis().filter(f=>f.status==='Pago'&&origemConfFin(f)==='extrato'&&(!ate||dataFin(f)<=ate)&&daContaFin(f,conta)).reduce((s,f)=>s+sinalFin(f),0);}
-function saldoForaDoBancoFin(){const hoje=today();
- return finVisiveis().filter(f=>f.status==='Pago'&&origemConfFin(f)!=='extrato'&&dataFin(f)<=hoje).reduce((s,f)=>s+sinalFin(f),0);}
 function saldoDataFuturaFin(){const hoje=today();
  return finVisiveis().filter(f=>f.status==='Pago'&&origemConfFin(f)!=='extrato'&&dataFin(f)>hoje).reduce((s,f)=>s+sinalFin(f),0);}
+/* debaixo do Saldo Atual só o pago com data futura, quando há: o No banco e o Fora do banco saíram do card a pedido
+   do dono (03/11); as contas continuam (o ajuste do saldo e o Conferir com o banco usam o No banco) */
 function pintarSaldoDivididoFin(){const el=$('fin-saldo-div');if(!el)return;
  if(!(FIN_LIGACAO_NO_BANCO||DB.financeiro.some(f=>origemFin(f)))){el.innerHTML='';return;}
  const linha=(rot,v,tit)=>'<span'+(tit?' title="'+tit+'"':'')+'><b>'+rot+'</b><span class="mono"'+(valorNegativo(v)?' style="color:var(--danger)"':'')+'>'+fmtSinal(v)+'</span></span>';
  const fut=saldoDataFuturaFin();
- el.innerHTML=linha('No banco',saldoNoBancoFin())+linha('Fora do banco',saldoForaDoBancoFin())
-  +(Math.abs(fut)>=0.005?linha('Data futura',fut,'Marcado como pago, mas com data depois de hoje: ainda não está no banco nem no caixa'):'');}
+ el.innerHTML=(Math.abs(fut)>=0.005?linha('Data futura',fut,'Marcado como pago, mas com data depois de hoje: ainda não está no banco nem no caixa'):'');}
 
 /* ----- critério do casamento (funções puras: só leem o que recebem) ----- */
 function diasEntreFin(a,b){return Math.round((new Date(String(b).slice(0,10)+'T12:00:00')-new Date(String(a).slice(0,10)+'T12:00:00'))/864e5);}
@@ -16286,8 +16284,8 @@ e não numera nada.
   já existentes. No topo: Saldo Atual (saldo inicial + o que está Pago,
   fora os mesclados; vermelho e com sinal só quando negativo), Recebido
   no mês, Pago no mês e Pendências (tocar abre a lista só com os
-  pendentes). O saldo aparece dividido em No banco (saldo inicial +
-  extrato), Fora do banco e, quando há, o pago com data futura.
+  pendentes). Debaixo do Saldo Atual aparece, quando há, o pago com
+  data futura.
   - Período: acima dos números, o mesmo seletor de Pedidos e Orçamentos
     (Mês, Ano ou Tudo; PER_FIN, começa em Tudo) filtra a lista e o
     contador junto com os outros filtros e a busca do topo, e leva
@@ -17349,13 +17347,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-03.1';
+const APP_VERSAO='2026-11-03.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=321;
+const APP_ATUALIZACAO=322;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

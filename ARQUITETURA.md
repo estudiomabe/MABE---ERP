@@ -975,8 +975,8 @@ e não numera nada.
   já existentes. No topo: Saldo Atual (saldo inicial + o que está Pago,
   fora os mesclados; vermelho e com sinal só quando negativo), Recebido
   no mês, Pago no mês e Pendências (tocar abre a lista só com os
-  pendentes). O saldo aparece dividido em No banco (saldo inicial +
-  extrato), Fora do banco e, quando há, o pago com data futura.
+  pendentes). Debaixo do Saldo Atual aparece, quando há, o pago com
+  data futura.
   - Período: acima dos números, o mesmo seletor de Pedidos e Orçamentos
     (Mês, Ano ou Tudo; PER_FIN, começa em Tudo) filtra a lista e o
     contador junto com os outros filtros e a busca do topo, e leva
