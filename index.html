@@ -834,6 +834,8 @@ body.sem-fin-obs .fin-obs { display:none; }
 .fin-abas .per-tab { display:inline-flex;align-items:center;gap:6px; }
 .fin-aba-n { min-width:18px;padding:0 6px;border-radius:10px;background:var(--accent);color:#1a1714;font-size:10.5px;font-family:var(--mono);font-weight:700;line-height:17px;text-align:center; }
 .fin-aba-n:empty { display:none; }
+.vnd-aba-n { font-family:var(--mono);font-size:11px;font-weight:600;opacity:.65; }
+.vnd-aba-n:empty { display:none; }
 /* saldo dividido embaixo do Saldo Atual */
 .fin-saldo-div { margin-top:7px;padding-top:6px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--text-muted); }
 .fin-saldo-div:empty { display:none; }
@@ -1294,6 +1296,10 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
     <div class="section" id="section-portfolio"><div id="portfolio-cards"></div><div class="table-wrapper" id="portfolio-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Portfólio & Estoque</div></div><table><thead><tr><th>#</th><th>Produto</th><th>Categoria</th><th>Tempo de Produção</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-portfolio"></tbody></table></div></div>
     <div class="section" id="section-vendas">
       <div id="vendas-lista-view">
+      <div class="per-tabs fin-abas" id="vnd-abas" role="tablist" aria-label="Pedidos">
+        <button type="button" class="per-tab active" role="tab" aria-selected="true" data-aba="andamento" onclick="trocarAbaVnd('andamento')">Em andamento<span class="vnd-aba-n" id="vnd-n-andamento"></span></button>
+        <button type="button" class="per-tab" role="tab" aria-selected="false" data-aba="finalizados" onclick="trocarAbaVnd('finalizados')">Finalizados<span class="vnd-aba-n" id="vnd-n-finalizados"></span></button>
+      </div>
       <div class="period-bar">
         <div class="per-tabs">
           <button class="per-tab" id="vnd-per-mes" onclick="setVndModo('mes')">Mês</button>
@@ -4888,8 +4894,21 @@ function statusPcpCelula(v){const op=opDoPedido(v);
  if(!op)return '<span class="badge badge-muted" title="Nenhuma ordem de produção vinculada">—</span>';
  if(op.status==='Concluída')return '<span class="badge badge-success" title="OP-'+pad(op.num)+'">✅ Concluída</span>';
  return '<span class="badge badge-info" title="OP-'+pad(op.num)+'">'+(ETAPAS[op.etapa]||'—')+'</span>';}
+/* Abas da lista de pedidos (pedido do dono, 04/11): "Em andamento" (Pendente, Confirmado, Enviado) e "Finalizados"
+   (Entregue e Cancelado). Marcar o pedido como Entregue ou Cancelado o leva para Finalizados; a OP concluída não
+   basta (a peça ainda precisa ser entregue). Abre em Em andamento; o período, a busca e os filtros valem nas duas */
+let VND_ABA='andamento';
+const vndFinalizado=v=>v.status==='Entregue'||v.status==='Cancelado';
+function trocarAbaVnd(aba){VND_ABA=aba==='finalizados'?'finalizados':'andamento';renderVendas();}
+function pintarAbasVnd(base){const abas=$('vnd-abas');if(!abas)return;
+ const nFin=base.filter(vndFinalizado).length;
+ $('vnd-n-andamento').textContent=base.length-nFin;$('vnd-n-finalizados').textContent=nFin;
+ abas.querySelectorAll('.per-tab').forEach(b=>{const a=b.dataset.aba===VND_ABA;b.classList.toggle('active',a);b.setAttribute('aria-selected',a?'true':'false');});}
 function renderVendas(){syncPerBar('vnd-per',PER_VND);
- const lista=DB.vendas.filter(v=>matchPer(v.data,PER_VND)&&fcPassa('vnd',v));
+ const base=DB.vendas.filter(v=>matchPer(v.data,PER_VND)&&fcPassa('vnd',v));
+ pintarAbasVnd(base);
+ const lista=base.filter(v=>vndFinalizado(v)===(VND_ABA==='finalizados'));
+ const vazioVnd=VND_ABA==='finalizados'?'Nenhum pedido entregue ou cancelado no período selecionado':'Nenhum pedido em andamento no período selecionado';
  $('tb-vendas').innerHTML=lista.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
  const itens=v.itens||[];
  const expandido=VND_EXPANDIDOS.has(v.id);
@@ -4900,12 +4919,12 @@ function renderVendas(){syncPerBar('vnd-per',PER_VND);
  if(expandido&&itens.length){
   linhasItens=itens.map(it=>'<tr class="venda-item-row sub-row" style="background:var(--surface2);cursor:pointer" onclick="'+abrirPedido+'"><td></td><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
  }
- return linhaHeader+linhasItens;}).join('')||emptyRow(10,fcMsgVazia('vnd','Nenhum pedido no período selecionado'));
- renderVendasCards(lista);fcPintar('vnd',lista);pintarAvisoAntigosVnd();}
+ return linhaHeader+linhasItens;}).join('')||emptyRow(10,fcMsgVazia('vnd',vazioVnd));
+ renderVendasCards(lista,vazioVnd);fcPintar('vnd',lista);pintarAvisoAntigosVnd();}
 /* mesma informacao da tabela, empilhada: nada de arrastar para o lado */
-function renderVendasCards(lista){
+function renderVendasCards(lista,vazio){
  const alvo=$('vendas-cards');if(!alvo)return;
- if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">'+fcMsgVazia('vnd','Nenhum pedido no período selecionado')+'</div>';return;}
+ if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">'+fcMsgVazia('vnd',vazio||'Nenhum pedido no período selecionado')+'</div>';return;}
  alvo.innerHTML=lista.map(v=>{
   const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
   const itens=v.itens||[];
@@ -16076,7 +16095,9 @@ e não numera nada.
     proposta diz a validade em dias (VALIDADE_PROPOSTA_DIAS). Excluir o
     orçamento mantém as OPs ligadas a ele, só desvinculadas.
 - Pedidos (Vendas) — lista de pedidos gerados manualmente ou a partir da
-  aprovação de orçamentos, com o mesmo seletor de período e um filtro em
+  aprovação de orçamentos, em duas abas: Em andamento (Pendente,
+  Confirmado, Enviado; abre nela) e Finalizados (Entregue e Cancelado),
+  cada uma com a quantidade; com o mesmo seletor de período e um filtro em
   cada coluna (Pedido, Data, Prazo, Cliente, Itens, Total, Pagamento,
   Status R$ e Status PCP, que é a etapa da OP do pedido; o Prazo é o da OP
   ou, sem ela, a entrega combinada, em vermelho quando passou e o pedido
@@ -17366,13 +17387,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-04.2';
+const APP_VERSAO='2026-11-04.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=324;
+const APP_ATUALIZACAO=325;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

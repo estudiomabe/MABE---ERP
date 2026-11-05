@@ -750,7 +750,9 @@ e não numera nada.
     proposta diz a validade em dias (VALIDADE_PROPOSTA_DIAS). Excluir o
     orçamento mantém as OPs ligadas a ele, só desvinculadas.
 - Pedidos (Vendas) — lista de pedidos gerados manualmente ou a partir da
-  aprovação de orçamentos, com o mesmo seletor de período e um filtro em
+  aprovação de orçamentos, em duas abas: Em andamento (Pendente,
+  Confirmado, Enviado; abre nela) e Finalizados (Entregue e Cancelado),
+  cada uma com a quantidade; com o mesmo seletor de período e um filtro em
   cada coluna (Pedido, Data, Prazo, Cliente, Itens, Total, Pagamento,
   Status R$ e Status PCP, que é a etapa da OP do pedido; o Prazo é o da OP
   ou, sem ela, a entrega combinada, em vermelho quando passou e o pedido
