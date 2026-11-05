@@ -667,11 +667,11 @@ e não numera nada.
   rótulo diz isso — periodoCorrido). Gráficos: Evolução de Pedidos
   (barras em escala logarítmica: 6 meses até o mês escolhido, os 12
   meses do ano ou um por ano) e Status dos Pedidos (rosca com legenda de
-  quantidade e %). Tabelas: Estoque Crítico, Top 5 Clientes do Período
-  (por faturamento) e Últimas Transações. Quem não vê valores fica só
-  com o gráfico de status e o estoque crítico. O botão "Gerar Relatório
-  Dashboard em PDF" leva a tabela de indicadores, o estoque crítico e as
-  últimas transações do período selecionado.
+  quantidade e %). Tabela: Últimas Transações, na largura toda (o
+  Estoque Crítico e o Top 5 Clientes saíram em 05/11/2026, a pedido do
+  dono). Quem não vê valores fica só com o gráfico de status. O botão
+  "Gerar Relatório Dashboard em PDF" leva a tabela de indicadores e as
+  últimas transações do período selecionado (sem o estoque crítico).
 - Calendário (de Entregas) — grade do mês (‹ ›, Hoje) com três tipos de
   compromisso: as entregas cadastradas, na cor do status (Agendada, Em
   rota, Entregue/Instalada; Agendada com data passada aparece como
