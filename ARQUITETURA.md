@@ -1132,7 +1132,7 @@ e não numera nada.
     Mesclar.
 - Centro de Custos — segmentação dos lançamentos financeiros por setor
   fixo (Marketing, Vendas, Pedidos, Insumo, Folha de Pagamento,
-  Administrativo, Manutenção). A lista é a constante SETORES_FIXOS, a
+  Custo Fixo, Manutenção). A lista é a constante SETORES_FIXOS, a
   mesma dos seletores do Financeiro. Por período (Mês, Ano ou Tudo),
   soma pagos e pendentes (fora os cancelados e os mesclados) em saídas e
   entradas por centro, com o percentual das saídas e um gráfico de
