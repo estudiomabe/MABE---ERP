@@ -1744,6 +1744,16 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         </div>
       </div>
       <div class="config-card">
+        <div class="config-title">📋 Configurações de Orçamentos</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Valem para os próximos orçamentos: os que já existem não mudam.</div>
+        <div class="form-grid">
+          <div class="form-grid form-2">
+            <div class="form-group"><label class="form-label" for="cfg-prazo-orc">Prazo padrão para orçamentos (dias)</label><input type="number" class="form-control" id="cfg-prazo-orc" step="1" min="1" max="365" inputmode="numeric"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Preenche o "Prazo (dias)" e a "Data de Entrega" de cada orçamento novo. Dá para mudar em cada orçamento.</div></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveConfigOrc()">💾 Salvar Configurações de Orçamentos</button>
+        </div>
+      </div>
+      <div class="config-card">
         <div class="config-title">🏢 Custos Fixos Padrão (Orçamentos)</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Pré-preenchidos em todo novo orçamento. Atualize aqui quando os custos mudarem.</div>
         <div class="form-grid">
@@ -2175,7 +2185,7 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Administrador',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',ultimaImportacaoOfx:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,taxaMaquina:0,saldoInicial:0,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
+ config:{sheetsUrl:'',ultimaImportacaoOfx:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,taxaMaquina:0,saldoInicial:0,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0,prazoOrcDias:15},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
@@ -4983,8 +4993,8 @@ async function duplicarVenda(id){
 async function duplicarOrcamento(id){
  if(!guard())return;
  const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
- if(!confirm('Duplicar o orçamento ORC-'+pad(o.num)+'?\n\nA cópia nasce como Rascunho, com data de hoje e validade em 15 dias.'))return;
- const novo={id:uid(),cliId:o.cliId,origem:o.origem||'',data:today(),validade:addDays(today(),15),status:'Rascunho',
+ if(!confirm('Duplicar o orçamento ORC-'+pad(o.num)+'?\n\nA cópia nasce como Rascunho, com data de hoje e entrega em '+prazoPadraoOrc()+' dias (o prazo padrão das Configurações).'))return;
+ const novo={id:uid(),cliId:o.cliId,origem:o.origem||'',data:today(),validade:addDays(today(),prazoPadraoOrc()),status:'Rascunho',
   obs:(o.obs?o.obs+' · ':'')+'Cópia de ORC-'+pad(o.num),
   itens:JSON.parse(JSON.stringify(itensOrc(o))).map(it=>Object.assign({},it,{id:uid()})),
   preco:o.preco,custo:o.custo,lucro:o.lucro,imposto:o.imposto,markup:o.markup,descPct:o.descPct,
@@ -5959,7 +5969,7 @@ function embutirCabecalhoOrc(destino){
  if(card.parentElement!==alvo)alvo.appendChild(card);
  alvo.style.display='block';}
 function prepararCabecalhoNovo(){ORC_ATUAL_ID=null;$('orch-id').value='';$('orch-cli').innerHTML='';fillSel('orch-cli',DB.clientes,c=>c.nome,'','— Sem cliente —');
- $('orch-data').value=today();$('orch-validade').value=addDays(today(),15);encherSelectLista('orch-status',ORC_STATUS,'Rascunho');$('orch-obs').value='';$('orch-origem').value='';aoMudarDatasOrc();}
+ $('orch-data').value=today();$('orch-validade').value=addDays(today(),prazoPadraoOrc());encherSelectLista('orch-status',ORC_STATUS,'Rascunho');$('orch-obs').value='';$('orch-origem').value='';aoMudarDatasOrc();}
 function novoOrcamento(){if(!guard())return;
  prepararCabecalhoNovo();
  ORC_NOVO_INLINE=true;ORC_ITEM_EDITANDO=null;ORC_VOLTAR='lista';
@@ -14552,6 +14562,7 @@ function renderConfig(){CFG_EDITANDO=false;$('sheets-url').value=DB.config.sheet
  $('cfg-hmes').value=cf.hmes;$('cfg-imposto').value=cf.imposto;$('cfg-taxa-maquina').value=cf.taxaMaquina||0;$('cfg-markup').value=cf.markup;
  $('cfg-saldo-inicial').value=cf.saldoInicial||0;
  $('cfg-pix-ant').value=cf.pixAntecipado;
+ $('cfg-prazo-orc').value=prazoPadraoOrc();
  for(let n=1;n<=10;n++)$('cfg-taxa-p'+n).value=cf['taxaParc'+n];
  renderCustosFixosExtrasConfig();
  renderFolhaConfig();
@@ -14655,6 +14666,17 @@ async function saveCFConfig(){if(!guard())return;
  Object.entries(DB.config.cf).forEach(([campo,valor])=>syncSheets('config','upsert',{campo,valor}));
  syncSheets('config','upsert',{campo:'custosFixosExtras',valor:JSON.stringify(extras)});
  toast('Configurações de custo salvas!','success');}
+/* o prazo padrão do orçamento novo, em dias (Configurações de Orçamentos). Sem valor válido, os 15 dias de antes */
+function prazoPadraoOrc(){const n=Math.round(Number(DB.config.cf.prazoOrcDias));return n>=1&&n<=365?n:15;}
+async function saveConfigOrc(){if(!guard())return;
+ const n=Math.round(Number($('cfg-prazo-orc').value));
+ if(!(n>=1&&n<=365)){toast('Informe o prazo em dias, de 1 a 365.','error');return;}
+ const antes=DB.config.cf.prazoOrcDias;
+ const {error}=await supa.from('config').upsert({campo:'prazoOrcDias',valor:n});
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ DB.config.cf.prazoOrcDias=n;saveDB();log('editar','Configurações','Prazo padrão para orçamentos: '+n+' dias'+(antes&&antes!==n?' (era '+antes+')':''));
+ syncSheets('config','upsert',{campo:'prazoOrcDias',valor:n});
+ toast('Configurações de orçamentos salvas: prazo padrão de '+n+(n===1?' dia.':' dias.'),'success');}
 async function saveCondPagto(){if(!guard())return;
  const parc={};for(let n=1;n<=10;n++)parc['taxaParc'+n]=Math.max(0,num('cfg-taxa-p'+n));
  Object.assign(DB.config.cf,{pixAntecipado:Math.min(100,Math.max(0,num('cfg-pix-ant')||50))},parc);
@@ -15919,7 +15941,8 @@ abaixo é o resumo em português.
     e frete) e as fichas de preço do portfólio. Os números simples ficam
     um por linha, com o nome da chave no campo: aluguel, iptu, agua,
     energia, contador, outros, hmes (horas/mês), imposto, markup,
-    taxaMaquina, pixAntecipado, taxaParc1 a taxaParc10 e saldoInicial
+    taxaMaquina, pixAntecipado, taxaParc1 a taxaParc10, saldoInicial e
+    prazoOrcDias (prazo padrão do orçamento novo, em dias; 15 sem valor)
     (hsocio e haux são de antes dos tipos de mão de obra). Os compostos
     são JSON em texto: custosFixosExtras, mdoTipos, folhaPagamento,
     empresaInfo, servicos, comissionados, temposProducao, linksProdutos,
@@ -17432,13 +17455,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-05.2';
+const APP_VERSAO='2026-11-05.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=327;
+const APP_ATUALIZACAO=328;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

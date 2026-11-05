@@ -534,7 +534,8 @@ abaixo é o resumo em português.
     e frete) e as fichas de preço do portfólio. Os números simples ficam
     um por linha, com o nome da chave no campo: aluguel, iptu, agua,
     energia, contador, outros, hmes (horas/mês), imposto, markup,
-    taxaMaquina, pixAntecipado, taxaParc1 a taxaParc10 e saldoInicial
+    taxaMaquina, pixAntecipado, taxaParc1 a taxaParc10, saldoInicial e
+    prazoOrcDias (prazo padrão do orçamento novo, em dias; 15 sem valor)
     (hsocio e haux são de antes dos tipos de mão de obra). Os compostos
     são JSON em texto: custosFixosExtras, mdoTipos, folhaPagamento,
     empresaInfo, servicos, comissionados, temposProducao, linksProdutos,
