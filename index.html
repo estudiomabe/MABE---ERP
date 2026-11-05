@@ -11539,7 +11539,7 @@ function renderFinanceiro(){pintarPeriodoFin();const ym=today().slice(0,7);
  const visiveis=finVisiveis();
  const pagos=visiveis.filter(f=>f.status==='Pago');
  /* saldo em cor neutra; vermelho e com "−" só quando a conta fica negativa */
- const saldo=saldoFin();$('fin-saldo').textContent=fmtSinal(saldo);$('fin-saldo').style.color=corSinal(saldo);
+ const saldo=saldoCardFin();$('fin-saldo').textContent=fmtSinal(saldo);$('fin-saldo').style.color=corSinal(saldo);
  pintarSaldoDivididoFin();
  $('fin-ent').textContent=fmtK(pagos.filter(f=>f.tipo==='Entrada'&&noPeriodoCartoesFin(f.data,ym)).reduce((s,f)=>s+Number(f.val),0));
  pintarTaxasRepasseFin(pagos,ym);
@@ -12316,13 +12316,14 @@ function saldoNoBancoFin(ate,conta){const inicial=Number(DB.config.cf.saldoInici
  return inicial+finVisiveis().filter(f=>f.status==='Pago'&&origemConfFin(f)==='extrato'&&(!ate||dataFin(f)<=ate)&&daContaFin(f,conta)).reduce((s,f)=>s+sinalFin(f),0);}
 function saldoDataFuturaFin(){const hoje=today();
  return finVisiveis().filter(f=>f.status==='Pago'&&origemConfFin(f)!=='extrato'&&dataFin(f)>hoje).reduce((s,f)=>s+sinalFin(f),0);}
-/* debaixo do Saldo Atual só o pago com data futura, quando há: o No banco e o Fora do banco saíram do card a pedido
-   do dono (03/11); as contas continuam (o ajuste do saldo e o Conferir com o banco usam o No banco) */
-function pintarSaldoDivididoFin(){const el=$('fin-saldo-div');if(!el)return;
- if(!(FIN_LIGACAO_NO_BANCO||DB.financeiro.some(f=>origemFin(f)))){el.innerHTML='';return;}
- const linha=(rot,v,tit)=>'<span'+(tit?' title="'+tit+'"':'')+'><b>'+rot+'</b><span class="mono"'+(valorNegativo(v)?' style="color:var(--danger)"':'')+'>'+fmtSinal(v)+'</span></span>';
- const fut=saldoDataFuturaFin();
- el.innerHTML=(Math.abs(fut)>=0.005?linha('Data futura',fut,'Marcado como pago, mas com data depois de hoje: ainda não está no banco nem no caixa'):'');}
+/* o Saldo Atual do card é o dinheiro que está no banco (saldo inicial + linhas do extrato pagas), a pedido do dono
+   (04/11): ele tem que bater com o saldo da conta. O recebido fora do banco (o cartão que ficou na Stone, dinheiro
+   em espécie) continua no Recebido e nos pedidos, mas não entra no card. Sem a marca de origem nos lançamentos
+   (banco antigo) não dá para separar o banco: o card volta a ser saldo inicial + tudo o que está Pago */
+function saldoCardFin(){return (FIN_LIGACAO_NO_BANCO||DB.financeiro.some(f=>origemFin(f)))?saldoNoBancoFin():saldoFin();}
+/* debaixo do Saldo Atual não aparece mais nada: o No banco e o Fora do banco saíram a pedido do dono (03/11), e o
+   pago com data futura (que não está no banco) também não faz parte do card desde 04/11 */
+function pintarSaldoDivididoFin(){const el=$('fin-saldo-div');if(el)el.innerHTML='';}
 
 /* ----- critério do casamento (funções puras: só leem o que recebem) ----- */
 function diasEntreFin(a,b){return Math.round((new Date(String(b).slice(0,10)+'T12:00:00')-new Date(String(a).slice(0,10)+'T12:00:00'))/864e5);}
@@ -13068,9 +13069,8 @@ async function mesclarTodosSemDuvida(ids){if(!guard())return;
 function pedirMesclarTodosFin(){const sd=sugestoesFinAgora().semDuvida;if(!sd.length)return;
  const tela=semDuvidaNaTelaFin(sd),n=tela.length,resto=sd.length-n;
  if(!n){toast('Os pares mudaram desde que a lista foi montada. Confira de novo.','info');renderFinanceiro();return;}
- /* cada lançamento seu (Pago) deixa de contar: o Saldo Atual muda em menos a soma deles */
- const sR=v=>(valorNegativo(v)?'−':'')+fmt(Math.abs(v)),s0=saldoFin(),s1=s0-tela.reduce((s,x)=>s+sinalFin(x.l),0);
- if(!confirm((n===1?'Mesclar este par sem dúvida?':'Mesclar estes '+n+' pares sem dúvida?')+'\n\nEm cada um fica a linha do banco, com o nome e o pedido do seu lançamento, e o seu deixa de contar (a linha do banco já conta esse dinheiro): o Saldo Atual passa de '+sR(s0)+' para '+sR(s1)+'.'
+ /* cada lançamento seu (Pago) deixa de contar no Recebido/Pago; o Saldo Atual (só o banco, desde 04/11) não muda */
+ if(!confirm((n===1?'Mesclar este par sem dúvida?':'Mesclar estes '+n+' pares sem dúvida?')+'\n\nEm cada um fica a linha do banco, com o nome e o pedido do seu lançamento, e o seu deixa de contar (a linha do banco já conta esse dinheiro). O Saldo Atual não muda: ele já é o dinheiro do banco.'
   +'\n\nSe algum destes foi pago em dinheiro, no cartão de crédito ou por outra conta, ele não é o mesmo dinheiro: toque em "Não é o mesmo" nele antes.'
   +'\n\nDá para desfazer um a um com Separar.'
   +(resto>0?'\n\nOs outros '+resto+' aparecem depois, para você conferir antes.':'')))return;
@@ -16281,11 +16281,11 @@ e não numera nada.
   mas saiu do menu lateral.
 - Financeiro — lançamentos de entrada/saída com status de pagamento,
   importação de extrato bancário em OFX e conciliação com os lançamentos
-  já existentes. No topo: Saldo Atual (saldo inicial + o que está Pago,
-  fora os mesclados; vermelho e com sinal só quando negativo), Recebido
+  já existentes. No topo: Saldo Atual (o dinheiro no banco: saldo inicial
+  + linhas do extrato pagas, para bater com a conta; o recebido fora do
+  banco não entra; vermelho e com sinal só quando negativo), Recebido
   no mês, Pago no mês e Pendências (tocar abre a lista só com os
-  pendentes). Debaixo do Saldo Atual aparece, quando há, o pago com
-  data futura.
+  pendentes).
   - Período: acima dos números, o mesmo seletor de Pedidos e Orçamentos
     (Mês, Ano ou Tudo; PER_FIN, começa em Tudo) filtra a lista e o
     contador junto com os outros filtros e a busca do topo, e leva
@@ -17347,13 +17347,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-03.2';
+const APP_VERSAO='2026-11-04.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=322;
+const APP_ATUALIZACAO=323;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
