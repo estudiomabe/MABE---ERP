@@ -10358,10 +10358,11 @@ function editOP(id){if(!canEdit())return;const o=DB.producao.find(x=>x.id===id);
  preencherDatalistResp();
  $('op-id').value=o.id;$('op-titulo').value=o.titulo;fillSel('op-cli',DB.clientes,c=>c.nome,o.cliId,'—');$('op-prazo').value=o.prazo||'';$('op-resp').value=o.resp||'';encherSelectLista('op-prio',OP_PRIO,o.prio||'Normal');$('op-etapa').value=String(o.etapa);$('op-obs').value=o.obs||'';
  $('op-btn-del').style.display='inline-flex';$('mop-title').textContent='Editar OP-'+pad(o.num||0);openModal('modal-producao');}
-async function saveOP(){if(!guard())return;const titulo=$('op-titulo').value.trim();if(!titulo){toast('Informe a peça / projeto.','error');return;}
+let ETAPA_ANTES_OP=null;   /* a etapa da OP antes do Salvar da janela (para saber se ela acabou de chegar em Entregue) */
+async function saveOP(){if(!guard())return;ETAPA_ANTES_OP=null;const titulo=$('op-titulo').value.trim();if(!titulo){toast('Informe a peça / projeto.','error');return;}
  const id=$('op-id').value;const o={titulo,cliId:$('op-cli').value,prazo:$('op-prazo').value,resp:$('op-resp').value.trim(),prio:$('op-prio').value,etapa:Number($('op-etapa').value),obs:$('op-obs').value.trim()};
  if(id){
-  const atual=DB.producao.find(x=>x.id===id);const etapaAntes=Number(atual.etapa);
+  const atual=DB.producao.find(x=>x.id===id);const etapaAntes=Number(atual.etapa);ETAPA_ANTES_OP=etapaAntes;
   const o2=Object.assign(atual,o);
   const {error}=await supa.from('producao').update(opParaSupabase(o2)).eq('id',id);
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
@@ -10374,12 +10375,30 @@ async function saveOP(){if(!guard())return;const titulo=$('op-titulo').value.tri
   n.num=data.num;n.criadoEm=data.created_at;
   DB.producao.push(n);commit('criar','Produção',titulo);syncSheets('pcp','upsert',n);
  }
- closeModal('modal-producao');toast('Ordem de produção salva!','success');}
+ closeModal('modal-producao');toast('Ordem de produção salva!','success');
+ if(id){const o3=DB.producao.find(x=>x.id===id);if(o3&&Number(o3.etapa)===ETAPA_FINAL&&ETAPA_ANTES_OP!==ETAPA_FINAL)await oferecerEntregarPedidoDaOp(o3);}}
 async function delOPFromModal(){const id=$('op-id').value;if(!id)return;const o=DB.producao.find(x=>x.id===id);
  if(!confirm('Excluir OP "'+o.titulo+'"?'))return;
  const {error}=await supa.from('producao').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.producao=DB.producao.filter(x=>x.id!==id);closeModal('modal-producao');commit('excluir','Produção',o.titulo);syncSheets('pcp','delete',{id});toast('OP excluída.','info');}
+/* a OP chegou em "Entregue" no PCP: o pedido dela continua com o status de antes (o PCP não muda o pedido), e ficava
+   na aba "Em andamento" de Pedidos (V-0019, 05/11). Pergunta se marca o pedido como Entregue, com a data de hoje no
+   "Entregue em" (a mesma marca que o Salvar do pedido carimba). Só o status e essa data mudam: pagamentos e
+   Financeiro ficam como estão. Não pergunta se o pedido já está Entregue ou Cancelado */
+async function oferecerEntregarPedidoDaOp(o){if(!o||Number(o.etapa)!==ETAPA_FINAL||!canEdit())return;
+ const v=pedidoDaOp(o);if(!v||v.status==='Entregue'||v.status==='Cancelado')return;
+ const cod='V-'+pad(v.num);
+ if(!confirm('A ordem de produção chegou em "Entregue".\n\nMarcar também o pedido '+cod+' — '+cliName(v.cliId)+' como Entregue, com entrega em '+fmtD(today())+'?\n\nEle passa para a aba Finalizados de Pedidos. Se a data de entrega foi outra, ajuste depois no pedido (Visão Geral, "Entregue em").'))return;
+ const antes=v.status,obs=marcaObs(v.obs,'Entregue em',today());
+ /* só se o status ainda é o que esta tela conhece (outro aparelho pode ter mudado o pedido) */
+ const {data,error}=await supa.from('vendas').update({status:'Entregue',obs}).eq('id',v.id).eq('status',antes).select('id');
+ if(error){toast('O pedido '+cod+' não foi marcado como Entregue: '+error.message,'error',8000);return;}
+ if(!data||!data.length){toast('O pedido '+cod+' mudou em outro aparelho e não foi marcado como Entregue. Confira em Pedidos.','error',8000);return;}
+ v.status='Entregue';v.obs=obs;
+ commit('editar','Pedidos',cod+' → Entregue (a OP chegou em Entregue no PCP)');syncSheets('vendas','upsert',v);
+ if(CUR==='vendas')renderVendas();
+ toast('Pedido '+cod+' marcado como Entregue.','success');}
 async function moveOP(id,dir){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  const antes=o.etapa;
  const nova=dir>0?proximaEtapa(antes):etapaAnterior(antes);
@@ -10388,7 +10407,8 @@ async function moveOP(id,dir){if(!guard())return;const o=DB.producao.find(x=>x.i
  const {error}=await supa.from('producao').update({etapa:o.etapa}).eq('id',id);
  if(error){o.etapa=antes;toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
  commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);
- if(ehCelular())toast(o.titulo+' → '+ETAPAS[o.etapa],'success');}
+ if(ehCelular())toast(o.titulo+' → '+ETAPAS[o.etapa],'success');
+ if(nova===ETAPA_FINAL&&Number(antes)!==ETAPA_FINAL)await oferecerEntregarPedidoDaOp(o);}
 async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  o.status='Concluída';o.fim=today();
  const {error}=await supa.from('producao').update({status:'Concluída',fim:o.fim}).eq('id',id);
@@ -17387,13 +17407,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-04.3';
+const APP_VERSAO='2026-11-05.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=325;
+const APP_ATUALIZACAO=326;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
