@@ -755,6 +755,11 @@ body.sem-valores .dup-valor { display:none; }
 .lix-op .lix-acoes { display:flex;gap:6px;flex-shrink:0; }
 body.sem-valores .lix-valor { display:none; }
 .cnpj-info { font-size:11.5px;line-height:1.45;margin-top:5px;color:var(--text-muted); }
+/* telefone: a linha de baixo mostra o país reconhecido pelo + (ou avisa quando o número não parece do Brasil) */
+.tel-pais-dica { font-size:11.5px;line-height:1.45;margin-top:5px;color:var(--text-muted); }
+.tel-pais-dica.ok { color:var(--success); }
+.tel-pais-dica.alerta { color:var(--warning); }
+.tel-pais-dica button { font:inherit;font-weight:600;color:var(--accent-dark,var(--accent));background:none;border:0;padding:0;text-decoration:underline;cursor:pointer; }
 .cnpj-info:empty { display:none; }
 .cnpj-info.ok { color:var(--success); }
 .cnpj-info.alerta { color:var(--danger);font-weight:600; }
@@ -1913,7 +1918,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="pedirAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-assistente-pag"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="assist-titulo">Ligar pagamentos antigos</div><button class="modal-close" onclick="fecharAssistente()">✕</button></div><div class="modal-body" id="assist-corpo"></div><div class="modal-footer" id="assist-rodape"></div></div></div>
 <div class="modal-overlay" id="modal-antes-salvar" onclick="if(event.target===this)responderAntes(false)"><div class="modal"><div class="modal-header"><div class="modal-title" id="antes-titulo">Antes de salvar</div><button class="modal-close" onclick="responderAntes(false)">✕</button></div><div class="modal-body"><p class="antes-sub" id="antes-sub"></p><div class="antes-lista" id="antes-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="responderAntes(false)">Voltar</button><button class="btn btn-primary" id="antes-ok" onclick="responderAntes(true)">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="numeric" maxlength="15" placeholder="(21) 99999-9999" oninput="mascararTel(this)"></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this);cnpjDigitado(this)"><div class="cnpj-info" id="cli-cnpj-info"></div></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label" for="cli-tel">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="tel" maxlength="24" placeholder="(21) 99999-9999 ou +1 212 555 0100" oninput="mascararTelCli(this)" autocomplete="off"><div class="tel-pais-dica" id="cli-tel-dica"></div></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this);cnpjDigitado(this)"><div class="cnpj-info" id="cli-cnpj-info"></div></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title" id="imp-titulo">🖨️ Imprimir pedido (PCP)</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div id="imp-explicacao" style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O pedido sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><label style="display:flex;align-items:center;gap:9px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;cursor:pointer"><input type="checkbox" id="imp-sem-valores" style="width:17px;height:17px;flex-shrink:0">Ocultar valores nesta impressão<span style="font-size:11px;color:var(--text-muted)">— para mandar à oficina</span></label><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0" oninput="atualizarCustoFinalProduto()"></div><div class="form-group" id="prod-frete-wrap"><label class="form-label">Frete (R$)</label><input type="number" class="form-control" id="prod-frete" step="0.01" min="0" placeholder="0,00" oninput="atualizarCustoFinalProduto()"></div></div><div id="prod-custo-final" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:-6px"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-link-wrap"><label class="form-label">Link do material</label><input type="url" class="form-control" id="prod-link" placeholder="https://site-do-fornecedor.com/produto" inputmode="url" autocomplete="off"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Página do produto no site do fornecedor — abre pelo 🔗 na lista</div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
@@ -3653,6 +3658,7 @@ function instalarTravaDeGravacao(){
    /* válvula: uma resposta que nunca chega não deixa o botão travado para sempre */
    valvula=setTimeout(soltar,nome==='doLogin'?15000:120000);
    return Promise.resolve(r).finally(soltar);};});}
+/* tel: do Brasil "(21) 99999-9999" (sem código); de fora "+1 (212) 555-0100" (com o + e o código: DDI_PAISES) */
 function clienteDeSupabase(row){return{id:row.id,nome:row.nome,email:row.email||'',tel:row.tel||'',doc:row.doc||'',cidade:row.cidade||'',end:row.endereco||'',status:row.status||'Ativo'};}
 function clienteParaSupabase(c){return{id:c.id,nome:c.nome,email:c.email||null,tel:c.tel||null,doc:c.doc||null,cidade:c.cidade||null,endereco:c.end||null,status:c.status||'Ativo'};}
 async function carregarClientesSupabase(){
@@ -3668,12 +3674,12 @@ function clientesFiltrados(){const q=semAcento(($('cli-busca')||{}).value||'').t
  if(!q)return DB.clientes;const qd=q.replace(/\D/g,'');
  return DB.clientes.filter(c=>semAcento([c.nome,c.email,c.cidade].join(' ')).includes(q)
   ||(qd.length>=3&&String((c.tel||'')+' '+(c.doc||'')).replace(/\D/g,'').includes(qd)));}
-function linkWhatsapp(tel){let d=String(tel||'').replace(/\D/g,'');if(d.length<10)return '';if(d.length<=11)d='55'+d;return 'https://wa.me/'+d;}
+function linkWhatsapp(tel){const d=telIntl(tel);return d?'https://wa.me/'+d:'';}
 function renderClientesCards(lista){const alvo=$('clientes-cards');if(!alvo)return;
  if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">'+(DB.clientes.length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado')+'</div>';return;}
  const pedidosDe={};DB.vendas.forEach(v=>{if(v.status==='Cancelado'||!v.cliId)return;const r=pedidosDe[v.cliId]||(pedidosDe[v.cliId]={n:0,ult:''});r.n++;if((v.data||'')>r.ult)r.ult=v.data||'';});
  alvo.innerHTML=lista.slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR')).map(c=>{
-  const tel=String(c.tel||'').replace(/\D/g,''),wa=linkWhatsapp(c.tel),ped=pedidosDe[c.id];
+  const tel=telDiscar(c.tel),wa=linkWhatsapp(c.tel),ped=pedidosDe[c.id];
   const links=[tel?'<a class="pc-link" href="tel:'+tel+'">📞 Ligar</a>':'',wa?'<a class="pc-link" href="'+wa+'" target="_blank" rel="noopener">💬 WhatsApp</a>':'',
    c.email?'<a class="pc-link" href="mailto:'+esc(c.email)+'">✉️ E-mail</a>':''].filter(Boolean).join('');
   const detalhe=[c.tel,c.cidade].filter(Boolean).map(esc).join(' · ');
@@ -3693,9 +3699,9 @@ function emptyRow(n,msg){return '<tr><td colspan="'+n+'" style="color:var(--text
 let CLIENTE_RAPIDO_ORC=false,CLIENTE_RAPIDO_VENDA=false;
 function abrirNovoClienteRapido(){openCliente();CLIENTE_RAPIDO_ORC=true;}
 function abrirNovoClienteRapidoVenda(){openCliente();CLIENTE_RAPIDO_VENDA=true;}
-function openCliente(){limparInfoCnpj();['cli-id','cli-nome','cli-email','cli-tel','cli-doc','cli-cidade','cli-end'].forEach(i=>$(i).value='');$('cli-status').value='Ativo';$('mc-title').textContent='Novo Cliente';openModal('modal-clientes');}
+function openCliente(){limparInfoCnpj();['cli-id','cli-nome','cli-email','cli-tel','cli-doc','cli-cidade','cli-end'].forEach(i=>$(i).value='');pintarDicaTelCli();$('cli-status').value='Ativo';$('mc-title').textContent='Novo Cliente';openModal('modal-clientes');}
 function editCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!c)return;limparInfoCnpj();
- $('cli-id').value=c.id;$('cli-nome').value=c.nome;$('cli-email').value=c.email||'';$('cli-tel').value=c.tel||'';$('cli-doc').value=c.doc||'';$('cli-cidade').value=c.cidade||'';$('cli-end').value=c.end||'';$('cli-status').value=c.status;$('mc-title').textContent='Editar Cliente';openModal('modal-clientes');}
+ $('cli-id').value=c.id;$('cli-nome').value=c.nome;$('cli-email').value=c.email||'';$('cli-tel').value=c.tel||'';pintarDicaTelCli();$('cli-doc').value=c.doc||'';$('cli-cidade').value=c.cidade||'';$('cli-end').value=c.end||'';$('cli-status').value=c.status;$('mc-title').textContent='Editar Cliente';openModal('modal-clientes');}
 /* ================= CNPJ → DADOS DA EMPRESA =================
    Com 14 dígitos válidos no CPF/CNPJ, o ERP consulta o cadastro público da
    Receita (BrasilAPI: gratuito, sem conta) e preenche só os campos vazios. O
@@ -3731,7 +3737,7 @@ function camposDaReceita(j){
  return {'cli-nome':nomeProprio(j.razao_social),'cli-tel':tel,'cli-email':String(j.email||'').toLowerCase().trim(),
   'cli-cidade':j.municipio?nomeProprio(j.municipio)+(j.uf?'/'+j.uf:''):'','cli-end':end};}
 const ROTULO_CAMPO={'cli-nome':'nome','cli-tel':'telefone','cli-email':'e-mail','cli-cidade':'cidade','cli-end':'endereço'};
-function aplicarCampoCnpj(id,valor){const el=$(id);if(!el)return;el.value=valor;if(id==='cli-tel'&&typeof mascararTel==='function')mascararTel(el);}
+function aplicarCampoCnpj(id,valor){const el=$(id);if(!el)return;el.value=valor;if(id==='cli-tel')mascararTelCli(el);}
 async function consultarCnpj(d){
  CNPJ_CONSULTADO=d;CNPJ_RECEITA=null;
  infoCnpj('🔎 Buscando dados da empresa na Receita...');
@@ -3762,7 +3768,8 @@ function usarReceitaNosMantidos(){if(!CNPJ_RECEITA)return;
  Object.entries(CNPJ_RECEITA).forEach(([id,valor])=>{if(valor)aplicarCampoCnpj(id,valor);});
  infoCnpj('✓ Campos trocados pelos dados da Receita.','ok');}
 async function saveCliente(){if(!guard())return;const nome=$('cli-nome').value.trim();if(!nome){toast('Informe o nome do cliente.','error');return;}
- const id=$('cli-id').value;const o={nome,email:$('cli-email').value.trim(),tel:$('cli-tel').value.trim(),doc:$('cli-doc').value.trim(),cidade:$('cli-cidade').value.trim(),end:$('cli-end').value.trim(),status:$('cli-status').value};
+ const telAviso=avisoTelCli();if(telAviso&&!confirm(telAviso+'\n\nSalvar assim mesmo?'))return;
+ const id=$('cli-id').value;const o={nome,email:$('cli-email').value.trim(),tel:telDoFormCli(),doc:$('cli-doc').value.trim(),cidade:$('cli-cidade').value.trim(),end:$('cli-end').value.trim(),status:$('cli-status').value};
  const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
  const {error}=await supa.from('clientes').upsert(clienteParaSupabase(registro));
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
@@ -5892,8 +5899,7 @@ let ORC_EXPANDIDOS=new Set();
 function toggleItensOrc(id){if(ORC_EXPANDIDOS.has(id))ORC_EXPANDIDOS.delete(id);else ORC_EXPANDIDOS.add(id);renderOrcamentos();}
 function abrirWhatsappOrc(id){const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  const cli=DB.clientes.find(c=>c.id===o.cliId);if(!cli||!cli.tel){toast('Cliente sem telefone cadastrado.','error');return;}
- let digits=String(cli.tel).replace(/\D/g,'');if(!digits){toast('Telefone do cliente inválido.','error');return;}
- if(digits.length<=11)digits='55'+digits;
+ const digits=telIntl(cli.tel);if(!digits){toast('Telefone do cliente inválido.','error');return;}
  const primeiroNome=(cli.nome||'').split(' ')[0];
  const msg='Olá '+primeiroNome+'! Aqui é do Estúdio MABE. Segue o orçamento ORC-'+pad(o.num)+' — '+resumoOrc(o)+', no valor de '+fmt(o.preco)+'. Qualquer dúvida, estou à disposição! 🪵';
  window.open('https://wa.me/'+digits+'?text='+encodeURIComponent(msg),'_blank');}
@@ -10904,7 +10910,7 @@ function renderEntregasCards(){const alvo=$('entregas-cards');if(!alvo)return;co
   const atrasada=e.status==='Agendada'&&e.data<t;
   const idx=ENT_ST.indexOf(e.status);
   const cli=e.cliId?DB.clientes.find(c=>c.id===e.cliId):null;
-  const tel=cli&&cli.tel?String(cli.tel).replace(/\D/g,''):'';
+  const tel=cli&&cli.tel?telDiscar(cli.tel):'';
   const links=[e.end?'<a class="pc-link" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(e.end)+'" target="_blank" rel="noopener">📍 Abrir no mapa</a>':'',
    tel?'<a class="pc-link" href="tel:'+tel+'">📞 Ligar para o cliente</a>':''].filter(Boolean).join('');
   const acoes=((canEdit()&&idx<3)?'<button class="btn btn-primary btn-sm" onclick="advEntrega(\''+e.id+'\')">'+ENT_ST[idx+1]+' →</button>':'')
@@ -14546,6 +14552,87 @@ function renderConfig(){CFG_EDITANDO=false;$('sheets-url').value=DB.config.sheet
 function mascararCep(el){const d=String(el.value).replace(/\D/g,'').slice(0,8);
  el.value=d.length>5?d.slice(0,5)+'-'+d.slice(5):d;}
 /* (21) 99999-9999 — aceita fixo de 8 dígitos e celular de 9 */
+/* ================= TELEFONE DE OUTRO PAÍS (clientes de fora) =================
+   Um campo só. Sem + é do Brasil e fica como sempre: "(21) 99999-9999" (o WhatsApp põe o +55).
+   Com + (ou 00) na frente, o código diz o país: "+1 (212) 555-0100", "+33 6 12 34 56 78" — e fica salvo assim.
+   n = quantos dígitos o número tem sem o código (quando é fixo); zero = tira o 0 da frente usado para ligar
+   dentro do país (+33 06 12... vira +33 6 12...); g = como agrupar. Código fora da lista: fica como digitado. */
+const DDI_PAISES=[
+ {c:'55',p:'Brasil'},
+ {c:'1',p:'EUA / Canadá',n:10,g:d=>d.length>6?'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6):d.length>3?'('+d.slice(0,3)+') '+d.slice(3):d},
+ {c:'33',p:'França',n:9,zero:true,g:d=>d.replace(/^(\d)(\d{0,2})(\d{0,2})(\d{0,2})(\d{0,2}).*/,'$1 $2 $3 $4 $5').trim().replace(/\s+/g,' ')},
+ {c:'351',p:'Portugal',n:9},{c:'44',p:'Reino Unido',n:10,zero:true,g:d=>d.length>4?d.slice(0,4)+' '+d.slice(4):d},
+ {c:'34',p:'Espanha',n:9},{c:'39',p:'Itália'},{c:'49',p:'Alemanha',zero:true},{c:'41',p:'Suíça',n:9,zero:true},
+ {c:'32',p:'Bélgica',zero:true},{c:'31',p:'Holanda',n:9,zero:true},{c:'43',p:'Áustria',zero:true},{c:'353',p:'Irlanda',zero:true},
+ {c:'45',p:'Dinamarca',n:8},{c:'46',p:'Suécia',zero:true},{c:'47',p:'Noruega',n:8},{c:'48',p:'Polônia',n:9},{c:'30',p:'Grécia',n:10},
+ {c:'54',p:'Argentina'},{c:'598',p:'Uruguai'},{c:'595',p:'Paraguai'},{c:'56',p:'Chile',n:9},{c:'57',p:'Colômbia',n:10},
+ {c:'51',p:'Peru',n:9},{c:'52',p:'México',n:10},{c:'591',p:'Bolívia'},{c:'61',p:'Austrália',n:9,zero:true},
+ {c:'81',p:'Japão',zero:true},{c:'86',p:'China'},{c:'971',p:'Emirados Árabes'},{c:'972',p:'Israel',zero:true},
+ {c:'244',p:'Angola',n:9},{c:'27',p:'África do Sul',zero:true},{c:'7',p:'Rússia'}];
+const ddiPorCodigo=c=>DDI_PAISES.find(x=>x.c===c)||null;
+/* agrupa de 3 em 3 (o último grupo fica com até 4) quando o país não tem formato próprio */
+const gruposTel=d=>{const out=[];let r=d;while(r.length>4){out.push(r.slice(0,3));r=r.slice(3);}if(r)out.push(r);return out.join(' ');};
+/* número de país fora da lista: fica como digitado, só com o + na frente, dígitos e espaços */
+const limparOutroTel=s=>{const t=String(s||'').replace(/^\s*(\+|00)/,'').replace(/[^\d ]/g,'').replace(/\s+/g,' ').trim().slice(0,22);return t?'+'+t:'';};
+/* "12125550100" (os dígitos depois do +) → {c:'1', resto:'2125550100'}; código fora da lista → c vazio */
+function separarDdi(digitos){const d=String(digitos||'');
+ for(const t of [3,2,1]){const x=ddiPorCodigo(d.slice(0,t));if(x)return {c:x.c,resto:d.slice(t)};}
+ return {c:'',resto:d};}
+function formatarTelPais(c,dig){const x=ddiPorCodigo(c);let d=String(dig||'').replace(/\D/g,'');if(!x)return d;
+ if(x.zero&&d.length>1&&d[0]==='0')d=d.slice(1);
+ d=d.slice(0,x.n||(15-x.c.length));
+ return x.g?x.g(d):gruposTel(d);}
+/* o número em dígitos com o país (para o WhatsApp); vazio se não dá para saber */
+function telIntl(tel){const s=String(tel||'').trim(),d=s.replace(/\D/g,'');
+ if(s.startsWith('+'))return d.length>=8?d:'';
+ if(d.length<10)return '';return d.length<=11?'55'+d:d;}
+/* para o "Ligar": do Brasil, os dígitos como sempre; de fora, com o + */
+function telDiscar(tel){const s=String(tel||'').trim();if(s.startsWith('+')){const d=telIntl(s);return d?'+'+d:'';}return s.replace(/\D/g,'');}
+/* sem +: o número pode ser do Brasil? (DDD sem 0; celular de 11 dígitos começa com 9 depois do DDD) */
+function telPareceBr(d){if(d.length<3)return true;if(d[0]==='0'||d[1]==='0')return false;
+ if(d.length===11&&d[2]!=='9')return false;return d.length<=11;}
+/* sem + e não é do Brasil: os casos em que dá para adivinhar o país com segurança razoável */
+function palpiteTelExterior(d){
+ if(d.length===11&&d[0]==='1')return '+1 '+formatarTelPais('1',d.slice(1));
+ if(d.length===11&&d.startsWith('33')&&/[67]/.test(d[2]))return '+33 '+formatarTelPais('33',d.slice(2));
+ if(d.length===10&&/^0[67]/.test(d))return '+33 '+formatarTelPais('33',d);
+ return '';}
+/* a linha de baixo do campo: o país reconhecido, ou o aviso */
+function pintarDicaTelCli(){const el=$('cli-tel'),dica=$('cli-tel-dica');if(!el||!dica)return;
+ const s=el.value.trim(),d=s.replace(/\D/g,'');dica.className='tel-pais-dica';
+ if(!d){dica.textContent='Cliente de fora? Comece com + e o código do país (ex.: +1 212 555 0100).';return;}
+ if(s.startsWith('+')){const {c}=separarDdi(d),x=ddiPorCodigo(c);
+  if(x&&c!=='55'){dica.classList.add('ok');dica.textContent='País: '+x.p+' (+'+c+'). O WhatsApp e o Ligar usam esse código.';}
+  else if(!x){dica.textContent='Número de fora: o WhatsApp e o Ligar usam o código que você digitou.';}
+  else dica.textContent='';
+  return;}
+ if(telPareceBr(d)){dica.textContent='';return;}
+ const palpite=palpiteTelExterior(d);dica.classList.add('alerta');
+ dica.innerHTML='Este número não parece do Brasil. Se for de fora, coloque o + e o código do país.'
+  +(palpite?' <button type="button" onclick="usarPalpiteTel(\''+palpite+'\')">Usar '+esc(palpite)+'</button>':'');}
+function usarPalpiteTel(v){const el=$('cli-tel');el.value=v;mascararTelCli(el);el.focus();}
+/* ao digitar ou colar */
+function mascararTelCli(el){let s=String(el.value);
+ /* sem +, mas com dígitos demais para o Brasil (ex.: 5521999998888 colado): o código já veio junto */
+ if(!/^\s*(\+|00)/.test(s)&&s.replace(/\D/g,'').length>11)s='+'+s.replace(/\D/g,'');
+ if(/^\s*(\+|00)/.test(s)){const dig=s.replace(/^\s*(\+|00)/,'').replace(/\D/g,'');
+  if(!dig)el.value='+';
+  else{const {c,resto}=separarDdi(dig);
+   if(c==='55'&&resto){el.value=resto;mascararTel(el);}
+   else if(c&&resto)el.value='+'+c+' '+formatarTelPais(c,resto);
+   else el.value=limparOutroTel(s);}}
+ else mascararTel(el);
+ pintarDicaTelCli();}
+/* o que vai para o banco */
+function telDoFormCli(){const v=$('cli-tel').value.trim();return v.replace(/\D/g,'')?v:'';}
+/* antes de salvar: número de fora com dígitos a menos ou a mais, ou sem + e que não é do Brasil */
+function avisoTelCli(){const s=$('cli-tel').value.trim(),d=s.replace(/\D/g,'');if(!d)return '';
+ if(s.startsWith('+')){const {c,resto}=separarDdi(d),x=ddiPorCodigo(c);
+  if(!x)return d.length<8?'O telefone parece incompleto: com o código do país, costuma ter de 8 a 15 dígitos.':'';
+  if(x.n&&resto.length!==x.n)return 'Telefone de '+x.p+' costuma ter '+x.n+' dígitos depois do +'+c+', e este tem '+resto.length+'.';
+  return '';}
+ if(!telPareceBr(d))return 'Este telefone não parece do Brasil. Se o cliente é de fora, coloque o + e o código do país (ex.: +1 212 555 0100).';
+ return '';}
 function mascararTel(el){const d=String(el.value).replace(/\D/g,'').slice(0,11);
  let v=d;
  if(d.length>2)v='('+d.slice(0,2)+') '+d.slice(2);
@@ -17425,13 +17512,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-05.5';
+const APP_VERSAO='2026-11-05.6';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=330;
+const APP_ATUALIZACAO=331;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
