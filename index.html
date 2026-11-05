@@ -1722,7 +1722,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
     </div>
 
-    <div class="section" id="section-pcp"><div class="period-bar"><select class="form-control" id="pcp-prio-filter" style="width:auto;min-width:150px" onchange="renderPCP()"><option value="">Todas as prioridades</option><option>Urgente</option><option>Alta</option><option>Normal</option></select><label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="pcp-ver-concluidas" onchange="renderPCP()" style="cursor:pointer">Mostrar concluídas</label><div class="per-tabs" id="pcp-modo-tabs"><button class="per-tab" id="pcp-modo-kanban" onclick="definirModoPcp('kanban')">▦ Kanban</button><button class="per-tab" id="pcp-modo-lista" onclick="definirModoPcp('lista')">☰ Lista</button></div><span id="pcp-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span><button class="btn btn-ghost btn-sm" onclick="imprimirPcp()">🖨️ Imprimir PCP</button></div><div class="pcp-stats" id="pcp-stats"></div><div class="pcp-abas" id="pcp-abas"></div><div class="kanban-board" id="pcp-kanban"></div><div id="pcp-lista-view" style="display:none"><div id="pcp-lista-cards"></div><div class="table-wrapper" id="pcp-lista-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Produção</div></div><table><thead><tr><th>Pedido</th><th>Peça / Projeto</th><th>Cliente</th><th>Status</th><th>Responsável</th><th>Prioridade</th><th>Prazo</th><th>Na fila</th><th>Ações</th></tr></thead><tbody id="tb-pcp-lista"></tbody></table></div></div></div>
+    <div class="section" id="section-pcp"><div class="per-tabs fin-abas" id="pcp-fase-abas" role="tablist" aria-label="Produção"><button type="button" class="per-tab active" role="tab" aria-selected="true" data-fase="andamento" onclick="trocarFasePcp('andamento')">Em andamento<span class="vnd-aba-n" id="pcp-n-andamento"></span></button><button type="button" class="per-tab" role="tab" aria-selected="false" data-fase="finalizadas" onclick="trocarFasePcp('finalizadas')">Finalizadas<span class="vnd-aba-n" id="pcp-n-finalizadas"></span></button></div><div class="period-bar"><select class="form-control" id="pcp-prio-filter" style="width:auto;min-width:150px" onchange="renderPCP()"><option value="">Todas as prioridades</option><option>Urgente</option><option>Alta</option><option>Normal</option></select><div class="per-tabs" id="pcp-modo-tabs"><button class="per-tab" id="pcp-modo-kanban" onclick="definirModoPcp('kanban')">▦ Kanban</button><button class="per-tab" id="pcp-modo-lista" onclick="definirModoPcp('lista')">☰ Lista</button></div><span id="pcp-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span><button class="btn btn-ghost btn-sm" onclick="imprimirPcp()">🖨️ Imprimir PCP</button></div><div class="pcp-stats" id="pcp-stats"></div><div class="pcp-abas" id="pcp-abas"></div><div class="kanban-board" id="pcp-kanban"></div><div id="pcp-lista-view" style="display:none"><div id="pcp-lista-cards"></div><div class="table-wrapper" id="pcp-lista-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Ordens de Produção</div></div><table><thead><tr><th>Pedido</th><th>Peça / Projeto</th><th>Cliente</th><th>Status</th><th>Responsável</th><th>Prioridade</th><th>Prazo</th><th>Na fila</th><th>Ações</th></tr></thead><tbody id="tb-pcp-lista"></tbody></table></div></div></div>
 
     <div class="section" id="section-usuarios"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Usuários do Sistema</div></div><table><thead><tr><th>Login</th><th>Nome</th><th>Nível de Acesso</th><th title="Registrado por dispositivo: mostra o último acesso feito neste navegador">Último acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-usuarios"></tbody></table></div><div class="table-wrapper" style="margin-top:14px"><div class="table-toolbar"><div class="table-toolbar-title">O que cada nível enxerga</div></div><div class="niveis-legenda" id="usr-legenda"></div></div></div>
     <div class="section" id="section-historico"><div class="table-wrapper"><div class="table-toolbar"><div class="table-toolbar-title">Histórico de Edições</div><button class="btn btn-danger btn-sm" onclick="clearHistorico()">🗑️ Limpar</button></div><table><thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Módulo</th><th>Detalhe</th></tr></thead><tbody id="tb-historico"></tbody></table></div></div>
@@ -10115,7 +10115,7 @@ const OP_PRIO=['Urgente','Alta','Normal'];
 /* o que estiver gravado fora da lista (ex.: "Baixa" de antes) entra no fim, para nenhuma ordem sumir do filtro */
 function prioridadesOP(){return [...OP_PRIO,...unicosOrdenados(DB.producao.map(o=>o.prio||'Normal').filter(p=>!OP_PRIO.includes(p)))];}
 /* atrasada é a mesma regra do ponto vermelho da aba Produção, lá embaixo */
-const opAtrasada=(o,t)=>o.status!=='Concluída'&&!!o.prazo&&o.prazo<t;
+const opAtrasada=(o,t)=>o.status!=='Concluída'&&Number(o.etapa)!==ETAPA_FINAL&&!!o.prazo&&o.prazo<t;
 /* mais urgente primeiro: atrasada, depois prioridade, depois prazo */
 const pesoPrio=p=>{const i=OP_PRIO.indexOf(p||'Normal');return i<0?OP_PRIO.length:i;};
 const porUrgencia=t=>(a,b)=>(opAtrasada(b,t)-opAtrasada(a,t))||(pesoPrio(a.prio)-pesoPrio(b.prio))||porPrazo(a,b);
@@ -10181,7 +10181,7 @@ function selecionarEtapaPCP(i){PCP_ETAPA_MOBILE=i;PCP_ETAPA_ESCOLHIDA=true;rende
  const aba=document.querySelector('.pcp-aba.ativa');if(aba)aba.scrollIntoView({block:'nearest',inline:'center'});}
 const ehCelular=()=>window.matchMedia('(max-width:860px)').matches;
 /* a etapa da ordem mais urgente entre as que estão na tela (null se não há nenhuma em aberto) */
-function etapaMaisUrgente(ordens,t){const abertas=ordens.filter(o=>o.status!=='Concluída'&&ETAPAS[Number(o.etapa)]);
+function etapaMaisUrgente(ordens,t){const abertas=ordens.filter(o=>!opFinalizada(o)&&ETAPAS[Number(o.etapa)]);
  return abertas.length?Number(abertas.slice().sort(porUrgencia(t))[0].etapa):null;}
 /* põe a aba escolhida sozinha no meio da faixa, sem rolar a tela. Com a faixa escondida
    (modo Lista, computador) não há o que medir: fica marcado para quando ela aparecer */
@@ -10207,12 +10207,25 @@ function encherFiltroPrioPCP(){const s=$('pcp-prio-filter');if(!s)return;
  const v=s.value;
  s.innerHTML='<option value="">Todas as prioridades</option>'+ops.map(p=>'<option value="'+esc(p)+'">'+esc(p)+'</option>').join('');
  s.value=v;s.dataset.ops=chave;}
+/* Abas da Produção (pedido do dono, 05/11), como em Pedidos: "Em andamento" (as ordens que ainda não chegaram em
+   Entregue) e "Finalizadas" (em Entregue ou concluídas). Em andamento, o quadro não tem a coluna Entregue; em
+   Finalizadas, a lista (a mais recente primeiro). A prioridade e os filtros valem nas duas */
+let PCP_FASE='andamento';
+const opFinalizada=o=>o.status==='Concluída'||Number(o.etapa)===ETAPA_FINAL;
+function trocarFasePcp(f){PCP_FASE=f==='finalizadas'?'finalizadas':'andamento';renderPCP();}
+const ordensDaFasePcp=base=>base.filter(o=>opFinalizada(o)===(PCP_FASE==='finalizadas'));
 function renderPCP(){const t=today();
  encherFiltroPrioPCP();
- const verConcluidas=$('pcp-ver-concluidas')?$('pcp-ver-concluidas').checked:false;
  const fPrio=$('pcp-prio-filter')?$('pcp-prio-filter').value:'';
- const ativas=DB.producao.filter(o=>(verConcluidas||o.status!=='Concluída')&&(!fPrio||(o.prio||'Normal')===fPrio)&&fcPassa('pcp',o));
+ const base=DB.producao.filter(o=>(!fPrio||(o.prio||'Normal')===fPrio)&&fcPassa('pcp',o));
+ const nFin=base.filter(opFinalizada).length;
+ if($('pcp-n-andamento')){$('pcp-n-andamento').textContent=base.length-nFin;$('pcp-n-finalizadas').textContent=nFin;
+  $('pcp-fase-abas').querySelectorAll('.per-tab').forEach(b=>{const a=b.dataset.fase===PCP_FASE;b.classList.toggle('active',a);b.setAttribute('aria-selected',a?'true':'false');});}
+ const fin=PCP_FASE==='finalizadas';
+ const ativas=ordensDaFasePcp(base);
  fcPintar('pcp',ativas);
+ if($('pcp-stats'))$('pcp-stats').style.display=fin?'none':'';
+ if($('pcp-modo-tabs'))$('pcp-modo-tabs').style.display=fin?'none':'';
  if($('pcp-filtro-label')){const tot=DB.producao.length;
   $('pcp-filtro-label').textContent=ativas.length===tot?(tot+' ordem(ns)'):(ativas.length+' de '+tot+' ordem(ns)');}
  const atras=ativas.filter(o=>opAtrasada(o,t)).length;
@@ -10228,26 +10241,27 @@ function renderPCP(){const t=today();
   +caixaAtras+caixa(['Concluídas (mês)',concMes,'color:var(--success)']);
  /* sem escolha da pessoa, o celular abre na etapa da ordem mais urgente (atrasada, depois prioridade) */
  if(PCP_ETAPA_MOBILE===null){const u=etapaMaisUrgente(ativas,t);if(u!==null){PCP_ETAPA_MOBILE=u;PCP_ABA_CENTRAR=true;}}
- const aba=PCP_ETAPA_MOBILE===null?0:PCP_ETAPA_MOBILE;
- $('pcp-abas').innerHTML=ETAPAS.map((et,i)=>{const daqui=ativas.filter(o=>Number(o.etapa)===i),atr=daqui.filter(o=>opAtrasada(o,t)).length;
+ const aba=PCP_ETAPA_MOBILE===null||PCP_ETAPA_MOBILE>=ETAPA_FINAL?0:PCP_ETAPA_MOBILE;
+ const etapasVis=ETAPAS.slice(0,ETAPA_FINAL);
+ $('pcp-abas').innerHTML=etapasVis.map((et,i)=>{const daqui=ativas.filter(o=>Number(o.etapa)===i),atr=daqui.filter(o=>opAtrasada(o,t)).length;
   return '<button class="pcp-aba'+(i===aba?' ativa':'')+'"'+(atr?' title="'+atr+(atr===1?' ordem atrasada':' ordens atrasadas')+'"':'')+' onclick="selecionarEtapaPCP('+i+')">'+esc(et)
    +'<span class="pcp-aba-n">'+daqui.length+(atr?'<span class="pcp-aba-atraso"></span>':'')+'</span></button>';}).join('');
  /* o seletor de modo e o que cada um mostra */
- const modoLista=PCP_MODO==='lista';
+ const modoLista=PCP_MODO==='lista'||fin;
  if($('pcp-modo-kanban')){$('pcp-modo-kanban').classList.toggle('active',!modoLista);$('pcp-modo-lista').classList.toggle('active',modoLista);}
  if($('pcp-lista-view'))$('pcp-lista-view').style.display=modoLista?'':'none';
  $('pcp-kanban').style.display=modoLista?'none':'';
  if($('pcp-abas'))$('pcp-abas').style.display=modoLista?'none':'';
  if(PCP_ABA_CENTRAR&&!modoLista)centralizarAbaPCP();
- if(modoLista){renderPcpLista(ativas.slice().sort(porPrazo),t);return;}
- $('pcp-kanban').innerHTML=ETAPAS.map((et,i)=>{const cards=ativas.filter(o=>Number(o.etapa)===i).sort(porPrazo);
+ if(modoLista){renderPcpLista(fin?ativas.slice().sort((a,b)=>String(b.fim||b.prazo||'').localeCompare(String(a.fim||a.prazo||''))):ativas.slice().sort(porPrazo),t);return;}
+ $('pcp-kanban').innerHTML=etapasVis.map((et,i)=>{const cards=ativas.filter(o=>Number(o.etapa)===i).sort(porPrazo);
   return '<div class="kanban-col'+(i===aba?' ativa':'')+'"><div class="kanban-col-header"><span class="kanban-col-title">'+et+'</span><span class="kanban-count">'+cards.length+'</span></div>'
   +cards.map(o=>{const pcls=!o.prazo?'ok':opAtrasada(o,t)?'vencido':o.prazo===t?'hoje':'ok';
    /* a peça é o que a bancada procura; cliente, pedido e OP vêm embaixo, como na Lista */
    const ped=pedidoDaOp(o),peca=pecaDaOp(o,ped),cli=o.cliId?cliName(o.cliId):'';
    const sub=[cli==='—'?'':cli,ped?'V-'+pad(ped.num):'',o.num?'OP-'+pad(o.num):''].filter(Boolean).join(' · ');
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
-   const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶<span class="pcp-btn-txt"> '+esc(ETAPAS[proximaEtapa(i)])+'</span></button>':'<button class="pcp-etapa-btn" style="background:var(--success);color:#fff" onclick="event.stopPropagation();concluirOP(\''+o.id+'\')">✓ Concluir</button>')+'</div>':'';
+   const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶<span class="pcp-btn-txt"> '+esc(ETAPAS[proximaEtapa(i)])+'</span></button>':'')+'</div>':'';
    const respLinha=canEdit()
     ?'<div class="card-resp" onclick="event.stopPropagation()">👤<select class="'+(o.resp?'':'vazio')+'" title="Quem é o responsável por esta ordem" onchange="definirRespOP(\''+o.id+'\',this.value,this)">'+opcoesResp(o.resp||'')+'</select></div>'
     :(o.resp?'<div class="card-resp">👤 '+esc(o.resp)+'</div>':'');
@@ -10293,7 +10307,7 @@ function renderPcpLista(ordens,t){
   const ped=pedidoDaOp(o);
   const peca=pecaDaOp(o,ped);
   const obs=obsDaOp(o,peca);
-  const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
+  const atrasada=opAtrasada(o,t);
   const prazo=o.prazo
    ?'<span class="mono"'+(atrasada?' style="color:var(--danger);font-weight:700"':'')+'>'+(atrasada?'⚠ ':'')+fmtD(o.prazo)+'</span>'
    :'<span style="font-size:11px;color:var(--text-muted)">sem prazo</span>';
@@ -10304,7 +10318,7 @@ function renderPcpLista(ordens,t){
   const acoes=canEdit()
    ?'<div class="row-actions" style="opacity:1">'
     +(i>0?'<button class="btn btn-ghost btn-sm" title="Voltar etapa" onclick="moveOP(\''+o.id+'\',-1)">◀</button>':'')
-    +(i<ETAPA_FINAL?'<button class="btn btn-ghost btn-sm" title="Avançar para '+esc(semEmoji(ETAPAS[proximaEtapa(i)]))+'" onclick="moveOP(\''+o.id+'\',1)">▶</button>':'<button class="btn btn-ghost btn-sm" title="Concluir" onclick="concluirOP(\''+o.id+'\')">✓</button>')
+    +(i<ETAPA_FINAL?'<button class="btn btn-ghost btn-sm" title="Avançar para '+esc(semEmoji(ETAPAS[proximaEtapa(i)]))+'" onclick="moveOP(\''+o.id+'\',1)">▶</button>':'')
     +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
    :'';
   const aberta=PCP_OBS_ABERTAS.has(o.id);
@@ -10332,7 +10346,7 @@ function renderPcpListaCards(ordens,t){
   const ped=pedidoDaOp(o);
   const peca=pecaDaOp(o,ped);
   const obs=obsDaOp(o,peca);
-  const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
+  const atrasada=opAtrasada(o,t);
   const i=Number(o.etapa)||0;
   const resp=canEdit()
    ?'<div class="card-resp">👤<select class="'+(o.resp?'':'vazio')+'" onchange="definirRespOP(\''+o.id+'\',this.value,this)">'+opcoesResp(o.resp||'')+'</select></div>'
@@ -10340,7 +10354,7 @@ function renderPcpListaCards(ordens,t){
   const acoes=canEdit()
    ?'<div class="pc-acoes">'
     +(i>0?'<button class="btn btn-ghost btn-sm" onclick="moveOP(\''+o.id+'\',-1)">◀</button>':'')
-    +(i<ETAPA_FINAL?'<button class="btn btn-primary btn-sm" onclick="moveOP(\''+o.id+'\',1)">▶ '+esc(semEmoji(ETAPAS[proximaEtapa(i)]))+'</button>':'<button class="btn btn-primary btn-sm" onclick="concluirOP(\''+o.id+'\')">✓ Concluir</button>')
+    +(i<ETAPA_FINAL?'<button class="btn btn-primary btn-sm" onclick="moveOP(\''+o.id+'\',1)">▶ '+esc(semEmoji(ETAPAS[proximaEtapa(i)]))+'</button>':'')
     +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
    :'';
   return '<div class="pedido-card">'
@@ -10363,7 +10377,7 @@ async function saveOP(){if(!guard())return;ETAPA_ANTES_OP=null;const titulo=$('o
  const id=$('op-id').value;const o={titulo,cliId:$('op-cli').value,prazo:$('op-prazo').value,resp:$('op-resp').value.trim(),prio:$('op-prio').value,etapa:Number($('op-etapa').value),obs:$('op-obs').value.trim()};
  if(id){
   const atual=DB.producao.find(x=>x.id===id);const etapaAntes=Number(atual.etapa);ETAPA_ANTES_OP=etapaAntes;
-  const o2=Object.assign(atual,o);
+  const o2=Object.assign(atual,o);Object.assign(o2,campoEtapaFinalOP(o2));
   const {error}=await supa.from('producao').update(opParaSupabase(o2)).eq('id',id);
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
   commit('editar','Produção',titulo+(Number(o2.etapa)!==etapaAntes?' → '+ETAPAS[o2.etapa]:''));syncSheets('pcp','upsert',o2);
@@ -10376,21 +10390,23 @@ async function saveOP(){if(!guard())return;ETAPA_ANTES_OP=null;const titulo=$('o
   DB.producao.push(n);commit('criar','Produção',titulo);syncSheets('pcp','upsert',n);
  }
  closeModal('modal-producao');toast('Ordem de produção salva!','success');
- if(id){const o3=DB.producao.find(x=>x.id===id);if(o3&&Number(o3.etapa)===ETAPA_FINAL&&ETAPA_ANTES_OP!==ETAPA_FINAL)await oferecerEntregarPedidoDaOp(o3);}}
+ if(id){const o3=DB.producao.find(x=>x.id===id);if(o3&&Number(o3.etapa)===ETAPA_FINAL&&ETAPA_ANTES_OP!==ETAPA_FINAL)await entregarPedidoDaOp(o3);}
+ if(CUR==='pcp')renderPCP();}
 async function delOPFromModal(){const id=$('op-id').value;if(!id)return;const o=DB.producao.find(x=>x.id===id);
  if(!confirm('Excluir OP "'+o.titulo+'"?'))return;
  const {error}=await supa.from('producao').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
  DB.producao=DB.producao.filter(x=>x.id!==id);closeModal('modal-producao');commit('excluir','Produção',o.titulo);syncSheets('pcp','delete',{id});toast('OP excluída.','info');}
-/* a OP chegou em "Entregue" no PCP: o pedido dela continua com o status de antes (o PCP não muda o pedido), e ficava
-   na aba "Em andamento" de Pedidos (V-0019, 05/11). Pergunta se marca o pedido como Entregue, com a data de hoje no
-   "Entregue em" (a mesma marca que o Salvar do pedido carimba). Só o status e essa data mudam: pagamentos e
-   Financeiro ficam como estão. Não pergunta se o pedido já está Entregue ou Cancelado */
-async function oferecerEntregarPedidoDaOp(o){if(!o||Number(o.etapa)!==ETAPA_FINAL||!canEdit())return;
+/* a OP chegou em "Entregue" no PCP (pedido do dono, 05/11): ela fica Concluída (com o fim de hoje) e o pedido dela
+   vira Entregue, sem perguntar, com a data de hoje no "Entregue em" (a mesma marca que o Salvar do pedido carimba;
+   a que já estiver no pedido fica). Só o status e essa data mudam no pedido: pagamentos e Financeiro ficam como estão.
+   Não cria entrega agendada (a peça já foi entregue). Voltar a OP de Entregue para outra etapa reabre a OP; o pedido
+   fica como está (ajuste nele, se for o caso) */
+function campoEtapaFinalOP(o){return Number(o.etapa)===ETAPA_FINAL?(o.status==='Concluída'?{}:{status:'Concluída',fim:o.fim||today()}):(o.status==='Concluída'?{status:'Ativa',fim:null}:{});}
+async function entregarPedidoDaOp(o){if(!o||Number(o.etapa)!==ETAPA_FINAL||!canEdit())return;
  const v=pedidoDaOp(o);if(!v||v.status==='Entregue'||v.status==='Cancelado')return;
  const cod='V-'+pad(v.num);
- if(!confirm('A ordem de produção chegou em "Entregue".\n\nMarcar também o pedido '+cod+' — '+cliName(v.cliId)+' como Entregue, com entrega em '+fmtD(today())+'?\n\nEle passa para a aba Finalizados de Pedidos. Se a data de entrega foi outra, ajuste depois no pedido (Visão Geral, "Entregue em").'))return;
- const antes=v.status,obs=marcaObs(v.obs,'Entregue em',today());
+ const antes=v.status,obs=lerMarcaObs(v.obs,'Entregue em')?(v.obs||''):marcaObs(v.obs,'Entregue em',today());
  /* só se o status ainda é o que esta tela conhece (outro aparelho pode ter mudado o pedido) */
  const {data,error}=await supa.from('vendas').update({status:'Entregue',obs}).eq('id',v.id).eq('status',antes).select('id');
  if(error){toast('O pedido '+cod+' não foi marcado como Entregue: '+error.message,'error',8000);return;}
@@ -10398,17 +10414,22 @@ async function oferecerEntregarPedidoDaOp(o){if(!o||Number(o.etapa)!==ETAPA_FINA
  v.status='Entregue';v.obs=obs;
  commit('editar','Pedidos',cod+' → Entregue (a OP chegou em Entregue no PCP)');syncSheets('vendas','upsert',v);
  if(CUR==='vendas')renderVendas();
- toast('Pedido '+cod+' marcado como Entregue.','success');}
+ toast('OP concluída e pedido '+cod+' marcado como Entregue.','success');}
 async function moveOP(id,dir){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  const antes=o.etapa;
  const nova=dir>0?proximaEtapa(antes):etapaAnterior(antes);
  if(nova===(Number(antes)||0))return; /* já está na ponta (Planejamento ◀ / Entregue ▶): nada a gravar */
- o.etapa=nova;
- const {error}=await supa.from('producao').update({etapa:o.etapa}).eq('id',id);
+ const stAntes=o.status,fimAntes=o.fim;
+ o.etapa=nova;const extra=campoEtapaFinalOP(o);
+ const {error}=await supa.from('producao').update(Object.assign({etapa:o.etapa},extra)).eq('id',id);
  if(error){o.etapa=antes;toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
- commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]);syncSheets('pcp','upsert',o);
- if(ehCelular())toast(o.titulo+' → '+ETAPAS[o.etapa],'success');
- if(nova===ETAPA_FINAL&&Number(antes)!==ETAPA_FINAL)await oferecerEntregarPedidoDaOp(o);}
+ Object.assign(o,extra);
+ commit('editar','Produção',o.titulo+' → '+ETAPAS[o.etapa]+(extra.status==='Concluída'?' (concluída)':extra.status==='Ativa'?' (reaberta)':''));syncSheets('pcp','upsert',o);
+ if(nova===ETAPA_FINAL&&Number(antes)!==ETAPA_FINAL){const v=pedidoDaOp(o);
+  if(v&&v.status!=='Entregue'&&v.status!=='Cancelado')await entregarPedidoDaOp(o);else toast('OP concluída: '+o.titulo+'.','success');
+  renderPCP();return;}
+ if(extra.status==='Ativa'){toast('OP reaberta: '+o.titulo+' voltou para '+semEmoji(ETAPAS[o.etapa])+'.','info');renderPCP();return;}
+ if(ehCelular())toast(o.titulo+' → '+ETAPAS[o.etapa],'success');}
 async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  o.status='Concluída';o.fim=today();
  const {error}=await supa.from('producao').update({status:'Concluída',fim:o.fim}).eq('id',id);
@@ -10690,10 +10711,9 @@ function montarPdfPcp(){
  const M=16,R=194,RODAPE_Y=280,CX=105;
  const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
  const t=today();
- /* mesma lista que está na tela: filtros de prioridade e de concluídas valem aqui */
- const verConcluidas=$('pcp-ver-concluidas')?$('pcp-ver-concluidas').checked:false;
+ /* mesma lista que está na tela: a aba (Em andamento / Finalizadas), a prioridade e os filtros valem aqui */
  const fPrio=$('pcp-prio-filter')?$('pcp-prio-filter').value:'';
- const ativas=DB.producao.filter(o=>(verConcluidas||o.status!=='Concluída')&&(!fPrio||(o.prio||'Normal')===fPrio)&&fcPassa('pcp',o));
+ const ativas=ordensDaFasePcp(DB.producao.filter(o=>(!fPrio||(o.prio||'Normal')===fPrio)&&fcPassa('pcp',o)));
 
  /* ---- capa ---- */
  fundo();
@@ -10733,7 +10753,7 @@ function montarPdfPcp(){
  const linhasObs=new Set();
  const linhas=[];
  ordens.forEach(o=>{
-  const atrasada=o.prazo&&o.prazo<t&&o.status!=='Concluída';
+  const atrasada=opAtrasada(o,t);
   const ped=pedidoDaOp(o);
   const peca=pecaDaOp(o,ped);
   linhas.push(['',ped?'V-'+pad(ped.num):'—',peca,cliName(o.cliId),
@@ -16285,12 +16305,17 @@ e não numera nada.
   para Pronto (o de Retrabalho também), o ◀ de Pronto ou de Retrabalho
   volta para Acabamento, e entra-se em Retrabalho pela ficha da OP
   (campo Etapa Atual); o banco guarda só o índice da etapa
-  (proximaEtapa/etapaAnterior). Na última etapa o botão vira ✓ Concluir:
-  a OP fica Concluída, com a data de fim, e, se ainda não tem entrega,
-  uma entrega Agendada é criada ligada a ela. No topo ficam os contadores
+  (proximaEtapa/etapaAnterior). Chegar em Entregue (pelo ▶ ou pela
+  ficha) conclui a OP (Concluída, com a data de fim) e marca o pedido
+  dela como Entregue, sem perguntar; voltar de Entregue reabre a OP.
+  Duas abas no topo: Em andamento (o quadro sem a coluna Entregue) e
+  Finalizadas (em Entregue ou concluídas, em lista, a mais recente
+  primeiro), cada uma com a contagem. A OP antiga que está em Entregue
+  sem ter sido concluída conta como finalizada (sem botão de concluir, e
+  não aparece atrasada). No topo ficam os contadores
   (Planejamento, Em produção, Retrabalho, Prontas, Atrasadas e
   Concluídas no mês); Atrasadas é um botão que mostra só as atrasadas.
-  Filtros: prioridade (Urgente, Alta, Normal), "Mostrar concluídas" e um
+  Filtros: prioridade (Urgente, Alta, Normal) e um
   funil em cada coluna (pedido, peça, cliente, status, responsável,
   prioridade, prazo), que valem para o quadro, a lista e a impressão. O
   cartão mostra a peça (tirada dos itens do pedido quando o título é só
@@ -17407,13 +17432,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-05.1';
+const APP_VERSAO='2026-11-05.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=326;
+const APP_ATUALIZACAO=327;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

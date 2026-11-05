@@ -920,12 +920,17 @@ e não numera nada.
   para Pronto (o de Retrabalho também), o ◀ de Pronto ou de Retrabalho
   volta para Acabamento, e entra-se em Retrabalho pela ficha da OP
   (campo Etapa Atual); o banco guarda só o índice da etapa
-  (proximaEtapa/etapaAnterior). Na última etapa o botão vira ✓ Concluir:
-  a OP fica Concluída, com a data de fim, e, se ainda não tem entrega,
-  uma entrega Agendada é criada ligada a ela. No topo ficam os contadores
+  (proximaEtapa/etapaAnterior). Chegar em Entregue (pelo ▶ ou pela
+  ficha) conclui a OP (Concluída, com a data de fim) e marca o pedido
+  dela como Entregue, sem perguntar; voltar de Entregue reabre a OP.
+  Duas abas no topo: Em andamento (o quadro sem a coluna Entregue) e
+  Finalizadas (em Entregue ou concluídas, em lista, a mais recente
+  primeiro), cada uma com a contagem. A OP antiga que está em Entregue
+  sem ter sido concluída conta como finalizada (sem botão de concluir, e
+  não aparece atrasada). No topo ficam os contadores
   (Planejamento, Em produção, Retrabalho, Prontas, Atrasadas e
   Concluídas no mês); Atrasadas é um botão que mostra só as atrasadas.
-  Filtros: prioridade (Urgente, Alta, Normal), "Mostrar concluídas" e um
+  Filtros: prioridade (Urgente, Alta, Normal) e um
   funil em cada coluna (pedido, peça, cliente, status, responsável,
   prioridade, prazo), que valem para o quadro, a lista e a impressão. O
   cartão mostra a peça (tirada dos itens do pedido quando o título é só
