@@ -751,8 +751,10 @@ e não numera nada.
     orçamento mantém as OPs ligadas a ele, só desvinculadas.
 - Pedidos (Vendas) — lista de pedidos gerados manualmente ou a partir da
   aprovação de orçamentos, com o mesmo seletor de período e um filtro em
-  cada coluna (Pedido, Data, Cliente, Itens, Total, Pagamento, Status R$
-  e Status PCP, que é a etapa da OP do pedido), resumo de quantidade e
+  cada coluna (Pedido, Data, Prazo, Cliente, Itens, Total, Pagamento,
+  Status R$ e Status PCP, que é a etapa da OP do pedido; o Prazo é o da OP
+  ou, sem ela, a entrega combinada, em vermelho quando passou e o pedido
+  não foi entregue), resumo de quantidade e
   soma e "Limpar filtros"; clicar na linha abre o pedido, e ⧉ duplica
   (a cópia nasce Pendente, com data de hoje, sem baixa de estoque e sem
   lançamento no financeiro: as contas entram quando o pedido novo é

@@ -630,6 +630,9 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 .pc-num { font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text); }
 .pc-data { font-family:var(--mono);font-size:11.5px;color:var(--text-muted); }
 .pc-cliente { font-size:16px;font-weight:700;line-height:1.25;color:var(--text);word-break:break-word; }
+.pc-prazo { font-size:12.5px;color:var(--text-muted);margin-top:-4px; }
+.pc-prazo .mono { color:var(--text);font-weight:600; }
+.prazo-atrasado, .pc-prazo.prazo-atrasado, .pc-prazo.prazo-atrasado .mono { color:var(--danger);font-weight:600; }
 .pc-valor { display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap; }
 .pc-total { font-family:var(--mono);font-size:19px;font-weight:800;color:var(--text); }
 .pc-pag { font-size:12px;color:var(--text-muted); }
@@ -1301,7 +1304,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
         <select class="form-control" id="vnd-per-ano-sel" style="width:auto;min-width:90px" onchange="onVndChange()"></select>
         <button type="button" class="ordem-cel filtro-cel" id="vnd-filtro-cel" title="Filtros" onclick="fcAbrirCel('vnd')"><svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg><span class="fc-n" id="vnd-fc-n" style="display:none"></span></button><div class="orc-resumo"><button type="button" class="orc-limpar" id="vnd-limpar" style="display:none" onclick="fcLimparTudo('vnd')">Limpar filtros</button><span id="vnd-resumo" style="display:none"></span><span id="vnd-per-label"></span></div>
       </div>
-      <div id="vnd-antigos-aviso" class="vnd-antigos" style="display:none"></div><div id="vendas-cards"></div><div class="table-wrapper" id="vendas-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos</div></div><table><thead><tr><th>Pedido<button type="button" class="th-filtro" data-fc="vnd" data-col="num" onclick="event.stopPropagation();fcAbrir('vnd','num',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Data<button type="button" class="th-filtro" data-fc="vnd" data-col="data" onclick="event.stopPropagation();fcAbrir('vnd','data',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Cliente<button type="button" class="th-filtro" data-fc="vnd" data-col="cliente" onclick="event.stopPropagation();fcAbrir('vnd','cliente',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Itens<button type="button" class="th-filtro" data-fc="vnd" data-col="itens" onclick="event.stopPropagation();fcAbrir('vnd','itens',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Total<button type="button" class="th-filtro" data-fc="vnd" data-col="total" onclick="event.stopPropagation();fcAbrir('vnd','total',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Pagamento<button type="button" class="th-filtro" data-fc="vnd" data-col="pag" onclick="event.stopPropagation();fcAbrir('vnd','pag',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>STATUS R$<button type="button" class="th-filtro" data-fc="vnd" data-col="status" onclick="event.stopPropagation();fcAbrir('vnd','status',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>STATUS PCP<button type="button" class="th-filtro" data-fc="vnd" data-col="pcp" onclick="event.stopPropagation();fcAbrir('vnd','pcp',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
+      <div id="vnd-antigos-aviso" class="vnd-antigos" style="display:none"></div><div id="vendas-cards"></div><div class="table-wrapper" id="vendas-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos</div></div><table><thead><tr><th>Pedido<button type="button" class="th-filtro" data-fc="vnd" data-col="num" onclick="event.stopPropagation();fcAbrir('vnd','num',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Data<button type="button" class="th-filtro" data-fc="vnd" data-col="data" onclick="event.stopPropagation();fcAbrir('vnd','data',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Prazo<button type="button" class="th-filtro" data-fc="vnd" data-col="prazo" onclick="event.stopPropagation();fcAbrir('vnd','prazo',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Cliente<button type="button" class="th-filtro" data-fc="vnd" data-col="cliente" onclick="event.stopPropagation();fcAbrir('vnd','cliente',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Itens<button type="button" class="th-filtro" data-fc="vnd" data-col="itens" onclick="event.stopPropagation();fcAbrir('vnd','itens',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Total<button type="button" class="th-filtro" data-fc="vnd" data-col="total" onclick="event.stopPropagation();fcAbrir('vnd','total',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Pagamento<button type="button" class="th-filtro" data-fc="vnd" data-col="pag" onclick="event.stopPropagation();fcAbrir('vnd','pag',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>STATUS R$<button type="button" class="th-filtro" data-fc="vnd" data-col="status" onclick="event.stopPropagation();fcAbrir('vnd','status',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>STATUS PCP<button type="button" class="th-filtro" data-fc="vnd" data-col="pcp" onclick="event.stopPropagation();fcAbrir('vnd','pcp',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
       </div>
       <div id="vendas-form-view" style="display:none">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
@@ -4768,6 +4771,7 @@ const unicosOrdenados=arr=>[...new Set(arr)].sort((a,b)=>a.localeCompare(b,'pt-B
 fcRegistrar('vnd',{titulo:'Filtrar pedidos',um:'pedido',varios:'pedidos',somar:v=>v.total,render:()=>renderVendas(),cols:{
  num:{nome:'Pedido',tipo:'texto',ph:'ex.: 31',val:v=>'v-'+pad(v.num)+' v-'+v.num+' v'+v.num+' '+v.num},
  data:{nome:'Data',tipo:'datas',val:v=>v.data||''},
+ prazo:{nome:'Prazo',tipo:'datas',val:v=>prazoDoPedido(v)},
  cliente:{nome:'Cliente',tipo:'texto',ph:'parte do nome',val:v=>cliName(v.cliId)},
  itens:{nome:'Itens',tipo:'texto',ph:'parte da descrição',val:v=>(v.itens||[]).map(i=>i.desc||'').join(' | ')},
  total:{nome:'Total',tipo:'faixa',valores:true,val:v=>v.total},
@@ -4869,6 +4873,17 @@ fcRegistrar('cli',{titulo:'Filtrar clientes',um:'cliente',varios:'clientes',tbod
  doc:{th:4,nome:'CPF/CNPJ',tipo:'texto',ph:'números',val:x=>x.doc},
  cidade:{th:5,nome:'Cidade',tipo:'opcoes',opcoes:opcoesDe(()=>DB.clientes,x=>x.cidade),val:x=>x.cidade||'—'},
  status:{th:6,nome:'Status',tipo:'opcoes',opcoes:opcoesDe(()=>DB.clientes,x=>x.status),val:x=>x.status||'—'}}});
+/* o prazo do pedido: o da OP (o mesmo do PCP e do Calendário), senão a "Entrega combinada" da aprovação — a mesma
+   regra da "Entrega Prevista" da Visão Geral. Sem coluna nova no banco */
+function prazoDoPedido(v){const op=opDoPedido(v);return (op&&op.prazo)||lerMarcaObs(v.obs,'Entrega combinada')||'';}
+/* atrasado: o prazo passou e o pedido não foi entregue nem cancelado */
+function atrasoDoPedido(v){const p=prazoDoPedido(v),hoje=today();
+ if(!p||p>=hoje||v.status==='Entregue'||v.status==='Cancelado'||lerMarcaObs(v.obs,'Entregue em'))return 0;
+ return diasEntreFin(p,hoje);}
+function textoAtraso(n){return n===1?'1 dia de atraso':n+' dias de atraso';}
+function prazoPedidoCelula(v){const p=prazoDoPedido(v);if(!p)return '<span style="color:var(--text-muted)" title="Sem prazo: o pedido não tem ordem de produção nem entrega combinada">—</span>';
+ const n=atrasoDoPedido(v);
+ return '<span class="mono'+(n?' prazo-atrasado':'')+'"'+(n?' title="'+textoAtraso(n)+'"':'')+'>'+fmtD(p)+'</span>';}
 function statusPcpCelula(v){const op=opDoPedido(v);
  if(!op)return '<span class="badge badge-muted" title="Nenhuma ordem de produção vinculada">—</span>';
  if(op.status==='Concluída')return '<span class="badge badge-success" title="OP-'+pad(op.num)+'">✅ Concluída</span>';
@@ -4880,12 +4895,12 @@ function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const expandido=VND_EXPANDIDOS.has(v.id);
  const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(expandido?'Recolher itens':'Ver itens do pedido')+'" onclick="event.stopPropagation();toggleItensVenda(\''+v.id+'\')">'+(expandido?'▾':'▸')+'</button>':'<span style="display:inline-block;width:29px"></span>';
  const abrirPedido='if(event.target.closest(\'button,select,label,a,input,.status-drop\'))return;editVenda(\''+v.id+'\')';
- const linhaHeader='<tr style="cursor:pointer" onclick="'+abrirPedido+'"><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span>'+seloFinPendente(v)+'</td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+(verValores()?'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button>':'')+'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Duplicar pedido" onclick="event.stopPropagation();duplicarVenda(\''+v.id+'\')">⧉</button>':'')+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
+ const linhaHeader='<tr style="cursor:pointer" onclick="'+abrirPedido+'"><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+prazoPedidoCelula(v)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span>'+seloFinPendente(v)+'</td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+(verValores()?'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button>':'')+'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Duplicar pedido" onclick="event.stopPropagation();duplicarVenda(\''+v.id+'\')">⧉</button>':'')+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
  let linhasItens='';
  if(expandido&&itens.length){
-  linhasItens=itens.map(it=>'<tr class="venda-item-row sub-row" style="background:var(--surface2);cursor:pointer" onclick="'+abrirPedido+'"><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
+  linhasItens=itens.map(it=>'<tr class="venda-item-row sub-row" style="background:var(--surface2);cursor:pointer" onclick="'+abrirPedido+'"><td></td><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
  }
- return linhaHeader+linhasItens;}).join('')||emptyRow(9,fcMsgVazia('vnd','Nenhum pedido no período selecionado'));
+ return linhaHeader+linhasItens;}).join('')||emptyRow(10,fcMsgVazia('vnd','Nenhum pedido no período selecionado'));
  renderVendasCards(lista);fcPintar('vnd',lista);pintarAvisoAntigosVnd();}
 /* mesma informacao da tabela, empilhada: nada de arrastar para o lado */
 function renderVendasCards(lista){
@@ -4908,6 +4923,8 @@ function renderVendasCards(lista){
   return '<div class="pedido-card" style="cursor:pointer" onclick="if(event.target.closest(\'button,select,label,a,input,.status-drop\'))return;editVenda(\''+v.id+'\')">'
    +'<div class="pc-topo"><span class="pc-num">V-'+pad(v.num)+'</span><span class="pc-data">'+fmtD(v.data)+'</span></div>'
    +'<div class="pc-cliente">'+esc(cliName(v.cliId))+'</div>'
+   +(()=>{const p=prazoDoPedido(v),n=atrasoDoPedido(v);
+     return p?'<div class="pc-prazo'+(n?' prazo-atrasado':'')+'">Prazo <span class="mono">'+fmtD(p)+'</span>'+(n?' · '+textoAtraso(n):'')+'</div>':'';})()
    +'<div class="pc-valor"><span class="pc-total">'+fmt(v.total)+'</span><span class="pc-pag">'+esc(v.pag||'—')+'</span></div>'
    +'<div class="pc-status"><span class="badge badge-rs '+stB+'">'+v.status+'</span>'+statusPcpCelula(v)+seloFinPendente(v)+'</div>'
    +btnItens+listaItens
@@ -16060,8 +16077,10 @@ e não numera nada.
     orçamento mantém as OPs ligadas a ele, só desvinculadas.
 - Pedidos (Vendas) — lista de pedidos gerados manualmente ou a partir da
   aprovação de orçamentos, com o mesmo seletor de período e um filtro em
-  cada coluna (Pedido, Data, Cliente, Itens, Total, Pagamento, Status R$
-  e Status PCP, que é a etapa da OP do pedido), resumo de quantidade e
+  cada coluna (Pedido, Data, Prazo, Cliente, Itens, Total, Pagamento,
+  Status R$ e Status PCP, que é a etapa da OP do pedido; o Prazo é o da OP
+  ou, sem ela, a entrega combinada, em vermelho quando passou e o pedido
+  não foi entregue), resumo de quantidade e
   soma e "Limpar filtros"; clicar na linha abre o pedido, e ⧉ duplica
   (a cópia nasce Pendente, com data de hoje, sem baixa de estoque e sem
   lançamento no financeiro: as contas entram quando o pedido novo é
@@ -17347,13 +17366,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-04.1';
+const APP_VERSAO='2026-11-04.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=323;
+const APP_ATUALIZACAO=324;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
