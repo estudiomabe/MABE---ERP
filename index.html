@@ -426,6 +426,28 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .form-control::placeholder { color:var(--text-muted); }
 select.form-control { cursor:pointer; } select.form-control option { background:#fff;color:var(--text); }
 .stat-row { display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap; }
+/* Financeiro — lançamentos sem direcionamento (sem centro de custo) */
+.sd-box { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin:-4px 0 18px;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+.sd-cab { display:flex;justify-content:space-between;align-items:flex-start;gap:10px; }
+.sd-tit { font-weight:700;font-size:13px;color:var(--text); }
+.sd-n { font-family:var(--mono);font-weight:700;font-size:15px;color:var(--warning);margin-left:4px; }
+.sd-sub { font-size:11.5px;color:var(--text-muted);margin-top:2px; }
+.sd-lista { margin-top:8px;display:flex;flex-direction:column; }
+.sd-item { display:grid;grid-template-columns:84px minmax(0,1fr) auto 190px;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--border);font-size:12.5px; }
+.sd-item.ro { grid-template-columns:84px minmax(0,1fr) auto; }
+.sd-data { font-size:11.5px;color:var(--text-muted); }
+.sd-desc { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0; }
+.sd-val { font-weight:700;white-space:nowrap;font-size:12px; } .sd-val.ent { color:var(--success); } .sd-val.sai { color:var(--danger); }
+.sd-sel { font-size:11.5px;padding:4px 6px; }
+.sd-mais { font-size:12px;color:var(--text-muted);padding-top:7px;border-top:1px solid var(--border); }
+.sd-ok { font-size:12.5px;color:var(--success);font-weight:600; } .sd-ok .sd-sub { display:inline;font-weight:400; }
+/* no celular: a data em cima, a descrição e o valor numa linha, o seletor embaixo na largura toda */
+@media (max-width:860px) {
+  .sd-item, .sd-item.ro { grid-template-columns:minmax(0,1fr) auto;row-gap:3px;padding:8px 0; }
+  .sd-data { grid-column:1 / -1; }
+  .sd-sel { grid-column:1 / -1;min-height:40px;font-size:13px; }
+  .sd-cab .btn { white-space:nowrap; }
+}
 .stat-row .stat-box { flex:1;min-width:150px; }
 .stat-box { flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .stat-value { font-size:20px;font-weight:800;font-family:var(--mono); }
@@ -1418,6 +1440,7 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
         <div class="stat-box num-atalho" role="button" tabindex="0" title="Ver só os lançamentos pendentes" onclick="atalhoPendencias()"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
       </div>
       <div id="fin-lista-view">
+      <div class="sd-box" id="fin-semdir"></div>
       <div class="period-bar"><select class="form-control" id="fin-tipo-filter" style="width:auto;min-width:140px" onchange="renderFinanceiro()"><option value="">Entradas e saídas</option><option>Entrada</option><option>Saída</option></select><select class="form-control" id="fin-status-filter" style="width:auto;min-width:150px" onchange="renderFinanceiro()"><option value="">Todos os status</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><span id="ofx-ultima-atualizacao" style="font-size:10.5px;color:var(--text-muted)"></span></div><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"><span id="fin-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div id="financeiro-cards"></div><div class="table-wrapper" id="financeiro-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Pedido</th><th>Centro de Custo</th><th class="fin-obs">Observações</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody><tfoot id="tf-financeiro" class="fin-medida" aria-hidden="true"></tfoot></table></div><div class="fin-ver-mais" id="fin-ver-mais" hidden><button type="button" class="btn btn-ghost btn-sm" id="fin-ver-mais-btn" onclick="verMaisFin()">Ver mais</button><span class="fin-ver-mais-n" id="fin-ver-mais-n"></span></div>
       </div>
       <div id="fin-conferir-view" style="display:none">
@@ -11816,6 +11839,7 @@ function renderFinanceiro(){pintarPeriodoFin();const ym=today().slice(0,7);
  pintarTaxasRepasseFin(pagos,ym);
  $('fin-sai').textContent=fmtK(pagos.filter(f=>f.tipo==='Saída'&&noPeriodoCartoesFin(f.data,ym)).reduce((s,f)=>s+Number(f.val),0));
  $('fin-pend').textContent=visiveis.filter(f=>f.status==='Pendente').length;
+ pintarSemDirecaoFin();
  if($('ofx-ultima-atualizacao'))$('ofx-ultima-atualizacao').textContent=DB.config.ultimaImportacaoOfx?('Última atualização: '+DB.config.ultimaImportacaoOfx):'Nenhuma importação de extrato ainda';
  /* abas Lançamentos / Conferir com o banco: só quando o banco tem as colunas de origem */
  /* as sugestões são calculadas uma vez para as abas, a aba Conferir e o bloco do saldo (o desenho só lê) */
@@ -12104,6 +12128,30 @@ function ordenarFinPeloTitulo(th){const ths=[...th.parentElement.children],idx=t
    ficavam com o valor velho, apesar do "Classificado!", e salvar depois pelo modal gravava esse valor velho no
    servidor). Sem o lançamento na lista (apagado em outro aparelho), fica o objeto de antes, fora da lista */
 function finDaListaAgora(id,f){return DB.financeiro.find(x=>x.id===id)||f;}
+/* Lançamentos sem direcionamento: os não cancelados sem centro de custo, no período escolhido em cima (em Tudo, todos).
+   Mostra quantos e os mais recentes, com o seletor para classificar ali mesmo (o mesmo da lista: ao escolher, o
+   lançamento sai da caixa); "Ver todos" abre a lista já filtrada em "Não classificado" */
+const SEM_DIR_N=6;
+function pintarSemDirecaoFin(){const el=$('fin-semdir');if(!el)return;
+ const todos=finVisiveis().filter(f=>f.status!=='Cancelado'&&!String(f.centroCusto||'').trim());
+ const lst=(PER_FIN.modo==='tudo'?todos:todos.filter(f=>matchPer(f.data,PER_FIN))).slice().sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')));
+ const quando=quandoPeriodoFin(),fora=todos.length-lst.length;
+ if(!lst.length){el.innerHTML='<div class="sd-ok">✓ Todos os lançamentos'+(quando?' de '+quando:'')+' têm centro de custo'
+  +(fora?' <span class="sd-sub">· '+fora+' sem centro em outros períodos</span>':'')+'</div>';return;}
+ const ed=canEdit();
+ el.innerHTML='<div class="sd-cab"><div><span class="sd-tit">⚠ Sem direcionamento</span><span class="sd-n">'+lst.length+'</span>'
+  +'<div class="sd-sub">'+(lst.length===1?'lançamento':'lançamentos')+' sem centro de custo'+(quando?' em '+quando:'')+(fora?' · mais '+fora+' em outros períodos':'')+'</div></div>'
+  +'<button type="button" class="btn btn-ghost btn-sm" onclick="atalhoSemCentroFin()">Ver todos</button></div>'
+  +'<div class="sd-lista">'+lst.slice(0,SEM_DIR_N).map(f=>{const ent=f.tipo==='Entrada';
+   return '<div class="sd-item'+(ed?'':' ro')+'"><span class="sd-data mono">'+fmtD(f.data)+'</span>'
+    +'<span class="sd-desc" title="'+esc(f.desc||'')+'">'+esc(f.desc||'—')+'</span>'
+    +'<span class="sd-val mono '+(ent?'ent':'sai')+'">'+(ent?'+ ':'− ')+fmt(f.val)+'</span>'
+    +(ed?'<select class="form-control sd-sel" aria-label="Centro de custo" onchange="setCentroCustoInline(\''+f.id+'\',this.value)">'+opcoesLista(SETORES_FIXOS,'','⚠ Escolher o centro')+'</select>':'')
+    +'</div>';}).join('')
+  +(lst.length>SEM_DIR_N?'<div class="sd-mais">e mais '+(lst.length-SEM_DIR_N)+' — <a href="#" onclick="atalhoSemCentroFin();return false">ver todos na lista</a></div>':'')
+  +'</div>';}
+/* a lista filtrada em "Não classificado", no mesmo período (a cópia: o atalho volta o período para Tudo) */
+const atalhoSemCentroFin=()=>abrirFinanceiroFiltrado({cc:['Não classificado'],status:['Pago','Pendente'],periodo:Object.assign({},PER_FIN)});
 async function setCentroCustoInline(id,valor){if(!guard())return;let f=DB.financeiro.find(x=>x.id===id);if(!f)return;
  if(f.mescladoCom){toast(finAbsorvido(f)?'Este lançamento está mesclado numa linha do banco: só para consulta.':'Este lançamento ficou preso numa mesclagem pela metade: use Restaurar em Conferir com o banco.','info',6000);renderFinanceiro();return;}
  const {error}=await supa.from('financeiro').update({centro_custo:valor||null}).eq('id',id);
@@ -16680,7 +16728,11 @@ e não numera nada.
   + linhas do extrato pagas, para bater com a conta; o recebido fora do
   banco não entra; vermelho e com sinal só quando negativo), Recebido
   no mês, Pago no mês e Pendências (tocar abre a lista só com os
-  pendentes).
+  pendentes). Logo abaixo, a caixa Sem direcionamento (desde 07/11/2026):
+  quantos lançamentos não cancelados estão sem centro de custo no período
+  escolhido, os 6 mais recentes com o seletor para classificar ali mesmo, e
+  "Ver todos" abre a lista filtrada em Não classificado; sem nenhum, uma
+  linha diz que está tudo classificado.
   - Período: acima dos números, o mesmo seletor de Pedidos e Orçamentos
     (Mês, Ano ou Tudo; PER_FIN, começa em Tudo) filtra a lista e o
     contador junto com os outros filtros e a busca do topo, e leva
@@ -17744,13 +17796,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-07.7';
+const APP_VERSAO='2026-11-07.8';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=339;
+const APP_ATUALIZACAO=340;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
