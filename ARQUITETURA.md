@@ -1006,11 +1006,7 @@ e não numera nada.
   + linhas do extrato pagas, para bater com a conta; o recebido fora do
   banco não entra; vermelho e com sinal só quando negativo), Recebido
   no mês, Pago no mês e Pendências (tocar abre a lista só com os
-  pendentes). Logo abaixo, a caixa Sem direcionamento (desde 07/11/2026):
-  quantos lançamentos não cancelados estão sem centro de custo no período
-  escolhido, os 6 mais recentes com o seletor para classificar ali mesmo, e
-  "Ver todos" abre a lista filtrada em Não classificado; sem nenhum, uma
-  linha diz que está tudo classificado.
+  pendentes).
   - Período: acima dos números, o mesmo seletor de Pedidos e Orçamentos
     (Mês, Ano ou Tudo; PER_FIN, começa em Tudo) filtra a lista e o
     contador junto com os outros filtros e a busca do topo, e leva
