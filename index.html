@@ -794,6 +794,33 @@ body.sem-valores .lix-valor { display:none; }
 .hp-compara-tit { font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
  color:var(--text-muted);margin-bottom:5px; }
 .hp-dif { font-weight:700;border-top:1px solid var(--border);margin-top:5px;padding-top:7px; }
+/* Painel — análise dos últimos pedidos entregues: orçado × real, em gastos e em mão de obra */
+.an-nota { padding:10px 18px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border);line-height:1.5; }
+#dash-analise-box table { min-width:780px; }
+#dash-analise-box th.an-g { text-align:center;border-left:1px solid var(--border); }
+#dash-analise-box th.an-n, #dash-analise-box td.an-v { text-align:right;white-space:nowrap; }
+#dash-analise-box .an-sep { border-left:1px solid var(--border); }
+#dash-analise-box td small { display:block;font-size:11px;color:var(--text-muted);font-weight:400;margin-top:2px; }
+#dash-analise-box .an-rot { display:none; }
+#dash-analise-box tfoot td { font-weight:700;background:var(--surface2);border-bottom:none; }
+.an-dif { font-weight:700; } .an-dif.acima { color:var(--danger); } .an-dif.abaixo { color:var(--success); }
+.an-nada { color:var(--text-muted);font-size:12px;font-style:italic;font-family:var(--font); }
+#dash-analise-box tr.an-clica { cursor:pointer; }
+@media (hover:hover) { #dash-analise-box tr.an-clica:hover td { background:var(--surface2); } }
+/* no celular cada pedido vira um cartão: o nome em cima e, embaixo, uma linha para gastos e outra para mão de obra */
+@media (max-width:860px) {
+  #dash-analise-box table { min-width:0; }
+  #dash-analise-box thead { display:none; }
+  #dash-analise-box tr { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:8px;padding:12px 14px;border-bottom:1px solid var(--border); }
+  #dash-analise-box td { border:none;padding:4px 0;font-size:12.5px; }
+  #dash-analise-box td.an-ped { grid-column:1 / -1;padding-bottom:6px;font-size:13.5px; }
+  #dash-analise-box td.an-rot { display:block;grid-column:1 / -1;font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;padding:8px 0 0; }
+  #dash-analise-box td.an-v { text-align:right;white-space:nowrap;font-size:12px; }
+  #dash-analise-box td.an-v::before { content:attr(data-rot);display:block;font-size:10px;color:var(--text-muted);font-family:var(--font);text-transform:uppercase;letter-spacing:.4px; }
+  #dash-analise-box .an-sep { border-left:none; }
+  #dash-analise-box tfoot tr { background:var(--surface2); }
+  #dash-analise-box td.an-vazio { grid-column:1 / -1; }
+}
 .hp-dif.acima .hp-nums { color:var(--danger); }
 .hp-dif.abaixo .hp-nums { color:var(--success); }
 .hp-vazio-cmp { font-size:11.5px;color:var(--text-muted); }
@@ -1159,7 +1186,7 @@ body.sem-valores #section-insumos table th:nth-child(4), body.sem-valores #secti
 body.sem-valores #section-insumos table th:nth-child(5), body.sem-valores #section-insumos table td:nth-child(5),
 body.sem-valores #section-portfolio table th:nth-child(5), body.sem-valores #section-portfolio table td:nth-child(5),
 body.sem-valores #section-portfolio table th:nth-child(6), body.sem-valores #section-portfolio table td:nth-child(6),
-body.sem-valores #dash-valores, body.sem-valores #dash-chart-vendas, body.sem-valores #dash-chart-orcped, body.sem-valores #dash-transacoes,
+body.sem-valores #dash-valores, body.sem-valores #dash-chart-vendas, body.sem-valores #dash-chart-orcped, body.sem-valores #dash-analise-box,
 body.sem-valores #dash-btn-pdf { display:none !important; }
 /* sem o gráfico de faturamento, o de status sobra sozinho e estica: limita a largura */
 body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px);grid-template-areas:"st"; }
@@ -1296,7 +1323,11 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px);grid-templ
         <div class="chart-card" id="dash-chart-status"><div class="chart-title">Status dos Pedidos</div><div class="rosca-moldura"><canvas id="chart-status"></canvas></div><div class="dash-legenda" id="dash-status-legenda"></div></div>
       </div>
       <div>
-        <div class="table-wrapper" id="dash-transacoes"><div class="table-toolbar"><div class="table-toolbar-title">Últimas Transações</div></div><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Valor</th></tr></thead><tbody id="dash-fin"></tbody></table></div>
+        <div class="table-wrapper" id="dash-analise-box"><div class="table-toolbar"><div class="table-toolbar-title">Análise dos Últimos Pedidos Entregues <span id="dash-analise-sub" style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0"></span></div></div>
+          <div class="an-nota">O mesmo comparativo de dentro de cada pedido. <strong>Materiais e serviços:</strong> o que a ficha dos itens do orçamento previu × as saídas do Financeiro ligadas ao pedido. <strong>Mão de obra:</strong> as horas da ficha × as horas apontadas no pedido. Vermelho é acima do orçado; verde, abaixo.</div>
+          <table><thead><tr><th rowspan="2">Pedido</th><th colspan="3" class="an-g">Materiais e serviços</th><th colspan="3" class="an-g">Mão de obra</th></tr>
+          <tr><th class="an-n an-sep">Orçado</th><th class="an-n">Gasto</th><th class="an-n">Diferença</th><th class="an-n an-sep">Orçada</th><th class="an-n">Trabalhada</th><th class="an-n">Diferença</th></tr></thead>
+          <tbody id="dash-analise"></tbody><tfoot id="dash-analise-pe"></tfoot></table></div>
       </div>
     </div>
 
@@ -3096,8 +3127,7 @@ function renderDashboard(){
  /* a receber subir não é bom nem ruim: é dinheiro que entra depois */
  pintarDelta('kpi-areceber-d',totReceber,A?A.aReceber:null,'neutro');
 
- const finList=finVisiveis().filter(f=>inPer(f.data)).slice(0,7);
- $('dash-fin').innerHTML=finList.map(f=>'<tr><td>'+esc(f.desc)+'</td><td><span class="badge '+(f.tipo==='Entrada'?'badge-success':'badge-danger')+'">'+f.tipo+'</span></td><td class="mono">'+fmt(f.val)+'</td></tr>').join('')||'<tr><td colspan="3" style="color:var(--text-muted)">Sem lançamentos no período</td></tr>';
+ renderAnaliseEntregues();
 
  /* gráfico de Faturamento e Lucro: as mesmas contas dos cartões (metricasDoPeriodo), um ponto por mês ou por ano.
     Linhas em escala comum (não logarítmica) porque o lucro pode ficar negativo; o mês que ainda não
@@ -4684,6 +4714,56 @@ function comparativoGastos(gasto,orcado){
   +linha('<strong style="color:var(--text)">Gasto até agora</strong>','<strong>'+fmt(gasto)+'</strong>')
   +linha(rotulo,sinal+fmt(Math.abs(d)),'hp-dif '+estado)
   +'</div>';}
+/* Painel — análise dos últimos pedidos entregues: o mesmo comparativo de dentro do pedido (gastos e
+   mão de obra, orçado × real), um pedido por linha, para ver de relance onde o orçamento erra.
+   Os mais recentes pela data de entrega (a marca "Entregue em"; sem ela, a data do pedido), sem olhar o
+   período do painel. Pedido sem gasto lançado ou sem hora apontada não mostra diferença nem entra na
+   soma: "nada lançado" não é economia. */
+const DASH_ANALISE_N=6;
+function renderAnaliseEntregues(){
+ const corpo=$('dash-analise'),pe=$('dash-analise-pe');if(!corpo)return;
+ const quando=v=>lerMarcaObs(v.obs,'Entregue em')||v.data||'';
+ const lista=DB.vendas.filter(v=>v.status==='Entregue').sort((a,b)=>quando(b).localeCompare(quando(a))).slice(0,DASH_ANALISE_N);
+ $('dash-analise-sub').textContent=lista.length>1?'os '+lista.length+' mais recentes':'';
+ if(!lista.length){corpo.innerHTML='<tr><td colspan="7" class="an-vazio" style="color:var(--text-muted)">Nenhum pedido entregue ainda.</td></tr>';pe.innerHTML='';return;}
+ const nada=t=>'<span class="an-nada">'+t+'</span>';
+ const sinal=d=>d>0.005?'+':d<-0.005?'−':'';
+ const dif=(d,dh)=>'<span class="an-dif '+(d>0.005?'acima':d<-0.005?'abaixo':'')+'">'+sinal(d)+fmt(Math.abs(d))
+  +(dh===undefined?'':'<small>'+sinal(dh)+fmtHoras(Math.abs(dh))+'</small>')+'</span>';
+ const td=(rot,html,cls)=>'<td class="mono an-v'+(cls?' '+cls:'')+'" data-rot="'+rot+'">'+html+'</td>';
+ const T={go:0,gr:0,ng:0,mo:0,mr:0,ho:0,hr:0,nm:0};
+ const linhas=lista.map(v=>{
+  const o=orcDoPedido(v),go=gastoOrcadoDoPedido(v),gr=gastosDoPedido(v).reduce((s,g)=>s+(Number(g.val)||0),0),nGastos=gastosDoPedido(v).length;
+  const ho=horasOrcadasDoPedido(v),hs=Array.isArray(v.horas)?v.horas:[];
+  const hr=hs.reduce((s,l)=>s+(Number(l.horas)||0),0),vr=hs.reduce((s,l)=>s+(Number(l.valor)||0),0);
+  /* materiais e serviços */
+  let g;
+  if(!o)g=td('Orçado',nada('sem orçamento'),'an-sep')+td('Gasto',nGastos?fmt(gr):nada('nada lançado'))+td('Diferença','—');
+  else if(!go.total)g=td('Orçado',nada('ficha sem materiais'),'an-sep')+td('Gasto',nGastos?fmt(gr):nada('nada lançado'))+td('Diferença','—');
+  else if(!nGastos)g=td('Orçado',fmt(go.total),'an-sep')+td('Gasto',nada('nada lançado'))+td('Diferença','—');
+  else{g=td('Orçado',fmt(go.total),'an-sep')+td('Gasto',fmt(gr))+td('Diferença',dif(gr-go.total));T.go+=go.total;T.gr+=gr;T.ng++;}
+  /* mão de obra */
+  const mo=ho&&ho.horas?fmt(ho.valor)+'<small>'+fmtHoras(ho.horas)+'</small>':'';
+  const mr=hs.length?fmt(vr)+'<small>'+fmtHoras(hr)+'</small>':'';
+  let m;
+  if(!o)m=td('Orçada',nada('sem orçamento'),'an-sep')+td('Trabalhada',mr||nada('nada apontado'))+td('Diferença','—');
+  else if(!mo)m=td('Orçada',nada('ficha sem horas'),'an-sep')+td('Trabalhada',mr||nada('nada apontado'))+td('Diferença','—');
+  else if(!mr)m=td('Orçada',mo,'an-sep')+td('Trabalhada',nada('nada apontado'))+td('Diferença','—');
+  else{m=td('Orçada',mo,'an-sep')+td('Trabalhada',mr)+td('Diferença',dif(vr-ho.valor,hr-ho.horas));T.mo+=ho.valor;T.mr+=vr;T.ho+=ho.horas;T.hr+=hr;T.nm++;}
+  const abre=canEdit()?' class="an-clica" title="Abrir o pedido" onclick="navigate(\'vendas\');editVenda(\''+v.id+'\')"':'';
+  return '<tr'+abre+'><td class="an-ped"><strong class="mono">V-'+pad(v.num)+'</strong> '+esc(cliName(v.cliId))
+   +'<small>entregue em '+fmtD(quando(v))+(o?' · ORC-'+pad(o.num):'')+'</small></td>'
+   +'<td class="an-rot">Materiais e serviços</td>'+g+'<td class="an-rot">Mão de obra</td>'+m+'</tr>';});
+ corpo.innerHTML=linhas.join('');
+ /* soma só o que dá para comparar; com um pedido só, a soma repetiria a linha */
+ if(T.ng+T.nm<2){pe.innerHTML='';return;}
+ const vazio=td('','—','an-sep')+td('','—')+td('','—');
+ pe.innerHTML='<tr><td class="an-ped">Soma<small>só os pedidos que têm o que comparar</small></td>'
+  +'<td class="an-rot">Materiais e serviços</td>'
+  +(T.ng?td('Orçado',fmt(T.go),'an-sep')+td('Gasto',fmt(T.gr))+td('Diferença',dif(T.gr-T.go)):vazio)
+  +'<td class="an-rot">Mão de obra</td>'
+  +(T.nm?td('Orçada',fmt(T.mo)+'<small>'+fmtHoras(T.ho)+'</small>','an-sep')+td('Trabalhada',fmt(T.mr)+'<small>'+fmtHoras(T.hr)+'</small>')+td('Diferença',dif(T.mr-T.mo,T.hr-T.ho)):vazio)
+  +'</tr>';}
 /* o Financeiro mudou com a ficha do pedido aberta: a lista de gastos acompanha */
 function atualizarGastosDoPedidoAberto(){
  const ficha=$('vendas-form-view');if(!ficha||ficha.style.display!=='block')return;
@@ -16166,7 +16246,13 @@ e não numera nada.
   meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (duas
   linhas com a quantidade de cada, nos mesmos meses; a dica mostra também
   o valor) e, ao lado dos dois, Status dos Pedidos (rosca com legenda de
-  quantidade e %). Tabela: Últimas Transações, na largura toda (o
+  quantidade e %). Embaixo, na largura toda, Análise dos Últimos Pedidos
+  Entregues (os 6 mais recentes pela data "Entregue em", fora do período
+  escolhido): para cada pedido, o comparativo de dentro dele — materiais e
+  serviços orçados na ficha × saídas do Financeiro ligadas ao pedido, e
+  mão de obra orçada × horas apontadas, com a diferença; sem gasto ou sem
+  hora lançada não há diferença nem soma; no rodapé, a soma dos que têm o
+  que comparar. Ela entrou em 07/11/2026 no lugar das Últimas Transações (o
   Estoque Crítico e o Top 5 Clientes saíram em 05/11/2026, a pedido do
   dono). Quem não vê valores fica só com o gráfico de status. O botão
   "Gerar Relatório Dashboard em PDF" leva a tabela de indicadores e as
@@ -17547,13 +17633,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-07.2';
+const APP_VERSAO='2026-11-07.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=334;
+const APP_ATUALIZACAO=335;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

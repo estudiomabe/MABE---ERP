@@ -670,7 +670,13 @@ e não numera nada.
   meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (duas
   linhas com a quantidade de cada, nos mesmos meses; a dica mostra também
   o valor) e, ao lado dos dois, Status dos Pedidos (rosca com legenda de
-  quantidade e %). Tabela: Últimas Transações, na largura toda (o
+  quantidade e %). Embaixo, na largura toda, Análise dos Últimos Pedidos
+  Entregues (os 6 mais recentes pela data "Entregue em", fora do período
+  escolhido): para cada pedido, o comparativo de dentro dele — materiais e
+  serviços orçados na ficha × saídas do Financeiro ligadas ao pedido, e
+  mão de obra orçada × horas apontadas, com a diferença; sem gasto ou sem
+  hora lançada não há diferença nem soma; no rodapé, a soma dos que têm o
+  que comparar. Ela entrou em 07/11/2026 no lugar das Últimas Transações (o
   Estoque Crítico e o Top 5 Clientes saíram em 05/11/2026, a pedido do
   dono). Quem não vê valores fica só com o gráfico de status. O botão
   "Gerar Relatório Dashboard em PDF" leva a tabela de indicadores e as
