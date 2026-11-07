@@ -669,8 +669,12 @@ e não numera nada.
   pode ficar negativo, e o mês que ainda não começou fica sem ponto: 6 meses até o mês escolhido, os 12
   meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (duas
   linhas com a quantidade de cada, nos mesmos meses; a dica mostra também
-  o valor) e, ao lado dos dois, Status dos Pedidos (rosca com legenda de
-  quantidade e %). Embaixo, na largura toda, Análise dos Últimos Pedidos
+  o valor) e, ao lado dos dois, Pedidos em Andamento (no lugar da rosca
+  de status desde 07/11/2026: os pedidos Pendente, Confirmado e Enviado,
+  fora do período escolhido, do prazo mais perto para o mais longe; cada
+  um com a data do pedido, o prazo (vermelho e dias de atraso se passou),
+  o total e uma barra de 0 a 100% do que o cliente já pagou — as linhas de
+  pagamento do pedido marcadas Pago ÷ o total, pelo valor cheio). Embaixo, na largura toda, Análise dos Últimos Pedidos
   Entregues (os 6 mais recentes pela data "Entregue em", fora do período
   escolhido): para cada pedido, o comparativo de dentro dele — materiais e
   serviços orçados na ficha × saídas do Financeiro ligadas ao pedido, e
@@ -678,7 +682,8 @@ e não numera nada.
   hora lançada não há diferença nem soma; no rodapé, a soma dos que têm o
   que comparar. Ela entrou em 07/11/2026 no lugar das Últimas Transações (o
   Estoque Crítico e o Top 5 Clientes saíram em 05/11/2026, a pedido do
-  dono). Quem não vê valores fica só com o gráfico de status. O botão
+  dono). Quem não vê valores fica só com a lista de pedidos em andamento,
+  sem o total e sem a barra do pago. O botão
   "Gerar Relatório Dashboard em PDF" leva a tabela de indicadores, a
   mesma Análise dos Últimos Pedidos Entregues (analiseEntregues, as
   contas que a tela também usa) e as últimas transações do período

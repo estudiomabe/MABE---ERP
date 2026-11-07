@@ -130,15 +130,24 @@ button.salvando { opacity:0.6;cursor:progress; }
 .kpi-delta.sobe { color:var(--success); }
 .kpi-delta.desce { color:var(--danger); }
 .kpi-delta .kd-nota { font-family:var(--font);font-weight:500;color:var(--text-muted);font-size:10px; }
-/* Legenda da rosca: sem ela a cor sozinha não diz quanto é cada fatia. */
-.grafico-moldura, .rosca-moldura { position:relative;height:208px;margin-top:10px; }
-.rosca-moldura { height:190px; }
-.dash-legenda { display:flex;flex-direction:column;gap:7px;margin-top:14px; }
-.dash-legenda .dl-item { display:flex;align-items:center;gap:8px;font-size:12px; }
-.dash-legenda .dl-cor { width:9px;height:9px;border-radius:2px;flex:none; }
-.dash-legenda .dl-nome { flex:1;min-width:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-.dash-legenda .dl-num { font-family:var(--mono);font-weight:700;color:var(--text); }
-.dash-legenda .dl-pct { font-family:var(--mono);color:var(--text-muted);min-width:42px;text-align:right; }
+.grafico-moldura { position:relative;height:208px;margin-top:10px; }
+/* Painel — pedidos em andamento: um por linha, com as datas e uma barra do quanto o cliente já pagou */
+.pa-lista { margin-top:8px;display:flex;flex-direction:column;overflow-y:auto;flex:1 1 auto;min-height:0;margin-right:-8px;padding-right:8px; }
+.pa-item { padding:10px 4px;border-bottom:1px solid var(--border); }
+.pa-item:last-child { border-bottom:none; }
+.pa-clica { cursor:pointer;border-radius:6px; }
+@media (hover:hover) { .pa-clica:hover { background:var(--surface2); } }
+.pa-top { display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px; }
+.pa-ped { min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.pa-valor { font-weight:700;white-space:nowrap;font-size:12px; }
+.pa-datas { font-size:11px;color:var(--text-muted);margin-top:3px; }
+.pa-datas .mono { font-size:11px; }
+.pa-pago { display:flex;align-items:center;gap:8px;margin-top:6px; }
+.pa-barra { flex:1;height:7px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);overflow:hidden; }
+.pa-barra span { display:block;height:100%;background:var(--accent); }
+.pa-barra.cheia span { background:var(--success); }
+.pa-pct { font-size:11px;min-width:58px;text-align:right;color:var(--text-muted); }
+.pa-vazio { color:var(--text-muted);font-size:12.5px;padding:10px 0; }
 /* Ranking: a posição em círculo, como nas referências */
 .rank-pos { display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
  border-radius:50%;background:var(--surface2);color:var(--text-muted);font-size:10px;font-weight:800;font-family:var(--mono); }
@@ -207,8 +216,8 @@ body.sem-valores .orc-resumo-valor, body.sem-valores .orc-resumo-sep, body.sem-v
 .charts-grid { display:grid;grid-template-columns:2fr 1fr;grid-template-areas:"fat st" "orc st";gap:14px;margin-bottom:20px; }
 #dash-chart-vendas { grid-area:fat; } #dash-chart-orcped { grid-area:orc; }
 /* o card de status fica com a altura dos dois gráficos: a rosca e a legenda vão para o meio dele */
-#dash-chart-status { grid-area:st;display:flex;flex-direction:column; }
-#dash-chart-status .rosca-moldura { margin-top:auto; } #dash-chart-status .dash-legenda { margin-bottom:auto; }
+/* a lista fica com a altura dos dois gráficos ao lado e rola dentro dela: contain:size faz o card não esticar a grade */
+#dash-chart-status { grid-area:st;display:flex;flex-direction:column;contain:size; }
 .chart-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .chart-title { font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between; }
 .bottom-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px; }
@@ -473,7 +482,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   .kpi-grid { grid-template-columns:repeat(2,1fr); }
   .charts-grid, .bottom-grid, .form-2, .form-3 { grid-template-columns:minmax(0,1fr); }
   .charts-grid { grid-template-areas:"fat" "orc" "st"; }
-  #dash-chart-status .rosca-moldura { margin-top:10px; }
+  #dash-chart-status { contain:none; } #dash-chart-status .pa-lista { max-height:470px; }
   .orc-tipo-grid, .orc-cols-2, .mad-dim-grid { grid-template-columns:minmax(0,1fr) !important; }
   /* Os contadores sao numeros pequenos: empilhados um por linha eles comiam
      quase uma tela inteira antes do primeiro card do PCP. Em duas colunas,
@@ -1188,8 +1197,10 @@ body.sem-valores #section-portfolio table th:nth-child(5), body.sem-valores #sec
 body.sem-valores #section-portfolio table th:nth-child(6), body.sem-valores #section-portfolio table td:nth-child(6),
 body.sem-valores #dash-valores, body.sem-valores #dash-chart-vendas, body.sem-valores #dash-chart-orcped, body.sem-valores #dash-analise-box,
 body.sem-valores #dash-btn-pdf { display:none !important; }
-/* sem o gráfico de faturamento, o de status sobra sozinho e estica: limita a largura */
+/* sem os gráficos, a lista de pedidos em andamento sobra sozinha: limita a largura, e ela fica sem o total e o pago */
 body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px);grid-template-areas:"st"; }
+body.sem-valores #dash-chart-status { contain:none; } body.sem-valores #dash-chart-status .pa-lista { max-height:470px; }
+body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important; }
 /* Financeiro: o período (Mês / Ano / Tudo) acima dos números, o mesmo de Pedidos e Orçamentos. No celular as abas
    têm 44 px de toque e os seletores ficam da mesma altura (a barra quebra em linhas como a de Pedidos) */
 @media (max-width:860px) {
@@ -1320,7 +1331,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px);grid-templ
       <div class="charts-grid">
         <div class="chart-card" id="dash-chart-vendas"><div class="chart-title">Faturamento e Lucro <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><div class="grafico-moldura"><canvas id="chart-vendas"></canvas></div></div>
         <div class="chart-card" id="dash-chart-orcped"><div class="chart-title">Orçamentos e Pedidos <span id="chart-orcped-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">quantidade</span></div><div class="grafico-moldura"><canvas id="chart-orcped"></canvas></div></div>
-        <div class="chart-card" id="dash-chart-status"><div class="chart-title">Status dos Pedidos</div><div class="rosca-moldura"><canvas id="chart-status"></canvas></div><div class="dash-legenda" id="dash-status-legenda"></div></div>
+        <div class="chart-card" id="dash-chart-status"><div class="chart-title">Pedidos em Andamento <span id="dash-and-sub" style="font-size:10px;color:var(--text-muted);font-weight:400"></span></div><div class="pa-lista" id="dash-andamento"></div></div>
       </div>
       <div>
         <div class="table-wrapper" id="dash-analise-box"><div class="table-toolbar"><div class="table-toolbar-title">Análise dos Últimos Pedidos Entregues <span id="dash-analise-sub" style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0"></span></div></div>
@@ -2886,7 +2897,7 @@ function setBadge(id,n){const b=$(id);if(!b)return;b.style.display=n>0?'inline-f
 function actionBtns(fnE,fnD){if(!canEdit())return '';return '<div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="'+fnE+'">✏️</button><button class="btn btn-danger btn-sm" onclick="'+fnD+'">🗑️</button></div>';}
 
 /* ================= DASHBOARD ================= */
-let chVendas=null,chStatus=null,chOrcPed=null;
+let chVendas=null,chOrcPed=null;
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 let PER={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function perYears(){const ys=new Set([new Date().getFullYear()]);
@@ -3127,7 +3138,7 @@ function renderDashboard(){
  /* a receber subir não é bom nem ruim: é dinheiro que entra depois */
  pintarDelta('kpi-areceber-d',totReceber,A?A.aReceber:null,'neutro');
 
- renderAnaliseEntregues();
+ renderAnaliseEntregues();renderPedidosAndamento();
 
  /* gráfico de Faturamento e Lucro: as mesmas contas dos cartões (metricasDoPeriodo), um ponto por mês ou por ano.
     Linhas em escala comum (não logarítmica) porque o lucro pode ficar negativo; o mês que ainda não
@@ -3173,18 +3184,7 @@ function renderDashboard(){
      return c.dataset.label+': '+n+' · '+fmt(v);}}}},
    scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
     y:{beginAtZero:true,grid:{color:'rgba(26,23,20,.07)'},ticks:{precision:0,maxTicksLimit:6,font:{size:9}}}}}});
- const sts={};vPer.forEach(v=>sts[v.status]=(sts[v.status]||0)+1);
- if(chStatus)chStatus.destroy();
- const cores={'Pendente':'#a07830','Confirmado':'#c8a96e','Enviado':'#7a6f62','Entregue':'#3d6b4f','Cancelado':'#b54040'};
- const stKeys=Object.keys(sts);
- /* a legenda diz o que a cor sozinha não diz: quantos e quanto por cento */
- const totalSt=stKeys.reduce((s2,k)=>s2+sts[k],0);
- $('dash-status-legenda').innerHTML=stKeys.length
-  ?stKeys.map(k=>'<div class="dl-item"><span class="dl-cor" style="background:'+(cores[k]||'#7a6f62')+'"></span>'
-    +'<span class="dl-nome">'+esc(k)+'</span><span class="dl-num">'+sts[k]+'</span>'
-    +'<span class="dl-pct">'+fmtN(sts[k]/totalSt*100,1)+'%</span></div>').join('')
-  :'<div class="dl-item"><span class="dl-nome" style="color:var(--text-muted)">Nenhum pedido no período</span></div>';
- chStatus=new Chart($('chart-status'),{type:'doughnut',data:{labels:stKeys.length?stKeys:['Sem pedidos'],datasets:[{data:stKeys.length?Object.values(sts):[1],backgroundColor:stKeys.length?stKeys.map(k=>cores[k]||'#1a1714'):['#e0d9ce']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}});}
+}
 function saldoFin(){const inicial=Number(DB.config.cf.saldoInicial)||0;
  return inicial+finVisiveis().filter(f=>f.status==='Pago').reduce((s,f)=>s+(f.tipo==='Entrada'?1:-1)*Number(f.val||0),0);}
 /* ================= ATALHOS DOS CONTADORES =================
@@ -4755,6 +4755,26 @@ function comparativoGastos(gasto,orcado){
    Os mais recentes pela data de entrega (a marca "Entregue em"; sem ela, a data do pedido), sem olhar o
    período do painel. Pedido sem gasto lançado ou sem hora apontada não mostra diferença nem entra na
    soma: "nada lançado" não é economia. */
+/* Painel — pedidos em andamento (Pendente, Confirmado, Enviado; as mesmas abas de Pedidos), fora do período escolhido:
+   os de prazo mais perto primeiro, os sem prazo no fim. A barra é quanto o cliente já pagou: as linhas de pagamento do
+   pedido marcadas Pago ÷ o total, pelo valor cheio (no cartão, o que o cliente pagou, não o repasse da maquininha) */
+function pagoDoPedido(v){return (Array.isArray(v.pags)?v.pags:[]).filter(p=>p&&p.status==='Pago').reduce((s,p)=>s+(Number(p.valor)||0),0);}
+function renderPedidosAndamento(){const alvo=$('dash-andamento');if(!alvo)return;
+ const lista=DB.vendas.filter(v=>!vndFinalizado(v)).sort((a,b)=>{const pa=prazoDoPedido(a),pb=prazoDoPedido(b);
+  if(pa!==pb)return !pa?1:!pb?-1:pa.localeCompare(pb);return String(a.data||'').localeCompare(String(b.data||''));});
+ $('dash-and-sub').textContent=lista.length?String(lista.length):'';
+ if(!lista.length){alvo.innerHTML='<div class="pa-vazio">Nenhum pedido em andamento.</div>';return;}
+ const abre=canEdit();
+ alvo.innerHTML=lista.map(v=>{const total=Number(v.total)||0,pago=pagoDoPedido(v);
+  const pct=total>0?Math.max(0,Math.min(100,pago/total*100)):0,p=prazoDoPedido(v),atr=atrasoDoPedido(v);
+  return '<div class="pa-item'+(abre?' pa-clica" title="Abrir o pedido" onclick="navigate(\'vendas\');editVenda(\''+v.id+'\')"':'"')+'>'
+   +'<div class="pa-top"><span class="pa-ped"><strong class="mono">V-'+pad(v.num)+'</strong> '+esc(cliName(v.cliId))+'</span><span class="pa-valor mono">'+fmt(total)+'</span></div>'
+   +'<div class="pa-datas">Pedido <span class="mono">'+fmtD(v.data)+'</span> · '
+    +(p?'Prazo <span class="mono'+(atr?' prazo-atrasado':'')+'">'+fmtD(p)+'</span>'+(atr?' <span class="prazo-atrasado">('+textoAtraso(atr)+')</span>':'')
+     :'sem prazo')+'</div>'
+   /* arredonda para baixo: 99,6% pago ainda não é 100% */
+   +'<div class="pa-pago" title="'+esc(fmt(pago)+' pago de '+fmt(total))+'"><div class="pa-barra'+(total>0&&pago>=total-0.005?' cheia':'')+'"><span style="width:'+pct.toFixed(1)+'%"></span></div>'
+   +'<span class="pa-pct mono">'+Math.floor(pct+1e-9)+'% pago</span></div></div>';}).join('');}
 const DASH_ANALISE_N=6;
 /* as contas, sem desenho: a tela e o PDF do painel mostram as mesmas */
 function analiseEntregues(){
@@ -16291,8 +16311,12 @@ e não numera nada.
   pode ficar negativo, e o mês que ainda não começou fica sem ponto: 6 meses até o mês escolhido, os 12
   meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (duas
   linhas com a quantidade de cada, nos mesmos meses; a dica mostra também
-  o valor) e, ao lado dos dois, Status dos Pedidos (rosca com legenda de
-  quantidade e %). Embaixo, na largura toda, Análise dos Últimos Pedidos
+  o valor) e, ao lado dos dois, Pedidos em Andamento (no lugar da rosca
+  de status desde 07/11/2026: os pedidos Pendente, Confirmado e Enviado,
+  fora do período escolhido, do prazo mais perto para o mais longe; cada
+  um com a data do pedido, o prazo (vermelho e dias de atraso se passou),
+  o total e uma barra de 0 a 100% do que o cliente já pagou — as linhas de
+  pagamento do pedido marcadas Pago ÷ o total, pelo valor cheio). Embaixo, na largura toda, Análise dos Últimos Pedidos
   Entregues (os 6 mais recentes pela data "Entregue em", fora do período
   escolhido): para cada pedido, o comparativo de dentro dele — materiais e
   serviços orçados na ficha × saídas do Financeiro ligadas ao pedido, e
@@ -16300,7 +16324,8 @@ e não numera nada.
   hora lançada não há diferença nem soma; no rodapé, a soma dos que têm o
   que comparar. Ela entrou em 07/11/2026 no lugar das Últimas Transações (o
   Estoque Crítico e o Top 5 Clientes saíram em 05/11/2026, a pedido do
-  dono). Quem não vê valores fica só com o gráfico de status. O botão
+  dono). Quem não vê valores fica só com a lista de pedidos em andamento,
+  sem o total e sem a barra do pago. O botão
   "Gerar Relatório Dashboard em PDF" leva a tabela de indicadores, a
   mesma Análise dos Últimos Pedidos Entregues (analiseEntregues, as
   contas que a tela também usa) e as últimas transações do período
@@ -17683,13 +17708,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-07.5';
+const APP_VERSAO='2026-11-07.6';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=337;
+const APP_ATUALIZACAO=338;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
