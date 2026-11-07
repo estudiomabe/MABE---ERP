@@ -667,7 +667,9 @@ e não numera nada.
   rótulo diz isso — periodoCorrido). Gráficos: Faturamento e Lucro (duas
   linhas com as mesmas contas dos cartões; escala comum, porque o lucro
   pode ficar negativo, e o mês que ainda não começou fica sem ponto: 6 meses até o mês escolhido, os 12
-  meses do ano ou um por ano) e Status dos Pedidos (rosca com legenda de
+  meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (duas
+  linhas com a quantidade de cada, nos mesmos meses; a dica mostra também
+  o valor) e, ao lado dos dois, Status dos Pedidos (rosca com legenda de
   quantidade e %). Tabela: Últimas Transações, na largura toda (o
   Estoque Crítico e o Top 5 Clientes saíram em 05/11/2026, a pedido do
   dono). Quem não vê valores fica só com o gráfico de status. O botão

@@ -204,7 +204,11 @@ body.sem-valores .orc-resumo-valor, body.sem-valores .orc-resumo-sep, body.sem-v
 .kpi-value { font-size:24px;font-weight:800;font-family:var(--mono);letter-spacing:-1px; }
 .kpi-sub { font-size:10px;color:var(--text-muted);margin-top:4px; }
 .kpi-icon { position:absolute;right:14px;top:14px;opacity:0.1; } .kpi-icon svg { width:36px;height:36px; }
-.charts-grid { display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px; }
+.charts-grid { display:grid;grid-template-columns:2fr 1fr;grid-template-areas:"fat st" "orc st";gap:14px;margin-bottom:20px; }
+#dash-chart-vendas { grid-area:fat; } #dash-chart-orcped { grid-area:orc; }
+/* o card de status fica com a altura dos dois gráficos: a rosca e a legenda vão para o meio dele */
+#dash-chart-status { grid-area:st;display:flex;flex-direction:column; }
+#dash-chart-status .rosca-moldura { margin-top:auto; } #dash-chart-status .dash-legenda { margin-bottom:auto; }
 .chart-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .chart-title { font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between; }
 .bottom-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px; }
@@ -468,6 +472,8 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   #content { padding:14px; }
   .kpi-grid { grid-template-columns:repeat(2,1fr); }
   .charts-grid, .bottom-grid, .form-2, .form-3 { grid-template-columns:minmax(0,1fr); }
+  .charts-grid { grid-template-areas:"fat" "orc" "st"; }
+  #dash-chart-status .rosca-moldura { margin-top:10px; }
   .orc-tipo-grid, .orc-cols-2, .mad-dim-grid { grid-template-columns:minmax(0,1fr) !important; }
   /* Os contadores sao numeros pequenos: empilhados um por linha eles comiam
      quase uma tela inteira antes do primeiro card do PCP. Em duas colunas,
@@ -1153,10 +1159,10 @@ body.sem-valores #section-insumos table th:nth-child(4), body.sem-valores #secti
 body.sem-valores #section-insumos table th:nth-child(5), body.sem-valores #section-insumos table td:nth-child(5),
 body.sem-valores #section-portfolio table th:nth-child(5), body.sem-valores #section-portfolio table td:nth-child(5),
 body.sem-valores #section-portfolio table th:nth-child(6), body.sem-valores #section-portfolio table td:nth-child(6),
-body.sem-valores #dash-valores, body.sem-valores #dash-chart-vendas, body.sem-valores #dash-transacoes,
+body.sem-valores #dash-valores, body.sem-valores #dash-chart-vendas, body.sem-valores #dash-chart-orcped, body.sem-valores #dash-transacoes,
 body.sem-valores #dash-btn-pdf { display:none !important; }
 /* sem o gráfico de faturamento, o de status sobra sozinho e estica: limita a largura */
-body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
+body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px);grid-template-areas:"st"; }
 /* Financeiro: o período (Mês / Ano / Tudo) acima dos números, o mesmo de Pedidos e Orçamentos. No celular as abas
    têm 44 px de toque e os seletores ficam da mesma altura (a barra quebra em linhas como a de Pedidos) */
 @media (max-width:860px) {
@@ -1286,7 +1292,8 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
       <div class="charts-grid">
         <div class="chart-card" id="dash-chart-vendas"><div class="chart-title">Faturamento e Lucro <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><div class="grafico-moldura"><canvas id="chart-vendas"></canvas></div></div>
-        <div class="chart-card"><div class="chart-title">Status dos Pedidos</div><div class="rosca-moldura"><canvas id="chart-status"></canvas></div><div class="dash-legenda" id="dash-status-legenda"></div></div>
+        <div class="chart-card" id="dash-chart-orcped"><div class="chart-title">Orçamentos e Pedidos <span id="chart-orcped-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">quantidade</span></div><div class="grafico-moldura"><canvas id="chart-orcped"></canvas></div></div>
+        <div class="chart-card" id="dash-chart-status"><div class="chart-title">Status dos Pedidos</div><div class="rosca-moldura"><canvas id="chart-status"></canvas></div><div class="dash-legenda" id="dash-status-legenda"></div></div>
       </div>
       <div>
         <div class="table-wrapper" id="dash-transacoes"><div class="table-toolbar"><div class="table-toolbar-title">Últimas Transações</div></div><table><thead><tr><th>Descrição</th><th>Tipo</th><th>Valor</th></tr></thead><tbody id="dash-fin"></tbody></table></div>
@@ -2848,7 +2855,7 @@ function setBadge(id,n){const b=$(id);if(!b)return;b.style.display=n>0?'inline-f
 function actionBtns(fnE,fnD){if(!canEdit())return '';return '<div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="'+fnE+'">✏️</button><button class="btn btn-danger btn-sm" onclick="'+fnD+'">🗑️</button></div>';}
 
 /* ================= DASHBOARD ================= */
-let chVendas=null,chStatus=null;
+let chVendas=null,chStatus=null,chOrcPed=null;
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 let PER={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function perYears(){const ys=new Set([new Date().getFullYear()]);
@@ -3121,6 +3128,21 @@ function renderDashboard(){
     /* a linha do zero mais forte: abaixo dela é prejuízo */
     y:{beginAtZero:true,grid:{color:c=>c.tick&&c.tick.value===0?'rgba(26,23,20,.35)':'rgba(26,23,20,.07)'},
      ticks:{maxTicksLimit:6,font:{size:9},callback:kTxt}}}}});
+ /* Orçamentos e Pedidos: quantos de cada no mês (ou ano), com o valor na dica. As mesmas regras dos
+    cartões: orçamento sem rascunho nem reprovado (pela data do orçamento), pedido não cancelado. */
+ $('chart-orcped-sub').textContent=$('chart-vendas-sub').textContent+' · quantidade';
+ if(chOrcPed)chOrcPed.destroy();
+ const qOrc=pontos.map(m=>m?m.oFeitos.length:null),qPed=pontos.map(m=>m?m.vPer.length:null);
+ const vOrc=pontos.map(m=>m?m.orcFeitos:null),vPed=pontos.map(m=>m?m.faturamento:null);
+ chOrcPed=new Chart($('chart-orcped'),{type:'line',data:{labels,datasets:[
+   linha('Orçamentos',qOrc,'#7a6a58'),
+   linha('Pedidos',qPed,'#c8a96e','rgba(200,169,110,.14)')]},
+  options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:7,boxHeight:7,padding:14,font:{size:11}}},
+    tooltip:{callbacks:{label:c=>{const n=c.raw,v=(c.datasetIndex?vPed:vOrc)[c.dataIndex];
+     return c.dataset.label+': '+n+' · '+fmt(v);}}}},
+   scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+    y:{beginAtZero:true,grid:{color:'rgba(26,23,20,.07)'},ticks:{precision:0,maxTicksLimit:6,font:{size:9}}}}}});
  const sts={};vPer.forEach(v=>sts[v.status]=(sts[v.status]||0)+1);
  if(chStatus)chStatus.destroy();
  const cores={'Pendente':'#a07830','Confirmado':'#c8a96e','Enviado':'#7a6f62','Entregue':'#3d6b4f','Cancelado':'#b54040'};
@@ -16141,7 +16163,9 @@ e não numera nada.
   rótulo diz isso — periodoCorrido). Gráficos: Faturamento e Lucro (duas
   linhas com as mesmas contas dos cartões; escala comum, porque o lucro
   pode ficar negativo, e o mês que ainda não começou fica sem ponto: 6 meses até o mês escolhido, os 12
-  meses do ano ou um por ano) e Status dos Pedidos (rosca com legenda de
+  meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (duas
+  linhas com a quantidade de cada, nos mesmos meses; a dica mostra também
+  o valor) e, ao lado dos dois, Status dos Pedidos (rosca com legenda de
   quantidade e %). Tabela: Últimas Transações, na largura toda (o
   Estoque Crítico e o Top 5 Clientes saíram em 05/11/2026, a pedido do
   dono). Quem não vê valores fica só com o gráfico de status. O botão
@@ -17523,13 +17547,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-07.1';
+const APP_VERSAO='2026-11-07.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=333;
+const APP_ATUALIZACAO=334;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
