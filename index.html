@@ -131,6 +131,15 @@ button.salvando { opacity:0.6;cursor:progress; }
 .kpi-delta.desce { color:var(--danger); }
 .kpi-delta .kd-nota { font-family:var(--font);font-weight:500;color:var(--text-muted);font-size:10px; }
 .grafico-moldura { position:relative;height:208px;margin-top:10px; }
+/* funil de conversão em cima do gráfico de Orçamentos e Pedidos: enviados, viraram pedido, conversão */
+.op-funil { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px; }
+.op-funil > div { background:var(--surface2);border-radius:8px;padding:8px 10px;min-width:0; }
+.op-funil span { display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.op-funil b { display:block;font-family:var(--mono);font-size:19px;font-weight:700;color:var(--text);margin-top:2px; }
+.op-funil small { display:block;font-family:var(--mono);font-size:10.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+#dash-chart-orcped .grafico-moldura { height:180px; }
+/* no celular o nome do quadro quebra em duas linhas em vez de cortar; os números ficam alinhados */
+@media (max-width:860px) { .op-funil span { white-space:normal;line-height:1.25;min-height:2.5em; } .op-funil > div { padding:8px; } }
 /* Painel — pedidos em andamento: um por linha, com as datas e uma barra do quanto o cliente já pagou */
 .pa-lista { margin-top:8px;display:flex;flex-direction:column;overflow-y:auto;flex:1 1 auto;min-height:0;margin-right:-8px;padding-right:8px; }
 .pa-item { padding:10px 4px;border-bottom:1px solid var(--border); }
@@ -1330,7 +1339,7 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
       </div>
       <div class="charts-grid">
         <div class="chart-card" id="dash-chart-vendas"><div class="chart-title">Faturamento e Lucro <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><div class="grafico-moldura"><canvas id="chart-vendas"></canvas></div></div>
-        <div class="chart-card" id="dash-chart-orcped"><div class="chart-title">Orçamentos e Pedidos <span id="chart-orcped-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">quantidade</span></div><div class="grafico-moldura"><canvas id="chart-orcped"></canvas></div></div>
+        <div class="chart-card" id="dash-chart-orcped"><div class="chart-title">Orçamentos e Pedidos <span id="chart-orcped-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">quantidade</span></div><div class="op-funil" id="dash-funil"></div><div class="grafico-moldura"><canvas id="chart-orcped"></canvas></div></div>
         <div class="chart-card" id="dash-chart-status"><div class="chart-title">Pedidos em Andamento <span id="dash-and-sub" style="font-size:10px;color:var(--text-muted);font-weight:400"></span></div><div class="pa-lista" id="dash-andamento"></div></div>
       </div>
       <div>
@@ -3154,6 +3163,10 @@ function renderDashboard(){
   $('chart-vendas-sub').textContent='6 meses até '+MESES[PER.mes].slice(0,3)+'/'+String(PER.ano).slice(2);}
  const pontos=pers.map(p=>p.k>hojeK.slice(0,p.k.length)?null:metricasDoPeriodo(p));
  const valsFat=pontos.map(m=>m?m.faturamento:null),valsLucro=pontos.map(m=>m?m.lucro:null);
+ /* funil dos orçamentos, nos mesmos meses (ou anos) do gráfico */
+ const comPedido=orcsComPedido();
+ const funil=pers.map((p,i)=>pontos[i]?funilOrcamentos(p,comPedido):null);
+ pintarFunilOrcamentos(funil);
  if(!window.Chart)return;
  if(chVendas)chVendas.destroy();
  const linha=(label,data,cor,area)=>({label,data,borderColor:cor,backgroundColor:area||cor,fill:!!area,tension:.3,cubicInterpolationMode:'monotone',borderWidth:2.5,
@@ -3169,19 +3182,19 @@ function renderDashboard(){
     /* a linha do zero mais forte: abaixo dela é prejuízo */
     y:{beginAtZero:true,grid:{color:c=>c.tick&&c.tick.value===0?'rgba(26,23,20,.35)':'rgba(26,23,20,.07)'},
      ticks:{maxTicksLimit:6,font:{size:9},callback:kTxt}}}}});
- /* Orçamentos e Pedidos: quantos de cada no mês (ou ano), com o valor na dica. As mesmas regras dos
-    cartões: orçamento sem rascunho nem reprovado (pela data do orçamento), pedido não cancelado. */
- $('chart-orcped-sub').textContent=$('chart-vendas-sub').textContent+' · quantidade';
+ /* Orçamentos e Pedidos: barras lado a lado, por mês (ou ano), com os orçamentos enviados e quantos deles
+    viraram pedido; a dica mostra o valor e a conversão do mês */
+ $('chart-orcped-sub').textContent=$('chart-vendas-sub').textContent;
  if(chOrcPed)chOrcPed.destroy();
- const qOrc=pontos.map(m=>m?m.oFeitos.length:null),qPed=pontos.map(m=>m?m.vPer.length:null);
- const vOrc=pontos.map(m=>m?m.orcFeitos:null),vPed=pontos.map(m=>m?m.faturamento:null);
- chOrcPed=new Chart($('chart-orcped'),{type:'line',data:{labels,datasets:[
-   linha('Orçamentos',qOrc,'#7a6a58'),
-   linha('Pedidos',qPed,'#c8a96e','rgba(200,169,110,.14)')]},
+ const barra=(label,data,cor)=>({label,data,backgroundColor:cor,borderRadius:4,maxBarThickness:22,categoryPercentage:.62,barPercentage:.9});
+ chOrcPed=new Chart($('chart-orcped'),{type:'bar',data:{labels,datasets:[
+   barra('Orçamentos enviados',funil.map(x=>x?x.env:null),'#7a6a58'),
+   barra('Viraram pedido',funil.map(x=>x?x.conv:null),'#c8a96e')]},
   options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-   plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:7,boxHeight:7,padding:14,font:{size:11}}},
-    tooltip:{callbacks:{label:c=>{const n=c.raw,v=(c.datasetIndex?vPed:vOrc)[c.dataIndex];
-     return c.dataset.label+': '+n+' · '+fmt(v);}}}},
+   plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:9,boxHeight:9,padding:14,font:{size:11}}},
+    tooltip:{callbacks:{label:c=>{const x=funil[c.dataIndex];if(!x)return '';
+      return c.dataset.label+': '+c.raw+' · '+fmt(c.datasetIndex?x.vConv:x.vEnv);},
+     footer:it=>{const x=it.length&&funil[it[0].dataIndex];return x&&x.env?'Conversão: '+Math.round(x.conv/x.env*100)+'%':'';}}}},
    scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
     y:{beginAtZero:true,grid:{color:'rgba(26,23,20,.07)'},ticks:{precision:0,maxTicksLimit:6,font:{size:9}}}}}});
 }
@@ -4755,6 +4768,25 @@ function comparativoGastos(gasto,orcado){
    Os mais recentes pela data de entrega (a marca "Entregue em"; sem ela, a data do pedido), sem olhar o
    período do painel. Pedido sem gasto lançado ou sem hora apontada não mostra diferença nem entra na
    soma: "nada lançado" não é economia. */
+/* Painel — funil dos orçamentos. Enviado = todo orçamento que saiu do rascunho (enviado, em ajuste, aprovado,
+   reprovado, concluído), pela data do orçamento. Virou pedido = aprovado ou concluído, ou citado (ORC-) por um pedido
+   não cancelado. A conversão é por orçamento: dos enviados no mês, quantos viraram pedido — o pedido de outubro que
+   veio de um orçamento de setembro conta em setembro. Os orçamentos ainda em aberto puxam a conversão do mês para baixo
+   até serem decididos. */
+function orcsComPedido(){const s=new Set();
+ DB.vendas.forEach(v=>{if(v.status==='Cancelado')return;const m=String(v.obs||'').match(/ORC-(\d+)/);if(m)s.add(Number(m[1]));});return s;}
+function funilOrcamentos(p,comPedido){
+ const env=DB.orcamentos.filter(o=>o.status!=='Rascunho'&&matchPer(o.data,p));
+ const conv=env.filter(o=>o.status==='Aprovado'||o.status==='Concluído'||comPedido.has(Number(o.num)));
+ const soma=a=>a.reduce((s,o)=>s+(Number(o.preco)||0),0);
+ return {env:env.length,conv:conv.length,vEnv:soma(env),vConv:soma(conv)};}
+function pintarFunilOrcamentos(funil){const el=$('dash-funil');if(!el)return;
+ const t=funil.reduce((a,x)=>{if(x){a.env+=x.env;a.conv+=x.conv;a.vEnv+=x.vEnv;a.vConv+=x.vConv;}return a;},{env:0,conv:0,vEnv:0,vConv:0});
+ const pct=t.env?Math.round(t.conv/t.env*100):null;
+ el.innerHTML='<div><span>Orçamentos enviados</span><b>'+t.env+'</b><small>'+fmt(t.vEnv)+'</small></div>'
+  +'<div><span>Viraram pedido</span><b>'+t.conv+'</b><small>'+fmt(t.vConv)+'</small></div>'
+  +'<div title="Dos orçamentos enviados no período, quantos viraram pedido"><span>Conversão</span><b>'+(pct===null?'—':pct+'%')+'</b><small>'
+  +(t.vEnv>0?Math.round(t.vConv/t.vEnv*100)+'% do valor':'&nbsp;')+'</small></div>';}
 /* Painel — pedidos em andamento (Pendente, Confirmado, Enviado; as mesmas abas de Pedidos), fora do período escolhido:
    os de prazo mais perto primeiro, os sem prazo no fim. A barra é quanto o cliente já pagou: as linhas de pagamento do
    pedido marcadas Pago ÷ o total, pelo valor cheio (no cartão, o que o cliente pagou, não o repasse da maquininha) */
@@ -16309,9 +16341,13 @@ e não numera nada.
   rótulo diz isso — periodoCorrido). Gráficos: Faturamento e Lucro (duas
   linhas com as mesmas contas dos cartões; escala comum, porque o lucro
   pode ficar negativo, e o mês que ainda não começou fica sem ponto: 6 meses até o mês escolhido, os 12
-  meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (duas
-  linhas com a quantidade de cada, nos mesmos meses; a dica mostra também
-  o valor) e, ao lado dos dois, Pedidos em Andamento (no lugar da rosca
+  meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (desde
+  07/11/2026: em cima, o funil — orçamentos enviados, quantos viraram
+  pedido e a conversão, em quantidade e em valor, somando os mesmos meses
+  do gráfico; embaixo, barras lado a lado por mês com os enviados e os que
+  viraram pedido, e a conversão do mês na dica. Enviado = saiu do
+  rascunho, pela data do orçamento; virou pedido = aprovado, concluído ou
+  citado por um pedido não cancelado) e, ao lado dos dois, Pedidos em Andamento (no lugar da rosca
   de status desde 07/11/2026: os pedidos Pendente, Confirmado e Enviado,
   fora do período escolhido, do prazo mais perto para o mais longe; cada
   um com a data do pedido, o prazo (vermelho e dias de atraso se passou),
@@ -17708,13 +17744,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-07.6';
+const APP_VERSAO='2026-11-07.7';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=338;
+const APP_ATUALIZACAO=339;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

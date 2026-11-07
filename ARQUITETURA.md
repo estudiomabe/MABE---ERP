@@ -667,9 +667,13 @@ e não numera nada.
   rótulo diz isso — periodoCorrido). Gráficos: Faturamento e Lucro (duas
   linhas com as mesmas contas dos cartões; escala comum, porque o lucro
   pode ficar negativo, e o mês que ainda não começou fica sem ponto: 6 meses até o mês escolhido, os 12
-  meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (duas
-  linhas com a quantidade de cada, nos mesmos meses; a dica mostra também
-  o valor) e, ao lado dos dois, Pedidos em Andamento (no lugar da rosca
+  meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (desde
+  07/11/2026: em cima, o funil — orçamentos enviados, quantos viraram
+  pedido e a conversão, em quantidade e em valor, somando os mesmos meses
+  do gráfico; embaixo, barras lado a lado por mês com os enviados e os que
+  viraram pedido, e a conversão do mês na dica. Enviado = saiu do
+  rascunho, pela data do orçamento; virou pedido = aprovado, concluído ou
+  citado por um pedido não cancelado) e, ao lado dos dois, Pedidos em Andamento (no lugar da rosca
   de status desde 07/11/2026: os pedidos Pendente, Confirmado e Enviado,
   fora do período escolhido, do prazo mais perto para o mais longe; cada
   um com a data do pedido, o prazo (vermelho e dias de atraso se passou),
