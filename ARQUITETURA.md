@@ -679,8 +679,10 @@ e não numera nada.
   que comparar. Ela entrou em 07/11/2026 no lugar das Últimas Transações (o
   Estoque Crítico e o Top 5 Clientes saíram em 05/11/2026, a pedido do
   dono). Quem não vê valores fica só com o gráfico de status. O botão
-  "Gerar Relatório Dashboard em PDF" leva a tabela de indicadores e as
-  últimas transações do período selecionado (sem o estoque crítico).
+  "Gerar Relatório Dashboard em PDF" leva a tabela de indicadores, a
+  mesma Análise dos Últimos Pedidos Entregues (analiseEntregues, as
+  contas que a tela também usa) e as últimas transações do período
+  selecionado (sem o estoque crítico).
 - Calendário (de Entregas) — grade do mês (‹ ›, Hoje) com três tipos de
   compromisso: as entregas cadastradas, na cor do status (Agendada, Em
   rota, Entregue/Instalada; Agendada com data passada aparece como
