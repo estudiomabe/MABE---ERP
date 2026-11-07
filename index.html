@@ -1285,7 +1285,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px); }
       </div>
       </div>
       <div class="charts-grid">
-        <div class="chart-card" id="dash-chart-vendas"><div class="chart-title">Evolução de Pedidos <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><div class="grafico-moldura"><canvas id="chart-vendas"></canvas></div></div>
+        <div class="chart-card" id="dash-chart-vendas"><div class="chart-title">Faturamento e Lucro <span id="chart-vendas-sub" style="font-size:10px;color:var(--text-muted);font-weight:400">últimos 6 meses</span></div><div class="grafico-moldura"><canvas id="chart-vendas"></canvas></div></div>
         <div class="chart-card"><div class="chart-title">Status dos Pedidos</div><div class="rosca-moldura"><canvas id="chart-status"></canvas></div><div class="dash-legenda" id="dash-status-legenda"></div></div>
       </div>
       <div>
@@ -2849,11 +2849,6 @@ function actionBtns(fnE,fnD){if(!canEdit())return '';return '<div class="row-act
 
 /* ================= DASHBOARD ================= */
 let chVendas=null,chStatus=null;
-function ticksRegua(maxValor){
- const seq=[1,2,3,5];const ticks=[];let expo=3;
- while(true){const potencia=Math.pow(10,expo);
-  for(const s of seq){const v=s*potencia;ticks.push(v);if(v>=maxValor&&ticks.length>=5)return ticks;}
-  expo++;if(expo>9)return ticks;}}
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 let PER={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function perYears(){const ys=new Set([new Date().getFullYear()]);
@@ -3097,21 +3092,35 @@ function renderDashboard(){
  const finList=finVisiveis().filter(f=>inPer(f.data)).slice(0,7);
  $('dash-fin').innerHTML=finList.map(f=>'<tr><td>'+esc(f.desc)+'</td><td><span class="badge '+(f.tipo==='Entrada'?'badge-success':'badge-danger')+'">'+f.tipo+'</span></td><td class="mono">'+fmt(f.val)+'</td></tr>').join('')||'<tr><td colspan="3" style="color:var(--text-muted)">Sem lançamentos no período</td></tr>';
 
- let labels=[],vals=[];
- if(PER.modo==='tudo'){const anos=perYears().slice().sort((a,b)=>a-b);
-  anos.forEach(y=>{labels.push(String(y));vals.push(DB.vendas.filter(v=>String(v.data).slice(0,4)===String(y)&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));});
+ /* gráfico de Faturamento e Lucro: as mesmas contas dos cartões (metricasDoPeriodo), um ponto por mês ou por ano.
+    Linhas em escala comum (não logarítmica) porque o lucro pode ficar negativo; o mês que ainda não
+    começou fica sem ponto, senão o lucro dele apareceria como prejuízo das despesas fixas. */
+ const hojeK=today().slice(0,7);const pers=[],labels=[];
+ if(PER.modo==='tudo'){perYears().slice().sort((a,b)=>a-b).forEach(y=>{pers.push({modo:'ano',ano:y,mes:0,k:String(y)});labels.push(String(y));});
   $('chart-vendas-sub').textContent='por ano';}
- else if(PER.modo==='ano'){for(let m=0;m<12;m++){const k=PER.ano+'-'+String(m+1).padStart(2,'0');labels.push(MESES[m].slice(0,3));
-  vals.push(DB.vendas.filter(v=>String(v.data).slice(0,7)===k&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));}
+ else if(PER.modo==='ano'){for(let m=0;m<12;m++){pers.push({modo:'mes',mes:m,ano:PER.ano,k:PER.ano+'-'+String(m+1).padStart(2,'0')});labels.push(MESES[m].slice(0,3));}
   $('chart-vendas-sub').textContent='meses de '+PER.ano;}
- else{for(let i=5;i>=0;i--){const d=new Date(PER.ano,PER.mes-i,1);const k=d.toISOString().slice(0,7);
-  labels.push(d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','')+'/'+String(d.getFullYear()).slice(2));
-  vals.push(DB.vendas.filter(v=>String(v.data).slice(0,7)===k&&v.status!=='Cancelado').reduce((s,v)=>s+Number(v.total||0),0));}
+ else{for(let i=5;i>=0;i--){const d=new Date(PER.ano,PER.mes-i,1);
+   pers.push({modo:'mes',mes:d.getMonth(),ano:d.getFullYear(),k:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')});
+   labels.push(d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','')+'/'+String(d.getFullYear()).slice(2));}
   $('chart-vendas-sub').textContent='6 meses até '+MESES[PER.mes].slice(0,3)+'/'+String(PER.ano).slice(2);}
+ const pontos=pers.map(p=>p.k>hojeK.slice(0,p.k.length)?null:metricasDoPeriodo(p));
+ const valsFat=pontos.map(m=>m?m.faturamento:null),valsLucro=pontos.map(m=>m?m.lucro:null);
  if(!window.Chart)return;
  if(chVendas)chVendas.destroy();
- const ticksVendas=ticksRegua(Math.max(...vals,1));
- chVendas=new Chart($('chart-vendas'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:'#c8a96e',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{type:'logarithmic',min:1000,max:ticksVendas[ticksVendas.length-1],afterBuildTicks:axis=>{axis.ticks=ticksVendas.map(v=>({value:v}));},ticks:{autoSkip:false,font:{size:9},callback:v=>v>=1000?(v/1000)+'k':v}}},responsive:true}});
+ const linha=(label,data,cor,area)=>({label,data,borderColor:cor,backgroundColor:area||cor,fill:!!area,tension:.3,cubicInterpolationMode:'monotone',borderWidth:2.5,
+  pointRadius:3.5,pointHoverRadius:5,pointBackgroundColor:cor,spanGaps:false});
+ const kTxt=v=>(v<0?'−':'')+(Math.abs(v)>=1000?fmtN(Math.abs(v)/1000,Math.abs(v)%1000?1:0)+'k':fmtN(Math.abs(v),0));
+ chVendas=new Chart($('chart-vendas'),{type:'line',data:{labels,datasets:[
+   linha('Faturamento',valsFat,'#c8a96e','rgba(200,169,110,.14)'),
+   linha('Lucro',valsLucro,'#3d6b4f')]},
+  options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+   plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:7,boxHeight:7,padding:14,font:{size:11}}},
+    tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
+   scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+    /* a linha do zero mais forte: abaixo dela é prejuízo */
+    y:{beginAtZero:true,grid:{color:c=>c.tick&&c.tick.value===0?'rgba(26,23,20,.35)':'rgba(26,23,20,.07)'},
+     ticks:{maxTicksLimit:6,font:{size:9},callback:kTxt}}}}});
  const sts={};vPer.forEach(v=>sts[v.status]=(sts[v.status]||0)+1);
  if(chStatus)chStatus.destroy();
  const cores={'Pendente':'#a07830','Confirmado':'#c8a96e','Enviado':'#7a6f62','Entregue':'#3d6b4f','Cancelado':'#b54040'};
@@ -16129,8 +16138,9 @@ e não numera nada.
   Médio, Recebido e Pago (o que entrou e saiu pago no período) e
   Despesas Fixas (custo fixo + folha; no mês que ainda corre o valor é
   rateado pelos dias já passados e no ano corrente pelos meses, e o
-  rótulo diz isso — periodoCorrido). Gráficos: Evolução de Pedidos
-  (barras em escala logarítmica: 6 meses até o mês escolhido, os 12
+  rótulo diz isso — periodoCorrido). Gráficos: Faturamento e Lucro (duas
+  linhas com as mesmas contas dos cartões; escala comum, porque o lucro
+  pode ficar negativo, e o mês que ainda não começou fica sem ponto: 6 meses até o mês escolhido, os 12
   meses do ano ou um por ano) e Status dos Pedidos (rosca com legenda de
   quantidade e %). Tabela: Últimas Transações, na largura toda (o
   Estoque Crítico e o Top 5 Clientes saíram em 05/11/2026, a pedido do
@@ -17513,13 +17523,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-05.7';
+const APP_VERSAO='2026-11-07.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=332;
+const APP_ATUALIZACAO=333;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
