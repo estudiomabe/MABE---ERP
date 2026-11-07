@@ -1072,7 +1072,9 @@ e não numera nada.
     e tipo) vem desmarcada e não entra de novo; o FITID que o banco
     repetiu para outra transação ganha uma chave longa
     (FITID|data|valor|tipo); o parecido (mesmo tipo e valor, até 3 dias)
-    vem desmarcado como possível duplicado. Enquanto se marca, a janela
+    vem desmarcado como possível duplicado, mas só quando é um lançamento
+    feito à mão ou vindo de pedido: outra linha do banco, com outro FITID,
+    é outro pagamento e não desmarca nada. Enquanto se marca, a janela
     compara o No banco depois da importação com o saldo que o banco
     declara no arquivo (LEDGERBAL). Com esse saldo no arquivo, depois de
     importar a conferência lista o que explica a diferença: lançamentos

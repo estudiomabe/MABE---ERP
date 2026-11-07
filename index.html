@@ -1433,7 +1433,7 @@ body.sem-valores .charts-grid { grid-template-columns:minmax(0,420px);grid-templ
     <div class="modal-overlay" id="modal-ofx"><div class="modal" style="max-width:640px">
       <div class="modal-header"><div class="modal-title">📥 Importar Extrato Bancário (OFX)</div><button class="modal-close" onclick="closeModal('modal-ofx')">✕</button></div>
       <div class="modal-body">
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Revise os lançamentos abaixo antes de confirmar. Itens já existentes no financeiro (mesma data/valor/descrição) e possíveis duplicados (mesmo valor, até 3 dias de diferença, mesmo com outra descrição) vêm desmarcados — confira antes de marcar.</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Revise os lançamentos abaixo antes de confirmar. Itens já existentes no financeiro (mesma data/valor/descrição) e possíveis duplicados (um lançamento seu, feito à mão ou vindo de pedido, de mesmo valor e até 3 dias de diferença, mesmo com outra descrição) vêm desmarcados — confira antes de marcar.</div>
         <div id="ofx-saldo-comparacao" style="margin-bottom:12px"></div>
         <div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn btn-ghost btn-sm" onclick="marcarTodosOfx(true)">Marcar todos</button><button class="btn btn-ghost btn-sm" onclick="marcarTodosOfx(false)">Desmarcar todos</button></div>
         <div id="ofx-itens-lista" style="display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto"></div>
@@ -11342,9 +11342,15 @@ function conferirFitidOfx(itens,conta){
 function jaExisteFinanceiro(t){return DB.financeiro.some(f=>!finAbsorvido(f)&&f.data===t.data&&Math.abs(Number(f.val)-t.val)<0.005
  &&((f.desc||'').trim()===t.desc.trim()||(f.descBanco||'').trim()===t.desc.trim()));}
 /* mesmo tipo e valor, até 3 dias de diferença, descrição diferente: costuma ser o mesmo pagamento já lançado à mão
-   (ex.: "Salário - Jonathas" x "Transf Pix enviada - Jonathas…") */
+   (ex.: "Salário - Jonathas" x "Transf Pix enviada - Jonathas…").
+   Outra linha do banco não conta: com identificador do banco na linha nova, a mesma transação já foi pega antes
+   (jaNoErp, pelo identificador), e duas linhas do banco de mesmo valor perto uma da outra são dois pagamentos — em
+   07/11 duas saídas do banco ficaram de fora por terem o mesmo valor de outras duas saídas do banco de dias antes, e o
+   saldo do ERP ficou acima do banco. Sem identificador (banco que não manda
+   FITID) continua como era: o texto pode ter mudado de um arquivo para outro. */
 function possivelDuplicadoFinanceiro(t){const alvo=new Date(t.data+'T12:00:00');
  return DB.financeiro.find(f=>f.status!=='Cancelado'&&f.tipo===t.tipo&&Math.abs(Number(f.val)-t.val)<0.005
+  &&!(t.fitid&&origemConfFin(f)==='extrato')
   &&Math.abs((new Date(String(f.data).slice(0,10)+'T12:00:00')-alvo)/864e5)<=3)||null;}
 function importarExtratoOfx(ev){const file=ev.target.files[0];ev.target.value='';if(!file)return;
  const reader=new FileReader();
@@ -16688,7 +16694,9 @@ e não numera nada.
     e tipo) vem desmarcada e não entra de novo; o FITID que o banco
     repetiu para outra transação ganha uma chave longa
     (FITID|data|valor|tipo); o parecido (mesmo tipo e valor, até 3 dias)
-    vem desmarcado como possível duplicado. Enquanto se marca, a janela
+    vem desmarcado como possível duplicado, mas só quando é um lançamento
+    feito à mão ou vindo de pedido: outra linha do banco, com outro FITID,
+    é outro pagamento e não desmarca nada. Enquanto se marca, a janela
     compara o No banco depois da importação com o saldo que o banco
     declara no arquivo (LEDGERBAL). Com esse saldo no arquivo, depois de
     importar a conferência lista o que explica a diferença: lançamentos
@@ -17675,13 +17683,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-07.4';
+const APP_VERSAO='2026-11-07.5';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=336;
+const APP_ATUALIZACAO=337;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
