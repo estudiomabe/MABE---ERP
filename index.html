@@ -2955,7 +2955,7 @@ let CC={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function setCCModo(m){CC.modo=m;renderCentroCustos();}
 function onCCChange(){CC.mes=+$('cc-per-mes-sel').value;CC.ano=+$('cc-per-ano-sel').value;renderCentroCustos();}
 let chCC=null;
-const SETORES_FIXOS=['Marketing','Vendas','Pedidos','Insumo','Folha de Pagamento','Custo Fixo','Manutenção'];
+const SETORES_FIXOS=['Marketing','Vendas','Pedidos','Insumo','Folha de Pagamento','Custo Fixo','Manutenção','Investimento na Empresa'];
 function renderCentroCustos(){syncPerBar('cc-per',CC);
  if(!window.Chart){carregarLib('chart').then(ok=>{if(ok&&CUR==='centrocustos')renderCentroCustos();});}
  const lancs=finVisiveis().filter(f=>f.status!=='Cancelado'&&matchPer(f.data,CC));
@@ -2981,7 +2981,7 @@ function renderCentroCustos(){syncPerBar('cc-per',CC);
  if(chCC)chCC.destroy();
  const catsComSaida=cats.filter(c=>c[1].saidas>0);
  if(!window.Chart)return;
- const cores=['#c8a96e','#1a1714','#7a6f62','#3d6b4f','#a07830','#b54040','#8a9bb5','#9c7fb5'];
+ const cores=['#c8a96e','#1a1714','#7a6f62','#3d6b4f','#a07830','#b54040','#8a9bb5','#9c7fb5','#4f7f86'];
  chCC=new Chart($('chart-cc'),{type:'doughnut',data:{labels:catsComSaida.length?catsComSaida.map(c=>c[0]):['Sem custos'],
   datasets:[{data:catsComSaida.length?catsComSaida.map(c=>c[1].saidas):[1],backgroundColor:catsComSaida.length?catsComSaida.map((c,i)=>cores[i%cores.length]):['#e0d9ce']}]},
   options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}},cutout:'60%'}});}
@@ -16828,7 +16828,8 @@ e não numera nada.
     Mesclar.
 - Centro de Custos — segmentação dos lançamentos financeiros por setor
   fixo (Marketing, Vendas, Pedidos, Insumo, Folha de Pagamento,
-  Custo Fixo, Manutenção). A lista é a constante SETORES_FIXOS, a
+  Custo Fixo, Manutenção, Investimento na Empresa — este desde
+  07/11/2026). A lista é a constante SETORES_FIXOS, a
   mesma dos seletores do Financeiro. Por período (Mês, Ano ou Tudo),
   soma pagos e pendentes (fora os cancelados e os mesclados) em saídas e
   entradas por centro, com o percentual das saídas e um gráfico de
@@ -17744,13 +17745,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-07.9';
+const APP_VERSAO='2026-11-07.10';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=341;
+const APP_ATUALIZACAO=342;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
