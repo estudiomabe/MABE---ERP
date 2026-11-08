@@ -156,6 +156,10 @@ button.salvando { opacity:0.6;cursor:progress; }
 .pa-barra span { display:block;height:100%;background:var(--accent); }
 .pa-barra.cheia span { background:var(--success); }
 .pa-pct { font-size:11px;min-width:58px;text-align:right;color:var(--text-muted); }
+/* Pedidos: a mesma barra na coluna Status R$ e no cartão do celular */
+.vnd-pago { min-width:124px;max-width:160px;margin-top:6px; }
+.vnd-pago .pa-pct { min-width:60px;font-size:10.5px;white-space:nowrap; }
+.pedido-card .vnd-pago { max-width:none;margin:2px 0 8px; }
 .pa-vazio { color:var(--text-muted);font-size:12.5px;padding:10px 0; }
 /* Ranking: a posição em círculo, como nas referências */
 .rank-pos { display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
@@ -4791,22 +4795,25 @@ function pintarFunilOrcamentos(funil){const el=$('dash-funil');if(!el)return;
    os de prazo mais perto primeiro, os sem prazo no fim. A barra é quanto o cliente já pagou: as linhas de pagamento do
    pedido marcadas Pago ÷ o total, pelo valor cheio (no cartão, o que o cliente pagou, não o repasse da maquininha) */
 function pagoDoPedido(v){return (Array.isArray(v.pags)?v.pags:[]).filter(p=>p&&p.status==='Pago').reduce((s,p)=>s+(Number(p.valor)||0),0);}
+/* a barra "x% pago" de um pedido: pagamentos Pago ÷ total. Arredonda para baixo: 99,6% pago ainda não é 100%.
+   Some para quem não vê valores (body.sem-valores .pa-pago) */
+function barraPagoHtml(v,classe){const total=Number(v.total)||0,pago=pagoDoPedido(v);
+ const pct=total>0?Math.max(0,Math.min(100,pago/total*100)):0;
+ return '<div class="pa-pago'+(classe?' '+classe:'')+'" title="'+esc(fmt(pago)+' pago de '+fmt(total))+'"><div class="pa-barra'+(total>0&&pago>=total-0.005?' cheia':'')+'"><span style="width:'+pct.toFixed(1)+'%"></span></div>'
+  +'<span class="pa-pct mono">'+Math.floor(pct+1e-9)+'% pago</span></div>';}
 function renderPedidosAndamento(){const alvo=$('dash-andamento');if(!alvo)return;
  const lista=DB.vendas.filter(v=>!vndFinalizado(v)).sort((a,b)=>{const pa=prazoDoPedido(a),pb=prazoDoPedido(b);
   if(pa!==pb)return !pa?1:!pb?-1:pa.localeCompare(pb);return String(a.data||'').localeCompare(String(b.data||''));});
  $('dash-and-sub').textContent=lista.length?String(lista.length):'';
  if(!lista.length){alvo.innerHTML='<div class="pa-vazio">Nenhum pedido em andamento.</div>';return;}
  const abre=canEdit();
- alvo.innerHTML=lista.map(v=>{const total=Number(v.total)||0,pago=pagoDoPedido(v);
-  const pct=total>0?Math.max(0,Math.min(100,pago/total*100)):0,p=prazoDoPedido(v),atr=atrasoDoPedido(v);
+ alvo.innerHTML=lista.map(v=>{const total=Number(v.total)||0,p=prazoDoPedido(v),atr=atrasoDoPedido(v);
   return '<div class="pa-item'+(abre?' pa-clica" title="Abrir o pedido" onclick="navigate(\'vendas\');editVenda(\''+v.id+'\')"':'"')+'>'
    +'<div class="pa-top"><span class="pa-ped"><strong class="mono">V-'+pad(v.num)+'</strong> '+esc(cliName(v.cliId))+'</span><span class="pa-valor mono">'+fmt(total)+'</span></div>'
    +'<div class="pa-datas">Pedido <span class="mono">'+fmtD(v.data)+'</span> · '
     +(p?'Prazo <span class="mono'+(atr?' prazo-atrasado':'')+'">'+fmtD(p)+'</span>'+(atr?' <span class="prazo-atrasado">('+textoAtraso(atr)+')</span>':'')
      :'sem prazo')+'</div>'
-   /* arredonda para baixo: 99,6% pago ainda não é 100% */
-   +'<div class="pa-pago" title="'+esc(fmt(pago)+' pago de '+fmt(total))+'"><div class="pa-barra'+(total>0&&pago>=total-0.005?' cheia':'')+'"><span style="width:'+pct.toFixed(1)+'%"></span></div>'
-   +'<span class="pa-pct mono">'+Math.floor(pct+1e-9)+'% pago</span></div></div>';}).join('');}
+   +barraPagoHtml(v)+'</div>';}).join('');}
 const DASH_ANALISE_N=6;
 /* as contas, sem desenho: a tela e o PDF do painel mostram as mesmas */
 function analiseEntregues(){
@@ -5104,7 +5111,7 @@ function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const expandido=VND_EXPANDIDOS.has(v.id);
  const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(expandido?'Recolher itens':'Ver itens do pedido')+'" onclick="event.stopPropagation();toggleItensVenda(\''+v.id+'\')">'+(expandido?'▾':'▸')+'</button>':'<span style="display:inline-block;width:29px"></span>';
  const abrirPedido='if(event.target.closest(\'button,select,label,a,input,.status-drop\'))return;editVenda(\''+v.id+'\')';
- const linhaHeader='<tr style="cursor:pointer" onclick="'+abrirPedido+'"><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+prazoPedidoCelula(v)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span>'+seloFinPendente(v)+'</td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+(verValores()?'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button>':'')+'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Duplicar pedido" onclick="event.stopPropagation();duplicarVenda(\''+v.id+'\')">⧉</button>':'')+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
+ const linhaHeader='<tr style="cursor:pointer" onclick="'+abrirPedido+'"><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+prazoPedidoCelula(v)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span>'+seloFinPendente(v)+(v.status==='Cancelado'?'':barraPagoHtml(v,'vnd-pago'))+'</td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+(verValores()?'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button>':'')+'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Duplicar pedido" onclick="event.stopPropagation();duplicarVenda(\''+v.id+'\')">⧉</button>':'')+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
  let linhasItens='';
  if(expandido&&itens.length){
   linhasItens=itens.map(it=>'<tr class="venda-item-row sub-row" style="background:var(--surface2);cursor:pointer" onclick="'+abrirPedido+'"><td></td><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
@@ -5135,6 +5142,7 @@ function renderVendasCards(lista,vazio){
    +(()=>{const p=prazoDoPedido(v),n=atrasoDoPedido(v);
      return p?'<div class="pc-prazo'+(n?' prazo-atrasado':'')+'">Prazo <span class="mono">'+fmtD(p)+'</span>'+(n?' · '+textoAtraso(n):'')+'</div>':'';})()
    +'<div class="pc-valor"><span class="pc-total">'+fmt(v.total)+'</span><span class="pc-pag">'+esc(v.pag||'—')+'</span></div>'
+   +(v.status==='Cancelado'?'':barraPagoHtml(v,'vnd-pago'))
    +'<div class="pc-status"><span class="badge badge-rs '+stB+'">'+v.status+'</span>'+statusPcpCelula(v)+seloFinPendente(v)+'</div>'
    +btnItens+listaItens
    +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
@@ -16449,7 +16457,8 @@ e não numera nada.
   Confirmado, Enviado; abre nela) e Finalizados (Entregue e Cancelado),
   cada uma com a quantidade; com o mesmo seletor de período e um filtro em
   cada coluna (Pedido, Data, Prazo, Cliente, Itens, Total, Pagamento,
-  Status R$ e Status PCP, que é a etapa da OP do pedido; o Prazo é o da OP
+  Status R$ (desde 07/11/2026 com a barra de 0 a 100% pago embaixo, a
+  mesma dos Pedidos em Andamento do painel; cancelado fica sem barra) e Status PCP, que é a etapa da OP do pedido; o Prazo é o da OP
   ou, sem ela, a entrega combinada, em vermelho quando passou e o pedido
   não foi entregue), resumo de quantidade e
   soma e "Limpar filtros"; clicar na linha abre o pedido, e ⧉ duplica
@@ -17745,13 +17754,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-07.10';
+const APP_VERSAO='2026-11-07.11';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=342;
+const APP_ATUALIZACAO=343;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

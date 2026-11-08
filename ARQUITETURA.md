@@ -775,7 +775,8 @@ e não numera nada.
   Confirmado, Enviado; abre nela) e Finalizados (Entregue e Cancelado),
   cada uma com a quantidade; com o mesmo seletor de período e um filtro em
   cada coluna (Pedido, Data, Prazo, Cliente, Itens, Total, Pagamento,
-  Status R$ e Status PCP, que é a etapa da OP do pedido; o Prazo é o da OP
+  Status R$ (desde 07/11/2026 com a barra de 0 a 100% pago embaixo, a
+  mesma dos Pedidos em Andamento do painel; cancelado fica sem barra) e Status PCP, que é a etapa da OP do pedido; o Prazo é o da OP
   ou, sem ela, a entrega combinada, em vermelho quando passou e o pedido
   não foi entregue), resumo de quantidade e
   soma e "Limpar filtros"; clicar na linha abre o pedido, e ⧉ duplica
