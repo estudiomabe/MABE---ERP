@@ -894,8 +894,22 @@ body.sem-fin-obs .fin-obs { display:none; }
 .fin-abas .per-tab { display:inline-flex;align-items:center;gap:6px; }
 .fin-aba-n { min-width:18px;padding:0 6px;border-radius:10px;background:var(--accent);color:#1a1714;font-size:10.5px;font-family:var(--mono);font-weight:700;line-height:17px;text-align:center; }
 .fin-aba-n:empty { display:none; }
-.vnd-aba-n { font-family:var(--mono);font-size:11px;font-weight:600;opacity:.65; }
-.vnd-aba-n:empty { display:none; }
+/* Pedidos: as duas caixas que escolhem a lista (Em andamento / Finalizados) */
+.vnd-caixas { display:grid;grid-template-columns:repeat(2,minmax(0,260px));gap:14px;margin-bottom:16px; }
+.vnd-caixa { text-align:left;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.05);cursor:pointer;position:relative;transition:border-color .15s,box-shadow .15s,opacity .15s;opacity:.72; }
+@media (hover:hover) { .vnd-caixa:hover { border-color:var(--accent);opacity:1; } }
+.vnd-caixa:focus-visible { outline:2px solid var(--accent);outline-offset:2px; }
+.vnd-caixa.active { opacity:1;border-color:var(--primary);box-shadow:0 0 0 1px var(--primary),0 2px 8px rgba(0,0,0,0.07); }
+.vnd-caixa.active::after { content:'';position:absolute;left:14px;right:14px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--accent); }
+.vnd-cx-tit { font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-muted); }
+.vnd-caixa.active .vnd-cx-tit { color:var(--text); }
+.vnd-cx-n { font-family:var(--mono);font-size:20px;font-weight:800;margin-top:4px; }
+.vnd-cx-n small { font-family:inherit;font-size:11px;font-weight:600;color:var(--text-muted);margin-left:4px; }
+.vnd-cx-val { font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--text-muted);margin-top:1px; }
+.vnd-cx-val:empty { display:none; }
+body.sem-valores .vnd-cx-val { display:none !important; }
+@media (max-width:860px) { .vnd-caixas { grid-template-columns:1fr 1fr;gap:10px; } .vnd-caixa { padding:10px 12px;min-height:44px; } .vnd-cx-n { font-size:18px; } }
 /* saldo dividido embaixo do Saldo Atual */
 .fin-saldo-div { margin-top:7px;padding-top:6px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--text-muted); }
 .fin-saldo-div:empty { display:none; }
@@ -1331,7 +1345,7 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
         <div class="kpi-card" style="--card-accent:var(--primary)"><div class="kpi-label">Faturamento</div><div class="kpi-value" id="kpi-resultado">R$0</div><div class="kpi-delta" id="kpi-resultado-d"></div><div class="kpi-sub" id="kpi-rsub">soma dos pedidos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--success)"><div class="kpi-label">Lucro</div><div class="kpi-value" id="kpi-lucro">R$0</div><div class="kpi-delta" id="kpi-lucro-d"></div><div class="kpi-sub" id="kpi-lucrosub">faturamento − despesas fixas</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Margem</div><div class="kpi-value" id="kpi-margem">0%</div><div class="kpi-delta" id="kpi-margem-d"></div><div class="kpi-sub" id="kpi-margemsub">lucro ÷ faturamento</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></div></div>
-        <div class="kpi-card num-atalho" style="--card-accent:var(--warning)" role="button" tabindex="0" title="Ver essas entradas pendentes no Financeiro" onclick="atalhoAReceber()"><div class="kpi-label">A Receber</div><div class="kpi-value" id="kpi-areceber">R$0</div><div class="kpi-delta" id="kpi-areceber-d"></div><div class="kpi-sub" id="kpi-arsub">entradas pendentes</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div></div>
+        <div class="kpi-card num-atalho" style="--card-accent:var(--warning)" role="button" tabindex="0" title="Ver os pedidos em andamento" onclick="atalhoAReceber()"><div class="kpi-label">A Receber</div><div class="kpi-value" id="kpi-areceber">R$0</div><div class="kpi-sub" id="kpi-arsub">pedidos com valor a receber</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div></div>
       </div>
       <div class="kpi-mini">
         <div class="kpi-card" style="--card-accent:var(--text-muted)"><div class="kpi-label">Orçamentos do Período</div><div class="kpi-value" id="kpi-orcamentos">R$0</div><div class="kpi-sub" id="kpi-osub">orçamentos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div></div>
@@ -1360,10 +1374,6 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
     <div class="section" id="section-portfolio"><div id="portfolio-cards"></div><div class="table-wrapper" id="portfolio-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Portfólio & Estoque</div></div><table><thead><tr><th>#</th><th>Produto</th><th>Categoria</th><th>Tempo de Produção</th><th>Preço Venda</th><th>Custo</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-portfolio"></tbody></table></div></div>
     <div class="section" id="section-vendas">
       <div id="vendas-lista-view">
-      <div class="per-tabs fin-abas" id="vnd-abas" role="tablist" aria-label="Pedidos">
-        <button type="button" class="per-tab active" role="tab" aria-selected="true" data-aba="andamento" onclick="trocarAbaVnd('andamento')">Em andamento<span class="vnd-aba-n" id="vnd-n-andamento"></span></button>
-        <button type="button" class="per-tab" role="tab" aria-selected="false" data-aba="finalizados" onclick="trocarAbaVnd('finalizados')">Finalizados<span class="vnd-aba-n" id="vnd-n-finalizados"></span></button>
-      </div>
       <div class="period-bar">
         <div class="per-tabs">
           <button class="per-tab" id="vnd-per-mes" onclick="setVndModo('mes')">Mês</button>
@@ -1374,7 +1384,11 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
         <select class="form-control" id="vnd-per-ano-sel" style="width:auto;min-width:90px" onchange="onVndChange()"></select>
         <button type="button" class="ordem-cel filtro-cel" id="vnd-filtro-cel" title="Filtros" onclick="fcAbrirCel('vnd')"><svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg><span class="fc-n" id="vnd-fc-n" style="display:none"></span></button><div class="orc-resumo"><button type="button" class="orc-limpar" id="vnd-limpar" style="display:none" onclick="fcLimparTudo('vnd')">Limpar filtros</button><span id="vnd-resumo" style="display:none"></span><span id="vnd-per-label"></span></div>
       </div>
-      <div id="vnd-antigos-aviso" class="vnd-antigos" style="display:none"></div><div id="vendas-cards"></div><div class="table-wrapper" id="vendas-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Pedidos</div></div><table><thead><tr><th>Pedido<button type="button" class="th-filtro" data-fc="vnd" data-col="num" onclick="event.stopPropagation();fcAbrir('vnd','num',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Data<button type="button" class="th-filtro" data-fc="vnd" data-col="data" onclick="event.stopPropagation();fcAbrir('vnd','data',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Prazo<button type="button" class="th-filtro" data-fc="vnd" data-col="prazo" onclick="event.stopPropagation();fcAbrir('vnd','prazo',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Cliente<button type="button" class="th-filtro" data-fc="vnd" data-col="cliente" onclick="event.stopPropagation();fcAbrir('vnd','cliente',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Itens<button type="button" class="th-filtro" data-fc="vnd" data-col="itens" onclick="event.stopPropagation();fcAbrir('vnd','itens',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Total<button type="button" class="th-filtro" data-fc="vnd" data-col="total" onclick="event.stopPropagation();fcAbrir('vnd','total',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Pagamento<button type="button" class="th-filtro" data-fc="vnd" data-col="pag" onclick="event.stopPropagation();fcAbrir('vnd','pag',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>STATUS R$<button type="button" class="th-filtro" data-fc="vnd" data-col="status" onclick="event.stopPropagation();fcAbrir('vnd','status',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>STATUS PCP<button type="button" class="th-filtro" data-fc="vnd" data-col="pcp" onclick="event.stopPropagation();fcAbrir('vnd','pcp',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
+      <div class="vnd-caixas" id="vnd-abas" role="tablist" aria-label="Pedidos">
+        <button type="button" class="vnd-caixa active" role="tab" aria-selected="true" data-aba="andamento" onclick="trocarAbaVnd('andamento')"><div class="vnd-cx-tit">Em andamento</div><div class="vnd-cx-n" id="vnd-n-andamento">0</div><div class="vnd-cx-val" id="vnd-v-andamento"></div></button>
+        <button type="button" class="vnd-caixa" role="tab" aria-selected="false" data-aba="finalizados" onclick="trocarAbaVnd('finalizados')"><div class="vnd-cx-tit">Finalizados</div><div class="vnd-cx-n" id="vnd-n-finalizados">0</div><div class="vnd-cx-val" id="vnd-v-finalizados"></div></button>
+      </div>
+      <div id="vnd-antigos-aviso" class="vnd-antigos" style="display:none"></div><div id="vendas-cards"></div><div class="table-wrapper" id="vendas-tabela"><div class="table-toolbar"><div class="table-toolbar-title" id="vnd-tab-titulo">Em andamento</div></div><table><thead><tr><th>Pedido<button type="button" class="th-filtro" data-fc="vnd" data-col="num" onclick="event.stopPropagation();fcAbrir('vnd','num',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Data<button type="button" class="th-filtro" data-fc="vnd" data-col="data" onclick="event.stopPropagation();fcAbrir('vnd','data',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Prazo<button type="button" class="th-filtro" data-fc="vnd" data-col="prazo" onclick="event.stopPropagation();fcAbrir('vnd','prazo',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Cliente<button type="button" class="th-filtro" data-fc="vnd" data-col="cliente" onclick="event.stopPropagation();fcAbrir('vnd','cliente',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Itens<button type="button" class="th-filtro" data-fc="vnd" data-col="itens" onclick="event.stopPropagation();fcAbrir('vnd','itens',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Total<button type="button" class="th-filtro" data-fc="vnd" data-col="total" onclick="event.stopPropagation();fcAbrir('vnd','total',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Pagamento<button type="button" class="th-filtro" data-fc="vnd" data-col="pag" onclick="event.stopPropagation();fcAbrir('vnd','pag',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>STATUS R$<button type="button" class="th-filtro" data-fc="vnd" data-col="status" onclick="event.stopPropagation();fcAbrir('vnd','status',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>STATUS PCP<button type="button" class="th-filtro" data-fc="vnd" data-col="pcp" onclick="event.stopPropagation();fcAbrir('vnd','pcp',this)" title="Filtrar esta coluna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg></button></th><th>Ações</th></tr></thead><tbody id="tb-vendas"></tbody></table></div>
       </div>
       <div id="vendas-form-view" style="display:none">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
@@ -3063,14 +3077,12 @@ function metricasDoPeriodo(p){
  const corrido=periodoCorrido(p);
  const custoFixo=custoFixoMensal*corrido.fracao,folha=folhaMensal*corrido.fracao;
  const lucro=faturamento-(custoFixo+folha);
- const aReceberList=finVisiveis().filter(f=>f.tipo==='Entrada'&&f.status==='Pendente'&&matchPer(f.data,p));
  return {oFeitos,oRasc,vPer,entradas,saidas,faturamento,corrido,custoFixo,folha,
   despesas:custoFixo+folha,lucro,
   ticket:vPer.length?faturamento/vPer.length:0,
   margem:faturamento>0?lucro/faturamento*100:0,
   orcFeitos:oFeitos.reduce((s2,o)=>s2+Number(o.preco||0),0),
-  orcRasc:oRasc.reduce((s2,o)=>s2+Number(o.preco||0),0),
-  aReceberList,aReceber:aReceberList.reduce((s2,f)=>s2+Number(f.val||0),0)};}
+  orcRasc:oRasc.reduce((s2,o)=>s2+Number(o.preco||0),0)};}
 /* o mês antes do mês escolhido, ou o ano antes do ano escolhido.
    "Tudo" não tem anterior — e aí o painel diz isso em vez de inventar. */
 function periodoAnterior(p){
@@ -3135,10 +3147,9 @@ function renderDashboard(){
  $('kpi-lucro').classList.toggle('kpi-negativo',valorNegativo(lucro));
  $('kpi-lucrosub').textContent=(lucro>=0?'faturamento - despesas fixas':'prejuízo no período')
   +(corrido.parcial?' (até hoje)':'');
- const aReceber=M.aReceberList;
- const totReceber=M.aReceber;
- $('kpi-areceber').textContent=fmtK(totReceber);
- $('kpi-arsub').textContent=aReceber.length?(aReceber.length+' entrada(s) pendente(s)'):'nada pendente no período';
+ const aRec=aReceberDosPedidos();
+ $('kpi-areceber').textContent=fmtK(aRec.total);
+ $('kpi-arsub').textContent=aRec.lista.length?textoAReceber(aRec.lista.length)+' · todos os períodos':'nenhum pedido com valor a receber';
  const margem=M.margem;
  $('kpi-margem').textContent=(Math.round(margem*10)<0?'−':'')+fmtN(Math.abs(margem),1)+'%';
  $('kpi-margem').style.color=Math.round(margem*10)<0?'var(--danger)':'';
@@ -3148,8 +3159,6 @@ function renderDashboard(){
  pintarDelta('kpi-resultado-d',faturamento,A?A.faturamento:null,'cima');
  pintarDelta('kpi-lucro-d',lucro,A?A.lucro:null,'cima');
  pintarDelta('kpi-margem-d',margem,A?A.margem:null,'cima',true);
- /* a receber subir não é bom nem ruim: é dinheiro que entra depois */
- pintarDelta('kpi-areceber-d',totReceber,A?A.aReceber:null,'neutro');
 
  renderAnaliseEntregues();renderPedidosAndamento();
 
@@ -3233,7 +3242,7 @@ function abrirFinanceiroFiltrado(f){if(!podeVer('financeiro'))return;
   if(c.scrollTo)c.scrollTo({top:y,behavior:'smooth'});else c.scrollTop=y;});}
 const atalhoPendencias=()=>abrirFinanceiroFiltrado({status:['Pendente']});
 /* mesmo período escolhido no Dashboard */
-const atalhoAReceber=()=>abrirFinanceiroFiltrado({tipo:['Entrada'],status:['Pendente'],periodo:PER});
+const atalhoAReceber=()=>{if(!podeVer('vendas'))return;PER_VND.modo='tudo';VND_ABA='andamento';FC_REG.vnd.estado=fcVazio(FC_REG.vnd.cols);navigate('vendas');};
 /* o Centro de Custos conta os não cancelados do período escolhido lá */
 const atalhoSemCentro=()=>abrirFinanceiroFiltrado({cc:['Não classificado'],status:['Pago','Pendente'],periodo:CC});
 /* os contadores com atalho são div: Enter e espaço também abrem, como num botão */
@@ -3275,7 +3284,7 @@ async function gerarPdfDashboard(){if(!guardValores())return;
  const saidas=pagos.filter(f=>f.tipo==='Saída').reduce((s,f)=>s+Number(f.val||0),0);
  const faturamento=vPer.reduce((s,v)=>s+Number(v.total||0),0);
  const ticketDash=vPer.length?faturamento/vPer.length:0;
- const aReceberDash=finVisiveis().filter(f=>f.tipo==='Entrada'&&f.status==='Pendente'&&inPer(f.data));
+ const aReceberDash=aReceberDosPedidos();
  const cfgDash=DB.config.cf;
  const custoFixoMensalDash=(['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfgDash[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0))*mesesNoPeriodo(PER);
  const folhaPagamentoDash=(DB.config.folhaPagamento||[]).reduce((s,c)=>s+(Number(c.salario)||0),0)*mesesNoPeriodo(PER);
@@ -3290,7 +3299,7 @@ async function gerarPdfDashboard(){if(!guardValores())return;
    ['Faturamento',fmt(faturamento)+'  (soma dos pedidos)'],
    ['Despesas Fixas',fmt(custoFixoMensalDash+folhaPagamentoDash)],
    ['Lucro',((faturamento-(custoFixoMensalDash+folhaPagamentoDash))<0?'- ':'')+fmt(Math.abs(faturamento-(custoFixoMensalDash+folhaPagamentoDash)))],
-   ['A Receber',fmt(aReceberDash.reduce((s,f)=>s+Number(f.val||0),0))+'  ('+aReceberDash.length+' entrada(s) pendente(s))'],
+   ['A Receber',fmt(aReceberDash.total)+'  ('+textoAReceber(aReceberDash.lista.length)+')'],
    ['Margem',(faturamento>0?fmtN((faturamento-(custoFixoMensalDash+folhaPagamentoDash))/faturamento*100,1):'0,0')+'%  (lucro / faturamento)']
   ],theme:'plain',
   headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3,bottom:3,left:3,right:3}},
@@ -4795,6 +4804,12 @@ function pintarFunilOrcamentos(funil){const el=$('dash-funil');if(!el)return;
    os de prazo mais perto primeiro, os sem prazo no fim. A barra é quanto o cliente já pagou: as linhas de pagamento do
    pedido marcadas Pago ÷ o total, pelo valor cheio (no cartão, o que o cliente pagou, não o repasse da maquininha) */
 function pagoDoPedido(v){return (Array.isArray(v.pags)?v.pags:[]).filter(p=>p&&p.status==='Pago').reduce((s,p)=>s+(Number(p.valor)||0),0);}
+/* A Receber do painel: o que falta dos pedidos não cancelados (total − pagamentos Pago), de qualquer data. Conta também o
+   entregue que ainda tem saldo: o dinheiro continua para entrar. Pago a mais não desconta de outro pedido */
+function aReceberDosPedidos(){const lista=DB.vendas.filter(v=>v.status!=='Cancelado')
+  .map(v=>({v,falta:Math.max(0,(Number(v.total)||0)-pagoDoPedido(v))})).filter(x=>x.falta>0.005);
+ return {lista,total:lista.reduce((s,x)=>s+x.falta,0)};}
+const textoAReceber=n=>n===1?'1 pedido com valor a receber':n+' pedidos com valor a receber';
 /* a barra "x% pago" de um pedido: pagamentos Pago ÷ total. Arredonda para baixo: 99,6% pago ainda não é 100%.
    Some para quem não vê valores (body.sem-valores .pa-pago) */
 function barraPagoHtml(v,classe){const total=Number(v.total)||0,pago=pagoDoPedido(v);
@@ -5098,9 +5113,14 @@ let VND_ABA='andamento';
 const vndFinalizado=v=>v.status==='Entregue'||v.status==='Cancelado';
 function trocarAbaVnd(aba){VND_ABA=aba==='finalizados'?'finalizados':'andamento';renderVendas();}
 function pintarAbasVnd(base){const abas=$('vnd-abas');if(!abas)return;
- const nFin=base.filter(vndFinalizado).length;
- $('vnd-n-andamento').textContent=base.length-nFin;$('vnd-n-finalizados').textContent=nFin;
- abas.querySelectorAll('.per-tab').forEach(b=>{const a=b.dataset.aba===VND_ABA;b.classList.toggle('active',a);b.setAttribute('aria-selected',a?'true':'false');});}
+ const fin=base.filter(vndFinalizado),and=base.filter(v=>!vndFinalizado(v)),canc=fin.filter(v=>v.status==='Cancelado').length;
+ const soma=a=>a.filter(v=>v.status!=='Cancelado').reduce((s,v)=>s+(Number(v.total)||0),0);
+ const n=(q,extra)=>q+'<small>'+(q===1?'pedido':'pedidos')+(extra||'')+'</small>';
+ $('vnd-n-andamento').innerHTML=n(and.length);
+ $('vnd-n-finalizados').innerHTML=n(fin.length,canc?' · '+canc+(canc===1?' cancelado':' cancelados'):'');
+ $('vnd-v-andamento').textContent=fmt(soma(and));$('vnd-v-finalizados').textContent=fmt(soma(fin));
+ abas.querySelectorAll('.vnd-caixa').forEach(b=>{const a=b.dataset.aba===VND_ABA;b.classList.toggle('active',a);b.setAttribute('aria-selected',a?'true':'false');});
+ const tit=$('vnd-tab-titulo');if(tit)tit.textContent=VND_ABA==='finalizados'?'Finalizados':'Em andamento';}
 function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const base=DB.vendas.filter(v=>matchPer(v.data,PER_VND)&&fcPassa('vnd',v));
  pintarAbasVnd(base);
@@ -16334,11 +16354,12 @@ e não numera nada.
 - Dashboard — período escolhido em Mês, Ano ou Tudo. Em cima, quatro
   números maiores: Faturamento (soma dos pedidos não cancelados do
   período, não o caixa), Lucro (faturamento − despesas fixas), Margem
-  (lucro ÷ faturamento) e A Receber (entradas pendentes do período; o
-  cartão abre o Financeiro já filtrado). Cada um mostra a variação contra
-  o mês ou o ano anterior, com seta e sinal além da cor; a Margem varia
-  em pontos percentuais, A Receber fica sem cor (subir ali não é bom nem
-  ruim) e em "Tudo" o cartão diz que não há período anterior. As contas
+  (lucro ÷ faturamento) e A Receber (desde 09/11/2026: o que falta dos
+  pedidos não cancelados, total menos pagamentos Pago, de qualquer data e
+  mesmo que a parcela não esteja no Financeiro; o cartão abre os pedidos
+  em andamento). Os três primeiros mostram a variação contra o mês ou o
+  ano anterior, com seta e sinal além da cor; a Margem varia em pontos
+  percentuais e em "Tudo" o cartão diz que não há período anterior. As contas
   ficam em metricasDoPeriodo(p), que recebe o período como argumento e
   por isso roda de novo no anterior (periodoAnterior). Abaixo, uma faixa
   compacta: Orçamentos do Período (sem rascunho nem reprovado; os
@@ -16454,7 +16475,9 @@ e não numera nada.
     orçamento mantém as OPs ligadas a ele, só desvinculadas.
 - Pedidos (Vendas) — lista de pedidos gerados manualmente ou a partir da
   aprovação de orçamentos, em duas abas: Em andamento (Pendente,
-  Confirmado, Enviado; abre nela) e Finalizados (Entregue e Cancelado),
+  Confirmado, Enviado; abre nela) e Finalizados (Entregue e Cancelado) —
+  desde 07/11/2026 escolhidas por duas caixas abaixo do período, com
+  quantos pedidos e o total em R$ (sem os cancelados, que aparecem à parte),
   cada uma com a quantidade; com o mesmo seletor de período e um filtro em
   cada coluna (Pedido, Data, Prazo, Cliente, Itens, Total, Pagamento,
   Status R$ (desde 07/11/2026 com a barra de 0 a 100% pago embaixo, a
@@ -16696,7 +16719,7 @@ e não numera nada.
     Recebido e Pago para o mês ou o ano escolhido (em Tudo, o mês
     corrente); Saldo Atual, o saldo dividido e Pendências não mudam, a
     barra some na aba Conferir com o banco, e os atalhos que abrem o
-    Financeiro filtrado (Pendências, A Receber, Sem centro) voltam o
+    Financeiro filtrado (Pendências, Sem centro) voltam o
     período para Tudo.
   - Origem: cada lançamento guarda de onde veio (origem = extrato,
     pedido, manual, compra ou nf) e mostra um selo junto do tipo (Banco,
@@ -17754,13 +17777,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-07.12';
+const APP_VERSAO='2026-11-09.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=344;
+const APP_ATUALIZACAO=345;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

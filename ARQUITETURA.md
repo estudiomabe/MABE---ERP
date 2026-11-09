@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 07/11/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 09/11/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -652,11 +652,12 @@ e não numera nada.
 - Dashboard — período escolhido em Mês, Ano ou Tudo. Em cima, quatro
   números maiores: Faturamento (soma dos pedidos não cancelados do
   período, não o caixa), Lucro (faturamento − despesas fixas), Margem
-  (lucro ÷ faturamento) e A Receber (entradas pendentes do período; o
-  cartão abre o Financeiro já filtrado). Cada um mostra a variação contra
-  o mês ou o ano anterior, com seta e sinal além da cor; a Margem varia
-  em pontos percentuais, A Receber fica sem cor (subir ali não é bom nem
-  ruim) e em "Tudo" o cartão diz que não há período anterior. As contas
+  (lucro ÷ faturamento) e A Receber (desde 09/11/2026: o que falta dos
+  pedidos não cancelados, total menos pagamentos Pago, de qualquer data e
+  mesmo que a parcela não esteja no Financeiro; o cartão abre os pedidos
+  em andamento). Os três primeiros mostram a variação contra o mês ou o
+  ano anterior, com seta e sinal além da cor; a Margem varia em pontos
+  percentuais e em "Tudo" o cartão diz que não há período anterior. As contas
   ficam em metricasDoPeriodo(p), que recebe o período como argumento e
   por isso roda de novo no anterior (periodoAnterior). Abaixo, uma faixa
   compacta: Orçamentos do Período (sem rascunho nem reprovado; os
@@ -772,7 +773,9 @@ e não numera nada.
     orçamento mantém as OPs ligadas a ele, só desvinculadas.
 - Pedidos (Vendas) — lista de pedidos gerados manualmente ou a partir da
   aprovação de orçamentos, em duas abas: Em andamento (Pendente,
-  Confirmado, Enviado; abre nela) e Finalizados (Entregue e Cancelado),
+  Confirmado, Enviado; abre nela) e Finalizados (Entregue e Cancelado) —
+  desde 07/11/2026 escolhidas por duas caixas abaixo do período, com
+  quantos pedidos e o total em R$ (sem os cancelados, que aparecem à parte),
   cada uma com a quantidade; com o mesmo seletor de período e um filtro em
   cada coluna (Pedido, Data, Prazo, Cliente, Itens, Total, Pagamento,
   Status R$ (desde 07/11/2026 com a barra de 0 a 100% pago embaixo, a
@@ -1014,7 +1017,7 @@ e não numera nada.
     Recebido e Pago para o mês ou o ano escolhido (em Tudo, o mês
     corrente); Saldo Atual, o saldo dividido e Pendências não mudam, a
     barra some na aba Conferir com o banco, e os atalhos que abrem o
-    Financeiro filtrado (Pendências, A Receber, Sem centro) voltam o
+    Financeiro filtrado (Pendências, Sem centro) voltam o
     período para Tudo.
   - Origem: cada lançamento guarda de onde veio (origem = extrato,
     pedido, manual, compra ou nf) e mostra um selo junto do tipo (Banco,
@@ -1739,4 +1742,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 07/11/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 09/11/2026.
