@@ -170,6 +170,10 @@ button.salvando { opacity:0.6;cursor:progress; }
 .tar-meta { font-size:11.5px;color:var(--text-muted);margin-top:2px; }
 .tar-item.feita .tar-texto { color:var(--text-muted);text-decoration:line-through; }
 .tar-vazio { padding:18px;border-top:1px solid var(--border);font-size:13px;color:var(--text-muted); }
+.tar-novo { display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border); }
+.tar-novo input { flex:1;min-width:0; }
+.tar-novo .btn { white-space:nowrap; }
+@media (max-width:860px) { .tar-novo { padding:10px; } .tar-novo input, .tar-novo .btn { min-height:44px; } }
 @media (max-width:860px) {
   .tar-item { grid-template-columns:36px 44px 26px minmax(0,1fr) auto;padding:6px 10px 6px 0;gap:2px; }
   .tar-item.sem { grid-template-columns:44px 30px minmax(0,1fr) auto;padding-left:4px; }
@@ -1575,7 +1579,7 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
 
     <!-- CALENDÁRIO DE ENTREGAS -->
     <div class="section" id="section-tarefas">
-      <div class="table-wrapper tar-caixa"><div class="table-toolbar"><div class="table-toolbar-title">Tarefas<span class="tar-qtd" id="tarefas-n-abertas"></span></div></div><div id="tarefas-abertas"></div></div>
+      <div class="table-wrapper tar-caixa"><div class="table-toolbar"><div class="table-toolbar-title">Tarefas<span class="tar-qtd" id="tarefas-n-abertas"></span></div></div><div class="tar-novo" id="tar-novo"><input type="text" class="form-control" id="tar-texto" maxlength="500" placeholder="Escreva uma tarefa" autocomplete="off" aria-label="Nova tarefa" onkeydown="if(event.key==='Enter'){event.preventDefault();salvarTarefa();}"><button type="button" class="btn btn-primary" id="tar-salvar" onclick="salvarTarefa()">+ Adicionar</button></div><div id="tarefas-abertas"></div></div>
       <div class="table-wrapper tar-caixa"><div class="table-toolbar"><div class="table-toolbar-title">Tarefas finalizadas<span class="tar-qtd" id="tarefas-n-finalizadas"></span></div></div><div id="tarefas-finalizadas"></div></div>
     </div>
     <div class="section" id="section-calendario">
@@ -2183,7 +2187,6 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
 </div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-entregas')">Cancelar</button><button class="btn btn-primary" onclick="saveEntrega()">Salvar</button></div></div></div>
 
 <!-- MODAL PRODUÇÃO (OP) -->
-<div class="modal-overlay" id="modal-tarefa"><div class="modal"><div class="modal-header"><div class="modal-title">Adicionar Tarefa</div><button class="modal-close" onclick="closeModal('modal-tarefa')">✕</button></div><div class="modal-body"><div class="form-group"><label class="form-label" for="tar-texto">Tarefa *</label><textarea class="form-control" id="tar-texto" rows="3" maxlength="500" placeholder="Escreva a tarefa" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();salvarTarefa();}"></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-tarefa')">Cancelar</button><button class="btn btn-primary" id="tar-salvar" onclick="salvarTarefa()">Adicionar</button></div></div></div>
 <div class="modal-overlay" id="modal-producao"><div class="modal"><div class="modal-header"><div class="modal-title" id="mop-title">Nova Ordem de Produção</div><button class="modal-close" onclick="closeModal('modal-producao')">✕</button></div><div class="modal-body"><input type="hidden" id="op-id"><div class="form-grid">
 <div class="form-group"><label class="form-label">Peça / Projeto *</label><input type="text" class="form-control" id="op-titulo" placeholder="Ex: Mesa de reunião Freijó 3,00m"></div>
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente</label><select class="form-control" id="op-cli"><option value="">—</option></select></div><div class="form-group"><label class="form-label">Prazo de Entrega</label><input type="date" class="form-control" id="op-prazo"></div></div>
@@ -2761,8 +2764,8 @@ const TITLES={dashboard:'Dashboard',tarefas:'Tarefas',clientes:'Clientes — CRM
 const TITULOS_CURTOS={clientes:'Clientes',pcp:'Produção',entregas:'Entregas',ferramentas:'Máquinas',
  calendario:'Calendário',insumos:'Material/Insumo',portfolio:'Portfólio',madeiras:'Madeiras',
  compras:'Compras',historico:'Histórico',servicos:'Serviços',documentos:'Documentos'};
-const NEWABLE=['tarefas','clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','servicos','comissoes','compras','usuarios'];
-const BTN_NEW_LABELS={tarefas:'Adicionar Tarefa',orcamentos:'Novo Orçamento',financeiro:'Adicionar Lançamento',servicos:'Cadastrar Novo Serviço Terceirizado',comissoes:'Nova Pessoa'};
+const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','servicos','comissoes','compras','usuarios'];
+const BTN_NEW_LABELS={orcamentos:'Novo Orçamento',financeiro:'Adicionar Lançamento',servicos:'Cadastrar Novo Serviço Terceirizado',comissoes:'Nova Pessoa'};
 let CUR='dashboard';
 /* ================= ROLAGEM ENTRE TELAS =================
    Todas as telas rolam no mesmo #content. Sem isto, a tela nova abria no meio
@@ -2972,7 +2975,7 @@ function mudarTarefas(op,acao,det){return naFilaTarefas(async()=>{
   if(acao)commit(acao,'Tarefas',typeof det==='function'?det():det);else{saveDB();if(CUR==='tarefas')renderTarefas();}syncSheets('config','upsert',{campo:'tarefas',valor});
   return true;
  }catch(e){toast('Não consegui salvar a tarefa: '+e.message,'error');if(CUR==='tarefas')renderTarefas();return false;}});}
-function openTarefa(){if(!guard())return;$('tar-texto').value='';openModal('modal-tarefa');setTimeout(()=>$('tar-texto').focus(),60);}
+function openTarefa(){if(!guard())return;$('tar-texto').focus();}
 async function salvarTarefa(){if(!guard())return;
  const btn=$('tar-salvar');if(btn.disabled)return;
  const texto=$('tar-texto').value.trim();
@@ -2980,7 +2983,7 @@ async function salvarTarefa(){if(!guard())return;
  btn.disabled=true;
  const ok=await mudarTarefas(l=>{l.push({id:uid(),texto,por:USER.nome,em:new Date().toISOString(),dia:today(),feita:false});},'criar',texto.slice(0,80));
  btn.disabled=false;
- if(ok){closeModal('modal-tarefa');toast('Tarefa adicionada!','success');}}
+ if(ok){$('tar-texto').value='';$('tar-texto').focus();}}
 function marcarTarefa(id,feita){if(!canEdit()){guard();renderTarefas();return;}
  let det='';
  return mudarTarefas(l=>{const t=l.find(x=>x.id===id);
@@ -3042,6 +3045,7 @@ function renderTarefas(){const el=$('tarefas-abertas');if(!el||TAR_ARR)return;
  const ed=canEdit(),todas=listaTarefas();
  const abertas=todas.filter(t=>!t.feita);
  const feitas=todas.filter(t=>t.feita).sort((a,b)=>String(b.feitaEm||'').localeCompare(String(a.feitaEm||'')));
+ $('tar-novo').style.display=ed?'':'none';
  $('tarefas-n-abertas').textContent=abertas.length||'';$('tarefas-n-finalizadas').textContent=feitas.length||'';
  el.innerHTML=abertas.map((t,i)=>linhaTarefa(t,i+1,ed,ed)).join('')||'<div class="tar-vazio">Nenhuma tarefa em aberto.</div>';
  $('tarefas-finalizadas').innerHTML=feitas.map((t,i)=>linhaTarefa(t,feitas.length-i,ed,false)).join('')||'<div class="tar-vazio">Nenhuma tarefa finalizada ainda.</div>';}
@@ -16597,8 +16601,9 @@ e não numera nada.
   contas que a tela também usa) e as últimas transações do período
   selecionado (sem o estoque crítico).
 - Tarefas (desde 09/11/2026) — lista de afazeres da equipe, logo abaixo
-  do Calendário no menu. O botão Adicionar Tarefa no topo abre uma janela
-  para escrever; cada tarefa tem número e caixinha, e ticar a leva para
+  do Calendário no menu. No topo da lista, um campo para escrever (Enter
+  ou "+ Adicionar"; desde 12/11/2026 no lugar da janela e do botão do
+  topo da tela); cada tarefa tem número e caixinha, e ticar a leva para
   Tarefas finalizadas, logo abaixo (desmarcar devolve). Abertas numeradas
   na ordem da lista, que a alça de cada linha permite arrastar (mouse ou
   dedo); finalizadas com a última concluída em cima e o maior número. Guarda quem adicionou e quem concluiu, e o dia. Fica no
@@ -17994,13 +17999,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-11.3';
+const APP_VERSAO='2026-11-12.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=348;
+const APP_ATUALIZACAO=349;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
