@@ -181,6 +181,12 @@ button.salvando { opacity:0.6;cursor:progress; }
   .tar-n, .tar-texto { padding-top:10px;line-height:1.4; }
   .tar-del { min-width:44px;min-height:44px; }
 }
+/* Orçamento: etiqueta de aprovação de cada item e o botão de levar ao pedido */
+.it-aprov { display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:5px; }
+.it-aprov .btn { font-size:11px;padding:3px 9px; }
+.it-aprov .badge { white-space:nowrap; }
+tr.it-nao-aprov td { color:var(--text-muted); }
+tr.it-nao-aprov td strong { font-weight:600; }
 .pa-pago { display:flex;align-items:center;gap:8px;margin-top:6px; }
 .pa-barra { flex:1;height:7px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);overflow:hidden; }
 .pa-barra span { display:block;height:100%;background:var(--accent); }
@@ -1721,7 +1727,8 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
         <div class="config-card" style="margin-top:14px;background:#1a1714;border-color:#1a1714;max-width:360px;margin-left:auto">
           <div style="display:flex;flex-direction:column;gap:6px">
             <div class="lucro-sigilo" style="display:flex;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Custo Total</span><span id="orcd-custo" style="font-family:var(--mono)">R$ 0,00</span></div>
-            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;color:var(--accent);font-weight:700">Total do Orçamento</span><span id="orcd-preco" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent)">R$ 0,00</span></div>
+            <div id="orcd-orcado-linha" style="display:none;justify-content:space-between;font-size:13px;color:rgba(250,247,242,0.6)"><span>Total orçado (todos os itens)</span><span id="orcd-orcado" style="font-family:var(--mono)">R$ 0,00</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span id="orcd-preco-lbl" style="font-size:13px;color:var(--accent);font-weight:700">Total do Orçamento</span><span id="orcd-preco" style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent)">R$ 0,00</span></div>
             <div id="orcd-comissao-linha" style="display:none;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:#d9b978" id="orcd-comissao-lbl">Comissão</span><span id="orcd-comissao" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#d9b978">R$ 0,00</span></div><div class="lucro-sigilo" style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:rgba(250,247,242,0.5)">Lucro estimado</span><span id="orcd-lucro" style="font-family:var(--mono);font-size:13px;font-weight:700;color:#6fcf97">R$ 0,00</span></div>
           </div>
         </div>
@@ -5999,11 +6006,15 @@ async function carregarOrcamentosSupabase(){
  DB.orcamentos=(data||[]).map(orcDeSupabase);saveDB();
  conferirColunaLinks();conferirColunaLixeira();
  if(CUR==='orcamentos'&&$('orc-lista-view').style.display!=='none')renderOrcamentos();}
-function itensOrc(o){return (o.itens&&o.itens.length)?o.itens:(o.desc?[{id:'legacy',tipo:o.tipo||'sob_medida',desc:o.desc,qty:o.qty||1,preco:o.preco||0,custo:o.custo||0,lucro:o.lucro||0}]:[]);}
+function itensTodosOrc(o){return (o.itens&&o.itens.length)?o.itens:(o.desc?[{id:'legacy',tipo:o.tipo||'sob_medida',desc:o.desc,qty:o.qty||1,preco:o.preco||0,custo:o.custo||0,lucro:o.lucro||0}]:[]);}
+/* só os itens que valem (fora os "Não aprovado" de uma aprovação parcial): é o que vai para o pedido, o PDF e as contas */
+function itensOrc(o){return itensTodosOrc(o).filter(it=>!it.naoAprovado);}
+const orcAprovado=o=>!!o&&(o.status==='Aprovado'||o.status==='Concluído');
 function resumoOrc(o){const itens=itensOrc(o);if(!itens.length)return '(sem itens)';
  if(itens.length===1)return itens[0].desc;
  const join=itens.map(i=>i.desc).join(', ');return itens.length+' itens: '+(join.length>60?join.slice(0,60)+'...':join);}
-function recomputeHeaderTotais(o){o.preco=(o.itens||[]).reduce((s,i)=>s+Number(i.preco||0),0);o.custo=(o.itens||[]).reduce((s,i)=>s+Number(i.custo||0),0);o.lucro=(o.itens||[]).reduce((s,i)=>s+Number(i.lucro||0),0);}
+function recomputeHeaderTotais(o){const it=(o.itens||[]).filter(i=>!i.naoAprovado);
+ o.preco=it.reduce((s,i)=>s+Number(i.preco||0),0);o.custo=it.reduce((s,i)=>s+Number(i.custo||0),0);o.lucro=it.reduce((s,i)=>s+Number(i.lucro||0),0);}
 function statusPillHtml(status){const map={'Rascunho':['var(--text-muted)','var(--surface3)'],'Enviado':['var(--primary)','rgba(26,23,20,0.06)'],'Em ajuste':['#9a6b13','rgba(200,169,110,0.22)'],'Aprovado':['var(--success)','rgba(61,107,79,0.1)'],'Reprovado':['var(--danger)','rgba(181,64,64,0.1)'],'Concluído':['var(--success)','rgba(61,107,79,0.1)']};
  const [color,bg]=map[status]||map['Rascunho'];
  return '<span class="status-pill" style="color:'+color+';background:'+bg+';border-color:'+color+'40"><span class="dot" style="background:'+color+'"></span>'+(status?esc(status):'Sem status')+'</span>';}
@@ -6408,7 +6419,11 @@ function textoPrazoOrc(o){
  if(dias<0)return ' · <strong>Prazo:</strong> <span style="color:var(--danger)">entrega antes do orçamento</span>';
  return ' · <strong>Prazo:</strong> '+(dias===0?'mesmo dia':dias+(dias===1?' dia':' dias'));}
 function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);if(!o)return;
- const itens=itensOrc(o);
+ const itens=itensTodosOrc(o),temFora=itens.some(it=>it.naoAprovado),etiquetar=orcAprovado(o)||temFora;
+ const podeLevar=canEdit()&&verValores();
+ const etiqueta=it=>!etiquetar?'':'<div class="it-aprov">'+(it.naoAprovado
+   ?'<span class="badge badge-muted">Não aprovado</span>'+(podeLevar?'<button type="button" class="btn btn-ghost btn-sm" data-orc="'+esc(o.id)+'" data-item="'+esc(it.id)+'" onclick="levarItemAoPedido(this.dataset.orc,this.dataset.item)">Aprovar e levar ao pedido</button>':'')
+   :'<span class="badge badge-success">✓ Aprovado</span>')+'</div>';
  $('orcd-title').textContent='Orçamento ORC-'+pad(o.num);
  $('orcd-badge').innerHTML=statusOrcHtml(o);
  $('orcd-info').innerHTML='<strong>Cliente:</strong> '+esc(cliName(o.cliId))+(o.origem?' · <strong>Origem:</strong> '+esc(o.origem):'')+'<br><strong>Data:</strong> '+fmtD(o.data)+' · <strong>Entrega:</strong> '+fmtD(o.validade)+textoPrazoOrc(o)+(o.obs?'<br><strong>Observações:</strong> '+esc(o.obs).replace(/\n/g,'<br>'):'');
@@ -6423,8 +6438,12 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
   if(it.precoManual&&it.precoSugerido){const desvioPct=(cheioIt-it.precoSugerido)/it.precoSugerido*100;
    precoCell+='<div style="font-size:10px;margin-top:2px" title="Sugerido: '+fmt(it.precoSugerido)+'"><span class="badge '+(desvioPct<0?'badge-danger':desvioPct>0?'badge-info':'badge-muted')+'" style="font-size:9px">✏️ manual '+(desvioPct>=0?'+':'')+fmtN(desvioPct,1)+'%</span></div>';}
   if(Number(it.descPct)>0)precoCell+='<div style="font-size:10px;margin-top:2px"'+(it.precoCheio!=null?' title="Sem desconto: '+fmt(it.precoCheio)+'"':'')+'><span class="badge badge-muted" style="font-size:9px;white-space:nowrap">desconto '+fmtPctD(it.descPct)+'%</span></div>';
-  return '<tr><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong></td><td class="mono">'+(it.qty||1)+'</td><td class="mono">'+precoCell+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>';}).join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
+  return '<tr'+(it.naoAprovado?' class="it-nao-aprov"':'')+'><td>'+(tipoL[it.tipo]||it.tipo||'—')+'</td><td><strong>'+esc(it.desc)+'</strong>'+etiqueta(it)+'</td><td class="mono">'+(it.qty||1)+'</td><td class="mono">'+precoCell+'</td><td class="mono" style="color:var(--success)">'+fmt(it.lucro||0)+'</td><td>'+(canEdit()&&it.id!=='legacy'?'<div class="row-actions" style="opacity:1"><button class="btn btn-ghost btn-sm" onclick="editarItemOrc(\''+it.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirItemOrc(\''+it.id+'\')">🗑️</button></div>':'')+'</td></tr>';}).join('')||emptyRow(6,'Nenhum item ainda — clique em "+ Adicionar Item"');
  atualizarResumoComissaoOrc(o);$('orcd-custo').textContent=fmt(o.custo);$('orcd-preco').textContent=fmt(o.preco);$('orcd-lucro').textContent=fmt(o.lucro);
+ /* com item fora do pedido, o total é o aprovado, e o orçado (todos os itens) aparece em cima */
+ $('orcd-orcado-linha').style.display=temFora?'flex':'none';
+ $('orcd-orcado').textContent=fmt(itens.reduce((s,it)=>s+Number(it.preco||0),0));
+ $('orcd-preco-lbl').textContent=temFora?'Total Aprovado':'Total do Orçamento';
  renderLinksOrc(o);renderAnexosOrc(o);pintarBotaoLixeira();}
 const anexoEhImagem=a=>/\.(png|jpe?g)$/i.test(a.nome||'');
 /* a marca fica guardada no próprio anexo: vale para o Gerar PDF e para o Imprimir */
@@ -6991,6 +7010,7 @@ async function salvarItemOrc(){if(!guard())return;const desc=$('orc-desc').value
   descPct:t.descPct,precoCheio:Math.round(Math.round(t.preco*100)*qty)/100};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
+ if(idx>=0?o.itens[idx].naoAprovado:orcAprovado(o))item.naoAprovado=true;
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
  recomputeHeaderTotais(o);
  const {error}=await supa.from('orcamentos').update(orcParaSupabase(o)).eq('id',o.id);
@@ -7197,6 +7217,7 @@ async function duplicarItemOrc(){if(!guard())return;const o=DB.orcamentos.find(x
  const idx=(o.itens||[]).findIndex(x=>x.id===marcado.value);if(idx<0)return;
  const orig=o.itens[idx];
  const copia=Object.assign(JSON.parse(JSON.stringify(orig)),{id:uid()});
+ if(orcAprovado(o))copia.naoAprovado=true;
  const btn=$('dup-item-ok');btn.disabled=true;
  const antes=o.itens.slice();
  o.itens.splice(idx+1,0,copia);
@@ -8651,6 +8672,7 @@ async function salvarPedidoSalvo(id,o,decisoes,statusAnterior){
  if(!r.naFila)await apagarCompRetirados(plano,decisoes);
  await gravarDatasNaOrigem();
  commit('editar','Pedidos','V-'+pad(v2.num)+(totalFeitosSinc(feitosRet)?' · Financeiro: '+resumoFeitosSinc(feitosRet):''));syncSheets('vendas','upsert',v2);
+ await concluirLevarItem(id,v2);
  let res=null,offSalvo=false;
  if(plano&&plano.precisaP1){
   if(r.naFila||local||FILA.some(i=>i.tabela==='vendas')||!sincLiberada())offSalvo=true;
@@ -9624,11 +9646,40 @@ async function gravarAssistentePagamentos(vid,E){if(!guard())return false;
 function atualizarFichaDepoisAssist(vid){if(!fichaPedidoAberta(vid)){if(CUR==='vendas')renderVendas();return;}
  const v=DB.vendas.find(x=>x.id===vid);if(!v)return;
  preencherPagamentosVenda(v);VND_PAGS_ABERTOS=fotoAbertura(v.pags);aoAbrirFichaPedido(vid);}
+/* o pedido gerado do orçamento: o não cancelado que cita ORC-<número> (o mais novo, se houver mais de um) */
+function pedidoDoOrc(o){return DB.vendas.filter(v=>{if(v.status==='Cancelado')return false;const m=String(v.obs||'').match(/ORC-(\d+)/);return !!m&&Number(m[1])===Number(o.num);})
+  .sort((a,b)=>b.num-a.num)[0]||null;}
+/* "Aprovar e levar ao pedido": a ficha do pedido abre com o item a mais e o total novo. O dono acerta o pagamento da
+   diferença e salva como sempre (o Financeiro segue a regra de qualquer edição). Só ao salvar o item vira Aprovado no
+   orçamento; cancelar a ficha deixa tudo como estava */
+let LEVAR_ITEM=null;
+function levarItemAoPedido(orcId,itemId){if(!guard()||!guardValores())return;
+ const o=DB.orcamentos.find(x=>x.id===orcId),it=o&&(o.itens||[]).find(x=>x.id===itemId);if(!it)return;
+ const v=pedidoDoOrc(o);
+ if(!v){toast('Não achei o pedido do ORC-'+pad(o.num)+' (cancelado ou excluído?). Use o "+ Item" no pedido certo.','error',9000);return;}
+ if(v.status==='Entregue'&&!confirm('O pedido V-'+pad(v.num)+' já foi entregue. Acrescentar o item mesmo assim?'))return;
+ navigate('vendas');editVenda(v.id);
+ if($('vnd-id').value!==v.id)return;
+ const qty=Number(it.qty)||1;
+ addItemPedido({prodId:it.prodId||null,desc:it.desc,qty,preco:Math.round(Number(it.preco||0)/qty*100)/100});
+ calcVenda();
+ LEVAR_ITEM={orcId,itemId,vid:v.id,desc:it.desc};
+ toast('"'+it.desc+'" entrou no V-'+pad(v.num)+'. Acerte o pagamento da diferença e toque em Salvar: aí o item fica Aprovado no orçamento.','info',10000);}
+/* depois do Salvar do pedido: o item que foi levado (e continua no pedido) vira Aprovado no orçamento */
+async function concluirLevarItem(vid,v){const L=LEVAR_ITEM;if(!L||L.vid!==vid)return;LEVAR_ITEM=null;
+ if(!(v.itens||[]).some(i=>String(i.desc||'').trim()===String(L.desc||'').trim()))return;
+ const o=DB.orcamentos.find(x=>x.id===L.orcId),it=o&&(o.itens||[]).find(x=>x.id===L.itemId);if(!it||!it.naoAprovado)return;
+ const antes=o.itens;
+ o.itens=o.itens.map(x=>{if(x.id!==L.itemId)return x;const c=Object.assign({},x);delete c.naoAprovado;return c;});
+ recomputeHeaderTotais(o);
+ const {error}=await supa.from('orcamentos').update(orcParaSupabase(o)).eq('id',o.id);
+ if(error){o.itens=antes;recomputeHeaderTotais(o);toast('O pedido foi salvo, mas não consegui marcar o item como Aprovado no ORC-'+pad(o.num)+': '+error.message,'error',10000);return;}
+ commit('editar','Orçamentos','Item "'+L.desc+'" aprovado e levado ao V-'+pad(v.num)+' (ORC-'+pad(o.num)+')');syncSheets('orcamentos','upsert',o);}
 function abrirAprovarOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
  if(o.status==='Aprovado'){toast('Este orçamento já está aprovado.','info');return;}
  if(!itensOrc(o).length){toast('Adicione ao menos um item antes de aprovar.','error');return;}
  $('aprv-orc-id').value=id;$('aprv-orc-desc').textContent=resumoOrc(o)+' — '+cliName(o.cliId)+' — '+fmt(o.preco);
- $('aprv-itens-lista').innerHTML=aprvItensChecklistHtml(itensOrc(o));
+ $('aprv-itens-lista').innerHTML=aprvItensChecklistHtml(itensTodosOrc(o));
  $('aprv-data').value=today();$('aprv-prazo').value=o.validade||addDays(today(),30);$('aprv-recebido').value='nao';$('aprv-lanc').innerHTML='';
  /* começa como o estúdio combina na maioria das vezes: PIX em duas partes.
     Trocar a forma da primeira linha e tirar a segunda dá o caso de pagamento único. */
@@ -9641,7 +9692,7 @@ function abrirAprovarOrc(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.
  atualizarPreviewAprov();
  openModal('modal-aprovar-orc');}
 function aprvItensChecklistHtml(itens){return itens.map((it,i)=>'<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12.5px;cursor:pointer"><input type="checkbox" class="aprv-item-chk" data-idx="'+i+'" checked onchange="atualizarPreviewAprov()"><span style="flex:1">'+esc(it.desc)+'</span><span class="mono" style="font-weight:700">'+fmt(it.preco)+'</span></label>').join('');}
-function itensSelecionadosAprov(o){const itens=itensOrc(o);const sel=[];document.querySelectorAll('.aprv-item-chk').forEach(c=>{if(c.checked)sel.push(itens[Number(c.dataset.idx)]);});return sel;}
+function itensSelecionadosAprov(o){const itens=itensTodosOrc(o);const sel=[];document.querySelectorAll('.aprv-item-chk').forEach(c=>{if(c.checked)sel.push(itens[Number(c.dataset.idx)]);});return sel;}
 function popularLancamentosAprov(){
  const sel=$('aprv-lanc');if(!sel)return;const atual=sel.value;
  sel.innerHTML='<option value="">— Escolher depois —</option>'+lancamentosSemPedido()
@@ -9677,7 +9728,7 @@ function atualizarPreviewAprov(){const o=DB.orcamentos.find(x=>x.id===$('aprv-or
   if(dAp)html+='<br>📄 O pedido será criado com a data de <strong>'+fmtD(dAp)+'</strong>.';}
  /* a 1ª forma no extrato: só PIX, transferência ou boleto, e com o valor da linha do banco (senão bloqueia) */
  const ext=conferirExtratoAprov(formas.filter(f=>f.valor>0));APROV_BLOQUEIO=ext.bloqueio;html+=ext.html;
- if(itensSel.length<itensOrc(o).length)html+='<br>⚠️ '+(itensOrc(o).length-itensSel.length)+' item(ns) não aprovado(s) — ficarão fora do pedido e <strong>serão removidos do orçamento</strong>.';
+ if(itensSel.length<itensTodosOrc(o).length)html+='<br>⚠️ '+(itensTodosOrc(o).length-itensSel.length)+' item(ns) não aprovado(s) — ficam fora do pedido e continuam no orçamento como <strong>Não aprovado</strong> (dá para levar ao pedido depois).';
  $('aprv-preview').innerHTML=html;}
 /* entradas do banco já pagas e ainda não ligadas a nenhum pedido: candidatas a ser o pagamento antecipado que caiu
    na conta antes de o pedido existir (foi o que gerou lançamento em dobro em setembro). Antes a lista trazia também
@@ -9754,7 +9805,7 @@ async function confirmarAprovarOrc(decisoes){const id=$('aprv-orc-id').value;con
   toast('As formas de pagamento somam '+fmt(totalFormas)+' e os itens aprovados somam '+fmt(totalItens)+'. Ajuste os valores antes de aprovar.','error',8000);return;}
  const ext=conferirExtratoAprov(formasPag);if(ext.bloqueio){toast(ext.bloqueio,'error',8000);return;}
  const pagLabel=rotuloPagamento(formasPag);
- const itensNaoAprovados=itensOrc(o).length-itensSel.length;
+ const itensNaoAprovados=itensTodosOrc(o).length-itensSel.length;
  /* aprovar grava o orçamento antes de criar o pedido: sem rede, pararia no meio */
  if(!await exigeConexao('aprovar o orçamento'))return;
  const liberada=!modo317()&&await conferirSincAgora();
@@ -9766,7 +9817,11 @@ async function confirmarAprovarOrc(decisoes){const id=$('aprv-orc-id').value;con
  const fBanco=idLanc?DB.financeiro.find(x=>x.id===idLanc):null;
  closeModal('modal-aprovar-orc');
  o.status='Aprovado';
- o.itens=itensSel;recomputeHeaderTotais(o);
+ /* os não escolhidos ficam no orçamento, marcados (o formato antigo, de um item só, vira a lista com o aprovado) */
+ if(o.itens&&o.itens.length){const sel=new Set(itensSel);
+  o.itens=o.itens.map(it=>{const c=Object.assign({},it);if(sel.has(it))delete c.naoAprovado;else c.naoAprovado=true;return c;});}
+ else o.itens=itensSel;
+ recomputeHeaderTotais(o);
  const {error:erroStatus}=await supa.from('orcamentos').update(orcParaSupabase(o)).eq('id',id);
  if(erroStatus){toast('Erro ao aprovar no Supabase: '+erroStatus.message,'error');return;}
  const itens=itensSel;
@@ -9889,6 +9944,7 @@ async function salvarItemCatalogo(){if(!guard())return;const c=calcCatalogo();if
  const item={id:ORC_ITEM_EDITANDO||uid(),tipo:'catalogo',desc:c.p.nome+(c.qty>1?' ×'+c.qty:''),prodId:c.p.id,qty:c.qty,descPct:c.pct,obs:$('orc-cat-obs').value.trim(),custo,preco:c.total,lucro:c.total-custo};
  if(!o.itens)o.itens=[];
  const idx=o.itens.findIndex(x=>x.id===item.id);
+ if(idx>=0?o.itens[idx].naoAprovado:orcAprovado(o))item.naoAprovado=true;
  if(idx>=0)o.itens[idx]=item;else o.itens.push(item);
  recomputeHeaderTotais(o);
  const {error}=await supa.from('orcamentos').update(orcParaSupabase(o)).eq('id',o.id);
@@ -17930,13 +17986,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-11.1';
+const APP_VERSAO='2026-11-11.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=346;
+const APP_ATUALIZACAO=347;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
