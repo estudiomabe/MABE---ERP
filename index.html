@@ -3125,7 +3125,7 @@ let CC={modo:'mes',ano:new Date().getFullYear(),mes:new Date().getMonth()};
 function setCCModo(m){CC.modo=m;renderCentroCustos();}
 function onCCChange(){CC.mes=+$('cc-per-mes-sel').value;CC.ano=+$('cc-per-ano-sel').value;renderCentroCustos();}
 let chCC=null;
-const SETORES_FIXOS=['Marketing','Vendas','Pedidos','Insumo','Folha de Pagamento','Custo Fixo','Manutenção','Investimento na Empresa','Reembolso'];
+const SETORES_FIXOS=['Marketing','Vendas','Pedidos','Insumo','Folha de Pagamento','Custo Fixo','Manutenção','Investimento na Empresa','Reembolso','Custo Variável'];
 function renderCentroCustos(){syncPerBar('cc-per',CC);
  if(!window.Chart){carregarLib('chart').then(ok=>{if(ok&&CUR==='centrocustos')renderCentroCustos();});}
  const lancs=finVisiveis().filter(f=>f.status!=='Cancelado'&&matchPer(f.data,CC));
@@ -3151,7 +3151,7 @@ function renderCentroCustos(){syncPerBar('cc-per',CC);
  if(chCC)chCC.destroy();
  const catsComSaida=cats.filter(c=>c[1].saidas>0);
  if(!window.Chart)return;
- const cores=['#c8a96e','#1a1714','#7a6f62','#3d6b4f','#a07830','#b54040','#8a9bb5','#9c7fb5','#4f7f86','#c27a5a'];
+ const cores=['#c8a96e','#1a1714','#7a6f62','#3d6b4f','#a07830','#b54040','#8a9bb5','#9c7fb5','#4f7f86','#c27a5a','#b58a9c'];
  chCC=new Chart($('chart-cc'),{type:'doughnut',data:{labels:catsComSaida.length?catsComSaida.map(c=>c[0]):['Sem custos'],
   datasets:[{data:catsComSaida.length?catsComSaida.map(c=>c[1].saidas):[1],backgroundColor:catsComSaida.length?catsComSaida.map((c,i)=>cores[i%cores.length]):['#e0d9ce']}]},
   options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}},cutout:'60%'}});}
@@ -16618,7 +16618,14 @@ e não numera nada.
   catálogo ou novo produto); status em caixa de seleção na própria lista
   (Rascunho, Enviado, Em ajuste, Aprovado, Reprovado, Concluído);
   aprovação parcial de itens (checklist) que gera automaticamente um
-  Pedido, contas a receber e uma Ordem de Produção; anexos de referência
+  Pedido, contas a receber e uma Ordem de Produção — desde 11/11/2026 os
+  itens não escolhidos ficam no orçamento marcados naoAprovado (etiqueta
+  Não aprovado; os outros, ✓ Aprovado), o total do orçamento continua
+  sendo só o aprovado (itensOrc() deixa os não aprovados de fora;
+  itensTodosOrc() vê todos), item novo ou duplicado num orçamento já
+  aprovado nasce Não aprovado, e o botão "Aprovar e levar ao pedido" abre
+  a ficha do pedido do orçamento com o item somado (vira Aprovado quando
+  o pedido é salvo); anexos de referência
   (fotos, PDFs); geração do PDF da proposta (com capa), do contrato de
   prestação de serviço e envio por WhatsApp ou e-mail.
   - Lista: seletor de período (Mês, Ano, Tudo), busca por número ou
@@ -17069,8 +17076,9 @@ e não numera nada.
     Mesclar.
 - Centro de Custos — segmentação dos lançamentos financeiros por setor
   fixo (Marketing, Vendas, Pedidos, Insumo, Folha de Pagamento,
-  Custo Fixo, Manutenção, Investimento na Empresa e Reembolso — estes
-  dois desde 07/11/2026). A lista é a constante SETORES_FIXOS, a
+  Custo Fixo, Manutenção, Investimento na Empresa, Reembolso e Custo
+  Variável — os dois primeiros destes desde 07/11/2026, o último desde
+  11/11/2026). A lista é a constante SETORES_FIXOS, a
   mesma dos seletores do Financeiro. Por período (Mês, Ano ou Tudo),
   soma pagos e pendentes (fora os cancelados e os mesclados) em saídas e
   entradas por centro, com o percentual das saídas e um gráfico de
@@ -17986,13 +17994,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-11.2';
+const APP_VERSAO='2026-11-11.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=347;
+const APP_ATUALIZACAO=348;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

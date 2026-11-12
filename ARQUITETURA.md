@@ -715,7 +715,14 @@ e não numera nada.
   catálogo ou novo produto); status em caixa de seleção na própria lista
   (Rascunho, Enviado, Em ajuste, Aprovado, Reprovado, Concluído);
   aprovação parcial de itens (checklist) que gera automaticamente um
-  Pedido, contas a receber e uma Ordem de Produção; anexos de referência
+  Pedido, contas a receber e uma Ordem de Produção — desde 11/11/2026 os
+  itens não escolhidos ficam no orçamento marcados naoAprovado (etiqueta
+  Não aprovado; os outros, ✓ Aprovado), o total do orçamento continua
+  sendo só o aprovado (itensOrc() deixa os não aprovados de fora;
+  itensTodosOrc() vê todos), item novo ou duplicado num orçamento já
+  aprovado nasce Não aprovado, e o botão "Aprovar e levar ao pedido" abre
+  a ficha do pedido do orçamento com o item somado (vira Aprovado quando
+  o pedido é salvo); anexos de referência
   (fotos, PDFs); geração do PDF da proposta (com capa), do contrato de
   prestação de serviço e envio por WhatsApp ou e-mail.
   - Lista: seletor de período (Mês, Ano, Tudo), busca por número ou
@@ -1166,8 +1173,9 @@ e não numera nada.
     Mesclar.
 - Centro de Custos — segmentação dos lançamentos financeiros por setor
   fixo (Marketing, Vendas, Pedidos, Insumo, Folha de Pagamento,
-  Custo Fixo, Manutenção, Investimento na Empresa e Reembolso — estes
-  dois desde 07/11/2026). A lista é a constante SETORES_FIXOS, a
+  Custo Fixo, Manutenção, Investimento na Empresa, Reembolso e Custo
+  Variável — os dois primeiros destes desde 07/11/2026, o último desde
+  11/11/2026). A lista é a constante SETORES_FIXOS, a
   mesma dos seletores do Financeiro. Por período (Mês, Ano ou Tudo),
   soma pagos e pendentes (fora os cancelados e os mesclados) em saídas e
   entradas por centro, com o percentual das saídas e um gráfico de
