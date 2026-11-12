@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 09/11/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 11/11/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -693,6 +693,14 @@ e não numera nada.
   mesma Análise dos Últimos Pedidos Entregues (analiseEntregues, as
   contas que a tela também usa) e as últimas transações do período
   selecionado (sem o estoque crítico).
+- Tarefas (desde 09/11/2026) — lista de afazeres da equipe, logo abaixo
+  do Calendário no menu. O botão Adicionar Tarefa no topo abre uma janela
+  para escrever; cada tarefa tem número e caixinha, e ticar a leva para
+  Tarefas finalizadas, logo abaixo (desmarcar devolve). Abertas numeradas
+  na ordem da lista, que a alça de cada linha permite arrastar (mouse ou
+  dedo); finalizadas com a última concluída em cima e o maior número. Guarda quem adicionou e quem concluiu, e o dia. Fica no
+  campo tarefas da tabela config; cada alteração relê a lista antes de
+  gravar, para duas pessoas não apagarem a tarefa uma da outra.
 - Calendário (de Entregas) — grade do mês (‹ ›, Hoje) com três tipos de
   compromisso: as entregas cadastradas, na cor do status (Agendada, Em
   rota, Entregue/Instalada; Agendada com data passada aparece como
@@ -1742,4 +1750,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 09/11/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 11/11/2026.

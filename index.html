@@ -151,6 +151,36 @@ button.salvando { opacity:0.6;cursor:progress; }
 .pa-valor { font-weight:700;white-space:nowrap;font-size:12px; }
 .pa-datas { font-size:11px;color:var(--text-muted);margin-top:3px; }
 .pa-datas .mono { font-size:11px; }
+/* Tarefas: linhas com caixinha, número, texto e quem fez */
+.tar-caixa { margin-bottom:18px; }
+.tar-qtd { font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text-muted);margin-left:6px; }
+#tarefas-abertas { position:relative; }
+.tar-item { display:grid;grid-template-columns:24px 32px 34px minmax(0,1fr) auto;gap:6px;align-items:flex-start;padding:10px 18px 10px 12px;border-top:1px solid var(--border);background:var(--surface); }
+.tar-item.ro { grid-template-columns:24px 32px 34px minmax(0,1fr); }
+.tar-alca { display:flex;align-items:center;justify-content:center;height:26px;color:var(--text-muted);opacity:.65;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none; }
+.tar-alca svg { width:14px;height:18px;fill:currentColor;pointer-events:none; }
+@media (hover:hover) { .tar-alca:hover { opacity:1; } }
+.tar-item.arrastando { position:relative;z-index:5;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.2); }
+.tar-item.arrastando .tar-alca { cursor:grabbing;opacity:1; }
+.tar-check { display:flex;align-items:center;justify-content:center;height:26px;cursor:pointer; }
+.tar-check input { width:20px;height:20px;margin:0;cursor:pointer;accent-color:var(--success); }
+.tar-check input:disabled { cursor:default; }
+.tar-n { font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text-muted);line-height:26px;text-align:right;padding-right:6px; }
+.tar-texto { font-size:14px;line-height:1.45;padding-top:2px;white-space:pre-wrap;overflow-wrap:anywhere; }
+.tar-meta { font-size:11.5px;color:var(--text-muted);margin-top:2px; }
+.tar-item.feita .tar-texto { color:var(--text-muted);text-decoration:line-through; }
+.tar-vazio { padding:18px;border-top:1px solid var(--border);font-size:13px;color:var(--text-muted); }
+@media (max-width:860px) {
+  .tar-item { grid-template-columns:36px 44px 26px minmax(0,1fr) auto;padding:6px 10px 6px 0;gap:2px; }
+  .tar-item.sem { grid-template-columns:44px 30px minmax(0,1fr) auto;padding-left:4px; }
+  .tar-item.sem.ro { grid-template-columns:44px 30px minmax(0,1fr); }
+  .tar-alca { height:44px; }
+  .tar-alca.vazia { display:none; }
+  .tar-check { width:44px;height:44px; }
+  .tar-check input { width:22px;height:22px; }
+  .tar-n, .tar-texto { padding-top:10px;line-height:1.4; }
+  .tar-del { min-width:44px;min-height:44px; }
+}
 .pa-pago { display:flex;align-items:center;gap:8px;margin-top:6px; }
 .pa-barra { flex:1;height:7px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);overflow:hidden; }
 .pa-barra span { display:block;height:100%;background:var(--accent); }
@@ -1258,6 +1288,7 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
     <span class="nav-label">Principal</span>
     <div class="nav-item active" onclick="navigate('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</div>
     <div class="nav-item" onclick="navigate('calendario')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendário</div>
+    <div class="nav-item" onclick="navigate('tarefas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Tarefas</div>
     <span class="nav-label">Comercial</span>
     <div class="nav-item" onclick="navigate('orcamentos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Orçamentos</div>
     <div class="nav-item" onclick="navigate('vendas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Pedidos</div>
@@ -1537,6 +1568,10 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
     </div>
 
     <!-- CALENDÁRIO DE ENTREGAS -->
+    <div class="section" id="section-tarefas">
+      <div class="table-wrapper tar-caixa"><div class="table-toolbar"><div class="table-toolbar-title">Tarefas<span class="tar-qtd" id="tarefas-n-abertas"></span></div></div><div id="tarefas-abertas"></div></div>
+      <div class="table-wrapper tar-caixa"><div class="table-toolbar"><div class="table-toolbar-title">Tarefas finalizadas<span class="tar-qtd" id="tarefas-n-finalizadas"></span></div></div><div id="tarefas-finalizadas"></div></div>
+    </div>
     <div class="section" id="section-calendario">
       <div class="table-toolbar" style="margin-bottom:14px"><div class="table-toolbar-title">📅 Calendário de Entregas</div><button class="btn btn-primary btn-sm" onclick="openEntrega()">+ Nova Entrega</button></div>
       <div class="period-bar">
@@ -2141,6 +2176,7 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
 </div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-entregas')">Cancelar</button><button class="btn btn-primary" onclick="saveEntrega()">Salvar</button></div></div></div>
 
 <!-- MODAL PRODUÇÃO (OP) -->
+<div class="modal-overlay" id="modal-tarefa"><div class="modal"><div class="modal-header"><div class="modal-title">Adicionar Tarefa</div><button class="modal-close" onclick="closeModal('modal-tarefa')">✕</button></div><div class="modal-body"><div class="form-group"><label class="form-label" for="tar-texto">Tarefa *</label><textarea class="form-control" id="tar-texto" rows="3" maxlength="500" placeholder="Escreva a tarefa" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();salvarTarefa();}"></textarea></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-tarefa')">Cancelar</button><button class="btn btn-primary" id="tar-salvar" onclick="salvarTarefa()">Adicionar</button></div></div></div>
 <div class="modal-overlay" id="modal-producao"><div class="modal"><div class="modal-header"><div class="modal-title" id="mop-title">Nova Ordem de Produção</div><button class="modal-close" onclick="closeModal('modal-producao')">✕</button></div><div class="modal-body"><input type="hidden" id="op-id"><div class="form-grid">
 <div class="form-group"><label class="form-label">Peça / Projeto *</label><input type="text" class="form-control" id="op-titulo" placeholder="Ex: Mesa de reunião Freijó 3,00m"></div>
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Cliente</label><select class="form-control" id="op-cli"><option value="">—</option></select></div><div class="form-group"><label class="form-label">Prazo de Entrega</label><input type="date" class="form-control" id="op-prazo"></div></div>
@@ -2353,9 +2389,9 @@ function buscarAtualizacoesManual(){if(!DB.config.sheetsUrl){toast('Configure a 
    Usuários e Configurações são exclusivos do Administrador. */
 const NIVEIS={
  'Administrador':{desc:'Acesso total, incluindo Usuários, Configurações e Folha de Pagamento.',edita:true,valores:true,secoes:null},
- 'Financeiro':{desc:'Tudo, exceto Usuários e Configurações — não altera custos padrão nem a folha.',edita:true,valores:true,secoes:['dashboard','calendario','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','centrocustos','relatorios','compras','fornecedores','servicos','comissoes','documentos','clientes','historico']},
- 'Produção':{desc:'Calendário, PCP, Máquinas, Estoque, Pedidos e Clientes. Não vê Financeiro, Orçamentos, custos nem valores em R$.',edita:true,valores:false,secoes:['dashboard','calendario','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']},
- 'Consulta':{desc:'Mesmas telas do nível Produção, somente leitura.',edita:false,valores:false,secoes:['dashboard','calendario','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']}
+ 'Financeiro':{desc:'Tudo, exceto Usuários e Configurações — não altera custos padrão nem a folha.',edita:true,valores:true,secoes:['dashboard','calendario','tarefas','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','centrocustos','relatorios','compras','fornecedores','servicos','comissoes','documentos','clientes','historico']},
+ 'Produção':{desc:'Calendário, Tarefas, PCP, Máquinas, Estoque, Pedidos e Clientes. Não vê Financeiro, Orçamentos, custos nem valores em R$.',edita:true,valores:false,secoes:['dashboard','calendario','tarefas','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']},
+ 'Consulta':{desc:'Mesmas telas do nível Produção, somente leitura.',edita:false,valores:false,secoes:['dashboard','calendario','tarefas','vendas','pcp','entregas','ferramentas','insumos','portfolio','clientes']}
 };
 const NIVEL_PADRAO='Consulta';
 /* perfis antigos (Admin/Operador/Visualizador) convertidos na carga do banco */
@@ -2712,14 +2748,14 @@ function prepararOrdenacao(sec){
   th.addEventListener('click',()=>ordenarTabela(th));});}
 
 /* ================= NAVEGAÇÃO ================= */
-const TITLES={dashboard:'Dashboard',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',servicos:'Serviços Terceirizados',comissoes:'Comissões',documentos:'Documentos — Modelo do Orçamento',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
+const TITLES={dashboard:'Dashboard',tarefas:'Tarefas',clientes:'Clientes — CRM',orcamentos:'Orçamentos',vendas:'Pedidos',pcp:'Produção — PCP',entregas:'Entregas & Instalações',ferramentas:'Máquinas & Ferramentas',calendario:'Calendário de Entregas',insumos:'Material/Insumo & Estoque',portfolio:'Portfólio & Estoque',madeiras:'Estoque de Madeiras',financeiro:'Financeiro',centrocustos:'Centro de Custos',relatorios:'Relatórios',fornecedores:'Fornecedores',servicos:'Serviços Terceirizados',comissoes:'Comissões',documentos:'Documentos — Modelo do Orçamento',compras:'Ordens de Compra',usuarios:'Usuários',historico:'Histórico de Edições',configuracoes:'Configurações'};
 /* No celular o titulo longo empurrava o botao '+ Novo' para a linha de baixo.
    So os nomes que sobram estao aqui; o resto usa o titulo normal. */
 const TITULOS_CURTOS={clientes:'Clientes',pcp:'Produção',entregas:'Entregas',ferramentas:'Máquinas',
  calendario:'Calendário',insumos:'Material/Insumo',portfolio:'Portfólio',madeiras:'Madeiras',
  compras:'Compras',historico:'Histórico',servicos:'Serviços',documentos:'Documentos'};
-const NEWABLE=['clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','servicos','comissoes','compras','usuarios'];
-const BTN_NEW_LABELS={orcamentos:'Novo Orçamento',financeiro:'Adicionar Lançamento',servicos:'Cadastrar Novo Serviço Terceirizado',comissoes:'Nova Pessoa'};
+const NEWABLE=['tarefas','clientes','orcamentos','vendas','pcp','entregas','ferramentas','insumos','portfolio','madeiras','financeiro','fornecedores','servicos','comissoes','compras','usuarios'];
+const BTN_NEW_LABELS={tarefas:'Adicionar Tarefa',orcamentos:'Novo Orçamento',financeiro:'Adicionar Lançamento',servicos:'Cadastrar Novo Serviço Terceirizado',comissoes:'Nova Pessoa'};
 let CUR='dashboard';
 /* ================= ROLAGEM ENTRE TELAS =================
    Todas as telas rolam no mesmo #content. Sem isto, a tela nova abria no meio
@@ -2787,8 +2823,9 @@ function navigate(sec){
  if(sec==='financeiro')carregarVendasSupabase();
  if(sec==='configuracoes')carregarConfigSupabase();
  if(sec==='historico')carregarHistoricoSupabase();
- if(sec==='usuarios')carregarUsuariosSupabase();}
-function renderSection(s){const map={dashboard:renderDashboard,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,servicos:renderServicos,comissoes:renderComissoes,documentos:renderDocumentos,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
+ if(sec==='usuarios')carregarUsuariosSupabase();
+ if(sec==='tarefas')carregarTarefas();}
+function renderSection(s){const map={dashboard:renderDashboard,tarefas:renderTarefas,clientes:renderClientes,insumos:renderInsumos,portfolio:renderPortfolio,madeiras:renderMadeiras,vendas:renderVendas,orcamentos:renderOrcamentos,pcp:renderPCP,entregas:renderEntregas,ferramentas:renderFerramentas,calendario:renderCalendario,financeiro:renderFinanceiro,centrocustos:renderCentroCustos,relatorios:renderRelatorios,servicos:renderServicos,comissoes:renderComissoes,documentos:renderDocumentos,fornecedores:renderFornecedores,compras:renderCompras,usuarios:renderUsuarios,historico:renderHistorico,configuracoes:renderConfig};(map[s]||function(){})();}
 /* ================= BUSCA GLOBAL =================
    Filtra a seção aberta, como antes, e ao mesmo tempo procura em todos os
    cadastros. Tocar num resultado abre o próprio registro, do mesmo jeito que
@@ -2894,8 +2931,116 @@ function buscaTecla(e){
  } else if(e.key==='Enter'){
   e.preventDefault();irParaResultado(BUSCA_SEL>=0?BUSCA_SEL:0);}}
 document.addEventListener('click',e=>{if(!e.target.closest('.search-box'))fecharBusca();});
+/* ================= TAREFAS =================
+   A lista fica numa linha só da tabela config (campo tarefas, JSON), como serviços e comissionados: não precisa de
+   tabela nova e entra no backup que já existe. Como duas pessoas mexem nela, cada alteração relê a lista do servidor
+   logo antes de gravar e aplica só a própria mudança; assim a tarefa que o outro acabou de pôr não se perde.
+   A fila faz os toques rápidos irem um de cada vez.
+   O número é a posição: abertas na ordem da lista guardada, que é a de criação até alguém arrastar; finalizadas com a última concluída em cima e o
+   maior número, para cada uma manter o seu número enquanto a lista cresce. */
+let TAR_FILA=Promise.resolve();
+function naFilaTarefas(fn){const p=TAR_FILA.then(fn,fn);TAR_FILA=p.catch(()=>{});return p;}
+function listaTarefas(){return Array.isArray(DB.config.tarefas)?DB.config.tarefas:[];}
+/* lê do servidor; falha ou conteúdo estragado viram erro, para nunca gravar por cima de uma lista que não foi lida */
+async function lerTarefasServidor(){
+ const r=await comPrazoRede(supa.from('config').select('valor').eq('campo','tarefas').maybeSingle(),12000);
+ if(r.error)throw new Error(r.error.message||'sem resposta');
+ if(!r.data)return [];
+ const arr=JSON.parse(r.data.valor);
+ if(!Array.isArray(arr))throw new Error('lista inválida');
+ return arr;}
+function carregarTarefas(){return naFilaTarefas(async()=>{
+ try{DB.config.tarefas=await lerTarefasServidor();saveDB();if(CUR==='tarefas')renderTarefas();}
+ catch(e){erroDeCarga('tarefas',e);}});}
+/* op recebe a lista recém-lida e a altera; devolve false quando não há o que gravar. det pode ser função, quando o texto
+   do histórico depende da lista lida */
+function mudarTarefas(op,acao,det){return naFilaTarefas(async()=>{
+ try{
+  const lista=await lerTarefasServidor();
+  if(op(lista)===false){DB.config.tarefas=lista;saveDB();if(CUR==='tarefas')renderTarefas();return false;}
+  const valor=JSON.stringify(lista);
+  const r=await comPrazoRede(supa.from('config').upsert({campo:'tarefas',valor}).select('campo'),12000);
+  if(r.error)throw new Error(r.error.message||'sem resposta');
+  DB.config.tarefas=lista;
+  if(acao)commit(acao,'Tarefas',typeof det==='function'?det():det);else{saveDB();if(CUR==='tarefas')renderTarefas();}syncSheets('config','upsert',{campo:'tarefas',valor});
+  return true;
+ }catch(e){toast('Não consegui salvar a tarefa: '+e.message,'error');if(CUR==='tarefas')renderTarefas();return false;}});}
+function openTarefa(){if(!guard())return;$('tar-texto').value='';openModal('modal-tarefa');setTimeout(()=>$('tar-texto').focus(),60);}
+async function salvarTarefa(){if(!guard())return;
+ const btn=$('tar-salvar');if(btn.disabled)return;
+ const texto=$('tar-texto').value.trim();
+ if(!texto){toast('Escreva a tarefa.','error');$('tar-texto').focus();return;}
+ btn.disabled=true;
+ const ok=await mudarTarefas(l=>{l.push({id:uid(),texto,por:USER.nome,em:new Date().toISOString(),dia:today(),feita:false});},'criar',texto.slice(0,80));
+ btn.disabled=false;
+ if(ok){closeModal('modal-tarefa');toast('Tarefa adicionada!','success');}}
+function marcarTarefa(id,feita){if(!canEdit()){guard();renderTarefas();return;}
+ let det='';
+ return mudarTarefas(l=>{const t=l.find(x=>x.id===id);
+  if(!t){toast('Essa tarefa já foi excluída.','info');return false;}
+  if(!!t.feita===feita)return false;
+  det=(feita?'Concluída: ':'Reaberta: ')+String(t.texto||'').slice(0,80);
+  t.feita=feita;
+  if(feita){t.feitaPor=USER.nome;t.feitaEm=new Date().toISOString();t.feitaDia=today();}
+  else{delete t.feitaPor;delete t.feitaEm;delete t.feitaDia;}},'editar',()=>det);}
+function excluirTarefa(id){if(!guard())return;
+ const a=listaTarefas().find(x=>x.id===id);if(!a||!confirm('Excluir a tarefa "'+a.texto+'"?'))return;
+ return mudarTarefas(l=>{const i=l.findIndex(x=>x.id===id);if(i<0)return false;l.splice(i,1);},'excluir',String(a.texto||'').slice(0,80));}
+function linhaTarefa(t,n,ed,arrasta){const id=esc(t.id);
+ const meta=t.feita?'Concluída por '+esc(t.feitaPor||'—')+' em '+fmtD(t.feitaDia):'Adicionada por '+esc(t.por||'—')+' em '+fmtD(t.dia);
+ return '<div class="tar-item'+(t.feita?' feita':'')+(ed?'':' ro')+(arrasta?'':' sem')+'" data-id="'+id+'">'
+  +(arrasta?'<span class="tar-alca" title="Arraste para mudar a ordem" onpointerdown="iniciarArrasteTarefa(event,this)"><svg viewBox="0 0 14 18" aria-hidden="true"><circle cx="4" cy="3" r="1.6"/><circle cx="10" cy="3" r="1.6"/><circle cx="4" cy="9" r="1.6"/><circle cx="10" cy="9" r="1.6"/><circle cx="4" cy="15" r="1.6"/><circle cx="10" cy="15" r="1.6"/></svg></span>':'<span class="tar-alca vazia" style="cursor:default"></span>')
+  +'<label class="tar-check"><input type="checkbox" aria-label="'+(t.feita?'Voltar para as tarefas em aberto':'Marcar como concluída')+'" data-id="'+id+'"'+(t.feita?' checked':'')+(ed?'':' disabled')+' onchange="marcarTarefa(this.dataset.id,this.checked)"></label>'
+  +'<span class="tar-n">'+n+'.</span><div><div class="tar-texto">'+esc(t.texto||'')+'</div><div class="tar-meta">'+meta+'</div></div>'
+  +(ed?'<button type="button" class="btn btn-danger btn-sm tar-del" title="Excluir tarefa" aria-label="Excluir tarefa" data-id="'+id+'" onclick="excluirTarefa(this.dataset.id)">🗑️</button>':'')+'</div>';}
+/* Arrastar pela alça (mouse e dedo, com Pointer Events). A tarefa acompanha o ponteiro e as outras abrem espaço; a lista
+   rola sozinha perto das bordas. Só as abertas: as finalizadas seguem a ordem de conclusão.
+   Ao soltar grava "esta vem antes daquela", relendo a lista, para não desfazer o que a outra pessoa mudou. */
+let TAR_ARR=null;
+function iniciarArrasteTarefa(ev,alca){if(!canEdit()||TAR_ARR||(ev.pointerType==='mouse'&&ev.button!==0))return;
+ const item=alca.closest('.tar-item'),lista=item.parentNode,c=$('content');
+ if(lista.children.length<2)return;
+ ev.preventDefault();
+ TAR_ARR={item,lista,c,y:ev.clientY,y0:ev.clientY,sc0:c.scrollTop,top0:item.offsetTop,prox0:item.nextElementSibling};
+ item.classList.add('arrastando');
+ document.addEventListener('pointermove',moverArrasteTarefa);
+ document.addEventListener('pointerup',soltarArrasteTarefa);
+ document.addEventListener('pointercancel',cancelarArrasteTarefa);
+ requestAnimationFrame(passoArrasteTarefa);}
+function moverArrasteTarefa(ev){if(TAR_ARR){ev.preventDefault();TAR_ARR.y=ev.clientY;}}
+function passoArrasteTarefa(){const D=TAR_ARR;if(!D)return;
+ const r=D.c.getBoundingClientRect();
+ if(D.y<r.top+50)D.c.scrollTop-=10;else if(D.y>r.bottom-70)D.c.scrollTop+=10;
+ const topo=D.top0+(D.y-D.y0)+(D.c.scrollTop-D.sc0),h=D.item.offsetHeight;
+ /* compara com o lugar das outras como se a arrastada não estivesse na lista: troca ao passar da metade, nos dois sentidos */
+ const prox=[...D.lista.children].filter(x=>x!==D.item)
+  .find(x=>topo<x.offsetTop-(x.offsetTop>D.item.offsetTop?h:0)+x.offsetHeight/2)||null;
+ if(prox!==D.item.nextElementSibling){D.lista.insertBefore(D.item,prox);
+  [...D.lista.children].forEach((el,i)=>{el.querySelector('.tar-n').textContent=(i+1)+'.';});}
+ D.item.style.transform='translateY('+(Math.max(0,Math.min(D.lista.offsetHeight-h,topo))-D.item.offsetTop)+'px)';
+ requestAnimationFrame(passoArrasteTarefa);}
+function fimArrasteTarefa(){const D=TAR_ARR;TAR_ARR=null;
+ document.removeEventListener('pointermove',moverArrasteTarefa);
+ document.removeEventListener('pointerup',soltarArrasteTarefa);
+ document.removeEventListener('pointercancel',cancelarArrasteTarefa);
+ D.item.classList.remove('arrastando');D.item.style.transform='';return D;}
+function cancelarArrasteTarefa(){if(TAR_ARR){fimArrasteTarefa();renderTarefas();}}
+function soltarArrasteTarefa(){if(!TAR_ARR)return;const D=fimArrasteTarefa(),prox=D.item.nextElementSibling;
+ if(prox===D.prox0){renderTarefas();return;}
+ const id=D.item.dataset.id,antes=prox?prox.dataset.id:null;
+ mudarTarefas(l=>{const i=l.findIndex(x=>x.id===id);if(i<0)return false;
+  const [t]=l.splice(i,1),j=antes?l.findIndex(x=>x.id===antes):-1;
+  if(j<0)l.push(t);else l.splice(j,0,t);},'',null);}
+function renderTarefas(){const el=$('tarefas-abertas');if(!el||TAR_ARR)return;
+ const ed=canEdit(),todas=listaTarefas();
+ const abertas=todas.filter(t=>!t.feita);
+ const feitas=todas.filter(t=>t.feita).sort((a,b)=>String(b.feitaEm||'').localeCompare(String(a.feitaEm||'')));
+ $('tarefas-n-abertas').textContent=abertas.length||'';$('tarefas-n-finalizadas').textContent=feitas.length||'';
+ el.innerHTML=abertas.map((t,i)=>linhaTarefa(t,i+1,ed,ed)).join('')||'<div class="tar-vazio">Nenhuma tarefa em aberto.</div>';
+ $('tarefas-finalizadas').innerHTML=feitas.map((t,i)=>linhaTarefa(t,feitas.length-i,ed,false)).join('')||'<div class="tar-vazio">Nenhuma tarefa finalizada ainda.</div>';}
 function openNew(){if(!guard())return;
  switch(CUR){
+  case 'tarefas':openTarefa();break;
   case 'clientes':openCliente();break;
   case 'insumos':openProduto('Insumo');break;
   case 'portfolio':openProduto('Portfólio');break;
@@ -16395,6 +16540,14 @@ e não numera nada.
   mesma Análise dos Últimos Pedidos Entregues (analiseEntregues, as
   contas que a tela também usa) e as últimas transações do período
   selecionado (sem o estoque crítico).
+- Tarefas (desde 09/11/2026) — lista de afazeres da equipe, logo abaixo
+  do Calendário no menu. O botão Adicionar Tarefa no topo abre uma janela
+  para escrever; cada tarefa tem número e caixinha, e ticar a leva para
+  Tarefas finalizadas, logo abaixo (desmarcar devolve). Abertas numeradas
+  na ordem da lista, que a alça de cada linha permite arrastar (mouse ou
+  dedo); finalizadas com a última concluída em cima e o maior número. Guarda quem adicionou e quem concluiu, e o dia. Fica no
+  campo tarefas da tabela config; cada alteração relê a lista antes de
+  gravar, para duas pessoas não apagarem a tarefa uma da outra.
 - Calendário (de Entregas) — grade do mês (‹ ›, Hoje) com três tipos de
   compromisso: as entregas cadastradas, na cor do status (Agendada, Em
   rota, Entregue/Instalada; Agendada com data passada aparece como
@@ -17777,13 +17930,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-09.1';
+const APP_VERSAO='2026-11-11.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=345;
+const APP_ATUALIZACAO=346;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
