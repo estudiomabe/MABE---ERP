@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 12/11/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 13/11/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -791,7 +791,10 @@ e não numera nada.
   aprovação de orçamentos, em duas abas: Em andamento (Pendente,
   Confirmado, Enviado; abre nela) e Finalizados (Entregue e Cancelado) —
   desde 07/11/2026 escolhidas por duas caixas abaixo do período, com
-  quantos pedidos e o total em R$ (sem os cancelados, que aparecem à parte),
+  quantos pedidos e o total em R$ (sem os cancelados, que aparecem à parte);
+  desde 12/11/2026 a aba Finalizados vem na ordem de entrega (a última
+  entregue em cima, pela marca "Entregue em"; cancelados no fim) e mostra
+  "Entregue em" embaixo do prazo,
   cada uma com a quantidade; com o mesmo seletor de período e um filtro em
   cada coluna (Pedido, Data, Prazo, Cliente, Itens, Total, Pagamento,
   Status R$ (desde 07/11/2026 com a barra de 0 a 100% pago embaixo, a
@@ -1759,4 +1762,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 12/11/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 13/11/2026.

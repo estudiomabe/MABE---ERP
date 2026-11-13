@@ -699,6 +699,9 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 .pc-data { font-family:var(--mono);font-size:11.5px;color:var(--text-muted); }
 .pc-cliente { font-size:16px;font-weight:700;line-height:1.25;color:var(--text);word-break:break-word; }
 .pc-prazo { font-size:12.5px;color:var(--text-muted);margin-top:-4px; }
+.vnd-entregue { display:block;font-size:11px;font-weight:600;color:var(--success);white-space:nowrap;margin-top:3px; }
+.pc-prazo .vnd-entregue { display:inline;margin:0 0 0 6px;font-size:12px; }
+.pc-prazo .vnd-entregue:first-child { margin-left:0; }
 .pc-prazo .mono { color:var(--text);font-weight:600; }
 .prazo-atrasado, .pc-prazo.prazo-atrasado, .pc-prazo.prazo-atrasado .mono { color:var(--danger);font-weight:600; }
 .pc-valor { display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap; }
@@ -5277,17 +5280,25 @@ function pintarAbasVnd(base){const abas=$('vnd-abas');if(!abas)return;
  $('vnd-v-andamento').textContent=fmt(soma(and));$('vnd-v-finalizados').textContent=fmt(soma(fin));
  abas.querySelectorAll('.vnd-caixa').forEach(b=>{const a=b.dataset.aba===VND_ABA;b.classList.toggle('active',a);b.setAttribute('aria-selected',a?'true':'false');});
  const tit=$('vnd-tab-titulo');if(tit)tit.textContent=VND_ABA==='finalizados'?'Finalizados':'Em andamento';}
+/* a data em que o pedido foi entregue: a marca "Entregue em" das observações (só para o status Entregue) */
+const entregaDoPedido=v=>v&&v.status==='Entregue'?lerMarcaObs(v.obs,'Entregue em'):'';
+function ordenarFinalizadosVnd(lista){const grupo=v=>v.status!=='Entregue'?2:entregaDoPedido(v)?0:1;
+ return lista.slice().sort((a,b)=>grupo(a)-grupo(b)
+  ||String(entregaDoPedido(b)||b.data||'').localeCompare(String(entregaDoPedido(a)||a.data||''))
+  ||(Number(b.num)||0)-(Number(a.num)||0));}
+const entregueEmHtml=v=>{const e=entregaDoPedido(v);return e?'<span class="vnd-entregue">Entregue em '+fmtD(e)+'</span>':'';};
 function renderVendas(){syncPerBar('vnd-per',PER_VND);
  const base=DB.vendas.filter(v=>matchPer(v.data,PER_VND)&&fcPassa('vnd',v));
  pintarAbasVnd(base);
- const lista=base.filter(v=>vndFinalizado(v)===(VND_ABA==='finalizados'));
+ let lista=base.filter(v=>vndFinalizado(v)===(VND_ABA==='finalizados'));
+ if(VND_ABA==='finalizados')lista=ordenarFinalizadosVnd(lista);
  const vazioVnd=VND_ABA==='finalizados'?'Nenhum pedido entregue ou cancelado no período selecionado':'Nenhum pedido em andamento no período selecionado';
  $('tb-vendas').innerHTML=lista.map(v=>{const stB={'Pendente':'badge-warning','Confirmado':'badge-info','Enviado':'badge-info','Entregue':'badge-success','Cancelado':'badge-danger'}[v.status]||'badge-muted';
  const itens=v.itens||[];
  const expandido=VND_EXPANDIDOS.has(v.id);
  const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(expandido?'Recolher itens':'Ver itens do pedido')+'" onclick="event.stopPropagation();toggleItensVenda(\''+v.id+'\')">'+(expandido?'▾':'▸')+'</button>':'<span style="display:inline-block;width:29px"></span>';
  const abrirPedido='if(event.target.closest(\'button,select,label,a,input,.status-drop\'))return;editVenda(\''+v.id+'\')';
- const linhaHeader='<tr style="cursor:pointer" onclick="'+abrirPedido+'"><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+prazoPedidoCelula(v)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span>'+seloFinPendente(v)+(v.status==='Cancelado'?'':barraPagoHtml(v,'vnd-pago'))+'</td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+(verValores()?'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button>':'')+'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Duplicar pedido" onclick="event.stopPropagation();duplicarVenda(\''+v.id+'\')">⧉</button>':'')+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
+ const linhaHeader='<tr style="cursor:pointer" onclick="'+abrirPedido+'"><td class="mono" style="white-space:nowrap">'+chevron+'V-'+pad(v.num)+'</td><td class="mono">'+fmtD(v.data)+'</td><td>'+prazoPedidoCelula(v)+entregueEmHtml(v)+'</td><td>'+esc(cliName(v.cliId))+'</td><td>'+itens.length+' item(ns)</td><td class="mono" style="font-weight:700">'+fmt(v.total)+'</td><td>'+esc(v.pag||'—')+'</td><td><span class="badge '+stB+'">'+v.status+'</span>'+seloFinPendente(v)+(v.status==='Cancelado'?'':barraPagoHtml(v,'vnd-pago'))+'</td><td>'+statusPcpCelula(v)+'</td><td><div style="display:flex;gap:4px;align-items:center">'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Adicionar item" onclick="event.stopPropagation();addItemVendaLista(\''+v.id+'\')">+ Item</button>':'')+(verValores()?'<button class="btn btn-ghost btn-sm" title="Gerar Recibo (PDF)" onclick="event.stopPropagation();gerarReciboVenda(\''+v.id+'\')">🧾</button>':'')+'<button class="btn btn-ghost btn-sm" title="Nota Fiscal" onclick="event.stopPropagation();abrirInfoNotaFiscal(\''+v.id+'\')">📋</button>'+((canEdit()&&verValores())?'<button class="btn btn-ghost btn-sm" title="Duplicar pedido" onclick="event.stopPropagation();duplicarVenda(\''+v.id+'\')">⧉</button>':'')+actionBtns("editVenda('"+v.id+"')","delVenda('"+v.id+"')")+'</div></td></tr>';
  let linhasItens='';
  if(expandido&&itens.length){
   linhasItens=itens.map(it=>'<tr class="venda-item-row sub-row" style="background:var(--surface2);cursor:pointer" onclick="'+abrirPedido+'"><td></td><td></td><td></td><td colspan="2" style="padding:5px 14px;font-size:11px;font-weight:400;color:rgba(122,111,98,0.85)">• '+esc(it.desc||'—')+'</td><td class="mono" style="font-size:11px;font-weight:600;color:var(--text)">'+fmt((it.qty||1)*(it.preco||0))+'</td><td class="mono" style="font-size:10.5px;font-weight:400;color:rgba(122,111,98,0.85)">'+(it.qty||1)+' × '+fmt(it.preco||0)+'</td><td></td><td></td><td></td></tr>').join('');
@@ -5315,8 +5326,8 @@ function renderVendasCards(lista,vazio){
   return '<div class="pedido-card" style="cursor:pointer" onclick="if(event.target.closest(\'button,select,label,a,input,.status-drop\'))return;editVenda(\''+v.id+'\')">'
    +'<div class="pc-topo"><span class="pc-num">V-'+pad(v.num)+'</span><span class="pc-data">'+fmtD(v.data)+'</span></div>'
    +'<div class="pc-cliente">'+esc(cliName(v.cliId))+'</div>'
-   +(()=>{const p=prazoDoPedido(v),n=atrasoDoPedido(v);
-     return p?'<div class="pc-prazo'+(n?' prazo-atrasado':'')+'">Prazo <span class="mono">'+fmtD(p)+'</span>'+(n?' · '+textoAtraso(n):'')+'</div>':'';})()
+   +(()=>{const p=prazoDoPedido(v),n=atrasoDoPedido(v),e=entregueEmHtml(v);
+     return p?'<div class="pc-prazo'+(n?' prazo-atrasado':'')+'">Prazo <span class="mono">'+fmtD(p)+'</span>'+(n?' · '+textoAtraso(n):'')+e+'</div>':e?'<div class="pc-prazo">'+e+'</div>':'';})()
    +'<div class="pc-valor"><span class="pc-total">'+fmt(v.total)+'</span><span class="pc-pag">'+esc(v.pag||'—')+'</span></div>'
    +(v.status==='Cancelado'?'':barraPagoHtml(v,'vnd-pago'))
    +'<div class="pc-status"><span class="badge badge-rs '+stB+'">'+v.status+'</span>'+statusPcpCelula(v)+seloFinPendente(v)+'</div>'
@@ -16698,7 +16709,10 @@ e não numera nada.
   aprovação de orçamentos, em duas abas: Em andamento (Pendente,
   Confirmado, Enviado; abre nela) e Finalizados (Entregue e Cancelado) —
   desde 07/11/2026 escolhidas por duas caixas abaixo do período, com
-  quantos pedidos e o total em R$ (sem os cancelados, que aparecem à parte),
+  quantos pedidos e o total em R$ (sem os cancelados, que aparecem à parte);
+  desde 12/11/2026 a aba Finalizados vem na ordem de entrega (a última
+  entregue em cima, pela marca "Entregue em"; cancelados no fim) e mostra
+  "Entregue em" embaixo do prazo,
   cada uma com a quantidade; com o mesmo seletor de período e um filtro em
   cada coluna (Pedido, Data, Prazo, Cliente, Itens, Total, Pagamento,
   Status R$ (desde 07/11/2026 com a barra de 0 a 100% pago embaixo, a
@@ -17999,13 +18013,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-12.1';
+const APP_VERSAO='2026-11-13.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=349;
+const APP_ATUALIZACAO=350;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
