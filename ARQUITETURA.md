@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 13/11/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 17/11/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -723,7 +723,9 @@ e não numera nada.
   itensTodosOrc() vê todos), item novo ou duplicado num orçamento já
   aprovado nasce Não aprovado, e o botão "Aprovar e levar ao pedido" abre
   a ficha do pedido do orçamento com o item somado (vira Aprovado quando
-  o pedido é salvo); anexos de referência
+  o pedido é salvo); desde 13/11/2026 o pedido nasce com as observações
+  do orçamento (no fim das observações, "Obs. do orçamento: ...") e com a
+  observação de cada item; anexos de referência
   (fotos, PDFs); geração do PDF da proposta (com capa), do contrato de
   prestação de serviço e envio por WhatsApp ou e-mail.
   - Lista: seletor de período (Mês, Ano, Tudo), busca por número ou
@@ -831,6 +833,12 @@ e não numera nada.
   - lixeira de itens: o ✕ manda o item para a lixeira da ficha, que vai
     para a coluna vendas.lixeira no Salvar Pedido (item, posição, quando
     e quem); Restaurar devolve a linha ao lugar de onde saiu;
+  - As observações do pedido ficam numa caixa de várias linhas (desde 16/11/2026). Cada item tem a sua observação (campo embaixo da linha; vai em
+    vendas.itens[].obs e sai no Imprimir pedido/PCP, não no recibo), e,
+    no pedido gerado de orçamento, o quadro "Do orçamento ORC-…" (fechado,
+    só consulta) mostra as observações do orçamento e de cada item
+    aprovado, com materiais, serviços de terceiros e horas previstas, sem
+    valores (desde 13/11/2026);
   - Visão Geral com as datas do ciclo (orçamento, pedido, entrega
     prevista = prazo da OP, entregue em, último pagamento): no Salvar
     Pedido, a data mudada é gravada na origem (orçamento, OP ou
@@ -1762,4 +1770,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 13/11/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 17/11/2026.

@@ -699,6 +699,20 @@ body.sem-valores .oc-lucro, body.sem-valores .pc-item strong { display:none; }
 .pc-data { font-family:var(--mono);font-size:11.5px;color:var(--text-muted); }
 .pc-cliente { font-size:16px;font-weight:700;line-height:1.25;color:var(--text);word-break:break-word; }
 .pc-prazo { font-size:12.5px;color:var(--text-muted);margin-top:-4px; }
+/* ficha do pedido: observação de cada item e o quadro "Do orçamento" */
+#vnd-obs { field-sizing:content;min-height:96px;max-height:300px; }
+.vi-obs { grid-column:1 / -1;font-size:12.5px;min-height:34px;resize:vertical;line-height:1.4; }
+.do-orc { background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:0 0 14px; }
+.do-orc summary { cursor:pointer;font-weight:700;font-size:13px;color:var(--text);list-style-position:outside;padding:4px 0;min-height:32px;display:list-item; }
+.do-orc-geral { font-size:12.5px;margin:8px 0 2px;white-space:pre-wrap;overflow-wrap:anywhere; }
+.do-orc-item { border-top:1px solid var(--border);padding:10px 0 4px;margin-top:8px; }
+.do-orc-tit { font-weight:700;font-size:13px; }
+.do-orc-tit span { font-family:var(--mono);font-weight:600;color:var(--text-muted);margin-left:4px; }
+.do-orc-obs { font-size:12.5px;margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere; }
+.do-orc-grupos { display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 18px;margin-top:6px; }
+.do-orc-grupo > span { display:block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px; }
+.do-orc-grupo ul { margin:0;padding-left:16px;font-size:12.5px;line-height:1.5; }
+.do-orc-nota, .do-orc-vazio { font-size:11.5px;color:var(--text-muted);margin-top:6px; }
 .vnd-entregue { display:block;font-size:11px;font-weight:600;color:var(--success);white-space:nowrap;margin-top:3px; }
 .pc-prazo .vnd-entregue { display:inline;margin:0 0 0 6px;font-size:12px; }
 .pc-prazo .vnd-entregue:first-child { margin-left:0; }
@@ -1448,7 +1462,7 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
 <div id="vnd-pags-soma" style="font-size:11.5px;margin-top:8px;font-weight:600"></div>
 <div id="vnd-pags-aviso" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
 <div id="vnd-pags-sql" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:8px"><div class="so-admin">Para guardar os comprovantes, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists pags jsonb default '[]'::jsonb;</div></div><div class="so-equipe">Comprovantes indisponíveis no momento — avise o administrador.</div></div>
-</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn btn-ghost btn-sm" id="vnd-lix-btn" onclick="abrirLixeiraVnd()">🗑️ Lixeira</button><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><input type="text" class="form-control" id="vnd-obs"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div><div id="vnd-gastos" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">💸 Valor gasto neste pedido</div></div><div class="hp-dica" style="font-size:11.5px;margin:-4px 0 8px">Vem do Financeiro: as saídas, inclusive as do extrato, em que este pedido foi escolhido na coluna "Pedido".</div><div id="vnd-gastos-corpo"></div><div id="vnd-gastos-total"></div></div><div id="vnd-horas" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">⏱️ Horas trabalhadas neste projeto</div><button type="button" class="btn btn-ghost btn-sm" id="vnd-horas-add" onclick="addLinhaHoras()">+ Adicionar Horas</button></div><div id="vnd-horas-dica" style="font-size:11.5px;margin:-4px 0 8px"></div><div id="vnd-horas-aviso" style="display:none;font-size:12px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--warning,#c9a227);border-radius:8px;padding:10px 12px;margin-bottom:8px"><div class="so-admin">Para guardar as horas, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface2);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists horas jsonb default '[]'::jsonb;</div></div><div class="so-equipe">Lançamento de horas indisponível no momento — avise o administrador.</div></div><div class="hp-cabecalho" id="vnd-horas-cab" style="display:none"><span>Data</span><span>Mão de obra</span><span>Horas</span><span>Valor (R$)</span><span>Observações</span><span></span></div><div id="vnd-horas-corpo" style="display:flex;flex-direction:column;gap:7px"></div><div id="vnd-horas-total"></div></div></div></div>
+</div><div class="form-group campo-origem"><label class="form-label">Origem do cliente</label><select class="form-control" id="vnd-origem"><option value="">— Não informado —</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Site</option><option>WhatsApp</option><option>Cliente recorrente</option><option>Arquiteto / parceiro</option><option>Feira / evento</option><option>Outro</option></select></div><div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><label class="form-label" style="margin:0">Itens do Pedido</label><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn btn-ghost btn-sm" id="vnd-lix-btn" onclick="abrirLixeiraVnd()">🗑️ Lixeira</button><button class="btn btn-ghost btn-sm" onclick="abrirTipoItemPedido()">+ Adicionar Item ao Pedido</button></div></div><div id="vnd-itens" style="display:flex;flex-direction:column;gap:7px"></div><div style="margin-top:10px;text-align:right;font-weight:700;font-size:15px">Total: <span id="vnd-total" style="color:var(--accent);font-family:var(--mono)">R$ 0,00</span></div></div><div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="vnd-obs" rows="4" style="resize:vertical;font-family:var(--font)" placeholder="Combinados com o cliente, detalhes da entrega..."></textarea></div><div id="vnd-do-orc" style="display:none"></div><div id="vnd-visao-geral" style="display:none;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">📅 Visão Geral</div><div id="vnd-visao-geral-corpo" style="display:flex;flex-direction:column"></div></div><div id="vnd-gastos" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">💸 Valor gasto neste pedido</div></div><div class="hp-dica" style="font-size:11.5px;margin:-4px 0 8px">Vem do Financeiro: as saídas, inclusive as do extrato, em que este pedido foi escolhido na coluna "Pedido".</div><div id="vnd-gastos-corpo"></div><div id="vnd-gastos-total"></div></div><div id="vnd-horas" style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-top:10px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em">⏱️ Horas trabalhadas neste projeto</div><button type="button" class="btn btn-ghost btn-sm" id="vnd-horas-add" onclick="addLinhaHoras()">+ Adicionar Horas</button></div><div id="vnd-horas-dica" style="font-size:11.5px;margin:-4px 0 8px"></div><div id="vnd-horas-aviso" style="display:none;font-size:12px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--warning,#c9a227);border-radius:8px;padding:10px 12px;margin-bottom:8px"><div class="so-admin">Para guardar as horas, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface2);border-radius:6px;padding:7px 9px;user-select:all">alter table public.vendas add column if not exists horas jsonb default '[]'::jsonb;</div></div><div class="so-equipe">Lançamento de horas indisponível no momento — avise o administrador.</div></div><div class="hp-cabecalho" id="vnd-horas-cab" style="display:none"><span>Data</span><span>Mão de obra</span><span>Horas</span><span>Valor (R$)</span><span>Observações</span><span></span></div><div id="vnd-horas-corpo" style="display:flex;flex-direction:column;gap:7px"></div><div id="vnd-horas-total"></div></div></div></div>
         <div class="config-card orc-anexos-zona" id="vnd-anexos-zona" style="margin-top:14px" ondragenter="anexoPedidoArrastando(event,true)" ondragover="anexoPedidoArrastando(event,true)" ondragleave="anexoPedidoArrastando(event,false)" ondrop="anexoPedidoSolto(event)">
           <div class="orc-anexos-aviso">Solte os arquivos para anexar</div>
           <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência<span class="orc-anexos-dica"> — ou arraste os arquivos para cá</span></div><button class="btn btn-ghost btn-sm" id="vnd-anexo-btn" onclick="document.getElementById('vnd-anexo-input').click()">+ Anexar Arquivo</button></div>
@@ -4727,7 +4741,32 @@ function marcaObs(obs,rotulo,iso){obs=obs||'';const re=new RegExp(rotulo+': \\d{
  if(iso){const txt=rotulo+': '+fmtD(iso);return re.test(obs)?obs.replace(re,txt):(obs?obs+' · ':'')+txt;}
  return obs.replace(new RegExp('\\s*·\\s*'+rotulo+': \\d{2}\\/\\d{2}\\/\\d{4}'),'').replace(re,'').replace(/^\s*·\s*/,'').trim();}
 /* "Visao Geral" do pedido: as 5 datas do ciclo de vida, todas derivadas do que ja existe (sem nova coluna no Supabase) */
-function renderVisaoGeralPedido(v){const alvo=$('vnd-visao-geral');if(!alvo)return;
+/* as observações do orçamento como texto de uma linha, para o fim das observações do pedido (o campo é de uma linha) */
+function obsDoOrcParaPedido(o){const t=String(o&&o.obs||'').trim().replace(/\s*\n+\s*/g,' / ');return t?' · Obs. do orçamento: '+t:'';}
+/* quadro só de consulta: o que o orçamento previu para cada item aprovado (sem valores em R$) */
+function renderDoOrcPedido(v){const el=$('vnd-do-orc');if(!el)return;
+ const orc=v?orcDoPedido(v):null,itens=orc?itensOrc(orc):[];
+ if(!orc||!itens.length){el.style.display='none';el.innerHTML='';return;}
+ const n=x=>{const q=Number(x)||0;return String(Math.round(q*1000)/1000).replace('.',',');};
+ const lista=arr=>'<ul>'+arr.join('')+'</ul>';
+ const blocos=itens.map(it=>{const q=Number(it.qty)||1,por=q>1?' (por unidade)':'';
+  const mats=(Array.isArray(it.materiais)?it.materiais:[]).filter(m=>m&&String(m.desc||'').trim());
+  const servs=(Array.isArray(it.servicos)?it.servicos:[]).filter(s=>s&&String(s.desc||'').trim());
+  const mdo=(Array.isArray(it.mdo)?it.mdo:[]).filter(m=>Number(m.horas)>0);
+  const grupos=[];
+  if(mats.length)grupos.push('<div class="do-orc-grupo"><span>Materiais'+por+'</span>'+lista(mats.map(m=>'<li>'+esc(m.desc)+(m.mode==='manual'?'':' — '+n(m.qty))+'</li>'))+'</div>');
+  if(servs.length)grupos.push('<div class="do-orc-grupo"><span>Serviços de terceiros</span>'+lista(servs.map(s=>'<li>'+esc(s.desc)+(Number(s.qtd)>0?' — '+n(s.qtd)+(s.unidade?' '+esc(s.unidade):''):'')+'</li>'))+'</div>');
+  if(mdo.length){const tot=mdo.reduce((s,m)=>s+Number(m.horas),0);
+   grupos.push('<div class="do-orc-grupo"><span>Mão de obra'+por+'</span>'+lista(mdo.map(m=>'<li>'+esc(m.tipoNome||'Mão de obra')+' — '+n(m.horas)+' h</li>')
+    .concat(q>1?['<li><strong>'+n(tot*q)+' h no total</strong></li>']:[]))+'</div>');}
+  return '<div class="do-orc-item"><div class="do-orc-tit">'+esc(it.desc||'—')+(q>1?'<span>×'+n(q)+'</span>':'')+'</div>'
+   +(String(it.obs||'').trim()?'<div class="do-orc-obs">'+esc(it.obs)+'</div>':'')
+   +(grupos.length?'<div class="do-orc-grupos">'+grupos.join('')+'</div>':'<div class="do-orc-vazio">Sem ficha de materiais e horas no orçamento.</div>')+'</div>';}).join('');
+ el.innerHTML='<details class="do-orc"><summary>📋 Do orçamento ORC-'+pad(orc.num)+' — observações, materiais e horas previstas</summary>'
+  +(String(orc.obs||'').trim()?'<div class="do-orc-geral"><strong>Observações do orçamento:</strong> '+esc(orc.obs)+'</div>':'')
+  +blocos+'<div class="do-orc-nota">Só para consulta: para mudar, edite o orçamento.</div></details>';
+ el.style.display='';}
+function renderVisaoGeralPedido(v){renderDoOrcPedido(v);const alvo=$('vnd-visao-geral');if(!alvo)return;
  if(!v){alvo.style.display='none';$('vnd-visao-geral-corpo').innerHTML='';return;}
  const orc=orcDoPedido(v);const op=opDoPedido(v);const pag=pagamentoDoPedido(v);
  /* data-original: só grava na origem (orçamento, OP, Financeiro) o que de fato mudou */
@@ -5529,8 +5568,9 @@ function montarPdfRecibo(v,refs,modo,semValores){
  // Itens: mesmas alturas e colunas da tabela do orçamento
  const itens=v.itens||[];
  const linhas=itens.map((it,i)=>{const qty=it.qty||1;
-  return comValores?[String(i+1),String(it.desc||'—'),String(qty),fmt(it.preco),fmt(qty*Number(it.preco||0))]
-                   :[String(i+1),String(it.desc||'—'),String(qty)];});
+  const nome=String(it.desc||'—')+(ehPedido&&String(it.obs||'').trim()?'\n'+textoPdf(it.obs):'');
+  return comValores?[String(i+1),nome,String(qty),fmt(it.preco),fmt(qty*Number(it.preco||0))]
+                   :[String(i+1),nome,String(qty)];});
  const cab=(t,a)=>({content:t,styles:{halign:a}});
  let tabelaJaPassouPorUmaPagina=false;
  const entrelinhaAntes=doc.getLineHeightFactor();doc.setLineHeightFactor(1.35);
@@ -5624,7 +5664,10 @@ function montarPdfRecibo(v,refs,modo,semValores){
  return doc;}
 function prodOptions(sel){return '<option value="">— Produto —</option>'+DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').map(p=>'<option value="'+p.id+'" data-preco="'+(p.preco||p.custo||0)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.nome)+' ('+p.est+' '+esc(p.un||'un')+')</option>').join('');}
 /* qtd, preço, subtotal e ✕ — iguais nos dois tipos de linha do pedido */
-function camposItemVenda(it){return '<span class="rot-cel">Qtd</span><span class="rot-cel">Preço unit.</span><span class="rot-cel">Subtotal</span><span class="rot-cel"></span><input type="number" class="form-control vi-qty" value="'+(it?it.qty:1)+'" min="1" oninput="calcVenda()"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control vi-preco" value="'+(it?it.preco:0)+'" step="0.01" oninput="calcVenda()" style="border:none;background:transparent;padding-left:2px"></div><div class="mono vi-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" title="Tirar este item (vai para a lixeira)" onclick="tirarItemVenda(this)">✕</button>';}
+function camposItemVenda(it){return '<span class="rot-cel">Qtd</span><span class="rot-cel">Preço unit.</span><span class="rot-cel">Subtotal</span><span class="rot-cel"></span><input type="number" class="form-control vi-qty" value="'+(it?it.qty:1)+'" min="1" oninput="calcVenda()"><div style="display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 4px"><span style="font-size:9.5px;color:var(--text-muted);flex-shrink:0">R$</span><input type="number" class="form-control vi-preco" value="'+(it?it.preco:0)+'" step="0.01" oninput="calcVenda()" style="border:none;background:transparent;padding-left:2px"></div><div class="mono vi-sub" style="text-align:right;font-size:12px">R$ 0,00</div><button class="btn btn-danger btn-sm" title="Tirar este item (vai para a lixeira)" onclick="tirarItemVenda(this)">✕</button>'
+  +'<textarea class="form-control vi-obs" rows="'+(it&&it.obs?Math.min(4,String(it.obs).split('\n').length+1):1)+'" maxlength="1000" placeholder="Observação do item (medidas, madeira, acabamento...)" aria-label="Observação do item">'+esc(it&&it.obs||'')+'</textarea>';}
+/* a observação da linha vai junto com o item (só quando escrita: item sem observação fica como antes) */
+const comObsVenda=(it,r)=>{const o=String(((r&&r.querySelector('.vi-obs'))||{}).value||'').trim();if(it&&o)it.obs=o;return it;};
 function linhaItemVenda(){const row=document.createElement('div');
  row.style.cssText='display:grid;grid-template-columns:2fr 70px 100px 100px 30px;gap:6px;align-items:center';
  return row;}
@@ -5651,9 +5694,9 @@ function pintarBotaoLixeiraVnd(){const b=$('vnd-lix-btn');if(!b)return;
 function itemDaLinhaVenda(r){
  const qty=parseFloat(r.querySelector('.vi-qty').value)||0;const preco=parseFloat(r.querySelector('.vi-preco').value)||0;
  const sel=r.querySelector('.vi-prod');
- if(sel){if(!sel.value)return null;const p=DB.produtos.find(x=>x.id===sel.value);return {prodId:sel.value,desc:p?p.nome:'',qty:qty||1,preco};}
+ if(sel){if(!sel.value)return null;const p=DB.produtos.find(x=>x.id===sel.value);return comObsVenda({prodId:sel.value,desc:p?p.nome:'',qty:qty||1,preco},r);}
  const d=(r.querySelector('.vi-desc')||{}).value;const desc=String(d||'').trim();
- return desc?{prodId:null,desc,qty:qty||1,preco}:null;}
+ return desc?comObsVenda({prodId:null,desc,qty:qty||1,preco},r):null;}
 function tirarItemVenda(btn){const r=btn.closest('#vnd-itens > div');if(!r)return;
  const item=itemDaLinhaVenda(r);
  /* linha vazia (nunca preenchida) só some; o resto vai para a lixeira */
@@ -5759,7 +5802,7 @@ function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.fin
 let ITEM_PARA_PEDIDO=null;
 function capturarPedido(){const itens=[];
  document.querySelectorAll('#vnd-itens > div').forEach(r=>{const sel=r.querySelector('.vi-prod'),desc=r.querySelector('.vi-desc');
-  itens.push({tipo:r.dataset.tipo,prodId:sel?sel.value:'',desc:desc?desc.value:'',qty:parseFloat(r.querySelector('.vi-qty').value)||1,preco:parseFloat(r.querySelector('.vi-preco').value)||0});});
+  itens.push(comObsVenda({tipo:r.dataset.tipo,prodId:sel?sel.value:'',desc:desc?desc.value:'',qty:parseFloat(r.querySelector('.vi-qty').value)||1,preco:parseFloat(r.querySelector('.vi-preco').value)||0},r));});
  return {id:$('vnd-id').value,cliId:$('vnd-cli').value,data:$('vnd-data').value,pag:rotuloPagamento(formasPagamentoDe('vnd-pags')),
   pags:formasPagamentoDe('vnd-pags').map(f=>({dados:{id:f.id,forma:f.forma,valor:f.valor,parcelas:f.parcelas,data:f.data,status:f.status,local:f.local,comprovantes:(f.linha._comp||[]).slice()},
    pag:f.linha._pag?JSON.parse(JSON.stringify(f.linha._pag)):null,salva:f.linha.dataset.salva||'',remontada:f.linha._remontada||null})),
@@ -5779,7 +5822,7 @@ function restaurarPedido(r){VND_LIX=(r.lixeira||[]).slice();pintarBotaoLixeiraVn
  r.visaoGeralValores.forEach(([id,valor])=>{if($(id))$(id).value=valor;});
  $('vnd-horas-corpo').innerHTML='';(r.horas||[]).forEach(l=>addLinhaHoras(l));calcHorasPedido();
  if(r.horasSujas)marcarHorasSujas();else limparHorasSujas();
- renderGastosPedido(DB.vendas.find(x=>x.id===r.id)||null);
+ renderGastosPedido(DB.vendas.find(x=>x.id===r.id)||null);renderDoOrcPedido(DB.vendas.find(x=>x.id===r.id)||null);
  $('vnd-itens').innerHTML='';
  r.itens.forEach(it=>it.tipo==='livre'?addItemLivreVenda(it):addItemVenda(it));
  vndShow('form');aoAbrirFichaPedido(r.id);}
@@ -8491,9 +8534,9 @@ function itensDoPedidoTela(){const itens=[];document.querySelectorAll('#vnd-iten
  const qty=parseFloat(r.querySelector('.vi-qty').value)||0;const preco=parseFloat(r.querySelector('.vi-preco').value)||0;
  if(qty<=0)return;
  const sel=r.querySelector('.vi-prod');
- if(sel){if(!sel.value)return;const p=DB.produtos.find(x=>x.id===sel.value);itens.push({prodId:sel.value,desc:p?p.nome:'',qty,preco});return;}
+ if(sel){if(!sel.value)return;const p=DB.produtos.find(x=>x.id===sel.value);itens.push(comObsVenda({prodId:sel.value,desc:p?p.nome:'',qty,preco},r));return;}
  const d=r.querySelector('.vi-desc').value.trim();
- if(d)itens.push({prodId:null,desc:d,qty,preco});});return itens;}
+ if(d)itens.push(comObsVenda({prodId:null,desc:d,qty,preco},r));});return itens;}
 const pidsDaTela=()=>[...document.querySelectorAll('#vnd-pags .pag-linha')].map(l=>l.dataset.pid).filter(Boolean);
 /* a linha da tela mudou em relação ao servidor (ids ou campos)? */
 function linhasMudaram(alvo,servidor){const a=(alvo||[]),s=(servidor||[]).filter(p=>p&&p.id);
@@ -9676,7 +9719,7 @@ function levarItemAoPedido(orcId,itemId){if(!guard()||!guardValores())return;
  navigate('vendas');editVenda(v.id);
  if($('vnd-id').value!==v.id)return;
  const qty=Number(it.qty)||1;
- addItemPedido({prodId:it.prodId||null,desc:it.desc,qty,preco:Math.round(Number(it.preco||0)/qty*100)/100});
+ addItemPedido(Object.assign({prodId:it.prodId||null,desc:it.desc,qty,preco:Math.round(Number(it.preco||0)/qty*100)/100},String(it.obs||'').trim()?{obs:String(it.obs).trim()}:{}));
  calcVenda();
  LEVAR_ITEM={orcId,itemId,vid:v.id,desc:it.desc};
  toast('"'+it.desc+'" entrou no V-'+pad(v.num)+'. Acerte o pagamento da diferença e toque em Salvar: aí o item fica Aprovado no orçamento.','info',10000);}
@@ -9843,7 +9886,7 @@ async function confirmarAprovarOrc(decisoes){const id=$('aprv-orc-id').value;con
  const totalAprovado=o.preco;
 
  // 1) Gerar pedido (venda) apenas com os itens aprovados
- const itensVenda=itens.map(it=>({prodId:it.prodId||null,desc:it.desc,qty:it.qty||1,preco:(it.qty||1)?Math.round((it.preco/(it.qty||1))*100)/100:it.preco}));
+ const itensVenda=itens.map(it=>Object.assign({prodId:it.prodId||null,desc:it.desc,qty:it.qty||1,preco:(it.qty||1)?Math.round((it.preco/(it.qty||1))*100)/100:it.preco},String(it.obs||'').trim()?{obs:String(it.obs).trim()}:{}));
  /* as fotos de referência seguem para o pedido: mesmos arquivos, sem cópia no servidor */
  const anexosDoOrc=(o.anexos||[]).map(a=>({path:a.path,nome:a.nome,url:a.url}));
  /* cada forma vira uma linha de pagamento; com a ligação, já com a marca finPendente (a porta única cria as contas
@@ -9855,7 +9898,7 @@ async function confirmarAprovarOrc(decisoes){const id=$('aprv-orc-id').value;con
   if(liberada||semConferir){x.finPendente={em,por,origem:'aprovacao'};
    const d=i===0&&fBanco?{ligar:fBanco.id}:decisoes['irmao:'+p.id];if(d!==undefined)x.finPendente.decisao=d;}
   return x;});
- const vendaObj={cliId:o.cliId||'',origem:o.origem||'',anexos:anexosDoOrc,pags,data:dataAprovacao,pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':''),itens:itensVenda,total:totalAprovado};
+ const vendaObj={cliId:o.cliId||'',origem:o.origem||'',anexos:anexosDoOrc,pags,data:dataAprovacao,pag:pagLabel,status:'Pendente',obs:'Gerado automaticamente do ORC-'+pad(o.num)+' · Entrega combinada: '+fmtD(prazoEntrega)+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) do orçamento não aprovado(s)':'')+obsDoOrcParaPedido(o),itens:itensVenda,total:totalAprovado};
  const novaVenda=Object.assign({id:uid(),baixa:false},vendaObj);
  const rInsV=await supa.from('vendas').insert(vendaParaSupabase(novaVenda)).select().single();const {data:dv,error:erroVenda}=rInsV;
  if(erroVenda){
@@ -16641,7 +16684,9 @@ e não numera nada.
   itensTodosOrc() vê todos), item novo ou duplicado num orçamento já
   aprovado nasce Não aprovado, e o botão "Aprovar e levar ao pedido" abre
   a ficha do pedido do orçamento com o item somado (vira Aprovado quando
-  o pedido é salvo); anexos de referência
+  o pedido é salvo); desde 13/11/2026 o pedido nasce com as observações
+  do orçamento (no fim das observações, "Obs. do orçamento: ...") e com a
+  observação de cada item; anexos de referência
   (fotos, PDFs); geração do PDF da proposta (com capa), do contrato de
   prestação de serviço e envio por WhatsApp ou e-mail.
   - Lista: seletor de período (Mês, Ano, Tudo), busca por número ou
@@ -16749,6 +16794,12 @@ e não numera nada.
   - lixeira de itens: o ✕ manda o item para a lixeira da ficha, que vai
     para a coluna vendas.lixeira no Salvar Pedido (item, posição, quando
     e quem); Restaurar devolve a linha ao lugar de onde saiu;
+  - As observações do pedido ficam numa caixa de várias linhas (desde 16/11/2026). Cada item tem a sua observação (campo embaixo da linha; vai em
+    vendas.itens[].obs e sai no Imprimir pedido/PCP, não no recibo), e,
+    no pedido gerado de orçamento, o quadro "Do orçamento ORC-…" (fechado,
+    só consulta) mostra as observações do orçamento e de cada item
+    aprovado, com materiais, serviços de terceiros e horas previstas, sem
+    valores (desde 13/11/2026);
   - Visão Geral com as datas do ciclo (orçamento, pedido, entrega
     prevista = prazo da OP, entregue em, último pagamento): no Salvar
     Pedido, a data mudada é gravada na origem (orçamento, OP ou
@@ -18013,13 +18064,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-13.1';
+const APP_VERSAO='2026-11-17.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=350;
+const APP_ATUALIZACAO=351;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
