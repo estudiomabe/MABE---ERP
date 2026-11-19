@@ -153,6 +153,12 @@ button.salvando { opacity:0.6;cursor:progress; }
 .pa-datas .mono { font-size:11px; }
 /* Tarefas: linhas com caixinha, número, texto e quem fez */
 .tar-caixa { margin-bottom:18px; }
+.fin-busca { position:relative;flex:1 1 300px;min-width:220px;max-width:480px; }
+.fin-busca input { width:100%;padding-left:34px;padding-right:36px; }
+.fin-busca-lupa { position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-muted);pointer-events:none; }
+.fin-busca-x { position:absolute;right:4px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;background:transparent;color:var(--text-muted);font-size:14px;cursor:pointer;border-radius:6px; }
+@media (hover:hover) { .fin-busca-x:hover { background:var(--surface2);color:var(--text); } }
+@media (max-width:860px) { .fin-busca { flex:1 1 100%;max-width:none;min-width:0; } .fin-busca input { min-height:44px; } .fin-busca-x { width:40px;height:40px; } }
 .tar-qtd { font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text-muted);margin-left:6px; }
 #tarefas-abertas { position:relative; }
 .tar-item { display:grid;grid-template-columns:24px 32px 34px minmax(0,1fr) auto;gap:6px;align-items:flex-start;padding:10px 18px 10px 12px;border-top:1px solid var(--border);background:var(--surface); }
@@ -1499,7 +1505,7 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
         <div class="stat-box num-atalho" role="button" tabindex="0" title="Ver só os lançamentos pendentes" onclick="atalhoPendencias()"><div class="stat-value" id="fin-pend">0</div><div class="stat-label">Pendências</div></div>
       </div>
       <div id="fin-lista-view">
-      <div class="period-bar"><select class="form-control" id="fin-tipo-filter" style="width:auto;min-width:140px" onchange="renderFinanceiro()"><option value="">Entradas e saídas</option><option>Entrada</option><option>Saída</option></select><select class="form-control" id="fin-status-filter" style="width:auto;min-width:150px" onchange="renderFinanceiro()"><option value="">Todos os status</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><span id="ofx-ultima-atualizacao" style="font-size:10.5px;color:var(--text-muted)"></span></div><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"><span id="fin-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div id="financeiro-cards"></div><div class="table-wrapper" id="financeiro-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Pedido</th><th>Centro de Custo</th><th class="fin-obs">Observações</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody><tfoot id="tf-financeiro" class="fin-medida" aria-hidden="true"></tfoot></table></div><div class="fin-ver-mais" id="fin-ver-mais" hidden><button type="button" class="btn btn-ghost btn-sm" id="fin-ver-mais-btn" onclick="verMaisFin()">Ver mais</button><span class="fin-ver-mais-n" id="fin-ver-mais-n"></span></div>
+      <div class="period-bar"><div class="fin-busca"><svg class="fin-busca-lupa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg><input type="text" class="form-control" id="fin-busca" placeholder="Buscar: descrição, valor, cliente, pedido…" autocomplete="off" enterkeyhint="search" aria-label="Buscar no Financeiro" oninput="buscarNoFin()" onkeydown="if(event.key==='Escape'){event.preventDefault();limparBuscaFin();}"><button type="button" class="fin-busca-x" id="fin-busca-x" aria-label="Limpar a busca" title="Limpar" onclick="limparBuscaFin()" style="display:none">✕</button></div><select class="form-control" id="fin-tipo-filter" style="width:auto;min-width:140px" onchange="renderFinanceiro()"><option value="">Entradas e saídas</option><option>Entrada</option><option>Saída</option></select><select class="form-control" id="fin-status-filter" style="width:auto;min-width:150px" onchange="renderFinanceiro()"><option value="">Todos os status</option><option>Pago</option><option>Pendente</option><option>Cancelado</option></select><div style="display:flex;flex-direction:column;gap:3px"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('fin-ofx-input').click()">📥 Importar Extrato (OFX)</button><span id="ofx-ultima-atualizacao" style="font-size:10.5px;color:var(--text-muted)"></span></div><input type="file" id="fin-ofx-input" accept=".ofx,.qfx" style="display:none" onchange="importarExtratoOfx(event)"><span id="fin-filtro-label" style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text-muted)"></span></div><div id="financeiro-cards"></div><div class="table-wrapper" id="financeiro-tabela"><div class="table-toolbar"><div class="table-toolbar-title">Lançamentos</div></div><table><thead><tr><th>Data</th><th>Descrição</th><th>Pedido</th><th>Centro de Custo</th><th class="fin-obs">Observações</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tb-financeiro"></tbody><tfoot id="tf-financeiro" class="fin-medida" aria-hidden="true"></tfoot></table></div><div class="fin-ver-mais" id="fin-ver-mais" hidden><button type="button" class="btn btn-ghost btn-sm" id="fin-ver-mais-btn" onclick="verMaisFin()">Ver mais</button><span class="fin-ver-mais-n" id="fin-ver-mais-n"></span></div>
       </div>
       <div id="fin-conferir-view" style="display:none">
         <div class="cb-intro">O extrato do banco é a referência. Quando um lançamento seu (do pedido, à mão ou da compra) é o mesmo dinheiro de uma linha do banco, <strong>Mesclar</strong> deixa só a linha do banco: ela fica com a data e o valor do banco e recebe o seu nome, o pedido, o centro de custo e a observação. O seu sai das listas e das contas. Nada é mesclado sozinho, e <strong>Separar</strong> desfaz.</div>
@@ -3448,6 +3454,7 @@ function abrirFinanceiroFiltrado(f){if(!podeVer('financeiro'))return;
  $('fin-tipo-filter').value='';$('fin-status-filter').value='';
  /* a busca do topo também filtra a lista: o texto que estava nela faria a lista não bater com o número */
  const gb=$('global-search');if(gb&&gb.value){gb.value='';fecharBusca();}clearTimeout(FIN_BUSCA_T);FIN_BUSCA_T=null;
+ if($('fin-busca')&&$('fin-busca').value){$('fin-busca').value='';$('fin-busca-x').style.display='none';}
  renderFinanceiro();
  /* no celular a lista começa abaixo dos contadores: leva até o filtro ligado e a lista */
  const c=$('content'),alvo=$('fin-fc-barra')||$('fin-tipo-filter');if(!c||!alvo)return;
@@ -12158,7 +12165,10 @@ function renderFinanceiro(){pintarPeriodoFin();const ym=today().slice(0,7);
  const busca=buscaFinAtual(),tabela=!ehCelular();FIN_BUSCA_DESENHADA=busca;
  let listaFin=base.filter(f=>(!fTipo||f.tipo===fTipo)&&(!fSt||f.status===fSt)&&fcPassa('fin',f)&&(!busca||textoBuscaFin(f).includes(busca)));
  if(tabela&&FIN_ORDENS.length)listaFin=ordenarListaFin(listaFin);
- if($('fin-filtro-label'))$('fin-filtro-label').textContent=listaFin.length===base.length?(base.length+' lançamento(s)'):(listaFin.length+' de '+base.length+' lançamento(s)');
+ if($('fin-filtro-label')){let txt=listaFin.length===base.length?(base.length+' lançamento(s)'):(listaFin.length+' de '+base.length+' lançamento(s)');
+  if(busca&&PER_FIN.modo!=='tudo'){const todos=(fcAtivo('fin','mesclados')?DB.financeiro:visiveis).filter(f=>(!fTipo||f.tipo===fTipo)&&(!fSt||f.status===fSt)&&fcPassa('fin',f)&&textoBuscaFin(f).includes(busca)).length;
+   if(todos>listaFin.length)txt+=' · +'+(todos-listaFin.length)+' fora do período';}
+  $('fin-filtro-label').textContent=txt;}
  /* o mesclado (com "Mesclados" ligado) e o preso numa mesclagem pela metade aparecem só para consulta: os
     seletores e a observação gravariam neles */
  const soLer=f=>!canEdit()||!!f.mescladoCom;
@@ -12387,14 +12397,23 @@ const TXT_BUSCA_FIN=new WeakMap();
 function seloBuscaFin(f){if(finMesclou(f))return '🔗 Mesclado';if(!f.mescladoCom)return '';
  if(!finAbsorvido(f))return '⚠ Mesclagem pela metade';
  const w=DB.financeiro.find(x=>x.id===f.mescladoCom);return '🔗 Mesclado no banco'+(w?' de '+fmtD(w.data):'');}
-function textoBuscaFin(f){const selo=seloBuscaFin(f),ed=canEdit()&&!f.mescladoCom,k=[f.data,f.desc,f.descBanco,f.cat,f.centroCusto,f.obs,f.tipo,f.origem,f.val,f.status,selo,ed].join('\u0001');
+function textoBuscaFin(f){const selo=seloBuscaFin(f),ed=canEdit()&&!f.mescladoCom;
+ const vd=f.vendaId?DB.vendas.find(v=>v.id===f.vendaId):null;
+ const ped=vd?'V-'+pad(vd.num)+' '+(cliName(vd.cliId)||''):'';
+ const k=[f.data,f.desc,f.descBanco,f.cat,f.centroCusto,f.obs,f.tipo,f.origem,f.val,f.status,selo,ed,ped].join('\u0001');
  const c=TXT_BUSCA_FIN.get(f);if(c&&c.k===k)return c.t;
  /* o vazio como a linha mostra: no seletor (linha editável) "— Nenhum —" e "⚠ Não classificado"; só para ler, "—" e
     "Não classificado". E a seta do tipo e do valor (o resultado "Financeiro" da busca usa a seta como termo) */
- const t=norm([fmtD(f.data),f.desc,f.descBanco||'',selo,f.cat||(ed?'— Nenhum —':'—'),f.centroCusto||(ed?'⚠ Não classificado':'Não classificado'),f.obs||'',(f.tipo==='Entrada'?'↑ ':'↓ ')+f.tipo,ORIGEM_FIN[origemFin(f)]||'',fmt(f.val),f.status].join(' '));
+ const t=norm([fmtD(f.data),f.desc,f.descBanco||'',selo,f.cat||(ed?'— Nenhum —':'—'),f.centroCusto||(ed?'⚠ Não classificado':'Não classificado'),f.obs||'',(f.tipo==='Entrada'?'↑ ':'↓ ')+f.tipo,ORIGEM_FIN[origemFin(f)]||'',fmt(f.val),f.status,ped,(()=>{const n=Math.abs(Number(f.val)||0);return n?String(n)+' '+n.toFixed(2).replace('.',','):'';})()].join(' '));
  TXT_BUSCA_FIN.set(f,{k,t});return t;}
 /* o termo da busca do topo vale enquanto o Financeiro está aberto (abrir uma tela limpa o campo) */
-function buscaFinAtual(){if(CUR!=='financeiro')return '';const g=$('global-search');return g?norm(g.value):'';}
+function buscaFinAtual(){if(CUR!=='financeiro')return '';
+ const b=$('fin-busca');if(b&&b.value.trim())return norm(b.value.trim());
+ const g=$('global-search');return g?norm(g.value):'';}
+function buscarNoFin(){const b=$('fin-busca');if($('fin-busca-x'))$('fin-busca-x').style.display=b&&b.value?'':'none';
+ agendarBuscaFin(buscaFinAtual());}
+function limparBuscaFin(){const b=$('fin-busca');if(!b)return;b.value='';$('fin-busca-x').style.display='none';
+ clearTimeout(FIN_BUSCA_T);FIN_BUSCA_T=null;if(CUR==='financeiro')renderFinanceiro();b.focus();}
 /* espera a pessoa parar de digitar (250 ms) para redesenhar; o termo já desenhado não redesenha de novo (o
    irParaResultado reaplica a busca a cada mudança da tela por 4 s) */
 function agendarBuscaFin(alvo){clearTimeout(FIN_BUSCA_T);FIN_BUSCA_T=null;
@@ -17050,6 +17069,14 @@ e não numera nada.
     barra some na aba Conferir com o banco, e os atalhos que abrem o
     Financeiro filtrado (Pendências, Sem centro) voltam o
     período para Tudo.
+  - Busca: desde 19/11/2026 um campo na própria página, no começo da
+    barra de filtros (✕ ou Esc limpa), com o mesmo filtro da busca do
+    topo; quando tem texto, é ele que vale. Procura data, descrição,
+    descrição do banco, centro de custo, observação, tipo, origem,
+    status, o valor com e sem pontuação (1.500,00, 1500, 1500,00) e o
+    pedido ligado com o nome do cliente (V-0012 — Cliente). Respeita o
+    período e os filtros; fora de Tudo, o contador diz quantos ficaram
+    fora do período.
   - Origem: cada lançamento guarda de onde veio (origem = extrato,
     pedido, manual, compra ou nf) e mostra um selo junto do tipo (Banco,
     Pedido, Manual, Compra, NF). O filtro Origem fica no funil da coluna
@@ -18107,13 +18134,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-19.1';
+const APP_VERSAO='2026-11-19.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=352;
+const APP_ATUALIZACAO=353;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

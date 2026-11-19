@@ -1049,6 +1049,14 @@ e não numera nada.
     barra some na aba Conferir com o banco, e os atalhos que abrem o
     Financeiro filtrado (Pendências, Sem centro) voltam o
     período para Tudo.
+  - Busca: desde 19/11/2026 um campo na própria página, no começo da
+    barra de filtros (✕ ou Esc limpa), com o mesmo filtro da busca do
+    topo; quando tem texto, é ele que vale. Procura data, descrição,
+    descrição do banco, centro de custo, observação, tipo, origem,
+    status, o valor com e sem pontuação (1.500,00, 1500, 1500,00) e o
+    pedido ligado com o nome do cliente (V-0012 — Cliente). Respeita o
+    período e os filtros; fora de Tudo, o contador diz quantos ficaram
+    fora do período.
   - Origem: cada lançamento guarda de onde veio (origem = extrato,
     pedido, manual, compra ou nf) e mostra um selo junto do tipo (Banco,
     Pedido, Manual, Compra, NF). O filtro Origem fica no funil da coluna
