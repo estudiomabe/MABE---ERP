@@ -169,6 +169,11 @@ button.salvando { opacity:0.6;cursor:progress; }
 .tar-texto { font-size:14px;line-height:1.45;padding-top:2px;white-space:pre-wrap;overflow-wrap:anywhere; }
 .tar-meta { font-size:11.5px;color:var(--text-muted);margin-top:2px; }
 .tar-item.feita .tar-texto { color:var(--text-muted);text-decoration:line-through; }
+.tar-corpo.editavel { cursor:text;border-radius:6px; }
+@media (hover:hover) { .tar-corpo.editavel:hover .tar-texto { background:var(--surface2);border-radius:4px; } }
+.tar-edit { width:100%;font-size:14px;line-height:1.45;padding:6px 8px;min-height:38px;resize:vertical;field-sizing:content;max-height:240px;font-family:var(--font); }
+.tar-edit-bt { display:flex;gap:6px;margin-top:6px;flex-wrap:wrap; }
+@media (max-width:860px) { .tar-edit-bt .btn { min-height:40px; } .tar-edit { font-size:16px; } }
 .tar-vazio { padding:18px;border-top:1px solid var(--border);font-size:13px;color:var(--text-muted); }
 .tar-novo { display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border); }
 .tar-novo input { flex:1;min-width:0; }
@@ -3013,18 +3018,52 @@ function marcarTarefa(id,feita){if(!canEdit()){guard();renderTarefas();return;}
 function excluirTarefa(id){if(!guard())return;
  const a=listaTarefas().find(x=>x.id===id);if(!a||!confirm('Excluir a tarefa "'+a.texto+'"?'))return;
  return mudarTarefas(l=>{const i=l.findIndex(x=>x.id===id);if(i<0)return false;l.splice(i,1);},'excluir',String(a.texto||'').slice(0,80));}
+let TAR_EDIT=null;
+function editarTarefa(corpo){if(!canEdit()||TAR_ARR)return;
+ if(corpo.querySelector('.tar-edit'))return;
+ if(window.getSelection&&String(window.getSelection())){return;} /* estava selecionando texto para copiar */
+ const id=corpo.closest('.tar-item').dataset.id;
+ if(TAR_EDIT){if(!fecharEdicaoTarefa())return;renderTarefas();
+  corpo=[...document.querySelectorAll('#tarefas-abertas .tar-item, #tarefas-finalizadas .tar-item')].find(x=>x.dataset.id===id);corpo=corpo&&corpo.querySelector('.tar-corpo');if(!corpo)return;}
+ const t=listaTarefas().find(x=>x.id===id);if(!t)return;
+ TAR_EDIT={id,corpo,texto:String(t.texto||'')};
+ corpo.onclick=null;corpo.classList.remove('editavel');
+ corpo.innerHTML='<textarea class="form-control tar-edit" maxlength="500" rows="1" aria-label="Editar tarefa"></textarea>'
+  +'<div class="tar-edit-bt"><button type="button" class="btn btn-primary btn-sm" onclick="salvarEdicaoTarefa()">Salvar</button>'
+  +'<button type="button" class="btn btn-ghost btn-sm" onclick="cancelarEdicaoTarefa()">Cancelar</button></div>';
+ const ta=corpo.querySelector('.tar-edit');ta.value=TAR_EDIT.texto;
+ ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();salvarEdicaoTarefa();}
+  else if(e.key==='Escape'){e.preventDefault();cancelarEdicaoTarefa();}});
+ ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}
+/* outra tarefa tocada com uma edição aberta: se nada mudou, fecha; se mudou, pergunta */
+function fecharEdicaoTarefa(){const E=TAR_EDIT;if(!E)return true;const ta=E.corpo.querySelector('.tar-edit');
+ if(ta&&ta.value.trim()!==E.texto.trim()&&!confirm('Descartar a alteração da tarefa que está aberta?'))return false;
+ TAR_EDIT=null;return true;}
+function cancelarEdicaoTarefa(){TAR_EDIT=null;renderTarefas();}
+async function salvarEdicaoTarefa(){const E=TAR_EDIT;if(!E||E.salvando)return;if(!guard())return;
+ const ta=E.corpo.querySelector('.tar-edit'),texto=ta?ta.value.trim():'';
+ if(!texto){toast('A tarefa não pode ficar vazia. Para tirar, use a lixeira.','error');ta&&ta.focus();return;}
+ if(texto===E.texto.trim()){cancelarEdicaoTarefa();return;}
+ E.salvando=true;E.corpo.querySelectorAll('button,textarea').forEach(b=>b.disabled=true);
+ TAR_EDIT=null;
+ const ok=await mudarTarefas(l=>{const t=l.find(x=>x.id===E.id);
+  if(!t){toast('Essa tarefa já foi excluída.','info');return false;}
+  if(String(t.texto||'')===texto)return false;
+  t.texto=texto;t.editPor=USER.nome;t.editEm=new Date().toISOString();t.editDia=today();},'editar','Editada: '+texto.slice(0,80));
+ if(!ok)renderTarefas();}
 function linhaTarefa(t,n,ed,arrasta){const id=esc(t.id);
- const meta=t.feita?'Concluída por '+esc(t.feitaPor||'—')+' em '+fmtD(t.feitaDia):'Adicionada por '+esc(t.por||'—')+' em '+fmtD(t.dia);
+ const meta=(t.feita?'Concluída por '+esc(t.feitaPor||'—')+' em '+fmtD(t.feitaDia):'Adicionada por '+esc(t.por||'—')+' em '+fmtD(t.dia))
+  +(t.editPor?' · editada por '+esc(t.editPor)+' em '+fmtD(t.editDia):'');
  return '<div class="tar-item'+(t.feita?' feita':'')+(ed?'':' ro')+(arrasta?'':' sem')+'" data-id="'+id+'">'
   +(arrasta?'<span class="tar-alca" title="Arraste para mudar a ordem" onpointerdown="iniciarArrasteTarefa(event,this)"><svg viewBox="0 0 14 18" aria-hidden="true"><circle cx="4" cy="3" r="1.6"/><circle cx="10" cy="3" r="1.6"/><circle cx="4" cy="9" r="1.6"/><circle cx="10" cy="9" r="1.6"/><circle cx="4" cy="15" r="1.6"/><circle cx="10" cy="15" r="1.6"/></svg></span>':'<span class="tar-alca vazia" style="cursor:default"></span>')
   +'<label class="tar-check"><input type="checkbox" aria-label="'+(t.feita?'Voltar para as tarefas em aberto':'Marcar como concluída')+'" data-id="'+id+'"'+(t.feita?' checked':'')+(ed?'':' disabled')+' onchange="marcarTarefa(this.dataset.id,this.checked)"></label>'
-  +'<span class="tar-n">'+n+'.</span><div><div class="tar-texto">'+esc(t.texto||'')+'</div><div class="tar-meta">'+meta+'</div></div>'
+  +'<span class="tar-n">'+n+'.</span><div class="tar-corpo'+(ed?' editavel':'')+'"'+(ed?' title="Toque para editar" onclick="editarTarefa(this)"':'')+'><div class="tar-texto">'+esc(t.texto||'')+'</div><div class="tar-meta">'+meta+'</div></div>'
   +(ed?'<button type="button" class="btn btn-danger btn-sm tar-del" title="Excluir tarefa" aria-label="Excluir tarefa" data-id="'+id+'" onclick="excluirTarefa(this.dataset.id)">🗑️</button>':'')+'</div>';}
 /* Arrastar pela alça (mouse e dedo, com Pointer Events). A tarefa acompanha o ponteiro e as outras abrem espaço; a lista
    rola sozinha perto das bordas. Só as abertas: as finalizadas seguem a ordem de conclusão.
    Ao soltar grava "esta vem antes daquela", relendo a lista, para não desfazer o que a outra pessoa mudou. */
 let TAR_ARR=null;
-function iniciarArrasteTarefa(ev,alca){if(!canEdit()||TAR_ARR||(ev.pointerType==='mouse'&&ev.button!==0))return;
+function iniciarArrasteTarefa(ev,alca){if(!canEdit()||TAR_ARR||TAR_EDIT||(ev.pointerType==='mouse'&&ev.button!==0))return;
  const item=alca.closest('.tar-item'),lista=item.parentNode,c=$('content');
  if(lista.children.length<2)return;
  ev.preventDefault();
@@ -3059,6 +3098,7 @@ function soltarArrasteTarefa(){if(!TAR_ARR)return;const D=fimArrasteTarefa(),pro
   const [t]=l.splice(i,1),j=antes?l.findIndex(x=>x.id===antes):-1;
   if(j<0)l.push(t);else l.splice(j,0,t);},'',null);}
 function renderTarefas(){const el=$('tarefas-abertas');if(!el||TAR_ARR)return;
+ if(TAR_EDIT){if(document.body.contains(TAR_EDIT.corpo))return;TAR_EDIT=null;}
  const ed=canEdit(),todas=listaTarefas();
  const abertas=todas.filter(t=>!t.feita);
  const feitas=todas.filter(t=>t.feita).sort((a,b)=>String(b.feitaEm||'').localeCompare(String(a.feitaEm||'')));
@@ -16660,7 +16700,10 @@ e não numera nada.
   topo da tela); cada tarefa tem número e caixinha, e ticar a leva para
   Tarefas finalizadas, logo abaixo (desmarcar devolve). Abertas numeradas
   na ordem da lista, que a alça de cada linha permite arrastar (mouse ou
-  dedo); finalizadas com a última concluída em cima e o maior número. Guarda quem adicionou e quem concluiu, e o dia. Fica no
+  dedo); finalizadas com a última concluída em cima e o maior número.
+  Desde 19/11/2026 tocar no texto abre a edição ali mesmo (Salvar ou
+  Cancelar; no teclado, Enter salva e Esc cancela), nas abertas e nas
+  finalizadas, e a linha mostra quem editou por último. Guarda quem adicionou e quem concluiu, e o dia. Fica no
   campo tarefas da tabela config; cada alteração relê a lista antes de
   gravar, para duas pessoas não apagarem a tarefa uma da outra.
 - Calendário (de Entregas) — grade do mês (‹ ›, Hoje) com três tipos de
@@ -18064,13 +18107,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-17.1';
+const APP_VERSAO='2026-11-19.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=351;
+const APP_ATUALIZACAO=352;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
