@@ -665,7 +665,21 @@ e não numera nada.
   Médio, Recebido e Pago (o que entrou e saiu pago no período) e
   Despesas Fixas (custo fixo + folha; no mês que ainda corre o valor é
   rateado pelos dias já passados e no ano corrente pelos meses, e o
-  rótulo diz isso — periodoCorrido). Gráficos: Faturamento e Lucro (duas
+  rótulo diz isso — periodoCorrido). Entre as duas faixas, desde
+  23/11/2026, a Meta (some em Tudo, num período que ainda não começou ou
+  com meta 0): o Faturamento do período contra a meta (Configurações →
+  Meta do Painel, cf.metaMensal, 30.000 por padrão; no Ano, × 12), uma
+  barra com a marca do ponto de equilíbrio, quanto falta para a meta e
+  para o equilíbrio (ou o lucro estimado depois dele) e, no período que
+  ainda corre, a projeção pelo ritmo. Equilíbrio = (custo fixo das
+  Configurações + folha) ÷ margem de contribuição. A folha vem do
+  Financeiro, centro de custo Folha de Pagamento (Pago e Pendente): mês
+  fechado = o lançado (sem lançamento, a lista das Configurações); mês
+  corrente ou futuro = o maior entre o já lançado e a média dos 3 meses
+  fechados anteriores com folha lançada. A margem de contribuição vem
+  dos itens aprovados com ficha: preço − materiais, serviços, frete,
+  comissão, máquina e o imposto das Configurações; a mão de obra da ficha
+  fica de fora porque é o pessoal da folha. Gráficos: Faturamento e Lucro (duas
   linhas com as mesmas contas dos cartões; escala comum, porque o lucro
   pode ficar negativo, e o mês que ainda não começou fica sem ponto: 6 meses até o mês escolhido, os 12
   meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (desde

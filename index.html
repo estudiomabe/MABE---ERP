@@ -118,6 +118,24 @@ button.salvando { opacity:0.6;cursor:progress; }
 .kpi-hero .kpi-value { font-size:30px; }
 .kpi-hero .kpi-card { padding:20px 18px 16px; }
 .kpi-mini { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:20px; }
+.meta-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.05);position:relative;overflow:hidden; }
+.meta-card::before { content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent); }
+.meta-topo { display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px; }
+.meta-num { font-family:var(--mono);line-height:1.15; }
+.meta-fat { font-size:24px;font-weight:800;letter-spacing:-1px; }
+.meta-de { font-size:13px;font-weight:600;color:var(--text-muted);letter-spacing:-.3px; }
+.meta-pct { font-family:var(--mono);font-size:20px;font-weight:800;letter-spacing:-.5px; }
+.meta-barra { position:relative;height:12px;border-radius:6px;background:var(--surface2); }
+.meta-enchido { height:100%;border-radius:6px;min-width:4px; }
+.meta-pct.meta-baixo { color:var(--warning); } .meta-enchido.meta-baixo { background:var(--warning); }
+.meta-pct.meta-bom, .meta-pct.meta-ok { color:var(--success); } .meta-enchido.meta-bom, .meta-enchido.meta-ok { background:var(--success); }
+.meta-eq { position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--text);border-radius:1px; }
+.meta-eq-linha { position:relative;height:15px;margin-top:4px;font-size:10px;font-weight:600;color:var(--text-muted);white-space:nowrap; }
+.meta-eq-linha span { position:absolute;top:0; }
+.meta-linhas { display:flex;flex-wrap:wrap;gap:4px 22px;font-size:12.5px;margin-top:6px; }
+.meta-linhas .meta-ok { color:var(--success); }
+.meta-conta { font-size:10.5px;color:var(--text-muted);margin-top:8px;line-height:1.45; }
+@media (max-width:860px) { .meta-card { padding:14px 14px 12px; } .meta-fat { font-size:21px; } .meta-linhas { flex-direction:column;font-size:12px; } }
 .kpi-mini .kpi-card { padding:12px 13px;box-shadow:none; }
 .kpi-mini .kpi-value { font-size:17px;letter-spacing:-0.5px; }
 .kpi-mini .kpi-label { font-size:9px;letter-spacing:.7px;margin-bottom:3px; }
@@ -1416,6 +1434,7 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Margem</div><div class="kpi-value" id="kpi-margem">0%</div><div class="kpi-delta" id="kpi-margem-d"></div><div class="kpi-sub" id="kpi-margemsub">lucro ÷ faturamento</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></div></div>
         <div class="kpi-card num-atalho" style="--card-accent:var(--warning)" role="button" tabindex="0" title="Ver os pedidos em andamento" onclick="atalhoAReceber()"><div class="kpi-label">A Receber</div><div class="kpi-value" id="kpi-areceber">R$0</div><div class="kpi-sub" id="kpi-arsub">pedidos com valor a receber</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div></div>
       </div>
+      <div class="meta-card" id="dash-meta" style="display:none"></div>
       <div class="kpi-mini">
         <div class="kpi-card" style="--card-accent:var(--text-muted)"><div class="kpi-label">Orçamentos do Período</div><div class="kpi-value" id="kpi-orcamentos">R$0</div><div class="kpi-sub" id="kpi-osub">orçamentos</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div></div>
         <div class="kpi-card" style="--card-accent:var(--accent)"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kpi-ticket">R$0</div><div class="kpi-sub" id="kpi-ticketsub">por pedido</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V4a1.2 1.2 0 0 1 1.2-1.2h8a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg></div></div>
@@ -1906,6 +1925,14 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
         </div>
       </div>
       <div class="config-card">
+        <div class="config-title">🎯 Meta do Painel</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Quanto o estúdio quer faturar por mês (soma dos pedidos, como o Faturamento do painel). No modo Ano o painel usa a meta × 12. Com 0, a caixa da meta some.</div>
+        <div class="form-grid">
+          <div class="form-grid form-2"><div class="form-group"><label class="form-label" for="cfg-meta-mensal">Meta de faturamento por mês (R$)</label><input type="number" class="form-control" id="cfg-meta-mensal" step="100" min="0" inputmode="decimal"></div></div>
+          <button class="btn btn-primary" onclick="saveMetaConfig()">💾 Salvar Meta</button>
+        </div>
+      </div>
+      <div class="config-card">
         <div class="config-title">🏢 Custos Fixos Padrão (Orçamentos)</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Pré-preenchidos em todo novo orçamento. Atualize aqui quando os custos mudarem.</div>
         <div class="form-grid">
@@ -2337,7 +2364,7 @@ let DB=null, USER=null;
 function defaultDB(){return{
  usuarios:[{id:'u1',login:'admin',senha:'admin123',nome:'Administrador',perfil:'Administrador',status:'Ativo',ultimo:''}],
  clientes:[],produtos:[],madeiras:[],vendas:[],orcamentos:[],producao:[],financeiro:[],fornecedores:[],compras:[],ferramentas:[],entregas:[],historico:[],
- config:{sheetsUrl:'',ultimaImportacaoOfx:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,taxaMaquina:0,saldoInicial:0,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0,prazoOrcDias:15},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
+ config:{sheetsUrl:'',ultimaImportacaoOfx:'',cf:{aluguel:0,iptu:0,agua:0,energia:0,contador:0,outros:0,hmes:176,hsocio:0,haux:0,imposto:6,markup:60,taxaMaquina:0,saldoInicial:0,pixAntecipado:50,taxaParc1:0,taxaParc2:0,taxaParc3:0,taxaParc4:0,taxaParc5:0,taxaParc6:0,taxaParc7:0,taxaParc8:0,taxaParc9:0,taxaParc10:0,prazoOrcDias:15,metaMensal:30000},custosFixosExtras:[],mdoTipos:[{id:'socio',nome:'Sócio',valorHora:0},{id:'auxiliar',nome:'Auxiliar',valorHora:0}],temposProducao:{},folhaPagamento:[],empresa:{endereco:'',bairro:'',cep:'',cidade:'',estado:'',telefone:'',email:'',site:''}},
  seq:{venda:1,compra:1,orc:1,op:1}};}
 function loadDB(){try{DB=JSON.parse(localStorage.getItem(DKEY));}catch(e){DB=null;}
  const d=defaultDB(); if(!DB||!DB.usuarios||!DB.usuarios.length)DB=d;
@@ -3302,6 +3329,85 @@ function metricasDoPeriodo(p){
   margem:faturamento>0?lucro/faturamento*100:0,
   orcFeitos:oFeitos.reduce((s2,o)=>s2+Number(o.preco||0),0),
   orcRasc:oRasc.reduce((s2,o)=>s2+Number(o.preco||0),0)};}
+/* ================= META DO PAINEL =================
+   Meta fixa de faturamento por mês (Configurações; 30.000 até alguém mudar). A barra compara o Faturamento do
+   painel (soma dos pedidos do período) com a meta e marca o ponto de equilíbrio do período:
+     equilíbrio = (custo fixo das Configurações + folha) ÷ margem de contribuição.
+   A folha muda conforme quantas pessoas são pagas no mês, então vem do Financeiro: as saídas Pago/Pendente do centro
+   de custo "Folha de Pagamento". Mês fechado = o que foi lançado nele (sem nada lançado — os meses antes de o centro
+   de custo ser usado —, a lista das Configurações). Mês que ainda corre (ou futuro) = o maior entre o que já foi
+   lançado e a média dos últimos 3 meses fechados que têm folha lançada: a marca não desce só porque o pagamento do
+   mês ainda não saiu, e sobe quando sai um pagamento maior.
+   Margem de contribuição = o que sobra do preço dos itens aprovados com ficha depois de materiais, serviços, frete,
+   comissão, taxa da máquina e imposto (o das Configurações, em todos: há fichas antigas sem ele). A mão de obra da
+   ficha fica de fora: as horas são do pessoal da folha, que já está no equilíbrio — contar as duas seria pagar o
+   mesmo salário duas vezes. */
+const CC_FOLHA='Folha de Pagamento';
+function metaMensal(){const v=DB.config.cf.metaMensal;return v===undefined||v===null||v===''?30000:Math.max(0,Number(v)||0);}
+function custoFixoConfigMensal(){const cfg=DB.config.cf;
+ return ['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfg[k])||0),0)
+  +(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0);}
+/* "2026-11" a partir de ano e mês (0 a 11; passa do limite e volta o ano sozinho) */
+const ymDe=(ano,mes)=>{const d=new Date(ano,mes,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');};
+function folhaLancadaPorMes(){const m={};
+ finVisiveis().forEach(x=>{if(x.tipo!=='Saída'||x.centroCusto!==CC_FOLHA||!(x.status==='Pago'||x.status==='Pendente')||!x.data)return;
+  const k=String(x.data).slice(0,7);m[k]=(m[k]||0)+(Number(x.val)||0);});
+ return m;}
+function folhaDoMes(ano,mes,porMes){porMes=porMes||folhaLancadaPorMes();
+ const ym=ymDe(ano,mes),hojeYm=today().slice(0,7),lanc=porMes[ym]||0;
+ const cfg=(DB.config.folhaPagamento||[]).reduce((s,c)=>s+(Number(c.salario)||0),0);
+ if(ym<hojeYm)return lanc>0?{val:lanc,lanc,fonte:'lancada'}:{val:cfg,lanc:0,fonte:'config'};
+ const [ba,bm]=hojeYm.split('-').map(Number);const ref=[];
+ for(let i=1;i<=3;i++){const v=porMes[ymDe(ba,bm-1-i)];if(v>0)ref.push(v);}
+ const media=ref.length?ref.reduce((a,b)=>a+b,0)/ref.length:cfg;
+ return lanc>=media?{val:lanc,lanc,fonte:'lancada',parcial:true}
+  :{val:media,lanc,media,nMedia:ref.length,fonte:ref.length?'media':'config',parcial:true};}
+function margemContribuicao(){const imp=Number(DB.config.cf.imposto)||0;let P=0,V=0,n=0;
+ DB.orcamentos.filter(orcAprovado).forEach(o=>itensOrc(o).forEach(it=>{const q=Number(it.qty)||1,preco=Number(it.preco)||0;if(!(preco>0))return;
+  const mat=(it.materiais||[]).reduce((s,m)=>s+(Number(m.qty)||0)*(Number(m.custo)||0),0)*q;
+  const serv=(it.servicos||[]).reduce((s,x)=>s+(Number(x.valor)||0),0)*q;
+  const horas=(Array.isArray(it.mdo)?it.mdo:[]).reduce((s,m)=>s+(Number(m.horas)||0),0);
+  if(mat+serv<=0&&horas<=0)return;
+  P+=preco;V+=mat+serv+(Number(it.frete)||0)*q+(Number(it.comissaoVal)||0)+(Number(it.maquinaVal)||0)+preco*imp/100;n++;}));
+ return n&&P>0?{pct:Math.min(1,Math.max(0,1-V/P)),n}:null;}
+/* null em Tudo, sem meta ou num período que ainda não começou: aí a caixa some */
+function metaDoPeriodo(p){if(p.modo==='tudo')return null;const mm=metaMensal();if(!(mm>0))return null;
+ const meses=p.modo==='mes'?[[p.ano,p.mes]]:Array.from({length:12},(_,i)=>[p.ano,i]);
+ if(ymDe(meses[0][0],meses[0][1])>today().slice(0,7))return null;
+ const porMes=folhaLancadaPorMes(),folhas=meses.map(([a,m])=>folhaDoMes(a,m,porMes));
+ const folha=folhas.reduce((s,x)=>s+x.val,0),fixo=custoFixoConfigMensal()*meses.length,mc=margemContribuicao();
+ return {meta:mm*meses.length,fixo,folha,folhas,mc,equil:mc&&mc.pct>0?(fixo+folha)/mc.pct:null};}
+function pintarMeta(M){const box=$('dash-meta');if(!box)return;const X=metaDoPeriodo(PER);
+ if(!X){box.style.display='none';box.innerHTML='';return;}
+ const ano=PER.modo==='ano',fat=M.faturamento,c=M.corrido;
+ const pct=fat/X.meta*100,larg=Math.min(100,Math.max(0,pct));
+ const eq=X.equil,eqPos=eq!==null?Math.min(100,eq/X.meta*100):null,passou=eq!==null&&fat>=eq;
+ const cls=fat>=X.meta?'ok':passou?'bom':'baixo';
+ const linhas=[fat>=X.meta?'<strong class="meta-ok">Meta batida</strong> · '+fmt(fat-X.meta)+' acima'
+  :'Faltam <strong>'+fmt(X.meta-fat)+'</strong> para a meta'];
+ if(eq!==null)linhas.push(passou?'Passou do ponto de equilíbrio · lucro estimado de <strong>'+fmt(fat*X.mc.pct-(X.fixo+X.folha))+'</strong>'
+  :'Faltam <strong>'+fmt(eq-fat)+'</strong> para '+(ano?'o ano':'o mês')+' se pagar (ponto de equilíbrio)');
+ /* ritmo: só com o período correndo e uns dias de dado, senão a conta exagera */
+ if(c.parcial&&fat>0&&(ano||c.dias>=5)){const proj=ano?fat/c.fracao*12:fat/c.fracao;
+  linhas.push('No ritmo de hoje, '+(ano?'o ano':'o mês')+' fecha perto de <strong>'+fmt(Math.round(proj/100)*100)+'</strong>');}
+ let folhaTxt;
+ if(ano)folhaTxt='folha '+fmt(X.folha)+' (a lançada no centro de custo Folha de Pagamento; meses sem lançamento pela média ou pelas Configurações)';
+ else{const fo=X.folhas[0];
+  folhaTxt='folha '+fmt(fo.val)+(fo.fonte==='lancada'?(fo.parcial?' (lançada no mês até hoje)':' (lançada no mês)')
+   :fo.fonte==='media'?' (média dos últimos '+fo.nMedia+(fo.nMedia===1?' mês':' meses')+' com folha lançada; no mês, até agora: '+fmt(fo.lanc)+')'
+   :' (lista das Configurações: nada lançado no centro de custo Folha de Pagamento)');}
+ const conta=eq!==null?'Ponto de equilíbrio '+fmt(eq)+' = (custo fixo '+fmt(X.fixo)+' + '+folhaTxt+') ÷ margem de contribuição de '+fmtN(X.mc.pct*100,0)+'% ('+X.mc.n+(X.mc.n===1?' item aprovado':' itens aprovados')+' com ficha; o que sobra do preço depois de materiais, serviços, frete, comissão, máquina e imposto)'
+  :'Sem itens aprovados com ficha para calcular o ponto de equilíbrio.';
+ const posRot=eqPos===null?'':'left:'+eqPos+'%;transform:translateX(-'+eqPos+'%)';
+ box.innerHTML='<div class="meta-topo"><div><div class="kpi-label">'+(ano?'Meta do ano':'Meta do mês')+'</div>'
+  +'<div class="meta-num"><span class="meta-fat">'+fmt(fat)+'</span> <span class="meta-de">de '+fmt(X.meta)+'</span></div></div>'
+  +'<div class="meta-pct meta-'+cls+'">'+fmtN(Math.max(0,pct),0)+'%</div></div>'
+  +'<div class="meta-barra" role="img" aria-label="'+fmtN(Math.max(0,pct),0)+'% da meta'+(eq!==null?'; ponto de equilíbrio em '+fmt(eq):'')+'">'
+  +'<div class="meta-enchido meta-'+cls+'" style="width:'+larg+'%"></div>'+(eqPos!==null?'<div class="meta-eq" style="left:'+eqPos+'%"></div>':'')+'</div>'
+  +(eqPos!==null?'<div class="meta-eq-linha"><span style="'+posRot+'">▲ equilíbrio '+fmt(eq)+'</span></div>':'<div style="height:8px"></div>')
+  +'<div class="meta-linhas">'+linhas.map(l=>'<div>'+l+'</div>').join('')+'</div>'
+  +'<div class="meta-conta">'+conta+'</div>';
+ box.style.display='';}
 /* o mês antes do mês escolhido, ou o ano antes do ano escolhido.
    "Tudo" não tem anterior — e aí o painel diz isso em vez de inventar. */
 function periodoAnterior(p){
@@ -3379,7 +3485,7 @@ function renderDashboard(){
  pintarDelta('kpi-lucro-d',lucro,A?A.lucro:null,'cima');
  pintarDelta('kpi-margem-d',margem,A?A.margem:null,'cima',true);
 
- renderAnaliseEntregues();renderPedidosAndamento();
+ renderAnaliseEntregues();renderPedidosAndamento();pintarMeta(M);
 
  /* gráfico de Faturamento e Lucro: as mesmas contas dos cartões (metricasDoPeriodo), um ponto por mês ou por ano.
     Linhas em escala comum (não logarítmica) porque o lucro pode ficar negativo; o mês que ainda não
@@ -15091,7 +15197,7 @@ async function clearHistorico(){if(!isAdmin()){toast('Apenas administradores.','
 let CFG_EDITANDO=false;
 function renderConfig(){CFG_EDITANDO=false;$('sheets-url').value=DB.config.sheetsUrl||'';const cf=DB.config.cf;
  $('cfg-aluguel').value=cf.aluguel;$('cfg-iptu').value=cf.iptu;$('cfg-agua').value=cf.agua;$('cfg-energia').value=cf.energia;$('cfg-contador').value=cf.contador;$('cfg-outros').value=cf.outros;
- $('cfg-hmes').value=cf.hmes;$('cfg-imposto').value=cf.imposto;$('cfg-taxa-maquina').value=cf.taxaMaquina||0;$('cfg-markup').value=cf.markup;
+ $('cfg-hmes').value=cf.hmes;if($('cfg-meta-mensal'))$('cfg-meta-mensal').value=metaMensal();$('cfg-imposto').value=cf.imposto;$('cfg-taxa-maquina').value=cf.taxaMaquina||0;$('cfg-markup').value=cf.markup;
  $('cfg-saldo-inicial').value=cf.saldoInicial||0;
  $('cfg-pix-ant').value=cf.pixAntecipado;
  $('cfg-prazo-orc').value=prazoPadraoOrc();
@@ -15281,6 +15387,15 @@ async function saveCFConfig(){if(!guard())return;
  toast('Configurações de custo salvas!','success');}
 /* o prazo padrão do orçamento novo, em dias (Configurações de Orçamentos). Sem valor válido, os 15 dias de antes */
 function prazoPadraoOrc(){const n=Math.round(Number(DB.config.cf.prazoOrcDias));return n>=1&&n<=365?n:15;}
+async function saveMetaConfig(){if(!guard())return;
+ const v=Math.round(Number($('cfg-meta-mensal').value)*100)/100;
+ if(!(v>=0)||!isFinite(v)){toast('Informe a meta em reais (0 para esconder a caixa).','error');return;}
+ const antes=metaMensal();
+ const {error}=await supa.from('config').upsert({campo:'metaMensal',valor:v});
+ if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
+ DB.config.cf.metaMensal=v;saveDB();log('editar','Configurações','Meta mensal do painel: '+fmt(v)+(antes!==v?' (era '+fmt(antes)+')':''));
+ syncSheets('config','upsert',{campo:'metaMensal',valor:v});
+ toast(v?'Meta salva: '+fmt(v)+' por mês.':'Meta zerada: a caixa some do painel.','success');}
 async function saveConfigOrc(){if(!guard())return;
  const n=Math.round(Number($('cfg-prazo-orc').value));
  if(!(n>=1&&n<=365)){toast('Informe o prazo em dias, de 1 a 365.','error');return;}
@@ -16685,7 +16800,21 @@ e não numera nada.
   Médio, Recebido e Pago (o que entrou e saiu pago no período) e
   Despesas Fixas (custo fixo + folha; no mês que ainda corre o valor é
   rateado pelos dias já passados e no ano corrente pelos meses, e o
-  rótulo diz isso — periodoCorrido). Gráficos: Faturamento e Lucro (duas
+  rótulo diz isso — periodoCorrido). Entre as duas faixas, desde
+  23/11/2026, a Meta (some em Tudo, num período que ainda não começou ou
+  com meta 0): o Faturamento do período contra a meta (Configurações →
+  Meta do Painel, cf.metaMensal, 30.000 por padrão; no Ano, × 12), uma
+  barra com a marca do ponto de equilíbrio, quanto falta para a meta e
+  para o equilíbrio (ou o lucro estimado depois dele) e, no período que
+  ainda corre, a projeção pelo ritmo. Equilíbrio = (custo fixo das
+  Configurações + folha) ÷ margem de contribuição. A folha vem do
+  Financeiro, centro de custo Folha de Pagamento (Pago e Pendente): mês
+  fechado = o lançado (sem lançamento, a lista das Configurações); mês
+  corrente ou futuro = o maior entre o já lançado e a média dos 3 meses
+  fechados anteriores com folha lançada. A margem de contribuição vem
+  dos itens aprovados com ficha: preço − materiais, serviços, frete,
+  comissão, máquina e o imposto das Configurações; a mão de obra da ficha
+  fica de fora porque é o pessoal da folha. Gráficos: Faturamento e Lucro (duas
   linhas com as mesmas contas dos cartões; escala comum, porque o lucro
   pode ficar negativo, e o mês que ainda não começou fica sem ponto: 6 meses até o mês escolhido, os 12
   meses do ano ou um por ano), embaixo dele Orçamentos e Pedidos (desde
@@ -18135,13 +18264,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-23.1';
+const APP_VERSAO='2026-11-23.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=354;
+const APP_ATUALIZACAO=355;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
