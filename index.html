@@ -4042,8 +4042,8 @@ function emptyRow(n,msg){return '<tr><td colspan="'+n+'" style="color:var(--text
 let CLIENTE_RAPIDO_ORC=false,CLIENTE_RAPIDO_VENDA=false;
 function abrirNovoClienteRapido(){openCliente();CLIENTE_RAPIDO_ORC=true;}
 function abrirNovoClienteRapidoVenda(){openCliente();CLIENTE_RAPIDO_VENDA=true;}
-function openCliente(){limparInfoCnpj();['cli-id','cli-nome','cli-email','cli-tel','cli-doc','cli-cidade','cli-end'].forEach(i=>$(i).value='');pintarDicaTel($('cli-tel'));$('cli-status').value='Ativo';$('mc-title').textContent='Novo Cliente';openModal('modal-clientes');}
-function editCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!c)return;limparInfoCnpj();
+function openCliente(){CLIENTE_RAPIDO_ORC=false;CLIENTE_RAPIDO_VENDA=false;limparInfoCnpj();['cli-id','cli-nome','cli-email','cli-tel','cli-doc','cli-cidade','cli-end'].forEach(i=>$(i).value='');pintarDicaTel($('cli-tel'));$('cli-status').value='Ativo';$('mc-title').textContent='Novo Cliente';openModal('modal-clientes');}
+function editCliente(id){if(!guard())return;CLIENTE_RAPIDO_ORC=false;CLIENTE_RAPIDO_VENDA=false;const c=DB.clientes.find(x=>x.id===id);if(!c)return;limparInfoCnpj();
  $('cli-id').value=c.id;$('cli-nome').value=c.nome;$('cli-email').value=c.email||'';$('cli-tel').value=c.tel||'';pintarDicaTel($('cli-tel'));$('cli-doc').value=c.doc||'';$('cli-cidade').value=c.cidade||'';$('cli-end').value=c.end||'';$('cli-status').value=c.status;$('mc-title').textContent='Editar Cliente';openModal('modal-clientes');}
 /* ================= CNPJ → DADOS DA EMPRESA =================
    Com 14 dígitos válidos no CPF/CNPJ, o ERP consulta o cadastro público da
@@ -4120,7 +4120,7 @@ async function saveCliente(){if(!guard())return;const nome=$('cli-nome').value.t
  else{DB.clientes.push(registro);commit('criar','Clientes',nome);}
  syncSheets('clientes','upsert',registro);
  closeModal('modal-clientes');toast('Cliente salvo!','success');
- if(CLIENTE_RAPIDO_ORC){CLIENTE_RAPIDO_ORC=false;orcShow('header');fillSel('orch-cli',DB.clientes,c=>c.nome,registro.id,'— Sem cliente —');}
+ if(CLIENTE_RAPIDO_ORC){CLIENTE_RAPIDO_ORC=false;fillSel('orch-cli',DB.clientes,c=>c.nome,registro.id,'— Sem cliente —');}
  if(CLIENTE_RAPIDO_VENDA){CLIENTE_RAPIDO_VENDA=false;fillSel('vnd-cli',DB.clientes,c=>c.nome,registro.id,'— Selecionar —');}}
 async function delCliente(id){if(!guard())return;const c=DB.clientes.find(x=>x.id===id);if(!confirm('Excluir cliente "'+c.nome+'"?'))return;
  const {error}=await supa.from('clientes').delete().eq('id',id);
@@ -6309,7 +6309,7 @@ function pintarFiltrosOrc(lista){
   const soma=lista.reduce((t,o)=>t+(Number(o.preco)||0),0);
   r.innerHTML=lista.length+(lista.length===1?' orçamento':' orçamentos')+'<span class="orc-resumo-sep"> · </span><span class="orc-resumo-valor">'+fmt(soma)+'</span>';}
  const ver=$('orc-filtros-ver');if(ver&&lista)ver.textContent='Ver '+lista.length+(lista.length===1?' orçamento':' orçamentos');}
-const orcEditandoItem=()=>['tipo','form','catalogo'].some(v=>$('orc-'+v+'-view').style.display==='block');
+const orcEditandoItem=()=>['tipo','form','catalogo','header'].some(v=>$('orc-'+v+'-view').style.display==='block');
 function renderOrcamentos(){if(!orcEditandoItem())orcShow('lista');syncPerBar('orc-per',PER_ORC);
  encherFiltroStatusOrc();
  const termo=semAcento(($('orc-busca')||{}).value||'').trim();
@@ -17273,7 +17273,8 @@ e não numera nada.
   dígito verificador errado, CNPJ não encontrado, situação diferente de
   ATIVA e falta de internet. CPF não é consultado. Orçamento e pedido
   têm "+ Novo Cliente", que abre o mesmo cadastro e já escolhe o cliente
-  novo.
+  novo, sem sair da tela (desde 23/11/2026 também no orçamento novo, em
+  que o cabeçalho fica na própria ficha do item).
 - Usuários — gestão de usuários e níveis (só o Administrador): e-mail de
   login, nome, nível e status na tabela usuarios. O nível se troca
   direto na lista; o último administrador ativo não pode ser rebaixado
@@ -18134,13 +18135,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-19.2';
+const APP_VERSAO='2026-11-23.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=353;
+const APP_ATUALIZACAO=354;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

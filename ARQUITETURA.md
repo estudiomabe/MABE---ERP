@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 19/11/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 23/11/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -1253,7 +1253,8 @@ e não numera nada.
   dígito verificador errado, CNPJ não encontrado, situação diferente de
   ATIVA e falta de internet. CPF não é consultado. Orçamento e pedido
   têm "+ Novo Cliente", que abre o mesmo cadastro e já escolhe o cliente
-  novo.
+  novo, sem sair da tela (desde 23/11/2026 também no orçamento novo, em
+  que o cabeçalho fica na própria ficha do item).
 - Usuários — gestão de usuários e níveis (só o Administrador): e-mail de
   login, nome, nível e status na tabela usuarios. O nível se troca
   direto na lista; o último administrador ativo não pode ser rebaixado
@@ -1781,4 +1782,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 19/11/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 23/11/2026.
