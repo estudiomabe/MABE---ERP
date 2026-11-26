@@ -886,6 +886,11 @@ body.sem-valores .lix-valor { display:none; }
 .tel-pais-dica.alerta { color:var(--warning); }
 .tel-pais-dica button { font:inherit;font-weight:600;color:var(--accent-dark,var(--accent));background:none;border:0;padding:0;text-decoration:underline;cursor:pointer; }
 .cnpj-info:empty { display:none; }
+.cli-secao { font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;padding-top:12px;margin-top:2px;border-top:1px solid var(--border); }
+.cli-g-cep { display:grid;gap:14px;grid-template-columns:130px minmax(0,1fr) 84px;grid-template-areas:"cep cid uf"; }
+.cli-g-cep > .g-cep { grid-area:cep; } .cli-g-cep > .g-cid { grid-area:cid; } .cli-g-cep > .g-uf { grid-area:uf; }
+.cli-g-num { display:grid;gap:14px;grid-template-columns:minmax(0,1fr) 110px; }
+@media (max-width:860px) { .cli-g-cep { grid-template-columns:minmax(0,1fr) 96px;grid-template-areas:"cep uf" "cid cid"; } .cli-g-num { grid-template-columns:minmax(0,1fr) 96px; } }
 .cnpj-info.ok { color:var(--success); }
 .cnpj-info.alerta { color:var(--danger);font-weight:600; }
 .cnpj-info button { background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--accent);text-decoration:underline;cursor:pointer; }
@@ -2107,7 +2112,18 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
 </div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-aprovar-orc')">Cancelar</button><button class="btn btn-primary" onclick="pedirAprovarOrc()">✔ Confirmar Aprovação</button></div></div></div>
 <div class="modal-overlay" id="modal-assistente-pag"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="assist-titulo">Ligar pagamentos antigos</div><button class="modal-close" onclick="fecharAssistente()">✕</button></div><div class="modal-body" id="assist-corpo"></div><div class="modal-footer" id="assist-rodape"></div></div></div>
 <div class="modal-overlay" id="modal-antes-salvar" onclick="if(event.target===this)responderAntes(false)"><div class="modal"><div class="modal-header"><div class="modal-title" id="antes-titulo">Antes de salvar</div><button class="modal-close" onclick="responderAntes(false)">✕</button></div><div class="modal-body"><p class="antes-sub" id="antes-sub"></p><div class="antes-lista" id="antes-lista"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="responderAntes(false)">Voltar</button><button class="btn btn-primary" id="antes-ok" onclick="responderAntes(true)">Salvar</button></div></div></div>
-<div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label" for="cli-tel">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="tel" maxlength="24" placeholder="(21) 99999-9999 ou +1 212 555 0100" oninput="mascararTelIntl(this)" autocomplete="off"><div class="tel-pais-dica" id="cli-tel-dica"></div></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this);cnpjDigitado(this)"><div class="cnpj-info" id="cli-cnpj-info"></div></div><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div></div><div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-control" id="cli-end"></div><div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-clientes"><div class="modal"><div class="modal-header"><div class="modal-title" id="mc-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-clientes')">✕</button></div><div class="modal-body"><input type="hidden" id="cli-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="cli-nome" placeholder="Nome do cliente"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="cli-email"></div><div class="form-group"><label class="form-label" for="cli-tel">Telefone</label><input type="text" class="form-control" id="cli-tel" inputmode="tel" maxlength="24" placeholder="(21) 99999-9999 ou +1 212 555 0100" oninput="mascararTelIntl(this)" autocomplete="off"><div class="tel-pais-dica" id="cli-tel-dica"></div></div></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">CPF/CNPJ</label><input type="text" class="form-control" id="cli-doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ" oninput="mascararDoc(this);cnpjDigitado(this)"><div class="cnpj-info" id="cli-cnpj-info"></div></div><div class="form-group"><label class="form-label" for="cli-aniv">Aniversário</label><input type="text" class="form-control cli-novo" id="cli-aniv" inputmode="numeric" maxlength="5" placeholder="dia/mês" oninput="mascararDiaMes(this)" autocomplete="off"></div></div>
+<div class="form-grid form-2"><div class="form-group"><label class="form-label" for="cli-c2-nome">2º contato</label><input type="text" class="form-control cli-novo" id="cli-c2-nome" placeholder="Cônjuge, secretária, obra..."></div><div class="form-group"><label class="form-label" for="cli-c2-tel">Telefone do 2º contato</label><input type="text" class="form-control cli-novo" id="cli-c2-tel" inputmode="tel" maxlength="24" placeholder="(21) 99999-9999" oninput="mascararTelIntl(this)" autocomplete="off"></div></div>
+<div class="cli-secao">Endereço</div>
+<div class="cli-g-cep"><div class="form-group g-cep"><label class="form-label" for="cli-cep">CEP</label><input type="text" class="form-control cli-novo" id="cli-cep" placeholder="00000-000" maxlength="9" inputmode="numeric" oninput="mascararCep(this);cepDigitado(this)" autocomplete="off"></div><div class="form-group g-cid"><label class="form-label" for="cli-cidade">Cidade</label><input type="text" class="form-control" id="cli-cidade"></div><div class="form-group g-uf"><label class="form-label" for="cli-estado">Estado</label><select class="form-control cli-novo" id="cli-estado"></select></div></div>
+<div class="cnpj-info" id="cli-cep-info"></div>
+<div class="cli-g-num"><div class="form-group"><label class="form-label" for="cli-end">Endereço</label><input type="text" class="form-control" id="cli-end" placeholder="Rua, avenida..."></div><div class="form-group"><label class="form-label" for="cli-numero">Número</label><input type="text" class="form-control cli-novo" id="cli-numero" maxlength="12"></div></div>
+<div class="form-grid form-2"><div class="form-group"><label class="form-label" for="cli-compl">Complemento</label><input type="text" class="form-control cli-novo" id="cli-compl" placeholder="Apto, bloco, sala..."></div><div class="form-group"><label class="form-label" for="cli-bairro">Bairro</label><input type="text" class="form-control cli-novo" id="cli-bairro"></div></div>
+<div class="form-group"><label class="form-label" for="cli-obs-ent">Observações de entrega</label><textarea class="form-control cli-novo" id="cli-obs-ent" rows="2" style="resize:vertical;font-family:var(--font)" placeholder="Andar, elevador de serviço (medidas), escada, horário da portaria, vaga para o caminhão..."></textarea></div>
+<div class="cli-secao">Relacionamento</div>
+<div class="form-grid form-2"><div class="form-group"><label class="form-label" for="cli-origem">Como nos conheceu</label><select class="form-control cli-novo" id="cli-origem"></select></div><div class="form-group"><label class="form-label" for="cli-indicador">Arquiteto / indicador</label><select class="form-control cli-novo" id="cli-indicador"></select></div></div>
+<div class="cnpj-info alerta" id="cli-campos-aviso"></div>
+<div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title" id="imp-titulo">🖨️ Imprimir pedido (PCP)</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div id="imp-explicacao" style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O pedido sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><label style="display:flex;align-items:center;gap:9px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;cursor:pointer"><input type="checkbox" id="imp-sem-valores" style="width:17px;height:17px;flex-shrink:0">Ocultar valores nesta impressão<span style="font-size:11px;color:var(--text-muted)">— para mandar à oficina</span></label><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0" oninput="atualizarCustoFinalProduto()"></div><div class="form-group" id="prod-frete-wrap"><label class="form-label">Frete (R$)</label><input type="number" class="form-control" id="prod-frete" step="0.01" min="0" placeholder="0,00" oninput="atualizarCustoFinalProduto()"></div></div><div id="prod-custo-final" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:-6px"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-link-wrap"><label class="form-label">Link do material</label><input type="url" class="form-control" id="prod-link" placeholder="https://site-do-fornecedor.com/produto" inputmode="url" autocomplete="off"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Página do produto no site do fornecedor — abre pelo 🔗 na lista</div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
@@ -2944,7 +2960,7 @@ const podeAbrirComValores=()=>canEdit()&&verValores();
 function fontesBusca(){return [
  {sec:'comissoes',grupo:'Comissões',itens:listaComissionados(),cod:c=>'',txt:c=>c.nome,sub:c=>c.papel||'',extra:c=>[c.contato,c.obs],abrir:c=>editComissionado(c.id)},
  {sec:'servicos',grupo:'Serviços',itens:listaServicos(),cod:sv=>'',txt:sv=>sv.nome,sub:sv=>sv.fornId?fornName(sv.fornId):'',extra:sv=>[sv.unidade,sv.obs],abrir:sv=>editServico(sv.id)},
- {sec:'clientes',grupo:'Clientes',itens:DB.clientes,cod:c=>'',txt:c=>c.nome,sub:c=>c.tel||'',extra:c=>[c.email,c.doc,c.cidade],abrir:c=>editCliente(c.id)},
+ {sec:'clientes',grupo:'Clientes',itens:DB.clientes,cod:c=>'',txt:c=>c.nome,sub:c=>c.tel||'',extra:c=>[c.email,c.doc,c.cidade,c.bairro,c.cep,c.contato2Nome],abrir:c=>editCliente(c.id)},
  {sec:'orcamentos',grupo:'Orçamentos',itens:DB.orcamentos,cod:o=>'ORC-'+pad(o.num),txt:o=>cliName(o.cliId),sub:o=>o.status,extra:o=>[(o.itens||[]).map(i=>i.desc).join(' '),o.obs],abrir:o=>abrirDetalheOrc(o.id),pode:()=>true},
  {sec:'vendas',grupo:'Pedidos',itens:DB.vendas,cod:v=>'V-'+pad(v.num),txt:v=>cliName(v.cliId),sub:v=>v.status,extra:v=>[(v.itens||[]).map(i=>i.desc).join(' '),v.obs],abrir:v=>editVenda(v.id),pode:podeAbrirComValores},
  /* a etapa pelo nome ("🔨 Montagem"): o número sozinho não dizia nada. A OP concluída
@@ -4149,12 +4165,54 @@ function instalarTravaDeGravacao(){
    valvula=setTimeout(soltar,nome==='doLogin'?15000:120000);
    return Promise.resolve(r).finally(soltar);};});}
 /* tel: do Brasil "(21) 99999-9999" (sem código); de fora "+1 (212) 555-0100" (com o + e o código: DDI_PAISES) */
-function clienteDeSupabase(row){return{id:row.id,nome:row.nome,email:row.email||'',tel:row.tel||'',doc:row.doc||'',cidade:row.cidade||'',end:row.endereco||'',status:row.status||'Ativo'};}
-function clienteParaSupabase(c){return{id:c.id,nome:c.nome,email:c.email||null,tel:c.tel||null,doc:c.doc||null,cidade:c.cidade||null,endereco:c.end||null,status:c.status||'Ativo'};}
+/* campos novos da ficha: nome no ERP → coluna no banco */
+const CLI_CAMPOS_NOVOS=[['numero','numero'],['compl','complemento'],['bairro','bairro'],['cep','cep'],['estado','estado'],
+ ['aniversario','aniversario'],['contato2Nome','contato2_nome'],['contato2Tel','contato2_tel'],['origem','origem'],['indicadorId','indicador_id'],['obsEntrega','obs_entrega']];
+function clienteDeSupabase(row){const c={id:row.id,nome:row.nome,email:row.email||'',tel:row.tel||'',doc:row.doc||'',cidade:row.cidade||'',end:row.endereco||'',status:row.status||'Ativo'};
+ CLI_CAMPOS_NOVOS.forEach(([k,col])=>{c[k]=row[col]||'';});return c;}
+/* os campos novos só vão para o banco quando as colunas existem: sem elas, o upsert inteiro falharia */
+let COLUNAS_CLI_NOVAS=false;
+function clienteParaSupabase(c){const r={id:c.id,nome:c.nome,email:c.email||null,tel:c.tel||null,doc:c.doc||null,cidade:c.cidade||null,endereco:c.end||null,status:c.status||'Ativo'};
+ if(COLUNAS_CLI_NOVAS)CLI_CAMPOS_NOVOS.forEach(([k,col])=>{r[col]=c[k]||null;});
+ return r;}
+function pintarCamposNovosCli(){const ok=COLUNAS_CLI_NOVAS;
+ document.querySelectorAll('#modal-clientes .cli-novo').forEach(el=>{el.disabled=!ok;el.title=ok?'':'Indisponível até criar as colunas no banco';});
+ const av=$('cli-campos-aviso');if(av)av.textContent=ok?'':paraAdmin('Os campos novos (número, complemento, bairro, CEP, estado, aniversário, 2º contato, origem, indicador e entrega) estão travados: falta rodar supabase/migracao-cliente-campos.sql no SQL Editor do Supabase.','Alguns campos da ficha estão indisponíveis no momento — avise o administrador.');}
+/* a carga já traz as linhas com select('*'): se houver alguma, basta olhar as chaves; se a tabela estiver vazia, pergunta direto */
+async function conferirColunasCli(linhas){
+ if(linhas&&linhas.length)COLUNAS_CLI_NOVAS=CLI_CAMPOS_NOVOS.every(([k,col])=>col in linhas[0]);
+ else{try{const {error}=await supa.from('clientes').select(CLI_CAMPOS_NOVOS.map(x=>x[1]).join(',')).limit(1);COLUNAS_CLI_NOVAS=!error;}catch(e){COLUNAS_CLI_NOVAS=false;}}
+ pintarCamposNovosCli();}
+/* listas da ficha montadas das que já existem: os estados vêm do cadastro da empresa (Configurações), a origem do
+   pedido, e o indicador da lista de Comissões. Valor que não está mais na lista continua aparecendo, marcado. */
+function encherSelectsCli(c){
+ const uf=$('cli-estado'),ufBase=$('cfg-emp-estado');
+ if(uf&&ufBase)uf.innerHTML=ufBase.innerHTML;if(uf)uf.value=c.estado||'';
+ const og=$('cli-origem'),ogBase=$('vnd-origem');
+ if(og&&ogBase){og.innerHTML=ogBase.innerHTML;if(c.origem&&![...og.options].some(o=>o.value===c.origem))og.add(new Option(c.origem,c.origem));og.value=c.origem||'';}
+ const ind=$('cli-indicador');if(ind){const lista=listaComissionados();
+  ind.innerHTML='<option value="">— Nenhum —</option>'+lista.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.nome)+(p.papel?' ('+esc(p.papel)+')':'')+'</option>').join('');
+  if(c.indicadorId&&!lista.some(p=>p.id===c.indicadorId))ind.add(new Option('(removido das Comissões)',c.indicadorId));
+  ind.value=c.indicadorId||'';}}
+function mascararDiaMes(el){const d=String(el.value).replace(/\D/g,'').slice(0,4);el.value=d.length>2?d.slice(0,2)+'/'+d.slice(2):d;}
+const diaMesValido=s=>{const m=/^(\d{2})\/(\d{2})$/.exec(s);if(!m)return false;const d=+m[1],mm=+m[2];return mm>=1&&mm<=12&&d>=1&&d<=[31,29,31,30,31,30,31,31,30,31,30,31][mm-1];};
+/* cidade "Rio de Janeiro/RJ" dos cadastros antigos (e da Receita antes de 26/11): separa a sigla do estado */
+const UFS_BR=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+function separarCidadeUf(cidade){const m=/^(.+?)\s*[\/-]\s*([A-Za-z]{2})$/.exec(String(cidade||'').trim());
+ return m&&UFS_BR.includes(m[2].toUpperCase())?{cidade:m[1].trim(),uf:m[2].toUpperCase()}:null;}
+const cidadeUf=c=>{const cid=String(c.cidade||'').trim();return c.estado&&!separarCidadeUf(cid)?[cid,c.estado].filter(Boolean).join('/'):cid;};
+/* endereço numa linha: "Rua X, 12, apto 5 — Bairro — Cidade/UF — CEP 00000-000". Cadastros antigos já trazem bairro e
+   CEP escritos dentro do endereço: aí não repete. */
+function enderecoCompletoCliente(c,semCidade){const end=String(c.end||'').trim();
+ const rua=[end,c.numero,c.compl].map(x=>String(x||'').trim()).filter(Boolean).join(', ');
+ const bairro=c.bairro&&!semAcento(end).includes(semAcento(c.bairro))?c.bairro:'';
+ const dc=String(c.cep||'').replace(/\D/g,'');const cep=dc&&!end.replace(/\D/g,'').includes(dc)?'CEP '+c.cep:'';
+ return [rua,bairro,semCidade?'':cidadeUf(c),cep].filter(Boolean).join(' — ');}
+const indicadorNome=c=>{if(!c.indicadorId)return '';const p=listaComissionados().find(x=>x.id===c.indicadorId);return p?p.nome:'(removido)';};
 async function carregarClientesSupabase(){
  const {data,error}=await supa.from('clientes').select('*').order('nome');
  if(error){erroDeCarga('clientes',error);return;}
- DB.clientes=(data||[]).map(clienteDeSupabase);saveDB();
+ DB.clientes=(data||[]).map(clienteDeSupabase);saveDB();conferirColunasCli(data);
  if(CUR==='clientes')renderClientes();}
 
 /* ================= CLIENTES ================= */
@@ -4162,8 +4220,8 @@ async function carregarClientesSupabase(){
 const semAcento=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function clientesFiltrados(){const q=semAcento(($('cli-busca')||{}).value||'').trim();
  if(!q)return DB.clientes;const qd=q.replace(/\D/g,'');
- return DB.clientes.filter(c=>semAcento([c.nome,c.email,c.cidade].join(' ')).includes(q)
-  ||(qd.length>=3&&String((c.tel||'')+' '+(c.doc||'')).replace(/\D/g,'').includes(qd)));}
+ return DB.clientes.filter(c=>semAcento([c.nome,c.email,c.cidade,c.bairro,c.contato2Nome].join(' ')).includes(q)
+  ||(qd.length>=3&&String((c.tel||'')+' '+(c.doc||'')+' '+(c.cep||'')+' '+(c.contato2Tel||'')).replace(/\D/g,'').includes(qd)));}
 function linkWhatsapp(tel){const d=telIntl(tel);return d?'https://wa.me/'+d:'';}
 function renderClientesCards(lista){const alvo=$('clientes-cards');if(!alvo)return;
  if(!lista.length){alvo.innerHTML='<div class="table-wrapper pc-vazio">'+(DB.clientes.length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado')+'</div>';return;}
@@ -4184,14 +4242,20 @@ function renderClientesCards(lista){const alvo=$('clientes-cards');if(!alvo)retu
 function renderClientes(){const lista=clientesFiltrados().filter(c=>fcPassa('cli',c));
  const n=$('cli-busca-n');if(n)n.textContent=lista.length===DB.clientes.length?DB.clientes.length+' clientes':lista.length+' de '+DB.clientes.length;
  renderClientesCards(lista);
- $('tb-clientes').innerHTML=lista.map((c,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(c.nome)+'</strong></td><td>'+esc(c.email||'—')+'</td><td>'+esc(c.tel||'—')+'</td><td class="mono">'+esc(c.doc||'—')+'</td><td>'+esc(c.cidade||'—')+'</td><td><span class="badge '+(c.status==='Ativo'?'badge-success':c.status==='Bloqueado'?'badge-danger':'badge-muted')+'">'+c.status+'</span></td><td>'+actionBtns("editCliente('"+c.id+"')","delCliente('"+c.id+"')")+'</td></tr>').join('')||emptyRow(8,fcMsgVazia('cli',DB.clientes.length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado'));fcPintar('cli',lista);}
+ $('tb-clientes').innerHTML=lista.map((c,i)=>'<tr><td class="mono">'+(i+1)+'</td><td><strong>'+esc(c.nome)+'</strong></td><td>'+esc(c.email||'—')+'</td><td>'+esc(c.tel||'—')+'</td><td class="mono">'+esc(c.doc||'—')+'</td><td>'+esc(cidadeUf(c)||'—')+'</td><td><span class="badge '+(c.status==='Ativo'?'badge-success':c.status==='Bloqueado'?'badge-danger':'badge-muted')+'">'+c.status+'</span></td><td>'+actionBtns("editCliente('"+c.id+"')","delCliente('"+c.id+"')")+'</td></tr>').join('')||emptyRow(8,fcMsgVazia('cli',DB.clientes.length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado'));fcPintar('cli',lista);}
 function emptyRow(n,msg){return '<tr><td colspan="'+n+'" style="color:var(--text-muted);text-align:center;padding:26px">'+msg+'</td></tr>';}
 let CLIENTE_RAPIDO_ORC=false,CLIENTE_RAPIDO_VENDA=false;
 function abrirNovoClienteRapido(){openCliente();CLIENTE_RAPIDO_ORC=true;}
 function abrirNovoClienteRapidoVenda(){openCliente();CLIENTE_RAPIDO_VENDA=true;}
-function openCliente(){CLIENTE_RAPIDO_ORC=false;CLIENTE_RAPIDO_VENDA=false;limparInfoCnpj();['cli-id','cli-nome','cli-email','cli-tel','cli-doc','cli-cidade','cli-end'].forEach(i=>$(i).value='');pintarDicaTel($('cli-tel'));$('cli-status').value='Ativo';$('mc-title').textContent='Novo Cliente';openModal('modal-clientes');}
+function openCliente(){CLIENTE_RAPIDO_ORC=false;CLIENTE_RAPIDO_VENDA=false;limparInfoCnpj();['cli-id','cli-nome','cli-email','cli-tel','cli-doc','cli-cidade','cli-end','cli-numero','cli-compl','cli-bairro','cli-cep','cli-aniv','cli-c2-nome','cli-c2-tel','cli-obs-ent'].forEach(i=>$(i).value='');
+ limparInfoCep();encherSelectsCli({});pintarCamposNovosCli();pintarDicaTel($('cli-tel'));$('cli-status').value='Ativo';$('mc-title').textContent='Novo Cliente';openModal('modal-clientes');}
 function editCliente(id){if(!guard())return;CLIENTE_RAPIDO_ORC=false;CLIENTE_RAPIDO_VENDA=false;const c=DB.clientes.find(x=>x.id===id);if(!c)return;limparInfoCnpj();
- $('cli-id').value=c.id;$('cli-nome').value=c.nome;$('cli-email').value=c.email||'';$('cli-tel').value=c.tel||'';pintarDicaTel($('cli-tel'));$('cli-doc').value=c.doc||'';$('cli-cidade').value=c.cidade||'';$('cli-end').value=c.end||'';$('cli-status').value=c.status;$('mc-title').textContent='Editar Cliente';openModal('modal-clientes');}
+ $('cli-id').value=c.id;$('cli-nome').value=c.nome;$('cli-email').value=c.email||'';$('cli-tel').value=c.tel||'';pintarDicaTel($('cli-tel'));$('cli-doc').value=c.doc||'';$('cli-cidade').value=c.cidade||'';$('cli-end').value=c.end||'';
+ limparInfoCep();encherSelectsCli(c);
+ [['cli-numero','numero'],['cli-compl','compl'],['cli-bairro','bairro'],['cli-cep','cep'],['cli-aniv','aniversario'],['cli-c2-nome','contato2Nome'],['cli-c2-tel','contato2Tel'],['cli-obs-ent','obsEntrega']].forEach(([id,k])=>{$(id).value=c[k]||'';});
+ /* cidade antiga com o estado junto ("Rio de Janeiro/RJ"): já abre separada; grava assim no próximo Salvar */
+ if(COLUNAS_CLI_NOVAS&&!c.estado){const s=separarCidadeUf(c.cidade);if(s){$('cli-cidade').value=s.cidade;$('cli-estado').value=s.uf;}}
+ pintarCamposNovosCli();$('cli-status').value=c.status;$('mc-title').textContent='Editar Cliente';openModal('modal-clientes');}
 /* ================= CNPJ → DADOS DA EMPRESA =================
    Com 14 dígitos válidos no CPF/CNPJ, o ERP consulta o cadastro público da
    Receita (BrasilAPI: gratuito, sem conta) e preenche só os campos vazios. O
@@ -4222,12 +4286,37 @@ function cnpjDigitado(el){const d=String(el.value||'').replace(/\D/g,'');
 function camposDaReceita(j){
  const tel=j.ddd_telefone_1?String(j.ddd_telefone_1).replace(/\D/g,''):'';
  const cep=String(j.cep||'').replace(/\D/g,'');
- const end=[nomeProprio([j.descricao_tipo_de_logradouro,j.logradouro].filter(Boolean).join(' '))+(j.numero?', '+j.numero:''),
+ const rua=nomeProprio([j.descricao_tipo_de_logradouro,j.logradouro].filter(Boolean).join(' '));
+ const base={'cli-nome':nomeProprio(j.razao_social),'cli-tel':tel,'cli-email':String(j.email||'').toLowerCase().trim()};
+ if(COLUNAS_CLI_NOVAS)return Object.assign(base,{'cli-end':rua,'cli-numero':String(j.numero||'').trim(),'cli-compl':nomeProprio(j.complemento),
+  'cli-bairro':nomeProprio(j.bairro),'cli-cep':cep.length===8?cep.slice(0,5)+'-'+cep.slice(5):'','cli-cidade':nomeProprio(j.municipio),
+  'cli-estado':UFS_BR.includes(String(j.uf||'').toUpperCase())?String(j.uf).toUpperCase():''});
+ /* sem as colunas novas: tudo junto no endereço, como era */
+ const end=[rua+(j.numero?', '+j.numero:''),
   nomeProprio(j.complemento),nomeProprio(j.bairro),cep.length===8?'CEP '+cep.slice(0,5)+'-'+cep.slice(5):''].filter(Boolean).join(' — ');
- return {'cli-nome':nomeProprio(j.razao_social),'cli-tel':tel,'cli-email':String(j.email||'').toLowerCase().trim(),
-  'cli-cidade':j.municipio?nomeProprio(j.municipio)+(j.uf?'/'+j.uf:''):'','cli-end':end};}
-const ROTULO_CAMPO={'cli-nome':'nome','cli-tel':'telefone','cli-email':'e-mail','cli-cidade':'cidade','cli-end':'endereço'};
-function aplicarCampoCnpj(id,valor){const el=$(id);if(!el)return;el.value=valor;if(id==='cli-tel')mascararTelIntl(el);}
+ return Object.assign(base,{'cli-cidade':j.municipio?nomeProprio(j.municipio)+(j.uf?'/'+j.uf:''):'','cli-end':end});}
+const ROTULO_CAMPO={'cli-nome':'nome','cli-tel':'telefone','cli-email':'e-mail','cli-cidade':'cidade','cli-end':'endereço','cli-numero':'número',
+ 'cli-compl':'complemento','cli-bairro':'bairro','cli-cep':'CEP','cli-estado':'estado'};
+function aplicarCampoCnpj(id,valor){const el=$(id);if(!el)return;el.value=valor;if(id==='cli-tel')mascararTelIntl(el);if(id==='cli-cep')mascararCep(el);}
+/* CEP digitado: busca rua, bairro, cidade e estado no BrasilAPI (base pública dos Correios, sem conta; vai só o CEP).
+   Preenche só o que está vazio, para não apagar o que já foi digitado. */
+let CEP_CONSULTADO='',CEP_TIMER=null;
+function limparInfoCep(){clearTimeout(CEP_TIMER);CEP_CONSULTADO='';const el=$('cli-cep-info');if(el){el.className='cnpj-info';el.innerHTML='';}}
+function infoCep(html,classe){const el=$('cli-cep-info');if(el){el.className='cnpj-info'+(classe?' '+classe:'');el.innerHTML=html;}}
+function cepDigitado(el){const d=String(el.value||'').replace(/\D/g,'');clearTimeout(CEP_TIMER);
+ if(d.length!==8){if(CEP_CONSULTADO)limparInfoCep();return;}
+ if(d===CEP_CONSULTADO)return;CEP_TIMER=setTimeout(()=>consultarCep(d),350);}
+async function consultarCep(d){CEP_CONSULTADO=d;infoCep('🔎 Buscando o endereço do CEP...');let j=null;
+ try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),10000);
+  const r=await fetch('https://brasilapi.com.br/api/cep/v2/'+d,{signal:ctl.signal});clearTimeout(t);
+  if(r.status===404){infoCep('CEP não encontrado. Preencha o endereço à mão.','alerta');return;}
+  if(!r.ok)throw new Error('HTTP '+r.status);j=await r.json();}
+ catch(e){if(CEP_CONSULTADO===d)infoCep('Não deu para consultar o CEP agora. Preencha à mão ou <button type="button" onclick="consultarCep(\''+d+'\')">tentar de novo</button>.','alerta');return;}
+ if(CEP_CONSULTADO!==d||String($('cli-cep').value).replace(/\D/g,'')!==d)return;
+ const uf=String(j.state||'').toUpperCase();
+ const campos={'cli-end':String(j.street||'').trim(),'cli-bairro':String(j.neighborhood||'').trim(),'cli-cidade':String(j.city||'').trim(),'cli-estado':UFS_BR.includes(uf)?uf:''};
+ const feitos=[];Object.entries(campos).forEach(([id,v])=>{if(v&&!String($(id).value||'').trim()){$(id).value=v;feitos.push(ROTULO_CAMPO[id]);}});
+ infoCep(feitos.length?'✓ Preenchido pelo CEP: '+feitos.join(', ')+'. Falta o número.':'✓ CEP encontrado. Mantive o que já estava digitado.','ok');}
 async function consultarCnpj(d){
  CNPJ_CONSULTADO=d;CNPJ_RECEITA=null;
  infoCnpj('🔎 Buscando dados da empresa na Receita...');
@@ -4259,7 +4348,13 @@ function usarReceitaNosMantidos(){if(!CNPJ_RECEITA)return;
  infoCnpj('✓ Campos trocados pelos dados da Receita.','ok');}
 async function saveCliente(){if(!guard())return;const nome=$('cli-nome').value.trim();if(!nome){toast('Informe o nome do cliente.','error');return;}
  const telAviso=avisoTel($('cli-tel'));if(telAviso&&!confirm(telAviso+'\n\nSalvar assim mesmo?'))return;
+ if(COLUNAS_CLI_NOVAS){const an=$('cli-aniv').value.trim();if(an&&!diaMesValido(an)){toast('Aniversário: use dia/mês, por exemplo 25/03.','error');$('cli-aniv').focus();return;}
+  const t2=avisoTel($('cli-c2-tel'));if(t2&&!confirm('2º contato — '+t2+'\n\nSalvar assim mesmo?'))return;}
  const id=$('cli-id').value;const o={nome,email:$('cli-email').value.trim(),tel:telDoForm($('cli-tel')),doc:$('cli-doc').value.trim(),cidade:$('cli-cidade').value.trim(),end:$('cli-end').value.trim(),status:$('cli-status').value};
+ /* sem as colunas os campos novos ficam travados: não mexe no que o cliente já tem guardado */
+ if(COLUNAS_CLI_NOVAS)Object.assign(o,{numero:$('cli-numero').value.trim(),compl:$('cli-compl').value.trim(),bairro:$('cli-bairro').value.trim(),
+  cep:$('cli-cep').value.trim(),estado:$('cli-estado').value,aniversario:$('cli-aniv').value.trim(),contato2Nome:$('cli-c2-nome').value.trim(),
+  contato2Tel:telDoForm($('cli-c2-tel')),origem:$('cli-origem').value,indicadorId:$('cli-indicador').value,obsEntrega:$('cli-obs-ent').value.trim()});
  const registro=id?Object.assign({id},o):Object.assign({id:uid()},o);
  const {error}=await supa.from('clientes').upsert(clienteParaSupabase(registro));
  if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
@@ -10644,7 +10739,7 @@ function montarPdfContrato(o){
  const titulo=t=>{if(y+20>RODAPE_Y-8)novaPag();bloco(t,{tam:9.5,estilo:'bold',antes:4,depois:2});};
  /* ---- partes ---- */
  const cli=o&&o.cliId?DB.clientes.find(c=>c.id===o.cliId):null;
- const enderecoCli=cli?[cli.end,cli.cidade].filter(Boolean).join(' — '):'';
+ const enderecoCli=cli?enderecoCompletoCliente(cli):'';
  bloco('CONTRATADA',{tam:7.5,estilo:'bold',cor:MUTED,depois:1.5});
  bloco('ESTÚDIO MABE'+(emp.cnpj?', inscrita no CNPJ sob o nº '+emp.cnpj:'')+
   (enderecoEstudio(emp)?', com sede em '+enderecoEstudio(emp):'')+
@@ -11105,7 +11200,7 @@ async function concluirOP(id){if(!guard())return;const o=DB.producao.find(x=>x.i
  const {error}=await supa.from('producao').update({status:'Concluída',fim:o.fim}).eq('id',id);
  if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
  if(!DB.entregas.some(e=>e.opId===o.id)){const cli=DB.clientes.find(c=>c.id===o.cliId);
-  const novaEnt={id:uid(),opId:o.id,data:o.prazo||addDays(today(),3),cliId:o.cliId,peca:o.titulo,end:cli?cli.end||'':'',resp:o.resp||'',status:'Agendada',obs:''};
+  const novaEnt={id:uid(),opId:o.id,data:o.prazo||addDays(today(),3),cliId:o.cliId,peca:o.titulo,end:cli?enderecoCompletoCliente(cli):'',resp:o.resp||'',status:'Agendada',obs:cli&&cli.obsEntrega||''};
   const {error:erroEnt}=await supa.from('entregas').insert(entregaParaSupabase(novaEnt));
   if(erroEnt){toast('Erro ao criar entrega no Supabase: '+erroEnt.message,'error');}
   else{DB.entregas.unshift(novaEnt);syncSheets('entregas','upsert',novaEnt);}
@@ -15628,7 +15723,10 @@ function montarPlanilhaBackup(){
  const nCli=id=>id?cliName(id):'';
  criarAba('Clientes','CLIENTES',[
   {t:'Nome',w:28,v:c=>txt(c.nome)},{t:'E-mail',w:28,v:c=>txt(c.email)},{t:'Telefone',w:18,v:c=>txt(c.tel)},
-  {t:'CPF/CNPJ',w:20,v:c=>txt(c.doc)},{t:'Cidade',w:20,v:c=>txt(c.cidade)},{t:'Endereço',w:34,v:c=>txt(c.end)},
+  {t:'CPF/CNPJ',w:20,v:c=>txt(c.doc)},{t:'Cidade',w:20,v:c=>txt(c.cidade)},{t:'Estado',w:8,v:c=>txt(c.estado)},{t:'Endereço',w:34,v:c=>txt(c.end)},
+  {t:'Número',w:9,v:c=>txt(c.numero)},{t:'Complemento',w:16,v:c=>txt(c.compl)},{t:'Bairro',w:20,v:c=>txt(c.bairro)},{t:'CEP',w:11,v:c=>txt(c.cep)},
+  {t:'Aniversário',w:11,v:c=>txt(c.aniversario)},{t:'2º contato',w:20,v:c=>txt(c.contato2Nome)},{t:'Tel. 2º contato',w:18,v:c=>txt(c.contato2Tel)},
+  {t:'Como nos conheceu',w:18,v:c=>txt(c.origem)},{t:'Arquiteto / indicador',w:22,v:c=>txt(indicadorNome(c))},{t:'Obs. de entrega',w:34,v:c=>txt(c.obsEntrega)},
   {t:'Status',w:12,v:c=>txt(c.status)}],DB.clientes);
 
  criarAba('Orçamentos','ORÇAMENTOS',[
@@ -15943,7 +16041,7 @@ function montarPdfBackup(){
  /* ---- Clientes ---- */
  secao('Clientes',DB.clientes.length);
  tabela(['Nome','CPF/CNPJ','Telefone','E-mail','Cidade','Endereço','Status'],
-  DB.clientes.map(c=>[t(c.nome),t(c.doc),t(c.tel),t(c.email),t(c.cidade),t(c.end),t(c.status)]),
+  DB.clientes.map(c=>[t(c.nome),t(c.doc),t(c.tel),t(c.email),t(cidadeUf(c)),t(enderecoCompletoCliente(c,true)),t(c.status)]),
   {0:{cellWidth:34,fontStyle:'bold'},1:{cellWidth:24},2:{cellWidth:22},3:{cellWidth:36},4:{cellWidth:22},6:{cellWidth:16}});
 
  /* ---- Orçamentos ---- */
@@ -16580,7 +16678,11 @@ O CREATE TABLE de todas elas, pronto para rodar no SQL Editor de um
 projeto novo, está em "supabase/estrutura.sql" no repositório. A lista
 abaixo é o resumo em português.
 
-1. clientes — nome, email, tel, doc (CPF/CNPJ), cidade, endereco, status
+1. clientes — nome, email, tel, doc (CPF/CNPJ), cidade, endereco (só a
+   rua), numero, complemento, bairro, cep, estado (sigla), aniversario
+   ("dd/mm"), contato2_nome, contato2_tel, origem (como nos conheceu, mesma
+   lista do pedido), indicador_id (id da lista de Comissões), obs_entrega,
+   status. Sem as colunas novas, a ficha trava esses campos e salva o resto.
 2. produtos — usada tanto para "Portfólio" (produtos prontos vendáveis)
    quanto para "Insumo" (matéria-prima); campos: nome, tipo, cat, preco,
    custo, est (estoque atual), min (estoque mínimo), un (unidade) e
@@ -17901,7 +18003,9 @@ ERP, usuários sem senha e o histórico ficam de fora.
   Administrador (paraAdmin); a equipe lê uma frase simples.
 - Serviço externo: a consulta de CNPJ do cadastro de clientes manda ao
   BrasilAPI (cadastro público da Receita, sem conta) só o número do
-  CNPJ; CPF não é consultado.
+  CNPJ; CPF não é consultado. O CEP digitado na ficha também é consultado
+  no BrasilAPI (vai só o CEP) para preencher rua, bairro, cidade e estado
+  que estiverem vazios.
 
 
 ## 15. Prompt pronto para recriar este sistema (copie e cole no Claude Code)
@@ -18313,13 +18417,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-26.1';
+const APP_VERSAO='2026-11-26.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=356;
+const APP_ATUALIZACAO=357;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

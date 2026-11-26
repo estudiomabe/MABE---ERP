@@ -79,7 +79,18 @@ create table if not exists public.clientes (
   tel         text,
   doc         text,
   cidade      text,
-  endereco    text,
+  endereco    text,                 -- só a rua
+  numero      text,
+  complemento text,
+  bairro      text,
+  cep         text,                 -- "00000-000"
+  estado      text,                 -- sigla, "RJ"
+  aniversario text,                 -- "dd/mm"
+  contato2_nome text,
+  contato2_tel  text,
+  origem      text,                 -- como nos conheceu (lista do pedido)
+  indicador_id text,                -- id na lista de Comissões
+  obs_entrega text,
   status      text default 'Ativo',
   created_at  timestamptz default now()
 );

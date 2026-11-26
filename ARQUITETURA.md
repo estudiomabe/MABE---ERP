@@ -404,7 +404,11 @@ O CREATE TABLE de todas elas, pronto para rodar no SQL Editor de um
 projeto novo, está em "supabase/estrutura.sql" no repositório. A lista
 abaixo é o resumo em português.
 
-1. clientes — nome, email, tel, doc (CPF/CNPJ), cidade, endereco, status
+1. clientes — nome, email, tel, doc (CPF/CNPJ), cidade, endereco (só a
+   rua), numero, complemento, bairro, cep, estado (sigla), aniversario
+   ("dd/mm"), contato2_nome, contato2_tel, origem (como nos conheceu, mesma
+   lista do pedido), indicador_id (id da lista de Comissões), obs_entrega,
+   status. Sem as colunas novas, a ficha trava esses campos e salva o resto.
 2. produtos — usada tanto para "Portfólio" (produtos prontos vendáveis)
    quanto para "Insumo" (matéria-prima); campos: nome, tipo, cat, preco,
    custo, est (estoque atual), min (estoque mínimo), un (unidade) e
@@ -1725,7 +1729,9 @@ ERP, usuários sem senha e o histórico ficam de fora.
   Administrador (paraAdmin); a equipe lê uma frase simples.
 - Serviço externo: a consulta de CNPJ do cadastro de clientes manda ao
   BrasilAPI (cadastro público da Receita, sem conta) só o número do
-  CNPJ; CPF não é consultado.
+  CNPJ; CPF não é consultado. O CEP digitado na ficha também é consultado
+  no BrasilAPI (vai só o CEP) para preencher rua, bairro, cidade e estado
+  que estiverem vazios.
 
 
 ## 15. Prompt pronto para recriar este sistema (copie e cole no Claude Code)
