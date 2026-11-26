@@ -99,6 +99,16 @@ body.com-aviso-versao #toast-container { bottom:calc(var(--aviso-versao-h,0px) +
 .search-box { display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;width:220px; }
 .search-box input { background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:13px;width:100%; }
 .search-box input::placeholder { color:var(--text-muted); }
+.btn-olho { display:inline-flex;align-items:center;justify-content:center;width:38px;height:36px;flex:none;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text-muted);cursor:pointer;padding:0; }
+.btn-olho svg { width:18px;height:18px; }
+.btn-olho .olho-fechado { display:none; }
+.btn-olho[aria-pressed="true"] { background:var(--primary);border-color:var(--primary);color:#fff; }
+.btn-olho[aria-pressed="true"] .olho-aberto { display:none; } .btn-olho[aria-pressed="true"] .olho-fechado { display:block; }
+@media (hover:hover) { .btn-olho:hover { color:var(--text);border-color:var(--text-muted); } .btn-olho[aria-pressed="true"]:hover { color:#fff; } }
+body.sem-valores .btn-olho { display:none; }
+/* valores escondidos: o elemento que tem "R$" no próprio texto fica borrado (marcado por marcarValoresOcultos), e
+   os gráficos também */
+body.ocultar-valores .v-oc, body.ocultar-valores canvas { filter:blur(7px);user-select:none; }
 .btn { padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s; }
 .btn-primary { background:#1a1714;color:#faf7f2; } .btn-primary:hover { background:#2e2a26; }
 .btn-ghost { background:var(--surface2);color:var(--text);border:1px solid var(--border); } .btn-ghost:hover { background:var(--surface3); }
@@ -559,6 +569,7 @@ code { font-family:var(--mono);font-size:11px;background:var(--surface2);padding
   .fila-aviso { order:3;flex:1 1 100%;min-height:36px;padding:7px 12px;font-size:13px;text-align:left;border-radius:10px; }
   .fila-aviso .fl-l { display:none; } .fila-aviso .fl-c { display:inline; }
   #btn-new { order:2; }
+  .btn-olho { order:2;width:44px;height:40px; }
   .search-box { order:3;flex:1 1 100%;width:100%; }
   #content { padding:14px; }
   .kpi-grid { grid-template-columns:repeat(2,1fr); }
@@ -1411,6 +1422,7 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
     <button id="btn-menu" class="btn btn-ghost" onclick="toggleSidebar()" style="display:none;padding:7px 10px" aria-label="Abrir menu">☰</button>
     <button id="fila-aviso" class="fila-aviso" onclick="abrirFilaEnvio()" style="display:none" title="Alterações guardadas neste aparelho"></button><div class="topbar-title" id="page-title"><span class="titulo-longo">Dashboard</span><span class="titulo-curto">Dashboard</span></div>
     <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Buscar em todo o ERP..." id="global-search" autocomplete="off" oninput="handleSearch(this.value)" onkeydown="buscaTecla(event)" onfocus="if(this.value)handleSearch(this.value)"><div id="busca-resultados" hidden></div></div>
+    <button type="button" class="btn-olho" id="btn-olho" onclick="alternarOcultarValores()" aria-pressed="false" title="Ocultar valores" aria-label="Ocultar valores"><svg class="olho-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="olho-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.4 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.4 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
     <button class="btn btn-primary" id="btn-new" onclick="openNew()" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span id="btn-new-label">Novo</span></button>
   </div>
   <div id="content">
@@ -2295,6 +2307,35 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
    lançamentos, só formatar os valores levava centenas de ms). O texto é o mesmo */
 const FMT_REAIS=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmt=v=>'R$ '+FMT_REAIS.format(Number(v)||0);
+/* ================= OCULTAR VALORES (o olho do topo) =================
+   Não troca o texto (as contas que leem a tela continuam vendo o número): marca com .v-oc o elemento que tem "R$" no
+   próprio texto e o CSS borra. Enquanto está ligado, um observador marca o que as telas desenham depois e desmarca o
+   que deixou de ter valor. Campos de digitar e listas de escolha não são borrados. Guardado só neste aparelho. */
+const OCULTAR_VALORES_KEY='mabe_ocultar_valores';
+const RX_VALOR_OC=/R\$/;
+let OBS_VALORES=null;
+const ignorarValorOc=el=>!el||/^(SCRIPT|STYLE|TEXTAREA|SELECT|OPTION|INPUT)$/.test(el.tagName);
+function marcarValorOc(el){if(!el||el.nodeType!==1||ignorarValorOc(el))return;
+ const tem=[...el.childNodes].some(n=>n.nodeType===3&&RX_VALOR_OC.test(n.nodeValue));
+ if(tem!==el.classList.contains('v-oc'))el.classList.toggle('v-oc',tem);}
+function marcarValoresOcultos(raiz){if(!raiz)return;
+ if(raiz.nodeType===3){marcarValorOc(raiz.parentElement);return;}
+ if(raiz.nodeType!==1)return;
+ const w=document.createTreeWalker(raiz,NodeFilter.SHOW_TEXT,{acceptNode:n=>RX_VALOR_OC.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP});
+ let n;while((n=w.nextNode()))marcarValorOc(n.parentElement);}
+function aplicarOcultarValores(lig){document.body.classList.toggle('ocultar-valores',lig);
+ const b=$('btn-olho');if(b){b.setAttribute('aria-pressed',lig?'true':'false');const t=lig?'Mostrar valores':'Ocultar valores';b.title=t;b.setAttribute('aria-label',t);}
+ if(lig&&!OBS_VALORES){marcarValoresOcultos(document.body);
+  OBS_VALORES=new MutationObserver(ms=>{for(const m of ms){
+   if(m.type==='characterData'){marcarValorOc(m.target.parentElement);continue;}
+   marcarValorOc(m.target);m.addedNodes.forEach(marcarValoresOcultos);}});
+  OBS_VALORES.observe(document.body,{childList:true,characterData:true,subtree:true});}
+ else if(!lig&&OBS_VALORES){OBS_VALORES.disconnect();OBS_VALORES=null;}}
+function alternarOcultarValores(){const lig=!document.body.classList.contains('ocultar-valores');
+ try{localStorage.setItem(OCULTAR_VALORES_KEY,lig?'1':'0');}catch(e){}
+ aplicarOcultarValores(lig);}
+function iniciarOcultarValores(){let lig=false;try{lig=localStorage.getItem(OCULTAR_VALORES_KEY)==='1';}catch(e){}if(lig)aplicarOcultarValores(true);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarOcultarValores);else iniciarOcultarValores();
 const fmtK=v=>{v=Number(v)||0;return v>=100000?'R$ '+(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0})+'k':fmt(v);};
 /* saldo e resultado: positivo na cor do texto; negativo em vermelho e com "−"
    na frente, para não depender só da cor (o "-" do toLocaleString some no meio) */
@@ -16775,6 +16816,14 @@ e não numera nada.
 - aplicarPermissoes() esconde da barra lateral (e da barra de baixo do
   celular) as telas que o nível não alcança e liga duas classes no body:
   sem-valores, que some pelo CSS com tudo o que é em R$, e eh-admin.
+- Olho do topo (desde 26/11/2026; some para quem já não vê valores): é
+  privacidade, não permissão. Ligado, o body ganha ocultar-valores e o
+  CSS borra todo elemento marcado .v-oc (o que tem "R$" no próprio texto;
+  o texto não muda, então as contas que leem a tela seguem iguais) e os
+  gráficos (canvas). Um MutationObserver marca o que as telas desenham
+  depois. Campos de digitar e listas de escolha não são borrados; PDFs
+  saem normais. Guardado só no aparelho (localStorage
+  mabe_ocultar_valores).
   paraAdmin(técnica, simples) escolhe o aviso: o que cita comando SQL ou
   nome de coluna aparece só para o Administrador; a equipe lê uma frase
   simples.
@@ -18264,13 +18313,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-23.2';
+const APP_VERSAO='2026-11-26.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=355;
+const APP_ATUALIZACAO=356;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

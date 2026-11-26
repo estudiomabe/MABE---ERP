@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 23/11/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 26/11/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -640,6 +640,14 @@ e não numera nada.
 - aplicarPermissoes() esconde da barra lateral (e da barra de baixo do
   celular) as telas que o nível não alcança e liga duas classes no body:
   sem-valores, que some pelo CSS com tudo o que é em R$, e eh-admin.
+- Olho do topo (desde 26/11/2026; some para quem já não vê valores): é
+  privacidade, não permissão. Ligado, o body ganha ocultar-valores e o
+  CSS borra todo elemento marcado .v-oc (o que tem "R$" no próprio texto;
+  o texto não muda, então as contas que leem a tela seguem iguais) e os
+  gráficos (canvas). Um MutationObserver marca o que as telas desenham
+  depois. Campos de digitar e listas de escolha não são borrados; PDFs
+  saem normais. Guardado só no aparelho (localStorage
+  mabe_ocultar_valores).
   paraAdmin(técnica, simples) escolhe o aviso: o que cita comando SQL ou
   nome de coluna aparece só para o Administrador; a equipe lê uma frase
   simples.
@@ -1796,4 +1804,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 23/11/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 26/11/2026.
