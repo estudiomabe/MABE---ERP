@@ -1241,6 +1241,21 @@ e não numera nada.
     Cada venda continua ligada à sua linha de pagamento do pedido e conta
     como a conta dela (o Salvar do pedido não cria outra). Separar desfaz
     o repasse inteiro.
+  - Comprovante pelo Compartilhar do Android (desde 27/11/2026): com o ERP
+    instalado pelo Chrome, ele aparece na lista do "Compartilhar" de
+    outros aplicativos (ex.: o comprovante da Cora). manifest.json tem o
+    share_target (imagem e PDF, POST em ./receber-comprovante); o sw.js
+    guarda o arquivo no cache "mabe-compartilhado" e abre
+    ./?compartilhado=1; depois do login abre o "Novo lançamento com
+    comprovante" (o modal do Financeiro: tipo, data, descrição, pedido,
+    valor, centro de custo, status, observações), com o arquivo preso na
+    área Comprovantes; o Salvar cria o lançamento e anexa pelo mesmo
+    caminho do 📎 (anexarCompFin). Entrada de pedido que já tem pagamentos
+    no Financeiro: oferece guardar num deles (senão conta duas vezes).
+    "Já está no Financeiro?" abre a lista dos lançamentos (mais perto de
+    hoje primeiro, só os sem comprovante, busca por nome, pedido ou valor).
+    Fechar sem salvar guarda o arquivo para a próxima abertura;
+    "Descartar" apaga. No iPhone não existe.
   - Trazer para o ERP: as linhas do extrato que ficaram desmarcadas na
     importação (guardadas com o saldo do banco) aparecem no bloco Saldo do
     banco; marcadas, entram como linha do banco igual à importação (mesma

@@ -11,8 +11,8 @@
    e mostrar o aviso "Nova versão disponível" dentro do app.
    ATUALIZACAO é o contador de publicações mostrado no aviso; sobe junto, e tem que bater
    com APP_VERSAO e APP_ATUALIZACAO do index.html. */
-const VERSAO = '2026-11-27.5';
-const ATUALIZACAO = 363;
+const VERSAO = '2026-11-27.6';
+const ATUALIZACAO = 364;
 const CACHE = 'mabe-erp-' + VERSAO;
 const ESSENCIAIS = [
   './',
@@ -68,8 +68,35 @@ button{background:#1a1714;color:#faf7f2;border:0;border-radius:10px;padding:12px
 <body><div class="cx"><h1>Sem conexão</h1><p>Não consegui abrir o ERP e ainda não há uma versão guardada neste aparelho. Verifique a internet e tente de novo.</p>
 <button onclick="location.reload()">Tentar de novo</button></div></body></html>`;
 
+/* "Compartilhar → Mabe ERP" (Android, app instalado): o outro aplicativo manda o arquivo por POST em
+   ./receber-comprovante (share_target do manifest.json). Guarda no cache "mabe-compartilhado" (não começa com
+   "mabe-erp-", então a troca de versão não apaga) e abre o ERP com ?compartilhado=1; a página pergunta onde guardar.
+   Se vier só texto (um link), guarda o texto para a página avisar. */
+const CACHE_COMPART = 'mabe-compartilhado';
+async function receberCompartilhado(req) {
+  try {
+    const fd = await req.formData();
+    const c = await caches.open(CACHE_COMPART);
+    const arqs = fd.getAll('arquivos').filter(a => a && typeof a === 'object' && a.size > 0);
+    let i = 0;
+    for (const a of arqs) {
+      await c.put('./__compartilhado/' + Date.now() + '-' + (i++), new Response(a, { headers: {
+        'Content-Type': a.type || 'application/octet-stream', 'X-Nome': encodeURIComponent(a.name || 'comprovante') } }));
+    }
+    if (!arqs.length) {
+      const texto = [fd.get('titulo'), fd.get('texto'), fd.get('link')].filter(Boolean).join(' ').trim();
+      if (texto) await c.put('./__compartilhado/' + Date.now() + '-texto', new Response('', { headers: { 'X-Texto': encodeURIComponent(texto.slice(0, 500)) } }));
+    }
+  } catch (err) {}
+  return Response.redirect(new URL('./?compartilhado=1', self.registration.scope).href, 303);
+}
+
 self.addEventListener('fetch', e => {
   const req = e.request;
+  if (req.method === 'POST' && new URL(req.url).pathname.endsWith('/receber-comprovante')) {
+    e.respondWith(receberCompartilhado(req));
+    return;
+  }
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;

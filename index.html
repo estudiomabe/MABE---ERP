@@ -299,6 +299,32 @@ body.sem-valores .orc-resumo-valor, body.sem-valores .orc-resumo-sep, body.sem-v
 #orcamentos-tabela th.th-ord.ord-ativa .ord-seta { opacity:1;color:var(--accent); }
 .per-tab { padding:6px 14px;border:none;background:none;border-radius:6px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all 0.15s; }
 .per-tab:hover { color:var(--text); } .per-tab.active { background:#1a1714;color:#faf7f2; }
+/* Comprovante recebido pelo Compartilhar do Android */
+.cpt-arqs { display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px; }
+.cpt-arq { display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 12px 8px 8px;max-width:100%;min-width:0; }
+.cpt-arq img, .cpt-arq .cpt-pdf { width:52px;height:52px;border-radius:7px;object-fit:cover;flex-shrink:0;background:var(--surface3); }
+.cpt-arq .cpt-pdf { display:flex;align-items:center;justify-content:center;font-size:24px; }
+.cpt-arq b { display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px; }
+.cpt-arq small { font-size:11.5px;color:var(--text-muted); }
+.cpt-pergunta { font-size:14.5px;font-weight:700;margin-bottom:8px; }
+.cpt-filtros { display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:10px 0; }
+.cpt-sem { display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-muted);cursor:pointer; }
+.cpt-lista { display:flex;flex-direction:column;gap:6px; }
+.cpt-item { display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;font-family:var(--font);color:var(--text); }
+.cpt-item:hover { border-color:var(--text-muted); }
+.cpt-item:disabled { opacity:.5;cursor:wait; }
+.cpt-l1 { display:flex;justify-content:space-between;align-items:baseline;gap:10px; }
+.cpt-desc { font-size:13.5px;font-weight:600;overflow-wrap:anywhere; }
+.cpt-val { font-size:13px;font-weight:700;white-space:nowrap; }
+.cpt-val.ent { color:var(--success); } .cpt-val.sai { color:var(--danger); }
+.cpt-l2 { font-size:11.5px;color:var(--text-muted);margin-top:3px; }
+.cpt-vazio, .cpt-mais { font-size:12.5px;color:var(--text-muted);padding:10px 2px; }
+.cpt-acoes-form { display:flex;gap:8px;flex-wrap:wrap;margin-top:8px; }
+.cpt-ok, .cpt-talvez { font-size:12.5px;line-height:1.45;border-radius:8px;padding:8px 10px;margin-top:2px; }
+.cpt-ok { background:rgba(61,107,79,.1);color:var(--success); }
+.cpt-talvez { background:rgba(201,162,39,.14);color:var(--text); }
+.cpt-acoes-form .cpt-desc-btn { color:var(--danger); }
+.cpt-aviso { font-size:12.5px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px; }
 .kpi-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 .kpi-card::before { content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--card-accent,#1a1714); }
 .kpi-label { font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px; }
@@ -2204,6 +2230,15 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
   <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-nfe-info')">Entendi</button></div>
 </div></div>
 <div class="modal-overlay" id="modal-conciliacao"><div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🧾 Conferência com o extrato</div><button class="modal-close" onclick="closeModal('modal-conciliacao')">✕</button></div><div class="modal-body" id="conc-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="conc-desfazer" onclick="pedirDesfazerAjusteSaldoFin()">↩ Desfazer ajuste do saldo</button><button class="btn btn-primary" id="conc-ajustar" style="display:none" onclick="ajustarSaldoOfx()">Ajustar o saldo</button><button class="btn btn-primary" id="conc-fechar" onclick="closeModal('modal-conciliacao')">Entendi</button></div></div></div>
+<div class="modal-overlay" id="modal-compart"><div class="modal" style="max-width:560px"><div class="modal-header"><div><div class="modal-title">📎 Comprovante recebido</div><div class="fop-sub">Compartilhado de outro aplicativo</div></div><button class="modal-close" onclick="fecharCompart()">✕</button></div><div class="modal-body">
+<div class="cpt-arqs" id="cpt-arqs"></div>
+<div id="cpt-escolha"><div class="cpt-pergunta">Em qual lançamento guardar?</div>
+<input type="search" class="form-control" id="cpt-busca" placeholder="🔎 Buscar nome, pedido ou valor" autocomplete="off" oninput="COMPART.busca=this.value;pintarListaCompart()">
+<div class="cpt-filtros"><div class="per-tabs" id="cpt-tipo"><button type="button" class="per-tab active" data-t="todas" onclick="tipoCompart('todas')">Todas</button><button type="button" class="per-tab" data-t="Entrada" onclick="tipoCompart('Entrada')">Entradas</button><button type="button" class="per-tab" data-t="Saída" onclick="tipoCompart('Saída')">Saídas</button></div>
+<label class="cpt-sem"><input type="checkbox" id="cpt-so-sem" checked onchange="COMPART.soSem=this.checked;pintarListaCompart()"> Só os sem comprovante</label></div>
+<div class="cpt-lista" id="cpt-lista"></div></div>
+<div class="cpt-aviso" id="cpt-sem-permissao" style="display:none">Seu nível de acesso não permite anexar comprovantes. Peça a quem tem acesso ao Financeiro.</div>
+</div><div class="modal-footer"><button class="btn btn-danger" style="margin-right:auto" onclick="descartarCompart()">Descartar</button><button class="btn btn-ghost" onclick="fecharCompart()">Agora não</button><button class="btn btn-primary" id="cpt-novo" onclick="abrirLancCompart()">+ Novo lançamento</button></div></div></div>
 <div class="modal-overlay" id="modal-comp-fin"><div class="modal"><div class="modal-header"><div class="modal-title">📎 Comprovantes</div><button class="modal-close" onclick="closeModal('modal-comp-fin')">✕</button></div><div class="modal-body"><div class="comp-fin-cab" id="comp-fin-cab"></div><div class="comp-fin" id="comp-fin-caixa" data-fin=""></div></div><div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-comp-fin')">Fechar</button></div></div></div>
 <div class="modal-overlay" id="modal-mescla"><div class="modal"><div class="modal-header"><div class="modal-title">🔗 Lançamento mesclado</div><button class="modal-close" onclick="closeModal('modal-mescla')">✕</button></div><div class="modal-body" id="mescla-corpo"></div><div class="modal-footer"><button class="btn btn-ghost" id="mescla-separar">Separar</button><button class="btn btn-primary" onclick="closeModal('modal-mescla')">Fechar</button></div></div></div>
 <div class="modal-overlay" id="modal-repasse"><div class="modal" style="max-width:640px"><div class="modal-header"><div class="modal-title">💳 Juntar repasse</div><button class="modal-close" onclick="closeModal('modal-repasse')">✕</button></div><div class="modal-body" id="repasse-corpo"></div><div class="modal-footer rp-rodape"><div class="rp-resumo" id="repasse-resumo"></div><button class="btn btn-ghost" onclick="closeModal('modal-repasse')">Cancelar</button><button class="btn btn-primary" id="repasse-juntar" onclick="pedirJuntarRepasseFin()">Juntar</button></div></div></div>
@@ -2843,7 +2878,9 @@ function afterLogin(){document.body.classList.add('logado');
  if(!DB.clientes.length&&!DB.produtos.length)toast('Bem-vindo! Carregue os dados de demonstração em Configurações.','info');
  if(DB.config.sheetsUrl)carregarDaPlanilha(true).then(ok=>{if(ok)toast('Dados atualizados a partir da planilha.','info');});
  verificarColunaOrigem();verificarColunaObsFin();verificarColunaLigacaoFin();verificarColunaCompFin();verificarColunaAnexosVenda();verificarColunaPagsVenda();conferirColunaLixeiraVnd();
- cargasDoBanco().forEach(p=>Promise.resolve(p).then(agendarRedesenho,agendarRedesenho));}
+ const cargas=cargasDoBanco();cargas.forEach(p=>Promise.resolve(p).then(agendarRedesenho,agendarRedesenho));
+ verificarCompartilhado();
+ Promise.allSettled(cargas).then(()=>{if($('modal-compart').classList.contains('open'))pintarListaCompart();});}
 /* as treze cargas do banco, numa lista só: o login dispara e o gesto de
    puxar para atualizar repete */
 function cargasDoBanco(){
@@ -13044,8 +13081,8 @@ function encherSelectCC(){const el=$('fin-cc');if(!el)return;const atual=el.valu
    Na edição nada muda sozinho. */
 function sugerirStatusFin(){const st=$('fin-st');if(!st||$('fin-id').value||st.dataset.manual)return;
  const d=$('fin-data').value;st.value=d&&d>today()?'Pendente':'Pago';}
-function openFin(){encherSelectCC();$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';fillFinPedidoSelect('');$('fin-cc').value='';$('fin-val').value='';encherSelectLista('fin-st',FIN_STATUS,'Pago');$('fin-st').dataset.manual='';sugerirStatusFin();$('fin-obs').value='';$('mf-title').textContent='Novo Lançamento';prepararAvisoBancoFin(null);prepararCompModalFin('');openModal('modal-financeiro');}
-function editFin(id){encherSelectCC();if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
+function openFin(){FIN_COMP_PENDENTE=null;encherSelectCC();$('fin-id').value='';$('fin-tipo').value='Entrada';$('fin-data').value=today();$('fin-desc').value='';fillFinPedidoSelect('');$('fin-cc').value='';$('fin-val').value='';encherSelectLista('fin-st',FIN_STATUS,'Pago');$('fin-st').dataset.manual='';sugerirStatusFin();$('fin-obs').value='';$('mf-title').textContent='Novo Lançamento';prepararAvisoBancoFin(null);prepararCompModalFin('');openModal('modal-financeiro');}
+function editFin(id){FIN_COMP_PENDENTE=null;encherSelectCC();if(!guard())return;const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
  /* o lançamento mesclado numa linha do banco não se edita: mudar o status dele voltaria a contar em dobro */
  if(finAbsorvido(f)){abrirMesclaFin(f.id);return;}
  /* o preso numa mesclagem pela metade se resolve em Conferir com o banco (Restaurar) */
@@ -13053,6 +13090,7 @@ function editFin(id){encherSelectCC();if(!guard())return;const f=DB.financeiro.f
  $('fin-id').value=f.id;$('fin-tipo').value=f.tipo;$('fin-data').value=f.data;$('fin-desc').value=f.desc;fillFinPedidoSelect(f.cat||'');encherSelectLista('fin-cc',SETORES_FIXOS,f.centroCusto,'— Não classificado —');$('fin-val').value=f.val;encherSelectLista('fin-st',FIN_STATUS,f.status);$('fin-obs').value=f.obs||'';$('mf-title').textContent='Editar Lançamento';prepararAvisoBancoFin(f);prepararCompModalFin(f.id);openModal('modal-financeiro');}
 async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').value.trim();if(!desc||num('fin-val')<=0){toast('Informe descrição e valor.','error');return;}
  const id=$('fin-id').value;const o={tipo:$('fin-tipo').value,data:$('fin-data').value||today(),desc,cat:$('fin-cat').value.trim(),centroCusto:$('fin-cc').value,val:num('fin-val'),status:$('fin-st').value,obs:$('fin-obs').value.trim()};
+ if(id&&FIN_COMP_PENDENTE&&FIN_COMP_PENDENTE.length&&!await exigeConexao('salvar com o comprovante','porque o arquivo vai direto para o servidor'))return;
  await ligacaoFin();
  if(id){
   let atual=DB.financeiro.find(x=>x.id===id);if(!atual)return;
@@ -13101,14 +13139,34 @@ async function saveFinanceiro(){if(!guard())return;const desc=$('fin-desc').valu
   Object.assign(f3,lig);commit('editar','Financeiro',desc);syncSheets('financeiro','upsert',f3);
   if(linhaPagMovida)marcarLinhaSemFin(linhaPagMovida.v.id,linhaPagMovida.p.id,'movido');
  } else {
+  /* com o comprovante recebido pelo Compartilhar: o arquivo vai direto para o servidor (sem internet, nem cria) e,
+     numa Entrada de pedido que já tem pagamentos no Financeiro, oferece guardar num deles (senão conta duas vezes) */
+  const pend=FIN_COMP_PENDENTE&&FIN_COMP_PENDENTE.length?FIN_COMP_PENDENTE:null;
+  if(pend){
+   const vid=vendaIdDoRotulo(o.cat);
+   if(o.tipo==='Entrada'&&vid){const ja=finVisiveis().filter(x=>x.tipo==='Entrada'&&x.status!=='Cancelado'&&!(x.mescladoCom&&finAbsorvido(x))&&vendaIdDoFin(x)===vid);
+    if(ja.length&&confirm('Este pedido já tem '+(ja.length===1?'1 pagamento':ja.length+' pagamentos')+' no Financeiro ('+ja.map(x=>fmt(x.val)+(x.status==='Pago'?' recebido':' a receber')).join(', ')+'). Um lançamento novo contaria esse dinheiro duas vezes.\n\nGuardar o comprovante num desses pagamentos em vez de criar outro?')){
+     const v=vendaPorIdAgora(vid);escolherExistenteCompart(v?'V-'+pad(v.num):'');return;}}
+   if(!await exigeConexao('salvar o lançamento com o comprovante','porque o arquivo vai direto para o servidor'))return;}
   const f2=comLigacaoFin(Object.assign({id:uid()},o),{origem:'manual',vendaId:vendaIdDoRotulo(o.cat)});
   const {error}=await supa.from('financeiro').insert(financeiroParaSupabase(f2));
   if(error){toast('Erro ao salvar no Supabase: '+error.message,'error');return;}
   /* a carga lida depois de o lançamento chegar ao servidor (gravação de mais de 30 s) já o trouxe: não entra duas vezes */
   const ja=DB.financeiro.findIndex(x=>x.id===f2.id);if(ja>=0)DB.financeiro[ja]=f2;else DB.financeiro.unshift(f2);
   commit('criar','Financeiro',desc);syncSheets('financeiro','upsert',f2);
+  if(pend){FIN_COMP_PENDENTE=null;closeModal('modal-financeiro');atualizarGastosDoPedidoAberto();
+   const ok=await anexarCompFin(f2.id,pend.map(i=>i.file));
+   if(ok){await apagarCompartilhados(pend.map(i=>i.chave));COMPART.itens=[];toast('Lançamento salvo com o comprovante!','success');}
+   else toast('O lançamento "'+desc+'" foi salvo, mas o comprovante não foi anexado. Ele continua guardado neste aparelho: na próxima vez que abrir o ERP, toque em "Já está no Financeiro?" e escolha esse lançamento.','error',14000);
+   return;}
  }
- closeModal('modal-financeiro');toastSalvoFin();atualizarGastosDoPedidoAberto();}
+ closeModal('modal-financeiro');
+ if(id&&FIN_COMP_PENDENTE&&FIN_COMP_PENDENTE.length){const pend=FIN_COMP_PENDENTE;FIN_COMP_PENDENTE=null;atualizarGastosDoPedidoAberto();
+  const ok=await anexarCompFin(id,pend.map(i=>i.file));
+  if(ok){await apagarCompartilhados(pend.map(i=>i.chave));COMPART.itens=[];toast('Lançamento salvo com o comprovante!','success');}
+  else toast('O lançamento "'+desc+'" foi salvo, mas o comprovante não foi anexado. Ele continua guardado neste aparelho: na próxima vez que abrir o ERP ele aparece de novo.','error',14000);
+  return;}
+ toastSalvoFin();atualizarGastosDoPedidoAberto();}
 /* o lançamento que é a conta de uma linha de pagamento do pedido: {v, p, n} (ou null) */
 function linhaPagDoFin(f){if(!f||f.tipo!=='Entrada'||!f.pagId)return null;const vid=vendaIdDoFin(f);if(!vid)return null;
  const v=vendaPorIdAgora(vid);if(!v)return null;const i=(v.pags||[]).findIndex(p=>p&&p.id===f.pagId);
@@ -13249,6 +13307,8 @@ function pedidoSemLinhaComp(f,lig){
  const vid=vendaIdDoFin(f);return vid&&DB.vendas.some(v=>v.id===vid)?vid:'';}
 /* a lista de comprovantes e o Anexar numa caixa .comp-fin (a da janela ou a do modal), pelo lançamento de data-fin */
 function pintarCompFin(cx){if(!cx)return;const id=cx.dataset.fin||'',f=id?DB.financeiro.find(x=>x.id===id):null;
+ /* o comprovante recebido pelo Compartilhar, esperando o Salvar (lançamento novo ou o que já existia) */
+ if(cx.id==='fin-comp'&&FIN_COMP_PENDENTE&&FIN_COMP_PENDENTE.length){cx.innerHTML=htmlCompPendenteFin();return;}
  const naJanela=cx.id==='comp-fin-caixa';
  if(naJanela){const cab=$('comp-fin-cab');if(cab)cab.innerHTML=f?cabecalhoCompFin(f):'';}
  if(!id){cx.innerHTML='<div class="comp-fin-vazio">Salve o lançamento para anexar comprovantes.</div>';return;}
@@ -13419,6 +13479,7 @@ async function anexarCompFin(id,files){files=Array.from(files||[]);if(!files.len
   if(g.linha)log('editar','Pedidos','Comprovante anexado no pagamento '+g.linha.n+' de V-'+pad(g.linha.num)+' (pelo Financeiro): '+nomes);
   else{log('editar','Financeiro','Comprovante anexado em "'+g.f.desc+'": '+nomes);syncSheets('financeiro','upsert',g.f);}
   toast(novos.length>1?novos.length+' comprovantes anexados!':'Comprovante anexado!','success');
+  return true;
  }finally{ENVIANDO_ANEXOS=false;COMP_OCUPADO.delete(chave);depoisDeGravarComp();}}
 async function excluirCompFin(id,path){if(!guard())return;
  const f=DB.financeiro.find(x=>x.id===id);if(!f)return;
@@ -14960,6 +15021,236 @@ function pintarTaxasRepasseFin(pagos,ym){const el=$('fin-ent-taxa');if(!el)retur
  const t=pagos.filter(f=>f.tipo==='Entrada'&&ehRepasseFin(f)&&noPeriodoCartoesFin(f.data,ym)).reduce((s,f)=>s+Math.max(0,taxaRepasseFin(f)),0);
  el.textContent=t>=0.005?'taxas da maquininha: '+fmt(t):'';}
 
+/* Leitor de texto de PDF pequeno (o comprovante da Cora sai do Chrome: fontes Type0/Identity-H com ToUnicode,
+   conteúdo em FlateDecode). Devolve as linhas na ordem em que aparecem. inflar(bytes)->Promise<Uint8Array>.
+   O mesmo código vai para o index.html (com DecompressionStream). */
+async function textoDoPdf(bytes,inflar){
+ const lat=u=>{let r='';for(let i=0;i<u.length;i+=8192)r+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return r;};
+ const s=lat(bytes);if(!/^%PDF-/.test(s))return null;
+ const objs={};const re=/(\d+)\s+\d+\s+obj\b/g;let m;
+ const marcas=[];while((m=re.exec(s)))marcas.push({n:m[1],ini:m.index+m[0].length});
+ marcas.forEach((o,i)=>{const fim=s.indexOf('endobj',o.ini);const corpo=s.slice(o.ini,fim<0?(marcas[i+1]?marcas[i+1].ini:s.length):fim);
+  const k=corpo.search(/\bstream\r?\n/);let dict=corpo,dados=null;
+  if(k>=0){dict=corpo.slice(0,k);const ini=o.ini+k+corpo.slice(k).match(/^stream\r?\n/)[0].length;
+   const lm=dict.match(/\/Length\s+(\d+)(?!\s+\d+\s+R)/);let fimS=lm?ini+Number(lm[1]):s.indexOf('endstream',ini);
+   dados={ini,fim:fimS,flate:/\/FlateDecode/.test(dict)};}
+  objs[o.n]={dict,dados};});
+ const conteudo=async n=>{const o=objs[n];if(!o||!o.dados)return '';const u=bytes.subarray(o.dados.ini,o.dados.fim);
+  try{return lat(o.dados.flate?await inflar(u):u);}catch(e){return '';}};
+ const hex4=h=>{const r=[];for(let i=0;i+3<h.length;i+=4)r.push(parseInt(h.substr(i,4),16));return r;};
+ const uniDe=h=>{let t='';for(let i=0;i+3<h.length;i+=4)t+=String.fromCharCode(parseInt(h.substr(i,4),16));return t;};
+ async function cmapDe(n){const c=await conteudo(n),mp={};
+  for(const bl of c.match(/beginbfchar([\s\S]*?)endbfchar/g)||[])for(const x of bl.matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>/g))mp[parseInt(x[1],16)]=uniDe(x[2]);
+  for(const bl of c.match(/beginbfrange([\s\S]*?)endbfrange/g)||[]){
+   for(const x of bl.matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*(<[0-9a-fA-F]+>|\[[^\]]*\])/g)){const a=parseInt(x[1],16),b=parseInt(x[2],16);
+    if(x[3][0]==='['){const ds=[...x[3].matchAll(/<([0-9a-fA-F]+)>/g)].map(y=>uniDe(y[1]));for(let g=a;g<=b;g++)mp[g]=ds[g-a]||'';}
+    else{const base=x[3].slice(1,-1),pre=base.slice(0,-4),ult=parseInt(base.slice(-4),16);for(let g=a;g<=b;g++)mp[g]=uniDe(pre)+String.fromCharCode(ult+g-a);}}}
+  return mp;}
+ const ref=(dict,chave)=>{const x=dict.match(new RegExp('/'+chave+'\\s+(\\d+)\\s+\\d+\\s+R'));return x?x[1]:null;};
+ const linhas=[];
+ for(const [n,o] of Object.entries(objs)){if(!/\/Type\s*\/Page\b/.test(o.dict))continue;
+  /* fontes da página (no próprio dicionário ou num objeto de Resources) */
+  let res=o.dict;const rr=ref(o.dict,'Resources');if(rr&&objs[rr])res=objs[rr].dict;
+  const fm=res.match(/\/Font\s*<<([\s\S]*?)>>/);const fontes={};
+  if(fm)for(const x of fm[1].matchAll(/\/([^\s\/]+)\s+(\d+)\s+\d+\s+R/g)){const fo=objs[x[2]];const tu=fo&&ref(fo.dict,'ToUnicode');fontes[x[1]]=tu?await cmapDe(tu):null;}
+  let cont=[];const cm=o.dict.match(/\/Contents\s*(\[[^\]]*\]|\d+\s+\d+\s+R)/);
+  if(cm)cont=[...cm[1].matchAll(/(\d+)\s+\d+\s+R/g)].map(x=>x[1]);
+  let txt='';for(const c of cont)txt+=await conteudo(c)+'\n';
+  /* tokens: strings hexa, strings (), arrays de TJ, números, operadores */
+  const tok=/<([0-9a-fA-F\s]*)>|\((?:\\.|[^\\)])*\)|\[|\]|\/[^\s\/\[\]<>()]+|[-+]?\d*\.?\d+|[A-Za-z'"*]+/g;
+  let fonte=null,y=null,ultY=null,atual='',pilha=[],emArr=null;
+  const decod=(h,mp)=>hex4(h.replace(/\s+/g,'')).map(g=>mp&&mp[g]!==undefined?mp[g]:'').join('');
+  /* string (literal): os escapes do PDF; sem tabela de letras, cada byte é a letra (Latin-1) */
+  const literal=(w,mp)=>{const b=w.slice(1,-1).replace(/\\([0-7]{1,3}|.)/g,(x,c)=>/^[0-7]/.test(c)?String.fromCharCode(parseInt(c,8)):({n:'\n',r:'\r',t:'\t',b:'\b',f:'\f'}[c]||c));
+   if(!mp)return b;let r='';for(let i=0;i<b.length;i++){const g=b.charCodeAt(i);r+=mp[g]!==undefined?mp[g]:String.fromCharCode(g);}return r;};
+  const solta=()=>{if(atual.trim())linhas.push(atual.replace(/\s+/g,' ').trim());atual='';};
+  const novoY=v=>{if(ultY!==null&&Math.abs(v-ultY)>0.5)solta();ultY=v;};
+  for(const t of txt.matchAll(tok)){const w=t[0];
+   if(w==='['){emArr=[];continue;} if(w===']'){pilha.push(emArr);emArr=null;continue;}
+   if(t[1]!==undefined){const v=decod(t[1],fonte);if(emArr)emArr.push(v);else pilha.push(v);continue;}
+   if(/^[-+]?\d*\.?\d+$/.test(w)){const v=Number(w);if(emArr){if(v<-200)emArr.push(' ');}else pilha.push(v);continue;}
+   if(w[0]==='('){const v=literal(w,fonte);if(emArr)emArr.push(v);else pilha.push(v);continue;}
+   if(w[0]==='/'){if(!emArr)pilha.push(w);continue;}
+   switch(w){
+    case 'Tf':fonte=fontes[String(pilha[pilha.length-2]).slice(1)]||null;break;
+    case 'Tm':novoY(pilha[pilha.length-1]);break;
+    case 'Td':case 'TD':if(Math.abs(pilha[pilha.length-1])>0.5){ultY=(ultY||0)+pilha[pilha.length-1];solta();}break;
+    case 'T*':case "'":case '"':solta();break;
+    case 'BT':break; case 'ET':break;
+    case 'Tj':atual+=pilha[pilha.length-1]||'';break;
+    case 'TJ':{const a=pilha[pilha.length-1];if(Array.isArray(a))atual+=a.join('');break;}}
+   if(!/^(Tj|TJ)$/.test(w))pilha=[];else pilha=[];}
+  solta();}
+ return linhas;}
+/* ================= COMPROVANTE RECEBIDO PELO "COMPARTILHAR" (Android) =================
+   O manifest.json põe o ERP instalado na lista do Compartilhar (imagem e PDF). O sw.js recebe o arquivo, guarda no
+   cache "mabe-compartilhado" (fica lá até ser anexado ou descartado: "Agora não" mostra de novo na próxima abertura)
+   e abre ./?compartilhado=1. Aqui a pessoa escolhe o lançamento, e o arquivo vai pelo mesmo caminho do 📎
+   (anexarCompFin). Só no Android com o app instalado pelo Chrome; no iPhone o sistema não oferece isso. */
+const CACHE_COMPART='mabe-compartilhado';
+const COMPART={itens:[],textos:[],tipo:'todas',soSem:true,busca:'',gravando:false,urls:[]};
+async function lerCompartilhados(){if(!('caches' in window))return {itens:[],textos:[]};
+ const itens=[],textos=[];
+ try{const c=await caches.open(CACHE_COMPART);
+  for(const k of await c.keys()){const r=await c.match(k);if(!r)continue;
+   if(r.headers.get('X-Texto')){textos.push({chave:k,texto:decodeURIComponent(r.headers.get('X-Texto'))});continue;}
+   const b=await r.blob(),tipo=b.type||r.headers.get('Content-Type')||'';
+   itens.push({chave:k,file:new File([b],decodeURIComponent(r.headers.get('X-Nome')||'comprovante'),{type:tipo})});}}
+ catch(e){}
+ return {itens,textos};}
+async function apagarCompartilhados(chaves){try{const c=await caches.open(CACHE_COMPART);await Promise.all(chaves.map(k=>c.delete(k)));}catch(e){}}
+async function verificarCompartilhado(){
+ if(/[?&]compartilhado=/.test(location.search)){try{history.replaceState(null,'',location.pathname+location.hash);}catch(e){}}
+ const {itens,textos}=await lerCompartilhados();
+ /* chegou só texto (o app mandou um link em vez do arquivo): avisa o que veio e não guarda */
+ if(textos.length){toast('Chegou só um texto, sem arquivo: "'+textos.map(t=>t.texto).join(' ').slice(0,140)+'". No outro aplicativo, procure a opção de compartilhar o comprovante como PDF ou imagem.','info',12000);
+  await apagarCompartilhados(textos.map(t=>t.chave));}
+ if(!itens.length)return;
+ COMPART.itens=itens;abrirLancCompart();}
+const tamanhoArqTxt=n=>n>=1048576?fmtN(n/1048576,1)+' MB':Math.max(1,Math.round(n/1024))+' KB';
+/* os cartões dos arquivos recebidos (miniatura da imagem; PDF com o ícone) */
+function htmlArqsCompart(){
+ COMPART.urls.forEach(u=>{try{URL.revokeObjectURL(u);}catch(e){}});COMPART.urls=[];
+ return COMPART.itens.map(({file})=>{const img=/^image\//.test(file.type);let prev='<div class="cpt-pdf">📄</div>';
+  if(img){const u=URL.createObjectURL(file);COMPART.urls.push(u);prev='<img src="'+u+'" alt="">';}
+  return '<div class="cpt-arq">'+prev+'<div style="min-width:0"><b title="'+esc(file.name)+'">'+esc(file.name)+'</b><small>'+(img?'Imagem':file.type==='application/pdf'?'PDF':'Arquivo')+' · '+tamanhoArqTxt(file.size)+'</small></div></div>';}).join('');}
+/* o caminho principal: a janela "Novo Lançamento" do Financeiro, com o comprovante preso (vai junto no Salvar).
+   Tipo começa em Saída (o comprovante de um pagamento feito), data de hoje, Pago */
+var FIN_COMP_PENDENTE=null;
+/* LIDO_COMP: o que saiu do PDF ({valor,data,tipo,nome,autent,desc}) ou null; ACHADO_COMP: {f,exato} quando o
+   pagamento já está no Financeiro (exato = pela Autenticação, que é o identificador da linha do extrato) */
+var LIDO_COMP=null,ACHADO_COMP=null,CC_LEMBRADO_COMP='';
+async function abrirLancCompart(opc){opc=opc||{};
+ if(!canEdit()){abrirCompart();return;}
+ closeModal('modal-compart');
+ if(!opc.novo)LIDO_COMP=await lerComprovanteRecebido();
+ const d=LIDO_COMP,ach=!opc.novo&&d?acharLancComp(d):null;
+ CC_LEMBRADO_COMP='';
+ if(ach){
+  /* já está no Financeiro: abre ESTE lançamento com o comprovante preso; o Salvar grava e anexa */
+  editFin(ach.f.id);if(!$('modal-financeiro').classList.contains('open'))return;
+  FIN_COMP_PENDENTE=COMPART.itens.slice();ACHADO_COMP=ach;
+  /* a linha do extrato ainda sem centro de custo: o da última vez com esse nome */
+  if(!ach.f.centroCusto&&d.nome){const cc=ccLembradoComp(d.nome,ach.f.tipo);if(cc){$('fin-cc').value=cc;CC_LEMBRADO_COMP=cc;}}
+  $('mf-title').textContent=ach.exato?'Comprovante de um lançamento do extrato':'Comprovante: é este lançamento?';
+  prepararCompModalFin(ach.f.id);return;}
+ ACHADO_COMP=null;
+ openFin();FIN_COMP_PENDENTE=COMPART.itens.slice();
+ $('fin-tipo').value=d&&d.tipo?d.tipo:'Saída';
+ if(d){if(d.data)$('fin-data').value=d.data;if(d.valor>0)$('fin-val').value=d.valor;if(d.desc)$('fin-desc').value=d.desc;
+  /* o centro de custo da última vez que apareceu esse nome */
+  const cc=d.nome?ccLembradoComp(d.nome,$('fin-tipo').value):'';if(cc){$('fin-cc').value=cc;CC_LEMBRADO_COMP=cc;}}
+ encherSelectLista('fin-st',FIN_STATUS,'Pago');$('fin-st').dataset.manual='';sugerirStatusFin();
+ $('mf-title').textContent='Novo lançamento com comprovante';
+ prepararCompModalFin('');
+ if(!d)setTimeout(()=>{try{$('fin-desc').focus();}catch(e){}},120);}
+/* ----- ler o comprovante (PDF com texto, como o da Cora) ----- */
+async function lerComprovanteRecebido(){const it=COMPART.itens.find(x=>x.file&&x.file.type==='application/pdf');if(!it)return null;
+ try{const linhas=await textoDoPdf(new Uint8Array(await it.file.arrayBuffer()),inflarPdf);return lerComprovante(linhas);}catch(e){return null;}}
+async function inflarPdf(u){if(typeof DecompressionStream==='undefined')throw new Error('sem DecompressionStream');
+ return new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer());}
+/* das linhas do comprovante: valor, data, tipo (o estúdio no "De" = Saída; no "Para" = Entrada), nome do outro lado,
+   Autenticação (na Cora é o identificador da linha no extrato) e a descrição */
+function lerComprovante(linhas){if(!Array.isArray(linhas)||!linhas.length)return null;
+ const L=linhas.map(x=>String(x).trim()),N=L.map(x=>semAcento(x).replace(/:$/,''));
+ const pos=rots=>N.findIndex(x=>rots.includes(x));
+ const depois=rots=>{const i=pos(rots);return i>=0&&i<L.length-1?L[i+1]:'';};
+ const bloco=rots=>{const i=pos(rots);return i>=0?L.slice(i+1,i+4).join(' '):'';};
+ const vtxt=depois(['valor','valor pago','valor do pagamento','valor da transferencia'])||L.find(x=>/R\$\s*[\d.]+,\d{2}/.test(x))||'';
+ const vm=vtxt.match(/([\d.]+,\d{2})/),valor=vm?Number(vm[1].replace(/\./g,'').replace(',','.')):null;
+ const dl=L.find(x=>/\b\d{2}\/\d{2}\/\d{4}\b/.test(x))||'',dm=dl.match(/(\d{2})\/(\d{2})\/(\d{4})/),data=dm?dm[3]+'-'+dm[2]+'-'+dm[1]:'';
+ const DE=['de','pagador','origem','remetente','quem pagou'],PARA=['para','recebedor','destinatario','destino','favorecido','beneficiario','quem recebeu'];
+ const cnpj=String(((DB.config||{}).empresa||{}).cnpj||'').replace(/\D/g,'');
+ const ehEstudio=t=>{const s=semAcento(t);return NOME_ESTUDIO_FIN.test(s)||(cnpj.length===14&&s.replace(/\D/g,'').includes(cnpj));};
+ const bDe=bloco(DE),bPara=bloco(PARA);
+ const tipo=bDe&&ehEstudio(bDe)?'Saída':bPara&&ehEstudio(bPara)?'Entrada':'';
+ const nome=(tipo==='Saída'?depois(PARA):tipo==='Entrada'?depois(DE):(depois(PARA)||depois(DE))).replace(/\s+/g,' ').trim();
+ const autent=(depois(['autenticacao cora','autenticacao','codigo de autenticacao'])||'').trim();
+ const pix=N.some(x=>/\bpix\b/.test(x)),boleto=N.some(x=>/boleto/.test(x));
+ const rot=pix?(tipo==='Entrada'?'Pix recebido':'Pix enviado'):boleto?'Boleto pago':tipo==='Entrada'?'Recebimento':'Pagamento';
+ if(!(valor>0)&&!data)return null;
+ return {valor,data,tipo,nome,autent,desc:nome?rot+' - '+nome:rot};}
+/* o pagamento já no Financeiro: pela Autenticação (= FITID do extrato da Cora); sem ela, mesmo tipo e valor com até 3
+   dias de diferença, um só (ou um só com o nome) */
+function acharLancComp(d){const vis=finVisiveis().filter(x=>x.status!=='Cancelado'&&!(x.mescladoCom&&finAbsorvido(x)));
+ if(d.autent){const a=d.autent.toLowerCase(),f=vis.find(x=>x.fitid&&(String(x.fitid).toLowerCase()===a||String(x.fitid).toLowerCase().indexOf(a+'|')===0));if(f)return {f,exato:true};}
+ if(!(d.valor>0)||!d.data)return null;
+ const dias=(a,b)=>Math.abs((new Date(a+'T12:00:00')-new Date(b+'T12:00:00'))/86400000);
+ const c=vis.filter(x=>(!d.tipo||x.tipo===d.tipo)&&Math.abs((Number(x.val)||0)-d.valor)<0.005&&x.data&&dias(String(x.data).slice(0,10),d.data)<=3);
+ if(c.length===1)return {f:c[0],exato:false};
+ if(c.length>1&&d.nome){const n=semAcento(d.nome),cn=c.filter(x=>semAcento(x.desc+' '+(x.descBanco||'')).includes(n));if(cn.length===1)return {f:cn[0],exato:false};}
+ return null;}
+/* o centro de custo do lançamento mais recente com esse nome na descrição (do mesmo tipo) */
+function ccLembradoComp(nome,tipo){const n=semAcento(nome);if(n.length<4)return '';
+ const c=finVisiveis().filter(x=>x.centroCusto&&x.status!=='Cancelado'&&(!tipo||x.tipo===tipo)&&semAcento((x.desc||'')+' '+(x.descBanco||'')).includes(n))
+  .sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')));
+ return c.length&&SETORES_FIXOS.includes(c[0].centroCusto)?c[0].centroCusto:'';}
+/* "Já está no Financeiro?": a lista dos lançamentos que existem (o pagamento de um pedido, por exemplo) */
+function escolherExistenteCompart(busca){FIN_COMP_PENDENTE=null;closeModal('modal-financeiro');abrirCompart(busca);}
+async function descartarDoFormCompart(){if(!COMPART.itens.length)return;
+ if(!confirm('Descartar o comprovante recebido? O lançamento continua aberto, sem ele.'))return;
+ await apagarCompartilhados(COMPART.itens.map(x=>x.chave));COMPART.itens=[];FIN_COMP_PENDENTE=null;
+ $('mf-title').textContent='Novo Lançamento';prepararCompModalFin('');toast('Comprovante descartado.','info');}
+/* a área Comprovantes do modal do lançamento novo, com os arquivos esperando o Salvar */
+function htmlCompPendenteFin(){const a=ACHADO_COMP,d=LIDO_COMP;let msg;
+ const ccTxt=CC_LEMBRADO_COMP&&d&&d.nome?' O centro de custo veio da última vez com '+esc(d.nome)+'.':'';
+ if(a&&a.exato)msg='<div class="cpt-ok">✓ Este pagamento já está no Financeiro (veio do extrato do banco). Confira o centro de custo, o pedido e a observação e toque em Salvar: o comprovante vai junto.'+ccTxt+'</div>';
+ else if(a)msg='<div class="cpt-talvez">Achei no Financeiro um lançamento com o mesmo valor e a mesma data. Se for este, confira e toque em Salvar: o comprovante vai junto.'+ccTxt+'</div>';
+ else if(d)msg='<div class="cpt-ok">✓ Lido do comprovante: tipo, data, valor e descrição'+(CC_LEMBRADO_COMP?'; o centro de custo é o da última vez com '+esc(d.nome):'')+'. Confira e toque em Salvar.</div>';
+ else msg='<div class="comp-fin-nota">Vai junto quando você tocar em Salvar.</div>';
+ return '<div class="cpt-arqs" style="margin-bottom:6px">'+htmlArqsCompart()+'</div>'+msg
+  +'<div class="cpt-acoes-form">'+(a?'<button type="button" class="btn btn-ghost btn-sm" onclick="abrirLancCompart({novo:true})">Não é este: criar lançamento novo</button>'
+   :'<button type="button" class="btn btn-ghost btn-sm" onclick="escolherExistenteCompart()">Já está no Financeiro? Escolher o lançamento ›</button>')
+  +'<button type="button" class="btn btn-ghost btn-sm cpt-desc-btn" onclick="descartarDoFormCompart()">Descartar comprovante</button></div>';}
+function abrirCompart(busca){
+ $('cpt-arqs').innerHTML=htmlArqsCompart();
+ const pode=canEdit();
+ $('cpt-escolha').style.display=pode?'':'none';$('cpt-sem-permissao').style.display=pode?'none':'';
+ $('cpt-novo').style.display=pode?'':'none';
+ COMPART.busca=busca||'';$('cpt-busca').value=COMPART.busca;
+ if(pode)pintarListaCompart();
+ openModal('modal-compart');}
+function fecharCompart(){if(COMPART.gravando)return;closeModal('modal-compart');}
+async function descartarCompart(){if(COMPART.gravando)return;
+ const n=COMPART.itens.length;
+ if(!confirm(n>1?'Descartar os '+n+' arquivos recebidos? Eles não ficam guardados no ERP.':'Descartar o comprovante recebido? Ele não fica guardado no ERP.'))return;
+ await apagarCompartilhados(COMPART.itens.map(x=>x.chave));COMPART.itens=[];closeModal('modal-compart');toast('Comprovante descartado.','info');}
+function tipoCompart(t){COMPART.tipo=t;document.querySelectorAll('#cpt-tipo .per-tab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));pintarListaCompart();}
+/* sem acento e em minúsculas, para a busca */
+const normCompart=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+/* "4000", "4.000", "4.000,50", "R$ 4000" viram número; texto comum, null */
+function valorDaBuscaCompart(q){const t=String(q||'').replace(/r\$|\s/gi,'');if(!/^\d[\d.,]*$/.test(t))return null;
+ const n=Number(/,\d{1,2}$/.test(t)?t.replace(/\./g,'').replace(',','.'):t.replace(/[.,](?=\d{3}(\D|$))/g,'').replace(',','.'));return Number.isFinite(n)?n:null;}
+function pintarListaCompart(){const el=$('cpt-lista');if(!el)return;
+ const hoje=today(),q=COMPART.busca.trim(),qv=valorDaBuscaCompart(q),qn=normCompart(q);
+ const dist=d=>Math.abs((new Date((d||hoje)+'T12:00:00')-new Date(hoje+'T12:00:00'))/86400000);
+ let lista=finVisiveis().filter(x=>x.status!=='Cancelado'&&!(x.mescladoCom&&finAbsorvido(x)));
+ if(COMPART.tipo!=='todas')lista=lista.filter(x=>x.tipo===COMPART.tipo);
+ const linhas=lista.map(x=>{const lig=linhaPagDoFin(x);return {f:x,lig,n:comprovantesDe(x,lig).length};});
+ let sel=COMPART.soSem?linhas.filter(r=>!r.n):linhas;
+ if(q)sel=sel.filter(({f:x,lig})=>{
+  if(qv!==null&&Math.abs((Number(x.val)||0)-qv)<0.005)return true;
+  const txt=normCompart([x.desc,x.cat,x.obs,lig?'v-'+pad(lig.v.num)+' '+cliName(lig.v.cliId):'',x.vendaId?(()=>{const v=vendaPorIdAgora(x.vendaId);return v?'v-'+pad(v.num)+' '+cliName(v.cliId):'';})():''].join(' '));
+  return qn.split(/\s+/).filter(Boolean).every(p=>txt.includes(p));});
+ sel.sort((a,b)=>dist(a.f.data)-dist(b.f.data)||String(b.f.data||'').localeCompare(String(a.f.data||'')));
+ if(!sel.length){el.innerHTML='<div class="cpt-vazio">'+(q?'Nada encontrado com "'+esc(q)+'".':'Nenhum lançamento '+(COMPART.soSem?'sem comprovante ':'')+'aqui.')
+  +(COMPART.soSem?' Desmarque "Só os sem comprovante" para ver todos.':'')+' Se o lançamento ainda não existe, importe o extrato ou crie o lançamento e compartilhe de novo.</div>';return;}
+ const MAX=40;
+ el.innerHTML=sel.slice(0,MAX).map(({f:x,lig,n})=>{const ent=x.tipo==='Entrada';
+  const sub=[fmtD(x.data),x.status==='Pago'?(ent?'recebido':'pago'):(ent?'a receber':'a pagar'),lig?rotLinhaPagFin(lig)+' · '+cliName(lig.v.cliId):'',n?'📎 '+n:''].filter(Boolean).join(' · ');
+  return '<button type="button" class="cpt-item" onclick="escolherCompart(\''+x.id+'\')"><div class="cpt-l1"><span class="cpt-desc">'+esc(x.desc||'Lançamento sem descrição')+'</span><span class="mono cpt-val '+(ent?'ent':'sai')+'">'+(ent?'↑ ':'↓ ')+fmt(x.val)+'</span></div><div class="cpt-l2">'+esc(sub)+'</div></button>';}).join('')
+  +(sel.length>MAX?'<div class="cpt-mais">Mostrando '+MAX+' de '+sel.length+'. Busque pelo nome ou pelo valor para achar os outros.</div>':'');}
+async function escolherCompart(id){if(COMPART.gravando||!guard())return;
+ const x=DB.financeiro.find(y=>y.id===id);if(!x||!COMPART.itens.length)return;
+ const n=COMPART.itens.length;
+ if(!confirm('Guardar '+(n>1?'os '+n+' arquivos':'o comprovante')+' em:\n\n"'+(x.desc||'Lançamento sem descrição')+'"\n'+fmt(x.val)+' · '+fmtD(x.data)+'?'))return;
+ COMPART.gravando=true;document.querySelectorAll('#cpt-lista .cpt-item').forEach(b=>b.disabled=true);
+ let ok=false;
+ try{ok=await anexarCompFin(id,COMPART.itens.map(i=>i.file));}
+ finally{COMPART.gravando=false;document.querySelectorAll('#cpt-lista .cpt-item').forEach(b=>b.disabled=false);}
+ if(!ok)return;
+ await apagarCompartilhados(COMPART.itens.map(i=>i.chave));COMPART.itens=[];
+ closeModal('modal-compart');abrirCompFin(id);}
 /* ----- Trazer para o ERP: as linhas do extrato que ficaram de fora -----
    Na importação, a linha que parecia já estar no ERP ("possível duplicado") vem desmarcada; as que ficam de fora são
    guardadas com o saldo do banco (config saldoBancoOfx.faltandoLinhas) e travam o ajuste do saldo. Trazer cria cada
@@ -17829,6 +18120,21 @@ e não numera nada.
     Cada venda continua ligada à sua linha de pagamento do pedido e conta
     como a conta dela (o Salvar do pedido não cria outra). Separar desfaz
     o repasse inteiro.
+  - Comprovante pelo Compartilhar do Android (desde 27/11/2026): com o ERP
+    instalado pelo Chrome, ele aparece na lista do "Compartilhar" de
+    outros aplicativos (ex.: o comprovante da Cora). manifest.json tem o
+    share_target (imagem e PDF, POST em ./receber-comprovante); o sw.js
+    guarda o arquivo no cache "mabe-compartilhado" e abre
+    ./?compartilhado=1; depois do login abre o "Novo lançamento com
+    comprovante" (o modal do Financeiro: tipo, data, descrição, pedido,
+    valor, centro de custo, status, observações), com o arquivo preso na
+    área Comprovantes; o Salvar cria o lançamento e anexa pelo mesmo
+    caminho do 📎 (anexarCompFin). Entrada de pedido que já tem pagamentos
+    no Financeiro: oferece guardar num deles (senão conta duas vezes).
+    "Já está no Financeiro?" abre a lista dos lançamentos (mais perto de
+    hoje primeiro, só os sem comprovante, busca por nome, pedido ou valor).
+    Fechar sem salvar guarda o arquivo para a próxima abertura;
+    "Descartar" apaga. No iPhone não existe.
   - Trazer para o ERP: as linhas do extrato que ficaram desmarcadas na
     importação (guardadas com o saldo do banco) aparecem no bloco Saldo do
     banco; marcadas, entram como linha do banco igual à importação (mesma
@@ -18757,13 +19063,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-27.5';
+const APP_VERSAO='2026-11-27.6';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=363;
+const APP_ATUALIZACAO=364;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

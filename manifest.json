@@ -30,5 +30,29 @@
       "purpose": "maskable"
     }
   ],
-  "id": "./"
+  "id": "./",
+  "share_target": {
+    "action": "./receber-comprovante",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "titulo",
+      "text": "texto",
+      "url": "link",
+      "files": [
+        {
+          "name": "arquivos",
+          "accept": [
+            "image/png",
+            "image/jpeg",
+            "application/pdf",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".pdf"
+          ]
+        }
+      ]
+    }
+  }
 }
