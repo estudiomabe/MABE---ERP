@@ -3376,9 +3376,8 @@ function metricasDoPeriodo(p){
  const cfg=DB.config.cf;
  const custoFixoMensal=['aluguel','iptu','agua','energia','contador','outros'].reduce((s2,k)=>s2+(Number(cfg[k])||0),0)
   +(DB.config.custosFixosExtras||[]).reduce((s2,c)=>s2+(Number(c.valor)||0),0);
- const folhaMensal=(DB.config.folhaPagamento||[]).reduce((s2,c)=>s2+(Number(c.salario)||0),0);
  const corrido=periodoCorrido(p);
- const custoFixo=custoFixoMensal*corrido.fracao,folha=folhaMensal*corrido.fracao;
+ const custoFixo=custoFixoMensal*corrido.fracao,folha=folhaDoPeriodo(p,corrido);
  const lucro=faturamento-(custoFixo+folha);
  return {oFeitos,oRasc,vPer,entradas,saidas,faturamento,corrido,custoFixo,folha,
   despesas:custoFixo+folha,lucro,
@@ -3419,6 +3418,19 @@ function folhaDoMes(ano,mes,porMes){porMes=porMes||folhaLancadaPorMes();
  const media=ref.length?ref.reduce((a,b)=>a+b,0)/ref.length:cfg;
  return lanc>=media?{val:lanc,lanc,fonte:'lancada',parcial:true}
   :{val:media,lanc,media,nMedia:ref.length,fonte:ref.length?'media':'config',parcial:true};}
+/* Folha dos cartões Despesas Fixas e Lucro, do gráfico e do PDF do painel: a mesma regra da Meta (folhaDoMes),
+   mês a mês, somando os meses do período. Diferença: no mês que ainda corre os cartões rateiam o custo fixo pelos
+   dias já passados, então a média entra na mesma proporção — mas o que já foi pago no mês nunca fica de fora
+   (dia 5 com o salário pago conta o salário inteiro). No Ano corrente, só os meses até hoje; em Tudo, do primeiro
+   mês com movimento até o atual. */
+function folhaDoPeriodo(p,corrido){corrido=corrido||periodoCorrido(p);
+ const hoje=new Date(),hy=hoje.getFullYear(),hm=hoje.getMonth();let meses=[];
+ if(p.modo==='mes')meses=[[p.ano,p.mes,corrido.parcial?corrido.fracao:1]];
+ else if(p.modo==='ano'){for(let m=0;m<12;m++){if(p.ano===hy&&m>hm)break;meses.push([p.ano,m,p.ano===hy&&m===hm?corrido.fracao-hm:1]);}}
+ else{const n=mesesNoPeriodo(p);for(let i=0;i<n;i++)meses.push([hy,hm-(n-1-i),1]);}
+ const porMes=folhaLancadaPorMes();
+ return meses.reduce((s,[a,m,peso])=>{const x=folhaDoMes(a,m,porMes);
+  return s+(x.parcial&&x.media!==undefined?Math.max(x.lanc,x.media*peso):x.val);},0);}
 function margemContribuicao(){const imp=Number(DB.config.cf.imposto)||0;let P=0,V=0,n=0;
  DB.orcamentos.filter(orcAprovado).forEach(o=>itensOrc(o).forEach(it=>{const q=Number(it.qty)||1,preco=Number(it.preco)||0;if(!(preco>0))return;
   const mat=(it.materiais||[]).reduce((s,m)=>s+(Number(m.qty)||0)*(Number(m.custo)||0),0)*q;
@@ -3523,6 +3535,7 @@ function renderDashboard(){
  $('kpi-despfixas').textContent=fmtK(custoFixoPeriodo+folhaPeriodo);
  $('kpi-dfsub').textContent='custo fixo '+fmtK(custoFixoPeriodo)+' + folha '+fmtK(folhaPeriodo)
   +(corrido.parcial?'  ·  '+corrido.dias+' de '+corrido.total+(corrido.unidade==='mês'?' meses':' dias'):'');
+ $('kpi-dfsub').title='Folha: a lançada no Financeiro (centro de custo Folha de Pagamento). No mês que ainda corre, a média dos 3 últimos meses proporcional aos dias, ou o que já foi pago se for mais. Meses sem nenhuma folha lançada usam a lista das Configurações.';
  const lucro=M.lucro;
  $('kpi-lucro').textContent=fmtSinal(lucro);
  $('kpi-lucro').style.color=corSinal(lucro);
@@ -3669,8 +3682,9 @@ async function gerarPdfDashboard(){if(!guardValores())return;
  const ticketDash=vPer.length?faturamento/vPer.length:0;
  const aReceberDash=aReceberDosPedidos();
  const cfgDash=DB.config.cf;
- const custoFixoMensalDash=(['aluguel','iptu','agua','energia','contador','outros'].reduce((s,k)=>s+(Number(cfgDash[k])||0),0)+(DB.config.custosFixosExtras||[]).reduce((s,c)=>s+(Number(c.valor)||0),0))*mesesNoPeriodo(PER);
- const folhaPagamentoDash=(DB.config.folhaPagamento||[]).reduce((s,c)=>s+(Number(c.salario)||0),0)*mesesNoPeriodo(PER);
+ /* as mesmas contas dos cartões (metricasDoPeriodo): folha do Financeiro e, no período que corre, até hoje */
+ const MDash=metricasDoPeriodo(PER);
+ const custoFixoMensalDash=MDash.custoFixo,folhaPagamentoDash=MDash.folha;
 
  doc.autoTable({startY:70,margin:{left:marginX,right:14},
   head:[['Indicador','Valor']],
@@ -3680,7 +3694,7 @@ async function gerarPdfDashboard(){if(!guardValores())return;
    ['Entradas',fmt(entradas)],
    ['Saídas',fmt(saidas)],
    ['Faturamento',fmt(faturamento)+'  (soma dos pedidos)'],
-   ['Despesas Fixas',fmt(custoFixoMensalDash+folhaPagamentoDash)],
+   ['Despesas Fixas',fmt(custoFixoMensalDash+folhaPagamentoDash)+'  (custo fixo '+fmt(custoFixoMensalDash)+' + folha '+fmt(folhaPagamentoDash)+(MDash.corrido.parcial?'; até hoje':'')+')'],
    ['Lucro',((faturamento-(custoFixoMensalDash+folhaPagamentoDash))<0?'- ':'')+fmt(Math.abs(faturamento-(custoFixoMensalDash+folhaPagamentoDash)))],
    ['A Receber',fmt(aReceberDash.total)+'  ('+textoAReceber(aReceberDash.lista.length)+')'],
    ['Margem',(faturamento>0?fmtN((faturamento-(custoFixoMensalDash+folhaPagamentoDash))/faturamento*100,1):'0,0')+'%  (lucro / faturamento)']
@@ -16949,9 +16963,12 @@ e não numera nada.
   compacta: Orçamentos do Período (sem rascunho nem reprovado; os
   rascunhos aparecem como nota ao lado, com quantidade e valor), Ticket
   Médio, Recebido e Pago (o que entrou e saiu pago no período) e
-  Despesas Fixas (custo fixo + folha; no mês que ainda corre o valor é
+  Despesas Fixas (custo fixo + folha; no mês que ainda corre o custo fixo é
   rateado pelos dias já passados e no ano corrente pelos meses, e o
-  rótulo diz isso — periodoCorrido). Entre as duas faixas, desde
+  rótulo diz isso — periodoCorrido). Desde 26/11/2026 a folha dos cartões,
+  do gráfico e do PDF do painel vem do Financeiro pela mesma regra da Meta
+  (folhaDoPeriodo → folhaDoMes, mês a mês); no mês que corre, a média entra
+  proporcional aos dias, mas nunca menos do que o já pago no mês. Entre as duas faixas, desde
   23/11/2026, a Meta (some em Tudo, num período que ainda não começou ou
   com meta 0): o Faturamento do período contra a meta (Configurações →
   Meta do Painel, cf.metaMensal, 30.000 por padrão; no Ano, × 12), uma
@@ -18417,13 +18434,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-26.2';
+const APP_VERSAO='2026-11-26.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=357;
+const APP_ATUALIZACAO=358;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

@@ -675,9 +675,12 @@ e não numera nada.
   compacta: Orçamentos do Período (sem rascunho nem reprovado; os
   rascunhos aparecem como nota ao lado, com quantidade e valor), Ticket
   Médio, Recebido e Pago (o que entrou e saiu pago no período) e
-  Despesas Fixas (custo fixo + folha; no mês que ainda corre o valor é
+  Despesas Fixas (custo fixo + folha; no mês que ainda corre o custo fixo é
   rateado pelos dias já passados e no ano corrente pelos meses, e o
-  rótulo diz isso — periodoCorrido). Entre as duas faixas, desde
+  rótulo diz isso — periodoCorrido). Desde 26/11/2026 a folha dos cartões,
+  do gráfico e do PDF do painel vem do Financeiro pela mesma regra da Meta
+  (folhaDoPeriodo → folhaDoMes, mês a mês); no mês que corre, a média entra
+  proporcional aos dias, mas nunca menos do que o já pago no mês. Entre as duas faixas, desde
   23/11/2026, a Meta (some em Tudo, num período que ainda não começou ou
   com meta 0): o Faturamento do período contra a meta (Configurações →
   Meta do Painel, cf.metaMensal, 30.000 por padrão; no Ano, × 12), uma
