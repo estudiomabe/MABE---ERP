@@ -17070,7 +17070,10 @@ App instalado (PWA) e versão:
   versão nova é perguntada ao worker por postMessage, tipo VERSAO, ou lida
   do texto do sw.js publicado); se for a mesma já aberta, o aviso some.
   "Atualizar" manda ATUALIZAR ao worker (skipWaiting) e a página recarrega
-  no controllerchange; "Depois" fecha. O app nunca se recarrega sozinho:
+  no controllerchange; "Depois" fecha. Se a tela já está na versão do
+  worker que espera (o HTML vem da rede primeiro), não há o que perguntar:
+  o worker assume na hora, sem recarregar (desde 27/11/2026; antes ele
+  ficava preso na versão antiga). O app nunca se recarrega sozinho:
   troca que a pessoa não pediu só vale na próxima abertura (recarregar no
   meio deixava a tela pintada pela metade no Chrome do Android). No
   celular o aviso fica acima da barra de baixo, e os toasts sobem para
@@ -19063,13 +19066,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-27.6';
+const APP_VERSAO='2026-11-27.7';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=364;
+const APP_ATUALIZACAO=365;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
@@ -19121,7 +19124,10 @@ async function descobrirVersaoNova(){
 function mostrarAvisoAtualizacao(){const el=$('aviso-atualizacao');if(!el)return;
  escreverVersoesAviso();el.style.display='flex';ajustarToastsAoAviso();
  descobrirVersaoNova().then(v=>{
-  if(v&&v===APP_VERSAO){fecharAvisoAtualizacao();return;}
+  if(v&&v===APP_VERSAO){fecharAvisoAtualizacao();
+   /* a tela já é a nova e só o worker ficou para trás: ele assume já (sem TROCA_PEDIDA, o controllerchange não recarrega) */
+   const w=workerPendente();if(w)try{w.postMessage({tipo:'ATUALIZAR'});}catch(e){}
+   return;}
   escreverVersoesAviso();ajustarToastsAoAviso();});}
 /* enquanto o aviso de versão está aberto, os toasts ficam logo acima dele; a altura muda com o texto */
 function ajustarToastsAoAviso(){const el=$('aviso-atualizacao');

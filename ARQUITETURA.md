@@ -191,7 +191,10 @@ App instalado (PWA) e versão:
   versão nova é perguntada ao worker por postMessage, tipo VERSAO, ou lida
   do texto do sw.js publicado); se for a mesma já aberta, o aviso some.
   "Atualizar" manda ATUALIZAR ao worker (skipWaiting) e a página recarrega
-  no controllerchange; "Depois" fecha. O app nunca se recarrega sozinho:
+  no controllerchange; "Depois" fecha. Se a tela já está na versão do
+  worker que espera (o HTML vem da rede primeiro), não há o que perguntar:
+  o worker assume na hora, sem recarregar (desde 27/11/2026; antes ele
+  ficava preso na versão antiga). O app nunca se recarrega sozinho:
   troca que a pessoa não pediu só vale na próxima abertura (recarregar no
   meio deixava a tela pintada pela metade no Chrome do Android). No
   celular o aviso fica acima da barra de baixo, e os toasts sobem para
