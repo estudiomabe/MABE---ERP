@@ -395,6 +395,10 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .op-reg-txt { font-size:13px;color:var(--text);white-space:pre-wrap;margin:4px 0 6px;overflow-wrap:anywhere; }
 .op-reg-fotos { display:flex;gap:6px;flex-wrap:wrap; }
 .op-reg-fotos img { width:72px;height:72px;object-fit:cover;border-radius:7px;display:block; }
+.anx-pcp-lista .op-reg:first-child { padding-top:0; }
+.anx-pcp-lista .op-reg-fotos img { width:96px;height:96px; }
+.anx-pcp-op { font-weight:600;color:var(--text); }
+.anx-pcp-vazio { font-size:12px;color:var(--text-muted); }
 .pcp-stats { display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px; }
 .pcp-stat { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04); }
 .pcp-stat-val { font-size:22px;font-weight:800;font-family:var(--mono); }
@@ -1547,6 +1551,10 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
           <input type="file" id="vnd-anexo-input" accept=".png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple style="display:none" onchange="uploadAnexoPedido(event)">
           <div id="vnd-anexos-lista" style="display:flex;flex-wrap:wrap;gap:10px"></div>
         </div>
+        <div class="config-card" id="vnd-pcp-box" style="margin-top:14px">
+          <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📷 Anexos do PCP<span class="anx-pcp-n"></span><span class="orc-anexos-dica"> — fotos e registros do botão 📷 no PCP</span></div></div>
+          <div class="anx-pcp-lista"></div>
+        </div>
       </div>
     </div>
 
@@ -1822,6 +1830,10 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
           <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📎 Anexos de Referência<span class="orc-anexos-dica"> — ou arraste os arquivos para cá</span></div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('orc-anexo-input').click()">+ Anexar Arquivo</button></div>
           <input type="file" id="orc-anexo-input" accept=".png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple style="display:none" onchange="uploadAnexoOrc(event)">
           <div id="orc-anexos-lista" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+        </div>
+        <div class="config-card" id="orc-pcp-box" style="margin-top:14px">
+          <div class="table-toolbar" style="padding:0 0 10px"><div class="table-toolbar-title">📷 Anexos do PCP<span class="anx-pcp-n"></span><span class="orc-anexos-dica"> — fotos e registros do botão 📷 no PCP</span></div></div>
+          <div class="anx-pcp-lista"></div>
         </div>
         <div class="config-card" style="margin-top:14px;background:#1a1714;border-color:#1a1714;max-width:360px;margin-left:auto">
           <div style="display:flex;flex-direction:column;gap:6px">
@@ -6133,13 +6145,13 @@ async function avisarIncertosVnd(){if(!lerIncertosVnd().length||redeRuimAgora())
  const c=await conferirIncertosVnd(VND_NOVO_ID);
  if(c.achados.length)toast(textoPedidoIncerto(c.achados[0])+' Ele está na lista de pedidos: não lance de novo. A baixa no estoque e a ordem de produção dele não foram feitas: confira.','info',12000);}
 function openVenda(){if(!guardValores())return;$('vnd-id').value='';VND_NOVO_ID='';VND_LIX=[];pintarBotaoLixeiraVnd();fillSel('vnd-cli',DB.clientes,c=>c.nome,'','— Selecionar —');$('vnd-data').value=today();$('vnd-origem').value='';
- VND_PAGS_ABERTOS=null;$('vnd-pags').innerHTML='';addFormaPagamento({forma:'pix',data:today()},'vnd-pags');encherSelectLista('vnd-status',VND_STATUS,'Pendente');$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderGastosPedido(null);renderHorasPedido(null);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');aoAbrirFichaPedido('');avisarIncertosVnd();}
+ VND_PAGS_ABERTOS=null;$('vnd-pags').innerHTML='';addFormaPagamento({forma:'pix',data:today()},'vnd-pags');encherSelectLista('vnd-status',VND_STATUS,'Pendente');$('vnd-obs').value='';$('vnd-itens').innerHTML='';addItemVenda();$('mv-title').textContent='Novo Pedido';renderVisaoGeralPedido(null);renderGastosPedido(null);renderHorasPedido(null);renderAnexosPedido();renderAnexosPCPPedido(null);atualizarBotaoImprimirPedido();vndShow('form');aoAbrirFichaPedido('');avisarIncertosVnd();}
 function editVenda(id){if(!guard()||!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;VND_LIX=(v.lixeira||[]).slice();pintarBotaoLixeiraVnd();
  /* aberto, o dono já sabe que ele existe; (r4) e fica sabendo que a OP e a baixa no estoque dele não foram feitas
     (antes o aviso sumia calado ao abrir pela lista) */
  const eraIncerto=lerIncertosVnd().some(x=>x.id===id);tirarIncertosVnd([id]);
  $('vnd-id').value=v.id;fillSel('vnd-cli',DB.clientes,c=>c.nome,v.cliId,'— Selecionar —');$('vnd-data').value=v.data;$('vnd-origem').value=v.origem||'';encherSelectLista('vnd-status',VND_STATUS,v.status);$('vnd-obs').value=v.obs||'';VND_PAGS_ABERTOS=fotoAbertura(v.pags);preencherPagamentosVenda(v);
- $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderGastosPedido(v);renderHorasPedido(v);renderAnexosPedido();atualizarBotaoImprimirPedido();vndShow('form');
+ $('vnd-itens').innerHTML='';(v.itens||[]).forEach(it=>addItemPedido(it));$('mv-title').textContent='Editar Pedido V-'+pad(v.num);renderVisaoGeralPedido(v);renderGastosPedido(v);renderHorasPedido(v);renderAnexosPedido();renderAnexosPCPPedido(v);atualizarBotaoImprimirPedido();vndShow('form');
  aoAbrirFichaPedido(v.id);
  if(eraIncerto)toast(textoPedidoIncerto(v)+' A baixa no estoque e a ordem de produção dele não foram feitas: confira.','info',12000);}
 let ITEM_PARA_PEDIDO=null;
@@ -6845,7 +6857,7 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
  $('orcd-orcado-linha').style.display=temFora?'flex':'none';
  $('orcd-orcado').textContent=fmt(itens.reduce((s,it)=>s+Number(it.preco||0),0));
  $('orcd-preco-lbl').textContent=temFora?'Total Aprovado':'Total do Orçamento';
- renderLinksOrc(o);renderAnexosOrc(o);pintarBotaoLixeira();}
+ renderLinksOrc(o);renderAnexosOrc(o);renderAnexosPCPOrc(o);pintarBotaoLixeira();}
 const anexoEhImagem=a=>/\.(png|jpe?g)$/i.test(a.nome||'');
 /* a marca fica guardada no próprio anexo: vale para o Gerar PDF e para o Imprimir */
 function caixaAnexoNoOrc(a,extra){
@@ -11039,6 +11051,25 @@ async function salvarFotoOP(){if(FOP.enviando||!guard())return;
 /* "26/11 14:32" */
 function dtCurtaReg(iso){const d=new Date(iso);if(isNaN(d))return '';return pad2Reg(d.getDate())+'/'+pad2Reg(d.getMonth()+1)+(d.getFullYear()!==new Date().getFullYear()?'/'+d.getFullYear():'')+' '+pad2Reg(d.getHours())+':'+pad2Reg(d.getMinutes());}
 const pad2Reg=n=>String(n).padStart(2,'0');
+/* "Anexos do PCP" no Pedido e no Orçamento: os registros de todas as ordens ligadas, do mais novo ao mais
+   antigo. O pedido acha as ordens por pedidoDaOp (o mesmo vínculo do resto do ERP: V-nº no título ou o
+   orçamento de origem); o orçamento, pela ordem que ele gerou (orc_id / op_id). */
+function renderAnexosPCPPedido(v){pintarAnexosPCP('vnd-pcp-box',v?DB.producao.filter(op=>pedidoDaOp(op)===v):[],v?'Este pedido ainda não tem ordem no PCP.':'As fotos aparecem aqui depois que o pedido for salvo e a ordem do PCP tiver registros.');}
+function renderAnexosPCPOrc(o){pintarAnexosPCP('orc-pcp-box',o?DB.producao.filter(op=>op.orcId===o.id||(o.opId&&o.opId===op.id)):[],'Este orçamento ainda não tem ordem no PCP.');}
+function pintarAnexosPCP(boxId,ops,semOrdem){const box=$(boxId);if(!box)return;
+ const lista=box.querySelector('.anx-pcp-lista'),cont=box.querySelector('.anx-pcp-n');if(!lista)return;
+ const regs=[];ops.forEach(op=>(Array.isArray(op.diario)?op.diario:[]).forEach(r=>{if(r)regs.push({r,op});}));
+ regs.sort((a,b)=>String(b.r.dt||'').localeCompare(String(a.r.dt||'')));
+ const fotosOk=r=>(Array.isArray(r.fotos)?r.fotos:[]).filter(x=>/^https:\/\//.test(String(x&&x.url||'')));
+ const nf=regs.reduce((s,x)=>s+fotosOk(x.r).length,0);
+ if(cont)cont.textContent=nf?' ('+nf+' foto'+(nf>1?'s':'')+')':'';
+ if(!ops.length){lista.innerHTML='<div class="anx-pcp-vazio">'+esc(semOrdem)+'</div>';return;}
+ if(!regs.length){lista.innerHTML='<div class="anx-pcp-vazio">Nenhuma foto ainda. No PCP, toque em 📷 Foto no cartão '+(ops.length>1?'de cada ordem':'da ordem')+'.</div>';return;}
+ const varias=ops.length>1;
+ lista.innerHTML=regs.map(({r,op})=>'<div class="op-reg"><div class="op-reg-cab"><span class="mono">'+esc(dtCurtaReg(r.dt))+'</span>'+(r.por?'<span>· '+esc(r.por)+'</span>':'')+(r.etapa?'<span>· '+esc(r.etapa)+'</span>':'')+(varias&&op.num?'<span class="anx-pcp-op">· OP-'+pad(op.num)+'</span>':'')+'</div>'
+  +(r.texto?'<div class="op-reg-txt">'+esc(r.texto)+'</div>':'')
+  +(fotosOk(r).length?'<div class="op-reg-fotos">'+fotosOk(r).map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener" title="Abrir a foto"><img src="'+esc(x.url)+'" alt="" loading="lazy"></a>').join('')+'</div>':'')
+  +'</div>').join('');}
 /* os registros na ficha da OP, do mais novo para o mais antigo */
 function pintarDiarioOP(o){const box=$('op-diario-box');if(!box)return;
  const regs=o&&COLUNA_DIARIO_OP?(o.diario||[]).slice().reverse():[];
@@ -17461,7 +17492,10 @@ e não numera nada.
   (data, quem, etapa, texto e fotos) vai para producao.diario; o cartão
   mostra a foto mais nova e quantas fotos a OP tem, e a ficha da OP
   lista os registros, do mais novo ao mais antigo, com o 🗑 para apagar
-  um (as fotos saem do Storage). Sem a coluna, o 📷 avisa
+  um (as fotos saem do Storage). Desde 27/11/2026 os mesmos registros
+  aparecem também no quadro "📷 Anexos do PCP", logo abaixo dos anexos de
+  referência do Pedido e do Orçamento (só para ver; juntam todas as ordens
+  ligadas, com o nº da OP quando há mais de uma). Sem a coluna, o 📷 avisa
   (supabase/migracao-pcp-diario.sql). O botão "Imprimir PCP"
   gera a folha de produção em PDF, com quadrado de conferência e a
   observação de cada ordem.
@@ -18611,13 +18645,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-27.1';
+const APP_VERSAO='2026-11-27.2';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=359;
+const APP_ATUALIZACAO=360;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

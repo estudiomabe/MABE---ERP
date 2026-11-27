@@ -1008,7 +1008,10 @@ e não numera nada.
   (data, quem, etapa, texto e fotos) vai para producao.diario; o cartão
   mostra a foto mais nova e quantas fotos a OP tem, e a ficha da OP
   lista os registros, do mais novo ao mais antigo, com o 🗑 para apagar
-  um (as fotos saem do Storage). Sem a coluna, o 📷 avisa
+  um (as fotos saem do Storage). Desde 27/11/2026 os mesmos registros
+  aparecem também no quadro "📷 Anexos do PCP", logo abaixo dos anexos de
+  referência do Pedido e do Orçamento (só para ver; juntam todas as ordens
+  ligadas, com o nº da OP quando há mais de uma). Sem a coluna, o 📷 avisa
   (supabase/migracao-pcp-diario.sql). O botão "Imprimir PCP"
   gera a folha de produção em PDF, com quadrado de conferência e a
   observação de cada ordem.
