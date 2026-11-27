@@ -726,7 +726,8 @@ e não numera nada.
   sem o total e sem a barra do pago. O botão
   "Gerar Relatório Dashboard em PDF" leva a tabela de indicadores, a
   mesma Análise dos Últimos Pedidos Entregues (analiseEntregues, com a
-  coluna Lucro real desde 27/11/2026: valor − gastos − mão de obra −
+  coluna "Tempo entre pedido e entrega", dias do pedido até a marca "Entregue em", com a média
+  na soma, e a coluna Lucro real desde 27/11/2026: valor − gastos − mão de obra −
   imposto da configuração; avisa quando falta gasto ou hora lançada; as
   contas que a tela também usa) e as últimas transações do período
   selecionado (sem o estoque crítico).
