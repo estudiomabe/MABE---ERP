@@ -722,7 +722,9 @@ e não numera nada.
   dono). Quem não vê valores fica só com a lista de pedidos em andamento,
   sem o total e sem a barra do pago. O botão
   "Gerar Relatório Dashboard em PDF" leva a tabela de indicadores, a
-  mesma Análise dos Últimos Pedidos Entregues (analiseEntregues, as
+  mesma Análise dos Últimos Pedidos Entregues (analiseEntregues, com a
+  coluna Lucro real desde 27/11/2026: valor − gastos − mão de obra −
+  imposto da configuração; avisa quando falta gasto ou hora lançada; as
   contas que a tela também usa) e as últimas transações do período
   selecionado (sem o estoque crítico).
 - Tarefas (desde 09/11/2026) — lista de afazeres da equipe, logo abaixo
