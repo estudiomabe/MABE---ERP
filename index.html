@@ -364,6 +364,37 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .kanban-card-prazo { font-size:10px;font-family:var(--mono); }
 .kanban-card-prazo.vencido { color:var(--danger);font-weight:700; } .kanban-card-prazo.hoje { color:var(--warning);font-weight:700; } .kanban-card-prazo.ok { color:var(--text-muted); }
 .pcp-etapa-btn { padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;border:none;cursor:pointer;transition:all 0.15s; }
+/* foto e registro do dia (PCP) */
+.kanban-card-foto { display:block;width:100%;height:110px;object-fit:cover;border-radius:7px;margin:0 0 9px;background:var(--surface3); }
+.pcp-foto-btn { background:var(--surface3);color:var(--text);flex-shrink:0;font-size:13px;padding:2px 7px;line-height:1.35; }
+.pcp-foto-n { font-family:var(--mono);font-size:10px;margin-left:2px;color:var(--text-muted); }
+.fop-sub { font-size:12px;color:var(--text-muted);margin-top:2px; }
+.fop-grade { display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-bottom:12px; }
+.fop-grade:empty { display:none; }
+.fop-mini { position:relative;aspect-ratio:1;border-radius:9px;overflow:hidden;background:var(--surface3); }
+.fop-mini img { width:100%;height:100%;object-fit:cover;display:block; }
+.fop-mini button { position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(26,23,20,.72);color:#fff;font-size:13px;cursor:pointer;line-height:1; }
+.fop-pergunta { font-size:14px;font-weight:700;margin:2px 0 12px;color:var(--text); }
+.fop-acoes { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+.fop-grande { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:92px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer; }
+.fop-grande span { font-size:26px;line-height:1; }
+.fop-grande:active { background:var(--surface3); }
+.fop-enviar { width:100%;justify-content:center;min-height:48px;font-size:14.5px;margin-top:12px; }
+.fop-sem-foto { display:block;margin:14px auto 0;background:none;border:none;color:var(--text-muted);font-family:inherit;font-size:12.5px;text-decoration:underline;cursor:pointer; }
+.fop-tiras { display:flex;gap:6px;overflow-x:auto;margin-bottom:12px; }
+.fop-tiras:empty { display:none; }
+.fop-tiras img { width:58px;height:58px;object-fit:cover;border-radius:7px;flex-shrink:0; }
+.fop-pergunta-txt { display:block;font-size:14.5px;font-weight:700;margin-bottom:8px;color:var(--text); }
+.fop-progresso { font-size:12.5px;color:var(--text-muted);margin-top:8px;min-height:16px; }
+.op-diario { margin-top:16px;border-top:1px solid var(--border);padding-top:12px; }
+.op-diario-tit { font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px; }
+.op-reg { padding:10px 0;border-bottom:1px solid var(--border); }
+.op-reg:last-child { border-bottom:none; }
+.op-reg-cab { display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted); }
+.op-reg-cab button { margin-left:auto;background:none;border:none;cursor:pointer;font-size:13px;padding:4px 6px;color:var(--text-muted); }
+.op-reg-txt { font-size:13px;color:var(--text);white-space:pre-wrap;margin:4px 0 6px;overflow-wrap:anywhere; }
+.op-reg-fotos { display:flex;gap:6px;flex-wrap:wrap; }
+.op-reg-fotos img { width:72px;height:72px;object-fit:cover;border-radius:7px;display:block; }
 .pcp-stats { display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px; }
 .pcp-stat { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04); }
 .pcp-stat-val { font-size:22px;font-weight:800;font-family:var(--mono); }
@@ -2276,7 +2307,16 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
 <div class="form-grid form-2"><div class="form-group"><label class="form-label">Responsável</label><input type="text" class="form-control" id="op-resp" list="lista-resp" placeholder="Quem executa esta ordem"><datalist id="lista-resp"></datalist></div><div class="form-group"><label class="form-label">Prioridade</label><select class="form-control" id="op-prio"><!-- opcoes vem de OP_PRIO --></select></div></div>
 <div class="form-group"><label class="form-label">Etapa Atual</label><select class="form-control" id="op-etapa"><!-- opcoes vem de ETAPAS: o mesmo nome do quadro, das abas e da Lista --></select></div>
 <div class="form-group"><label class="form-label">Observações Técnicas</label><input type="text" class="form-control" id="op-obs" placeholder="Encaixes, acabamento, madeira, medidas..."></div>
-</div></div><div class="modal-footer"><button class="btn btn-danger" id="op-btn-del" style="margin-right:auto;display:none" onclick="delOPFromModal()">Excluir</button><button class="btn btn-ghost" onclick="closeModal('modal-producao')">Cancelar</button><button class="btn btn-primary" onclick="saveOP()">Salvar</button></div></div></div>
+</div><div id="op-diario-box"></div></div><div class="modal-footer"><button class="btn btn-danger" id="op-btn-del" style="margin-right:auto;display:none" onclick="delOPFromModal()">Excluir</button><button class="btn btn-ghost" onclick="closeModal('modal-producao')">Cancelar</button><button class="btn btn-primary" onclick="saveOP()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-foto-op"><div class="modal" style="max-width:520px"><div class="modal-header"><div><div class="modal-title">📷 Registro do dia</div><div class="fop-sub" id="fop-sub"></div></div><button class="modal-close" onclick="fecharFotoOP()">✕</button></div><div class="modal-body">
+<input type="file" id="fop-camera" accept="image/*" capture="environment" style="display:none" onchange="fotosEscolhidasOP(this)">
+<input type="file" id="fop-galeria" accept="image/*" multiple style="display:none" onchange="fotosEscolhidasOP(this)">
+<div id="fop-passo-fotos"><div class="fop-grade" id="fop-grade"></div><div class="fop-pergunta" id="fop-pergunta"></div>
+<div class="fop-acoes"><button type="button" class="fop-grande" onclick="$('fop-camera').click()"><span>📷</span><b id="fop-txt-cam">Tirar foto</b></button><button type="button" class="fop-grande" onclick="$('fop-galeria').click()"><span>🖼️</span><b>Galeria</b></button></div>
+<button type="button" class="btn btn-primary fop-enviar" id="fop-enviar" onclick="passoTextoFotoOP()">Enviar para o PCP ›</button>
+<button type="button" class="fop-sem-foto" id="fop-sem-foto" onclick="passoTextoFotoOP()">Registrar só com texto, sem foto ›</button></div>
+<div id="fop-passo-texto" style="display:none"><div class="fop-tiras" id="fop-tiras"></div><label class="fop-pergunta-txt" for="fop-texto">O que foi feito hoje neste item?</label><textarea class="form-control" id="fop-texto" rows="4" placeholder="Ex.: tampo colado e lixado no grão 120"></textarea><div class="fop-progresso" id="fop-progresso"></div></div>
+</div><div class="modal-footer"><button class="btn btn-ghost" id="fop-voltar" onclick="voltarFotosOP()">‹ Fotos</button><button class="btn btn-ghost" id="fop-cancelar" onclick="fecharFotoOP()">Cancelar</button><button class="btn btn-primary" id="fop-salvar" onclick="salvarFotoOP()">Salvar no PCP</button></div></div></div>
 
 <script>
 /* ================= ERRO VISÍVEL =================
@@ -10899,16 +10939,134 @@ const opAtrasada=(o,t)=>o.status!=='Concluída'&&Number(o.etapa)!==ETAPA_FINAL&&
 const pesoPrio=p=>{const i=OP_PRIO.indexOf(p||'Normal');return i<0?OP_PRIO.length:i;};
 const porUrgencia=t=>(a,b)=>(opAtrasada(b,t)-opAtrasada(a,t))||(pesoPrio(a.prio)-pesoPrio(b.prio))||porPrazo(a,b);
 function opParaSupabase(o){const r={id:o.id,titulo:o.titulo,cli_id:o.cliId||null,prazo:o.prazo||null,resp:o.resp||null,prio:o.prio||null,etapa:o.etapa||0,status:o.status||'Ativa',obs:o.obs||null,orc_id:o.orcId||null,fim:o.fim||null};if(o.num!==undefined&&o.num!==null)r.num=o.num;return r;}
-function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim,criadoEm:row.created_at};}
+function opDeSupabase(row){return{id:row.id,num:row.num,titulo:row.titulo,cliId:row.cli_id,prazo:row.prazo,resp:row.resp||'',prio:row.prio||'Normal',etapa:row.etapa,status:row.status,obs:row.obs||'',orcId:row.orc_id,fim:row.fim,criadoEm:row.created_at,diario:Array.isArray(row.diario)?row.diario:[]};}
 function elapsedStr(iso){if(!iso)return '';const ms=Date.now()-new Date(iso).getTime();if(ms<0)return '0min';
  const min=Math.floor(ms/60000);const dias=Math.floor(min/1440);const horas=Math.floor((min%1440)/60);const mins=min%60;
  const partes=[];if(dias)partes.push(dias+'d');if(dias||horas)partes.push(horas+'h');partes.push(mins+'min');return partes.join(' ');}
 function tickPCPTimers(){document.querySelectorAll('.kanban-card-timer[data-criado]').forEach(el=>{const iso=el.getAttribute('data-criado');if(iso)el.textContent='⏱ '+elapsedStr(iso);});}
 setInterval(tickPCPTimers,60000);
+/* ================= FOTO E REGISTRO DO DIA (PCP) =================
+   Cada OP guarda na coluna diario uma lista de registros {id, dt (ISO), por, etapa, texto, fotos:[{path,nome,url}]}.
+   O Salvar da ficha da OP não manda essa coluna (opParaSupabase não a conhece): só o registro do dia e o apagar
+   de um registro escrevem nela, e sempre relendo a lista do banco antes, para dois celulares ao mesmo tempo não
+   apagarem o registro um do outro. */
+let COLUNA_DIARIO_OP=false;
+async function conferirColunaDiarioOP(linhas){
+ if(linhas&&linhas.length)COLUNA_DIARIO_OP='diario' in linhas[0];
+ else{try{const {error}=await supa.from('producao').select('diario').limit(1);COLUNA_DIARIO_OP=!error;}catch(e){COLUNA_DIARIO_OP=false;}}}
+const avisoDiarioOP=()=>toast(paraAdmin('Fotos do PCP: falta criar a coluna no banco (supabase/migracao-pcp-diario.sql, no SQL Editor do Supabase).','Fotos do PCP indisponíveis no momento — avise o administrador.'),'error',8000);
+/* a foto mais nova da OP (para o cartão) e quantas fotos ela tem */
+function ultimaFotoOP(o){const d=o.diario||[];for(let i=d.length-1;i>=0;i--){const fs=d[i].fotos||[];if(fs.length)return fs[fs.length-1];}return null;}
+const nFotosOP=o=>(o.diario||[]).reduce((s,r)=>s+(r.fotos||[]).length,0);
+/* foto de celular tem 3 a 8 MB: reduz para no máx. 1600px em JPEG (~300 KB). Também converte o que o navegador
+   abre mas o Storage não aceita (WebP, HEIC já convertido pelo sistema). null = o navegador não conseguiu abrir. */
+function fotoParaJpeg(file){return new Promise(res=>{const u=URL.createObjectURL(file);const img=new Image();
+ img.onload=()=>{try{const k=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+   const w=Math.max(1,Math.round(img.naturalWidth*k)),h=Math.max(1,Math.round(img.naturalHeight*k));
+   const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');
+   cx.fillStyle='#fff';cx.fillRect(0,0,w,h);cx.drawImage(img,0,0,w,h);URL.revokeObjectURL(u);
+   cv.toBlob(b=>res(b),'image/jpeg',0.82);}catch(e){URL.revokeObjectURL(u);res(null);}};
+ img.onerror=()=>{URL.revokeObjectURL(u);res(null);};img.src=u;});}
+let FOP={opId:null,fotos:[],enviando:false,preparando:0};
+function limparFotosFOP(){FOP.fotos.forEach(x=>URL.revokeObjectURL(x.url));FOP.fotos=[];}
+function abrirFotoOP(id){if(!guard())return;
+ const o=DB.producao.find(x=>x.id===id);if(!o)return;
+ if(!COLUNA_DIARIO_OP){avisoDiarioOP();return;}
+ if(FOP.enviando){toast('Aguarde terminar o envio anterior.','info');return;}
+ limparFotosFOP();FOP.opId=id;FOP.preparando=0;
+ const ped=pedidoDaOp(o);
+ $('fop-sub').textContent=[pecaDaOp(o,ped),o.num?'OP-'+pad(o.num):'',semEmoji(ETAPAS[Number(o.etapa)||0]||'')].filter(Boolean).join(' · ');
+ $('fop-texto').value='';$('fop-progresso').textContent='';
+ voltarFotosOP();openModal('modal-foto-op');}
+function fecharFotoOP(){if(FOP.enviando){toast('Aguarde: as fotos ainda estão sendo enviadas.','info');return;}
+ closeModal('modal-foto-op');limparFotosFOP();FOP.opId=null;}
+async function fotosEscolhidasOP(input){const files=Array.from(input.files||[]);input.value='';
+ if(!files.length||!FOP.opId)return;
+ const recusadas=[];FOP.preparando+=files.length;pintarFotosOP();
+ for(const file of files){
+  const blob=file.type&&!file.type.startsWith('image/')?null:await fotoParaJpeg(file);
+  FOP.preparando--;
+  if(!blob||!FOP.opId){if(!blob)recusadas.push(file.name||'foto');continue;}
+  FOP.fotos.push({blob,url:URL.createObjectURL(blob)});pintarFotosOP();}
+ pintarFotosOP();
+ if(recusadas.length)toast('Não consegui abrir: '+recusadas.join(', ')+'. Tente tirar a foto de novo ou escolher outra.','error',7000);}
+function tirarFotoFOP(i){const x=FOP.fotos[i];if(!x)return;URL.revokeObjectURL(x.url);FOP.fotos.splice(i,1);pintarFotosOP();}
+function pintarFotosOP(){const n=FOP.fotos.length;
+ $('fop-grade').innerHTML=FOP.fotos.map((x,i)=>'<div class="fop-mini"><img src="'+x.url+'" alt="Foto '+(i+1)+'"><button type="button" aria-label="Tirar esta foto" title="Tirar esta foto" onclick="tirarFotoFOP('+i+')">✕</button></div>').join('');
+ $('fop-pergunta').textContent=FOP.preparando?'Preparando a foto…'
+  :n?(n===1?'1 foto pronta.':n+' fotos prontas.')+' Deseja tirar outra foto ou enviar para o PCP?'
+  :'Tire uma foto da peça ou escolha da galeria.';
+ $('fop-txt-cam').textContent=n?'Tirar outra foto':'Tirar foto';
+ $('fop-enviar').style.display=n?'':'none';$('fop-enviar').disabled=!!FOP.preparando;
+ $('fop-sem-foto').style.display=n?'none':'';}
+function passoTextoFotoOP(){if(FOP.preparando)return;
+ $('fop-passo-fotos').style.display='none';$('fop-passo-texto').style.display='';
+ $('fop-tiras').innerHTML=FOP.fotos.map(x=>'<img src="'+x.url+'" alt="">').join('');
+ $('fop-voltar').style.display='';$('fop-cancelar').style.display='none';$('fop-salvar').style.display='';
+ setTimeout(()=>{try{$('fop-texto').focus();}catch(e){}},80);}
+function voltarFotosOP(){if(FOP.enviando)return;
+ $('fop-passo-fotos').style.display='';$('fop-passo-texto').style.display='none';
+ $('fop-voltar').style.display='none';$('fop-cancelar').style.display='';$('fop-salvar').style.display='none';
+ pintarFotosOP();}
+async function salvarFotoOP(){if(FOP.enviando||!guard())return;
+ const id=FOP.opId,o=DB.producao.find(x=>x.id===id);if(!o)return;
+ const texto=$('fop-texto').value.trim();
+ if(!FOP.fotos.length&&!texto){toast('Escreva o que foi feito hoje neste item.','error');$('fop-texto').focus();return;}
+ FOP.enviando=true;$('fop-salvar').disabled=true;$('fop-voltar').disabled=true;
+ const subidas=[];const desfazer=()=>{if(subidas.length)supa.storage.from('orcamentos-anexos').remove(subidas.map(x=>x.path)).catch(()=>{});};
+ try{
+  for(let i=0;i<FOP.fotos.length;i++){
+   $('fop-progresso').textContent='Enviando foto '+(i+1)+' de '+FOP.fotos.length+'…';
+   const nome='foto-'+today()+'-'+(i+1)+'.jpg',path='producao/'+id+'/'+uid()+'-'+nome;
+   const {error:upErr}=await supa.storage.from('orcamentos-anexos').upload(path,FOP.fotos[i].blob,{contentType:'image/jpeg'});
+   if(upErr){desfazer();toast('Erro ao enviar a foto '+(i+1)+': '+upErr.message+'. Nada foi salvo; tente de novo.','error',8000);return;}
+   const {data:pub}=supa.storage.from('orcamentos-anexos').getPublicUrl(path);
+   subidas.push({path,nome,url:pub.publicUrl});}
+  $('fop-progresso').textContent='Salvando o registro…';
+  /* relê a lista do banco: outro aparelho pode ter registrado nesta OP depois que a tela foi carregada */
+  const {data:atual,error:lerErr}=await supa.from('producao').select('diario').eq('id',id).single();
+  if(lerErr){desfazer();toast('Erro ao salvar o registro: '+lerErr.message,'error',8000);return;}
+  const reg={id:uid(),dt:new Date().toISOString(),por:USER?USER.nome:'',etapa:semEmoji(ETAPAS[Number(o.etapa)||0]||''),texto,fotos:subidas};
+  const diario=(Array.isArray(atual&&atual.diario)?atual.diario:[]).concat([reg]);
+  const {error}=await supa.from('producao').update({diario}).eq('id',id);
+  if(error){desfazer();toast('Erro ao salvar o registro: '+error.message,'error',8000);return;}
+  o.diario=diario;
+  FOP.enviando=false;closeModal('modal-foto-op');limparFotosFOP();FOP.opId=null;
+  commit('editar','Produção',pecaDaOp(o,pedidoDaOp(o))+(o.num?' (OP-'+pad(o.num)+')':'')+' — registro do dia'+(subidas.length?' com '+subidas.length+' foto'+(subidas.length>1?'s':''):''));
+  toast('Registro salvo no PCP!','success');
+ }catch(e){desfazer();toast('Erro ao salvar o registro: '+(e&&e.message||e),'error',8000);}
+ finally{FOP.enviando=false;$('fop-salvar').disabled=false;$('fop-voltar').disabled=false;$('fop-progresso').textContent='';}}
+/* "26/11 14:32" */
+function dtCurtaReg(iso){const d=new Date(iso);if(isNaN(d))return '';return pad2Reg(d.getDate())+'/'+pad2Reg(d.getMonth()+1)+(d.getFullYear()!==new Date().getFullYear()?'/'+d.getFullYear():'')+' '+pad2Reg(d.getHours())+':'+pad2Reg(d.getMinutes());}
+const pad2Reg=n=>String(n).padStart(2,'0');
+/* os registros na ficha da OP, do mais novo para o mais antigo */
+function pintarDiarioOP(o){const box=$('op-diario-box');if(!box)return;
+ const regs=o&&COLUNA_DIARIO_OP?(o.diario||[]).slice().reverse():[];
+ if(!regs.length){box.innerHTML='';return;}
+ box.innerHTML='<div class="op-diario"><div class="op-diario-tit">Fotos e registros ('+regs.length+')</div>'
+  +regs.map(r=>'<div class="op-reg"><div class="op-reg-cab"><span class="mono">'+esc(dtCurtaReg(r.dt))+'</span>'+(r.por?'<span>· '+esc(r.por)+'</span>':'')+(r.etapa?'<span>· '+esc(r.etapa)+'</span>':'')
+   +(canEdit()?'<button type="button" title="Apagar este registro" aria-label="Apagar este registro" onclick="excluirRegistroOP(\''+o.id+'\',\''+esc(r.id)+'\')">🗑</button>':'')+'</div>'
+   +(r.texto?'<div class="op-reg-txt">'+esc(r.texto)+'</div>':'')
+   +((r.fotos||[]).length?'<div class="op-reg-fotos">'+r.fotos.filter(x=>/^https:\/\//.test(String(x.url||''))).map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener" title="Abrir a foto"><img src="'+esc(x.url)+'" alt="" loading="lazy"></a>').join('')+'</div>':'')
+   +'</div>').join('')+'</div>';}
+async function excluirRegistroOP(opId,regId){if(!guard())return;
+ const o=DB.producao.find(x=>x.id===opId);if(!o)return;
+ const r=(o.diario||[]).find(x=>x.id===regId);if(!r)return;
+ const nf=(r.fotos||[]).length;
+ if(!confirm('Apagar este registro'+(nf?' e '+(nf>1?'as '+nf+' fotos dele':'a foto dele'):'')+'? Não dá para desfazer.'))return;
+ const {data:atual,error:lerErr}=await supa.from('producao').select('diario').eq('id',opId).single();
+ if(lerErr){toast('Erro ao apagar: '+lerErr.message,'error');return;}
+ const diario=(Array.isArray(atual&&atual.diario)?atual.diario:[]).filter(x=>x.id!==regId);
+ const {error}=await supa.from('producao').update({diario}).eq('id',opId);
+ if(error){toast('Erro ao apagar: '+error.message,'error');return;}
+ if(nf)supa.storage.from('orcamentos-anexos').remove(r.fotos.map(x=>x.path).filter(Boolean)).catch(()=>{});
+ o.diario=diario;pintarDiarioOP(o);
+ commit('excluir','Produção','Registro do dia de '+dtCurtaReg(r.dt)+' — '+pecaDaOp(o,pedidoDaOp(o))+(o.num?' (OP-'+pad(o.num)+')':''));
+ toast('Registro apagado.','info');}
 async function carregarProducaoSupabase(){
  const {data,error}=await supa.from('producao').select('*').order('num',{ascending:false});
  if(error){erroDeCarga('produção',error);return;}
- DB.producao=(data||[]).map(opDeSupabase);saveDB();
+ DB.producao=(data||[]).map(opDeSupabase);saveDB();conferirColunaDiarioOP(data);
  if(CUR==='pcp')renderPCP();
  if(CUR==='calendario')renderCalendario();}
 /* ordem da fila: prazo mais apertado primeiro, e quem não tem prazo fica no fim.
@@ -11041,10 +11199,13 @@ function renderPCP(){const t=today();
    const sub=[cli==='—'?'':cli,ped?'V-'+pad(ped.num):'',o.num?'OP-'+pad(o.num):''].filter(Boolean).join(' · ');
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
    const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶<span class="pcp-btn-txt"> '+esc(ETAPAS[proximaEtapa(i)])+'</span></button>':'')+'</div>':'';
+   const nF=nFotosOP(o),ultF=ultimaFotoOP(o);
+   const fotoBtn='<button class="pcp-etapa-btn pcp-foto-btn" title="Foto e registro do dia" aria-label="Foto e registro do dia" onclick="event.stopPropagation();abrirFotoOP(\''+o.id+'\')">📷'+(nF?'<span class="pcp-foto-n">'+nF+'</span>':'')+'<span class="pcp-btn-txt"> Foto</span></button>';
    const respLinha=canEdit()
-    ?'<div class="card-resp" onclick="event.stopPropagation()">👤<select class="'+(o.resp?'':'vazio')+'" title="Quem é o responsável por esta ordem" onchange="definirRespOP(\''+o.id+'\',this.value,this)">'+opcoesResp(o.resp||'')+'</select></div>'
+    ?'<div class="card-resp" onclick="event.stopPropagation()">👤<select class="'+(o.resp?'':'vazio')+'" title="Quem é o responsável por esta ordem" onchange="definirRespOP(\''+o.id+'\',this.value,this)">'+opcoesResp(o.resp||'')+'</select>'+fotoBtn+'</div>'
     :(o.resp?'<div class="card-resp">👤 '+esc(o.resp)+'</div>':'');
-   return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')"><div class="kanban-card-title">'+esc(peca)+'</div>'+(sub?'<div class="kanban-card-sub">'+esc(sub)+'</div>':'')+respLinha+(o.criadoEm?'<div class="kanban-card-timer" data-criado="'+o.criadoEm+'">⏱ '+elapsedStr(o.criadoEm)+'</div>':'')+'<div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
+   const fotoCard=ultF&&/^https:\/\//.test(String(ultF.url||''))?'<img class="kanban-card-foto" src="'+esc(ultF.url)+'" alt="" loading="lazy">':'';
+   return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')">'+fotoCard+'<div class="kanban-card-title">'+esc(peca)+'</div>'+(sub?'<div class="kanban-card-sub">'+esc(sub)+'</div>':'')+respLinha+(o.criadoEm?'<div class="kanban-card-timer" data-criado="'+o.criadoEm+'">⏱ '+elapsedStr(o.criadoEm)+'</div>':'')+'<div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
   +(cards.length?'':'<div class="kanban-col-vazia">Nenhuma ordem nesta etapa</div>')
   +'</div>';}).join('');}
 /* nao existe cadastro de marceneiro: a lista sai de quem ja apareceu em ordens,
@@ -11098,6 +11259,7 @@ function renderPcpLista(ordens,t){
    ?'<div class="row-actions" style="opacity:1">'
     +(i>0?'<button class="btn btn-ghost btn-sm" title="Voltar etapa" onclick="moveOP(\''+o.id+'\',-1)">◀</button>':'')
     +(i<ETAPA_FINAL?'<button class="btn btn-ghost btn-sm" title="Avançar para '+esc(semEmoji(ETAPAS[proximaEtapa(i)]))+'" onclick="moveOP(\''+o.id+'\',1)">▶</button>':'')
+    +'<button class="btn btn-ghost btn-sm" title="Foto e registro do dia" onclick="abrirFotoOP(\''+o.id+'\')">📷</button>'
     +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
    :'';
   const aberta=PCP_OBS_ABERTAS.has(o.id);
@@ -11134,6 +11296,7 @@ function renderPcpListaCards(ordens,t){
    ?'<div class="pc-acoes">'
     +(i>0?'<button class="btn btn-ghost btn-sm" onclick="moveOP(\''+o.id+'\',-1)">◀</button>':'')
     +(i<ETAPA_FINAL?'<button class="btn btn-primary btn-sm" onclick="moveOP(\''+o.id+'\',1)">▶ '+esc(semEmoji(ETAPAS[proximaEtapa(i)]))+'</button>':'')
+    +'<button class="btn btn-ghost btn-sm" onclick="abrirFotoOP(\''+o.id+'\')">📷 Foto</button>'
     +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
    :'';
   return '<div class="pedido-card">'
@@ -11146,11 +11309,11 @@ function renderPcpListaCards(ordens,t){
    +((obs&&PCP_OBS_ABERTAS.has(o.id))?'<div style="font-size:12.5px;color:var(--text-muted);margin:6px 0 8px">Obs. '+esc(obs)+'</div>':'')
    +acoes+'</div>';}).join('');}
 function openOP(){preencherDatalistResp();$('op-id').value='';$('op-titulo').value='';fillSel('op-cli',DB.clientes,c=>c.nome,'','—');$('op-prazo').value=addDays(today(),21);$('op-resp').value='';encherSelectLista('op-prio',OP_PRIO,'Normal');$('op-etapa').value='0';$('op-obs').value='';
- $('op-btn-del').style.display='none';$('mop-title').textContent='Nova Ordem de Produção';openModal('modal-producao');}
+ $('op-btn-del').style.display='none';$('mop-title').textContent='Nova Ordem de Produção';pintarDiarioOP(null);openModal('modal-producao');}
 function editOP(id){if(!canEdit())return;const o=DB.producao.find(x=>x.id===id);if(!o)return;
  preencherDatalistResp();
  $('op-id').value=o.id;$('op-titulo').value=o.titulo;fillSel('op-cli',DB.clientes,c=>c.nome,o.cliId,'—');$('op-prazo').value=o.prazo||'';$('op-resp').value=o.resp||'';encherSelectLista('op-prio',OP_PRIO,o.prio||'Normal');$('op-etapa').value=String(o.etapa);$('op-obs').value=o.obs||'';
- $('op-btn-del').style.display='inline-flex';$('mop-title').textContent='Editar OP-'+pad(o.num||0);openModal('modal-producao');}
+ $('op-btn-del').style.display='inline-flex';$('mop-title').textContent='Editar OP-'+pad(o.num||0);pintarDiarioOP(o);openModal('modal-producao');}
 let ETAPA_ANTES_OP=null;   /* a etapa da OP antes do Salvar da janela (para saber se ela acabou de chegar em Entregue) */
 async function saveOP(){if(!guard())return;ETAPA_ANTES_OP=null;const titulo=$('op-titulo').value.trim();if(!titulo){toast('Informe a peça / projeto.','error');return;}
  const id=$('op-id').value;const o={titulo,cliId:$('op-cli').value,prazo:$('op-prazo').value,resp:$('op-resp').value.trim(),prio:$('op-prio').value,etapa:Number($('op-etapa').value),obs:$('op-obs').value.trim()};
@@ -11175,6 +11338,8 @@ async function delOPFromModal(){const id=$('op-id').value;if(!id)return;const o=
  if(!confirm('Excluir OP "'+o.titulo+'"?'))return;
  const {error}=await supa.from('producao').delete().eq('id',id);
  if(error){toast('Erro ao excluir no Supabase: '+error.message,'error');return;}
+ const fotosOP=(o.diario||[]).flatMap(r=>(r.fotos||[]).map(x=>x.path)).filter(Boolean);
+ if(fotosOP.length)supa.storage.from('orcamentos-anexos').remove(fotosOP).catch(()=>{});
  DB.producao=DB.producao.filter(x=>x.id!==id);closeModal('modal-producao');commit('excluir','Produção',o.titulo);syncSheets('pcp','delete',{id});toast('OP excluída.','info');}
 /* a OP chegou em "Entregue" no PCP (pedido do dono, 05/11): ela fica Concluída (com o fim de hoje) e o pedido dela
    vira Entregue, sem perguntar, com a data de hoje no "Entregue em" (a mesma marca que o Salvar do pedido carimba;
@@ -16769,7 +16934,10 @@ abaixo é o resumo em português.
    os registros antigos continuarem abrindo.
 6. producao (Ordens de Produção / PCP) — num sequencial, titulo, cli_id,
    prazo, resp (responsável), prio (prioridade), etapa (índice 0-6 do
-   kanban), status, obs, orc_id, fim (data de conclusão)
+   kanban), status, obs, orc_id, fim (data de conclusão), diario (desde
+   26/11/2026, jsonb: registros do dia [{id, dt ISO, por, etapa, texto,
+   fotos:[{path,nome,url}]}]; só o registro do dia e o apagar escrevem
+   nela, relendo a lista do banco antes; o Salvar da ficha não a envia)
 7. entregas — op_id, data, cli_id, peca, endereco, resp, status, obs
 8. ferramentas (Máquinas & Ferramentas) — nome, tipo, ult (última
    manutenção), intervalo (dias), obs
@@ -17285,7 +17453,16 @@ e não numera nada.
   visualização, escolhidos num seletor e gravados no aparelho: Kanban
   (quadro por etapa) e Lista (tabela única por prazo, com a etapa em
   coluna de status e a observação recolhível). O responsável por cada
-  ordem é escolhido direto no cartão ou na linha. O botão "Imprimir PCP"
+  ordem é escolhido direto no cartão ou na linha. Desde 26/11/2026 cada
+  ordem tem o botão 📷 (cartão, linha e cartão da Lista no celular): tirar
+  foto ou escolher da galeria (reduzidas a 1600px em JPEG, pasta
+  producao/<id>/ do bucket orcamentos-anexos), "tirar outra ou enviar
+  para o PCP" e por fim "O que foi feito hoje neste item?". O registro
+  (data, quem, etapa, texto e fotos) vai para producao.diario; o cartão
+  mostra a foto mais nova e quantas fotos a OP tem, e a ficha da OP
+  lista os registros, do mais novo ao mais antigo, com o 🗑 para apagar
+  um (as fotos saem do Storage). Sem a coluna, o 📷 avisa
+  (supabase/migracao-pcp-diario.sql). O botão "Imprimir PCP"
   gera a folha de produção em PDF, com quadrado de conferência e a
   observação de cada ordem.
   Retrabalho é desvio, não passo da fila: o ▶ de Acabamento vai direto
@@ -18221,7 +18398,7 @@ const TABELAS_RESTAURO=[
  {chave:'ferramentas',tabela:'ferramentas',rotulo:'Máquinas e ferramentas',conv:f=>ferramentaParaSupabase(f)},
  {chave:'orcamentos',tabela:'orcamentos',rotulo:'Orçamentos',conv:o=>orcParaSupabase(o)},
  {chave:'vendas',tabela:'vendas',rotulo:'Pedidos',conv:v=>vendaParaSupabase(v)},
- {chave:'producao',tabela:'producao',rotulo:'Ordens de produção',conv:o=>opParaSupabase(o)},
+ {chave:'producao',tabela:'producao',rotulo:'Ordens de produção',conv:o=>{const r=opParaSupabase(o);if(COLUNA_DIARIO_OP&&Array.isArray(o.diario)&&o.diario.length)r.diario=o.diario;return r;}},
  {chave:'entregas',tabela:'entregas',rotulo:'Entregas',conv:e=>entregaParaSupabase(e)},
  {chave:'compras',tabela:'compras',rotulo:'Ordens de compra',conv:c=>compraParaSupabase(c)},
  {chave:'financeiro',tabela:'financeiro',rotulo:'Financeiro',conv:f=>financeiroParaSupabase(f)},
@@ -18434,13 +18611,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-26.3';
+const APP_VERSAO='2026-11-27.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=358;
+const APP_ATUALIZACAO=359;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

@@ -272,6 +272,7 @@ create table if not exists public.producao (
   status      text,
   obs         text,
   fim         date,
+  diario      jsonb default '[]'::jsonb, -- registros do dia [{id, dt, por, etapa, texto, fotos:[{path,nome,url}]}]
   created_at  timestamptz default now()
 );
 

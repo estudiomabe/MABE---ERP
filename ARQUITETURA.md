@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 26/11/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 27/11/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -481,7 +481,10 @@ abaixo é o resumo em português.
    os registros antigos continuarem abrindo.
 6. producao (Ordens de Produção / PCP) — num sequencial, titulo, cli_id,
    prazo, resp (responsável), prio (prioridade), etapa (índice 0-6 do
-   kanban), status, obs, orc_id, fim (data de conclusão)
+   kanban), status, obs, orc_id, fim (data de conclusão), diario (desde
+   26/11/2026, jsonb: registros do dia [{id, dt ISO, por, etapa, texto,
+   fotos:[{path,nome,url}]}]; só o registro do dia e o apagar escrevem
+   nela, relendo a lista do banco antes; o Salvar da ficha não a envia)
 7. entregas — op_id, data, cli_id, peca, endereco, resp, status, obs
 8. ferramentas (Máquinas & Ferramentas) — nome, tipo, ult (última
    manutenção), intervalo (dias), obs
@@ -997,7 +1000,16 @@ e não numera nada.
   visualização, escolhidos num seletor e gravados no aparelho: Kanban
   (quadro por etapa) e Lista (tabela única por prazo, com a etapa em
   coluna de status e a observação recolhível). O responsável por cada
-  ordem é escolhido direto no cartão ou na linha. O botão "Imprimir PCP"
+  ordem é escolhido direto no cartão ou na linha. Desde 26/11/2026 cada
+  ordem tem o botão 📷 (cartão, linha e cartão da Lista no celular): tirar
+  foto ou escolher da galeria (reduzidas a 1600px em JPEG, pasta
+  producao/<id>/ do bucket orcamentos-anexos), "tirar outra ou enviar
+  para o PCP" e por fim "O que foi feito hoje neste item?". O registro
+  (data, quem, etapa, texto e fotos) vai para producao.diario; o cartão
+  mostra a foto mais nova e quantas fotos a OP tem, e a ficha da OP
+  lista os registros, do mais novo ao mais antigo, com o 🗑 para apagar
+  um (as fotos saem do Storage). Sem a coluna, o 📷 avisa
+  (supabase/migracao-pcp-diario.sql). O botão "Imprimir PCP"
   gera a folha de produção em PDF, com quadrado de conferência e a
   observação de cada ordem.
   Retrabalho é desvio, não passo da fila: o ▶ de Acabamento vai direto
@@ -1813,4 +1825,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 26/11/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 27/11/2026.
