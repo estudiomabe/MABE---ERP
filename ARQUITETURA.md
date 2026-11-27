@@ -1013,7 +1013,8 @@ e não numera nada.
   "+📷 Adicionar", ✏️ para editar o texto de um registro (grava na hora,
   marca "editado") e ✕ em cada foto para apagar só ela (o registro sem
   foto e sem texto sai junto). Tocar na foto do cartão abre a ficha já
-  nas fotos. Desde 27/11/2026 os mesmos registros
+  nas fotos. O "+📷" mostra, embaixo dos botões, as fotos que a peça já
+  tem, com os mesmos ✏️, ✕ e 🗑 (htmlDiarioOP serve aos dois lugares). Desde 27/11/2026 os mesmos registros
   aparecem também no quadro "📷 Anexos do PCP", logo abaixo dos anexos de
   referência do Pedido e do Orçamento (só para ver; juntam todas as ordens
   ligadas, com o nº da OP quando há mais de uma). Sem a coluna, o 📷 avisa
