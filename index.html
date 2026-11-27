@@ -367,7 +367,9 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 /* foto e registro do dia (PCP) */
 .kanban-card-foto { display:block;width:100%;height:110px;object-fit:cover;border-radius:7px;margin:0 0 9px;background:var(--surface3); }
 .pcp-foto-btn { background:var(--surface3);color:var(--text);flex-shrink:0;font-size:13px;padding:2px 7px;line-height:1.35; }
-.pcp-foto-n { font-family:var(--mono);font-size:10px;margin-left:2px;color:var(--text-muted); }
+.pcp-foto-n { font-family:var(--mono);font-size:11px;font-weight:700;margin-left:3px;color:var(--text); }
+.pcp-foto-mais { font-weight:800;margin-right:1px; }
+.kanban-card-foto { cursor:zoom-in; }
 .fop-sub { font-size:12px;color:var(--text-muted);margin-top:2px; }
 .fop-grade { display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-bottom:12px; }
 .fop-grade:empty { display:none; }
@@ -392,6 +394,16 @@ tr:last-child td { border-bottom:none; } tr:hover td { background:rgba(26,23,20,
 .op-reg:last-child { border-bottom:none; }
 .op-reg-cab { display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted); }
 .op-reg-cab button { margin-left:auto;background:none;border:none;cursor:pointer;font-size:13px;padding:4px 6px;color:var(--text-muted); }
+.op-reg-cab button + button { margin-left:0; }
+.op-diario-cab { display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px; }
+.op-diario-cab .op-diario-tit { margin-bottom:0; }
+.op-reg-foto { position:relative;display:block; }
+.op-reg-foto-x { position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;border:none;padding:0;cursor:pointer;background:rgba(26,23,20,.78);color:#fff;font-size:12px;line-height:24px;text-align:center; }
+@media (hover:none) { .op-reg-foto-x { width:30px;height:30px;line-height:30px;font-size:14px; } }
+.op-reg-ed { margin:6px 0; }
+.op-reg-ed textarea { width:100%;resize:vertical;font-family:var(--font);font-size:14px; }
+.op-reg-ed-acoes { display:flex;gap:8px;justify-content:flex-end;margin-top:6px; }
+.op-reg-editado { font-style:italic; }
 .op-reg-txt { font-size:13px;color:var(--text);white-space:pre-wrap;margin:4px 0 6px;overflow-wrap:anywhere; }
 .op-reg-fotos { display:flex;gap:6px;flex-wrap:wrap; }
 .op-reg-fotos img { width:72px;height:72px;object-fit:cover;border-radius:7px;display:block; }
@@ -11043,6 +11055,7 @@ async function salvarFotoOP(){if(FOP.enviando||!guard())return;
   const {error}=await supa.from('producao').update({diario}).eq('id',id);
   if(error){desfazer();toast('Erro ao salvar o registro: '+error.message,'error',8000);return;}
   o.diario=diario;
+  if($('modal-producao').classList.contains('open')&&$('op-id').value===id)pintarDiarioOP(o);
   FOP.enviando=false;closeModal('modal-foto-op');limparFotosFOP();FOP.opId=null;
   commit('editar','Produção',pecaDaOp(o,pedidoDaOp(o))+(o.num?' (OP-'+pad(o.num)+')':'')+' — registro do dia'+(subidas.length?' com '+subidas.length+' foto'+(subidas.length>1?'s':''):''));
   toast('Registro salvo no PCP!','success');
@@ -11064,7 +11077,7 @@ function pintarAnexosPCP(boxId,ops,semOrdem){const box=$(boxId);if(!box)return;
  const nf=regs.reduce((s,x)=>s+fotosOk(x.r).length,0);
  if(cont)cont.textContent=nf?' ('+nf+' foto'+(nf>1?'s':'')+')':'';
  if(!ops.length){lista.innerHTML='<div class="anx-pcp-vazio">'+esc(semOrdem)+'</div>';return;}
- if(!regs.length){lista.innerHTML='<div class="anx-pcp-vazio">Nenhuma foto ainda. No PCP, toque em 📷 Foto no cartão '+(ops.length>1?'de cada ordem':'da ordem')+'.</div>';return;}
+ if(!regs.length){lista.innerHTML='<div class="anx-pcp-vazio">Nenhuma foto ainda. No PCP, toque em +📷 no cartão '+(ops.length>1?'de cada ordem':'da ordem')+'.</div>';return;}
  const varias=ops.length>1;
  lista.innerHTML=regs.map(({r,op})=>'<div class="op-reg"><div class="op-reg-cab"><span class="mono">'+esc(dtCurtaReg(r.dt))+'</span>'+(r.por?'<span>· '+esc(r.por)+'</span>':'')+(r.etapa?'<span>· '+esc(r.etapa)+'</span>':'')+(varias&&op.num?'<span class="anx-pcp-op">· OP-'+pad(op.num)+'</span>':'')+'</div>'
   +(r.texto?'<div class="op-reg-txt">'+esc(r.texto)+'</div>':'')
@@ -11072,14 +11085,71 @@ function pintarAnexosPCP(boxId,ops,semOrdem){const box=$(boxId);if(!box)return;
   +'</div>').join('');}
 /* os registros na ficha da OP, do mais novo para o mais antigo */
 function pintarDiarioOP(o){const box=$('op-diario-box');if(!box)return;
- const regs=o&&COLUNA_DIARIO_OP?(o.diario||[]).slice().reverse():[];
- if(!regs.length){box.innerHTML='';return;}
- box.innerHTML='<div class="op-diario"><div class="op-diario-tit">Fotos e registros ('+regs.length+')</div>'
-  +regs.map(r=>'<div class="op-reg"><div class="op-reg-cab"><span class="mono">'+esc(dtCurtaReg(r.dt))+'</span>'+(r.por?'<span>· '+esc(r.por)+'</span>':'')+(r.etapa?'<span>· '+esc(r.etapa)+'</span>':'')
-   +(canEdit()?'<button type="button" title="Apagar este registro" aria-label="Apagar este registro" onclick="excluirRegistroOP(\''+o.id+'\',\''+esc(r.id)+'\')">🗑</button>':'')+'</div>'
-   +(r.texto?'<div class="op-reg-txt">'+esc(r.texto)+'</div>':'')
-   +((r.fotos||[]).length?'<div class="op-reg-fotos">'+r.fotos.filter(x=>/^https:\/\//.test(String(x.url||''))).map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener" title="Abrir a foto"><img src="'+esc(x.url)+'" alt="" loading="lazy"></a>').join('')+'</div>':'')
-   +'</div>').join('')+'</div>';}
+ if(!o||!COLUNA_DIARIO_OP){box.innerHTML='';return;}
+ const regs=(o.diario||[]).slice().reverse(),ed=canEdit(),oid=esc(o.id),nf=nFotosOP(o);
+ box.innerHTML='<div class="op-diario"><div class="op-diario-cab"><div class="op-diario-tit">Fotos e registros'+(nf?' ('+nf+' foto'+(nf>1?'s':'')+')':'')+'</div>'
+  +(ed?'<button type="button" class="btn btn-ghost btn-sm" title="Adicionar foto e registro do dia" onclick="abrirFotoOP(\''+oid+'\')"><span class="pcp-foto-mais">+</span>📷 Adicionar</button>':'')+'</div>'
+  +(regs.length?regs.map(r=>{const rid=esc(r.id);
+   return '<div class="op-reg" data-reg="'+rid+'"><div class="op-reg-cab"><span class="mono">'+esc(dtCurtaReg(r.dt))+'</span>'+(r.por?'<span>· '+esc(r.por)+'</span>':'')+(r.etapa?'<span>· '+esc(r.etapa)+'</span>':'')
+    +(r.editadoEm?'<span class="op-reg-editado" title="Texto editado em '+esc(dtCurtaReg(r.editadoEm))+(r.editadoPor?' por '+esc(r.editadoPor):'')+'">· editado</span>':'')
+    +(ed?'<button type="button" title="Editar o texto" aria-label="Editar o texto" onclick="editarTextoRegOP(\''+oid+'\',\''+rid+'\')">✏️</button><button type="button" title="Apagar este registro inteiro" aria-label="Apagar este registro inteiro" onclick="excluirRegistroOP(\''+oid+'\',\''+rid+'\')">🗑</button>':'')+'</div>'
+    +(r.texto?'<div class="op-reg-txt">'+esc(r.texto)+'</div>':'')
+    +((r.fotos||[]).length?'<div class="op-reg-fotos">'+r.fotos.map((x,i)=>/^https:\/\//.test(String(x&&x.url||''))?'<span class="op-reg-foto"><a href="'+esc(x.url)+'" target="_blank" rel="noopener" title="Abrir a foto"><img src="'+esc(x.url)+'" alt="" loading="lazy"></a>'
+      +(ed?'<button type="button" class="op-reg-foto-x" title="Apagar esta foto" aria-label="Apagar esta foto" onclick="excluirFotoRegOP(\''+oid+'\',\''+rid+'\','+i+')">✕</button>':'')+'</span>':'').join('')+'</div>':'')
+    +'</div>';}).join(''):'<div class="anx-pcp-vazio">Nenhuma foto ainda.</div>')+'</div>';}
+/* "+📷 3": o + diz que o botão acrescenta; o número é quantas fotos a ordem já tem (igual no computador e no celular) */
+function rotuloFotoOP(o){const n=nFotosOP(o);return '<span class="pcp-foto-mais">+</span>📷'+(n?'<span class="pcp-foto-n">'+n+'</span>':'');}
+function tituloFotoOP(o){const n=nFotosOP(o);return 'Adicionar foto e registro do dia'+(n?' ('+n+' foto'+(n>1?'s':'')+' nesta ordem)':'');}
+/* a foto do cartão abre a ficha da OP já rolada até as fotos */
+function verRegistrosOP(id){editOP(id);setTimeout(()=>{const b=$('op-diario-box');if(b&&$('modal-producao').classList.contains('open'))b.scrollIntoView({block:'start',behavior:'smooth'});},80);}
+/* ✏️: troca o texto do registro por uma caixa, ali mesmo; "Salvar texto" grava na hora (o Salvar da ficha não mexe no diário) */
+function editarTextoRegOP(opId,regId){if(!guard())return;
+ const o=DB.producao.find(x=>x.id===opId),r=o&&(o.diario||[]).find(x=>x.id===regId);if(!r)return;
+ const el=[...document.querySelectorAll('#op-diario-box .op-reg')].find(x=>x.dataset.reg===regId);if(!el||el.querySelector('.op-reg-ed'))return;
+ const ed=document.createElement('div');ed.className='op-reg-ed';
+ ed.innerHTML='<textarea class="form-control" rows="3" placeholder="O que foi feito hoje neste item?"></textarea><div class="op-reg-ed-acoes"><button type="button" class="btn btn-ghost btn-sm">Cancelar</button><button type="button" class="btn btn-primary btn-sm">Salvar texto</button></div>';
+ const ta=ed.querySelector('textarea'),[bCanc,bSalv]=ed.querySelectorAll('button');ta.value=r.texto||'';
+ bCanc.onclick=()=>pintarDiarioOP(o);bSalv.onclick=()=>salvarTextoRegOP(opId,regId,ta.value,bSalv);
+ const txt=el.querySelector('.op-reg-txt');if(txt)txt.replaceWith(ed);else el.querySelector('.op-reg-cab').after(ed);
+ ta.focus();}
+async function salvarTextoRegOP(opId,regId,texto,btn){if(!guard())return;
+ const o=DB.producao.find(x=>x.id===opId);if(!o)return;
+ texto=String(texto||'').trim();
+ const loc=(o.diario||[]).find(x=>x.id===regId);
+ if(!texto&&!(loc&&(loc.fotos||[]).length)){toast('Um registro sem foto precisa de texto. Para tirar o registro, use o 🗑.','error');return;}
+ if(btn)btn.disabled=true;
+ try{
+  /* relê do banco: outro aparelho pode ter registrado ou apagado nesta OP */
+  const {data:atual,error:lerErr}=await supa.from('producao').select('diario').eq('id',opId).single();
+  if(lerErr){toast('Erro ao salvar o texto: '+lerErr.message,'error');return;}
+  const diario=Array.isArray(atual&&atual.diario)?atual.diario:[],r=diario.find(x=>x.id===regId);
+  if(!r){o.diario=diario;pintarDiarioOP(o);toast('Este registro foi apagado em outro aparelho.','error');return;}
+  if(String(r.texto||'').trim()===texto){o.diario=diario;pintarDiarioOP(o);return;}
+  r.texto=texto;r.editadoEm=new Date().toISOString();r.editadoPor=USER?USER.nome:'';
+  const {error}=await supa.from('producao').update({diario}).eq('id',opId);
+  if(error){toast('Erro ao salvar o texto: '+error.message,'error');return;}
+  o.diario=diario;pintarDiarioOP(o);
+  commit('editar','Produção','Texto do registro de '+dtCurtaReg(r.dt)+' — '+pecaDaOp(o,pedidoDaOp(o))+(o.num?' (OP-'+pad(o.num)+')':''));
+  toast('Texto salvo.','success');
+ }finally{if(btn&&btn.isConnected)btn.disabled=false;}}
+/* ✕ numa foto: tira só ela. Se o registro ficar sem foto e sem texto, ele sai junto (não sobra registro vazio) */
+async function excluirFotoRegOP(opId,regId,i){if(!guard())return;
+ const o=DB.producao.find(x=>x.id===opId),loc=o&&(o.diario||[]).find(x=>x.id===regId),ft=loc&&(loc.fotos||[])[i];if(!ft)return;
+ const vaiJunto=(loc.fotos||[]).length===1&&!String(loc.texto||'').trim();
+ if(!confirm(vaiJunto?'Apagar esta foto? O registro não tem texto, então ele sai junto. Não dá para desfazer.':'Apagar esta foto? Não dá para desfazer.'))return;
+ const {data:atual,error:lerErr}=await supa.from('producao').select('diario').eq('id',opId).single();
+ if(lerErr){toast('Erro ao apagar a foto: '+lerErr.message,'error');return;}
+ let diario=Array.isArray(atual&&atual.diario)?atual.diario:[];
+ const r=diario.find(x=>x.id===regId),mesma=x=>!!x&&(ft.path?x.path===ft.path:x.url===ft.url);
+ if(!r||!(r.fotos||[]).some(mesma)){o.diario=diario;pintarDiarioOP(o);toast('Esta foto já tinha sido apagada.','info');return;}
+ r.fotos=r.fotos.filter(x=>!mesma(x));
+ if(!r.fotos.length&&!String(r.texto||'').trim())diario=diario.filter(x=>x.id!==regId);
+ const {error}=await supa.from('producao').update({diario}).eq('id',opId);
+ if(error){toast('Erro ao apagar a foto: '+error.message,'error');return;}
+ if(ft.path)supa.storage.from('orcamentos-anexos').remove([ft.path]).catch(()=>{});
+ o.diario=diario;pintarDiarioOP(o);
+ commit('excluir','Produção','Foto do registro de '+dtCurtaReg(r.dt)+' — '+pecaDaOp(o,pedidoDaOp(o))+(o.num?' (OP-'+pad(o.num)+')':''));
+ toast('Foto apagada.','info');}
 async function excluirRegistroOP(opId,regId){if(!guard())return;
  const o=DB.producao.find(x=>x.id===opId);if(!o)return;
  const r=(o.diario||[]).find(x=>x.id===regId);if(!r)return;
@@ -11231,11 +11301,11 @@ function renderPCP(){const t=today();
    const prioB=o.prio==='Urgente'?'<span class="badge badge-danger">Urgente</span>':o.prio==='Alta'?'<span class="badge badge-warning">Alta</span>':'';
    const mv=canEdit()?'<div style="display:flex;gap:4px">'+(i>0?'<button class="pcp-etapa-btn" style="background:var(--surface3)" onclick="event.stopPropagation();moveOP(\''+o.id+'\',-1)">◀</button>':'')+(i<ETAPA_FINAL?'<button class="pcp-etapa-btn" style="background:#1a1714;color:#c8a96e" onclick="event.stopPropagation();moveOP(\''+o.id+'\',1)">▶<span class="pcp-btn-txt"> '+esc(ETAPAS[proximaEtapa(i)])+'</span></button>':'')+'</div>':'';
    const nF=nFotosOP(o),ultF=ultimaFotoOP(o);
-   const fotoBtn='<button class="pcp-etapa-btn pcp-foto-btn" title="Foto e registro do dia" aria-label="Foto e registro do dia" onclick="event.stopPropagation();abrirFotoOP(\''+o.id+'\')">📷'+(nF?'<span class="pcp-foto-n">'+nF+'</span>':'')+'<span class="pcp-btn-txt"> Foto</span></button>';
+   const fotoBtn='<button class="pcp-etapa-btn pcp-foto-btn" title="'+tituloFotoOP(o)+'" aria-label="'+tituloFotoOP(o)+'" onclick="event.stopPropagation();abrirFotoOP(\''+o.id+'\')">'+rotuloFotoOP(o)+'</button>';
    const respLinha=canEdit()
     ?'<div class="card-resp" onclick="event.stopPropagation()">👤<select class="'+(o.resp?'':'vazio')+'" title="Quem é o responsável por esta ordem" onchange="definirRespOP(\''+o.id+'\',this.value,this)">'+opcoesResp(o.resp||'')+'</select>'+fotoBtn+'</div>'
     :(o.resp?'<div class="card-resp">👤 '+esc(o.resp)+'</div>':'');
-   const fotoCard=ultF&&/^https:\/\//.test(String(ultF.url||''))?'<img class="kanban-card-foto" src="'+esc(ultF.url)+'" alt="" loading="lazy">':'';
+   const fotoCard=ultF&&/^https:\/\//.test(String(ultF.url||''))?'<img class="kanban-card-foto" src="'+esc(ultF.url)+'" alt="" loading="lazy" title="Ver, apagar e editar as fotos" onclick="event.stopPropagation();verRegistrosOP(\''+o.id+'\')">':'';
    return '<div class="kanban-card" onclick="editOP(\''+o.id+'\')">'+fotoCard+'<div class="kanban-card-title">'+esc(peca)+'</div>'+(sub?'<div class="kanban-card-sub">'+esc(sub)+'</div>':'')+respLinha+(o.criadoEm?'<div class="kanban-card-timer" data-criado="'+o.criadoEm+'">⏱ '+elapsedStr(o.criadoEm)+'</div>':'')+'<div class="kanban-card-footer"><span class="kanban-card-prazo '+pcls+'">'+(o.prazo?(pcls==='vencido'?'⚠ ':'')+fmtD(o.prazo):'sem prazo')+'</span>'+(prioB||mv?prioB+mv:'')+'</div></div>';}).join('')
   +(cards.length?'':'<div class="kanban-col-vazia">Nenhuma ordem nesta etapa</div>')
   +'</div>';}).join('');}
@@ -11290,7 +11360,7 @@ function renderPcpLista(ordens,t){
    ?'<div class="row-actions" style="opacity:1">'
     +(i>0?'<button class="btn btn-ghost btn-sm" title="Voltar etapa" onclick="moveOP(\''+o.id+'\',-1)">◀</button>':'')
     +(i<ETAPA_FINAL?'<button class="btn btn-ghost btn-sm" title="Avançar para '+esc(semEmoji(ETAPAS[proximaEtapa(i)]))+'" onclick="moveOP(\''+o.id+'\',1)">▶</button>':'')
-    +'<button class="btn btn-ghost btn-sm" title="Foto e registro do dia" onclick="abrirFotoOP(\''+o.id+'\')">📷</button>'
+    +'<button class="btn btn-ghost btn-sm" title="'+tituloFotoOP(o)+'" onclick="abrirFotoOP(\''+o.id+'\')">'+rotuloFotoOP(o)+'</button>'
     +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
    :'';
   const aberta=PCP_OBS_ABERTAS.has(o.id);
@@ -11327,7 +11397,7 @@ function renderPcpListaCards(ordens,t){
    ?'<div class="pc-acoes">'
     +(i>0?'<button class="btn btn-ghost btn-sm" onclick="moveOP(\''+o.id+'\',-1)">◀</button>':'')
     +(i<ETAPA_FINAL?'<button class="btn btn-primary btn-sm" onclick="moveOP(\''+o.id+'\',1)">▶ '+esc(semEmoji(ETAPAS[proximaEtapa(i)]))+'</button>':'')
-    +'<button class="btn btn-ghost btn-sm" onclick="abrirFotoOP(\''+o.id+'\')">📷 Foto</button>'
+    +'<button class="btn btn-ghost btn-sm" title="'+tituloFotoOP(o)+'" onclick="abrirFotoOP(\''+o.id+'\')">'+rotuloFotoOP(o)+'</button>'
     +'<button class="btn btn-ghost btn-sm" onclick="editOP(\''+o.id+'\')">✏️</button></div>'
    :'';
   return '<div class="pedido-card">'
@@ -17492,7 +17562,12 @@ e não numera nada.
   (data, quem, etapa, texto e fotos) vai para producao.diario; o cartão
   mostra a foto mais nova e quantas fotos a OP tem, e a ficha da OP
   lista os registros, do mais novo ao mais antigo, com o 🗑 para apagar
-  um (as fotos saem do Storage). Desde 27/11/2026 os mesmos registros
+  um (as fotos saem do Storage). Desde 27/11/2026 o botão é "+📷 N" (N =
+  fotos da ordem, também no celular e na Lista); na ficha da OP há
+  "+📷 Adicionar", ✏️ para editar o texto de um registro (grava na hora,
+  marca "editado") e ✕ em cada foto para apagar só ela (o registro sem
+  foto e sem texto sai junto). Tocar na foto do cartão abre a ficha já
+  nas fotos. Desde 27/11/2026 os mesmos registros
   aparecem também no quadro "📷 Anexos do PCP", logo abaixo dos anexos de
   referência do Pedido e do Orçamento (só para ver; juntam todas as ordens
   ligadas, com o nº da OP quando há mais de uma). Sem a coluna, o 📷 avisa
@@ -18645,13 +18720,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-27.2';
+const APP_VERSAO='2026-11-27.3';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=360;
+const APP_ATUALIZACAO=361;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
