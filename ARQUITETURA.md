@@ -754,7 +754,8 @@ e não numera nada.
   "+ Nova Entrega" fica aqui.
 - Orçamentos — criação de orçamentos com múltiplos itens (sob medida,
   catálogo ou novo produto); status em caixa de seleção na própria lista
-  (Rascunho, Enviado, Em ajuste, Aprovado, Reprovado, Concluído);
+  (Rascunho, Enviado, Feito Follow-up 1x, Feito Follow-up 2x, Em ajuste,
+  Aprovado, Reprovado, Concluído);
   aprovação parcial de itens (checklist) que gera automaticamente um
   Pedido, contas a receber e uma Ordem de Produção — desde 11/11/2026 os
   itens não escolhidos ficam no orçamento marcados naoAprovado (etiqueta
@@ -1441,8 +1442,10 @@ unitário já com desconto.
 
 ## 9. Fluxo de aprovação de orçamento
 
-Status do orçamento (lista ORC_STATUS): Rascunho, Enviado, Em ajuste,
-Aprovado, Reprovado e Concluído. Quem pode editar troca o status direto
+Status do orçamento (lista ORC_STATUS): Rascunho, Enviado, Feito
+Follow-up 1x, Feito Follow-up 2x (desde 27/11/2026: a cobrança depois de
+enviar, em azul e roxo; contam como enviados), Em ajuste, Aprovado,
+Reprovado e Concluído. Quem pode editar troca o status direto
 na caixa da lista (statusOrcHtml / mudarStatusOrc). Aprovado e Reprovado
 não são só etiqueta: escolhidos na caixa, ela volta ao valor antigo e
 abre o fluxo próprio (a caixa de aprovação, ou a confirmação de
