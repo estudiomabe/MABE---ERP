@@ -1260,7 +1260,9 @@ e não numera nada.
     "Já está no Financeiro?" abre a lista dos lançamentos (mais perto de
     hoje primeiro, só os sem comprovante, busca por nome, pedido ou valor).
     Fechar sem salvar guarda o arquivo para a próxima abertura;
-    "Descartar" apaga. No iPhone não existe.
+    "Descartar" apaga. Cada compartilhamento é um
+    lote: vale só o mais novo, e um compartilhamento novo tira da fila o
+    que tinha sobrado sem salvar, com aviso. No iPhone não existe.
   - Trazer para o ERP: as linhas do extrato que ficaram desmarcadas na
     importação (guardadas com o saldo do banco) aparecem no bloco Saldo do
     banco; marcadas, entram como linha do banco igual à importação (mesma

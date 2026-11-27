@@ -15123,13 +15123,19 @@ async function lerCompartilhados(){if(!('caches' in window))return {itens:[],tex
  return {itens,textos};}
 async function apagarCompartilhados(chaves){try{const c=await caches.open(CACHE_COMPART);await Promise.all(chaves.map(k=>c.delete(k)));}catch(e){}}
 async function verificarCompartilhado(){
- if(/[?&]compartilhado=/.test(location.search)){try{history.replaceState(null,'',location.pathname+location.hash);}catch(e){}}
+ const chegouAgora=/[?&]compartilhado=/.test(location.search);
+ if(chegouAgora){try{history.replaceState(null,'',location.pathname+location.hash);}catch(e){}}
  const {itens,textos}=await lerCompartilhados();
  /* chegou só texto (o app mandou um link em vez do arquivo): avisa o que veio e não guarda */
  if(textos.length){toast('Chegou só um texto, sem arquivo: "'+textos.map(t=>t.texto).join(' ').slice(0,140)+'". No outro aplicativo, procure a opção de compartilhar o comprovante como PDF ou imagem.','info',12000);
   await apagarCompartilhados(textos.map(t=>t.chave));}
  if(!itens.length)return;
- COMPART.itens=itens;abrirLancCompart();}
+ /* o lote mais novo: os arquivos de um mesmo compartilhamento chegam com poucos milissegundos de diferença */
+ const hora=it=>{const m=String((it.chave&&it.chave.url)||it.chave||'').match(/__compartilhado\/(\d+)-/);return m?Number(m[1]):0;};
+ const ult=Math.max(...itens.map(hora)),doLote=itens.filter(it=>ult-hora(it)<=10000),velhos=itens.filter(it=>ult-hora(it)>10000);
+ if(velhos.length&&chegouAgora){await apagarCompartilhados(velhos.map(x=>x.chave));
+  toast((velhos.length>1?'Os comprovantes que tinham ficado sem salvar ('+velhos.map(x=>x.file.name).join(', ')+') foram deixados de lado.':'O comprovante que tinha ficado sem salvar ('+velhos[0].file.name+') foi deixado de lado.')+' Se ainda precisar, compartilhe de novo.','info',10000);}
+ COMPART.itens=doLote;abrirLancCompart();}
 const tamanhoArqTxt=n=>n>=1048576?fmtN(n/1048576,1)+' MB':Math.max(1,Math.round(n/1024))+' KB';
 /* os cartões dos arquivos recebidos (miniatura da imagem; PDF com o ícone) */
 function htmlArqsCompart(){
@@ -18162,7 +18168,9 @@ e não numera nada.
     "Já está no Financeiro?" abre a lista dos lançamentos (mais perto de
     hoje primeiro, só os sem comprovante, busca por nome, pedido ou valor).
     Fechar sem salvar guarda o arquivo para a próxima abertura;
-    "Descartar" apaga. No iPhone não existe.
+    "Descartar" apaga. Cada compartilhamento é um
+    lote: vale só o mais novo, e um compartilhamento novo tira da fila o
+    que tinha sobrado sem salvar, com aviso. No iPhone não existe.
   - Trazer para o ERP: as linhas do extrato que ficaram desmarcadas na
     importação (guardadas com o saldo do banco) aparecem no bloco Saldo do
     banco; marcadas, entram como linha do banco igual à importação (mesma
@@ -19093,13 +19101,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-27.9';
+const APP_VERSAO='2026-11-27.10';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=367;
+const APP_ATUALIZACAO=368;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);
