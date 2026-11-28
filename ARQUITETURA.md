@@ -57,6 +57,12 @@ e não em CDN externo: no celular a página ficava em branco esperando
 - jsPDF 2.5.1 + jspdf-autotable 3.8.2 (vendor/jspdf.umd.min.js e
   vendor/jspdf.plugin.autotable.min.js) — geração de PDFs (orçamentos,
   relatórios, backups).
+- Fontes da proposta (vendor/fontes/, Google Fonts, licença OFL): EB
+  Garamond normal, itálico e médio, e Josefin Sans fina e seminegrito.
+  carregarFontesPdf() busca os cinco .ttf no primeiro PDF de proposta e
+  guarda na memória; fontesPdfNoDoc(doc) registra no documento. Sem as
+  fontes, a proposta sai em Times/Helvetica com um aviso. Só a proposta
+  usa essas fontes; os outros PDFs seguem em Helvetica.
 - xlsx-js-style 1.2.0 (vendor/xlsx.bundle.js; fork do SheetJS com suporte
   a estilos de célula) — exportação do backup em Excel com a identidade
   visual do estúdio.
@@ -1546,9 +1552,12 @@ O que cada um tem de particular:
 - Proposta (montarPdfOrcamento; o arquivo sai como "Proposta-ORC-…"):
   antes de gerar, uma janela deixa marcar quais itens entram. A capa
   traz "Preparado para", o cliente e as datas do orçamento e da entrega.
-  Depois vêm a tabela de itens (#, item, qtd, unitário, subtotal), com a
-  descrição detalhada numa linha menor logo abaixo do item; a caixa do
-  TOTAL; as formas de pagamento (o % de PIX inicial vem da mesma
+  Desde 27/11/2026 o desenho é o "editorial com filetes", sem nada
+  pintado: título "Proposta" em itálico, a lista das peças numeradas em
+  romano (i, ii, iii) com a descrição embaixo do nome e o preço unitário
+  ("R$ x cada") embaixo do valor quando a quantidade passa de 1, o
+  INVESTIMENTO grande à direita com filete duplo; as condições de
+  pagamento (o % de PIX inicial vem da mesma
   configuração usada ao aprovar, e a chave PIX entra quando o CNPJ da
   empresa está cadastrado); a validade da proposta, só o prazo em dias
   (constante VALIDADE_PROPOSTA_DIAS); observações e assinaturas; e, no
@@ -1602,7 +1611,7 @@ desenhada com addImage(...,'SLOW') — assim o arquivo final fica na casa
 das dezenas de KB em vez de centenas. Não se deve redesenhar o logotipo
 com fonte do jsPDF: a fonte da marca é geométrica e o resultado não bate.
 Três cabeçalhos ainda montam a marca com um quadrado escuro e o texto
-"estúdio"/"mabe." em Helvetica: o da página 2 da proposta, o do
+"estúdio"/"mabe." em Helvetica (mesmo com as fontes novas da proposta): o da página 2 da proposta, o do
 relatório do dashboard e o do relatório gerencial.
 
 Duas armadilhas do jsPDF que o código contorna: as fontes são Latin-1, de

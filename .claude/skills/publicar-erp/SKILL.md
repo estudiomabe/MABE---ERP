@@ -168,7 +168,9 @@ Sem lista de arquivos, sem nome de função no texto principal.
   `href` executa código no navegador de quem clica.
 - **Número de dinheiro novo no painel entra também na regra
   `body.sem-valores`**, que esconde valores de quem não tem permissão.
-- **PDFs ficam em Helvetica.** Outras fontes já foram testadas e recusadas.
+- **PDFs ficam em Helvetica, menos a proposta.** A proposta usa EB Garamond +
+  Josefin Sans (vendor/fontes/), escolhidas pelo dono em 27/11/2026; nos
+  outros PDFs, outras fontes já foram testadas e recusadas.
 - **Nada de seletor de status escrito à mão.** Monte a partir das listas que já
   existem (`ORC_STATUS`, `SETORES_FIXOS`, `DB.config.mdoTipos`...): opção
   duplicada em dois lugares sempre acaba divergindo.
