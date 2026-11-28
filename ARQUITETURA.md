@@ -1,6 +1,6 @@
 # Arquitetura do ERP — Estúdio Mabe
 
-Documento técnico gerado automaticamente pelo próprio sistema em 27/11/2026.
+Documento técnico gerado automaticamente pelo próprio sistema em 28/11/2026.
 Descreve COMO este ERP foi projetado e construído — tecnologias, banco de dados,
 módulos e regras de negócio — para que o sistema possa ser recriado do zero,
 mesmo sem acesso ao código-fonte original.
@@ -1457,8 +1457,13 @@ enviar, em azul e roxo; contam como enviados), Em ajuste, Aprovado,
 Reprovado e Concluído. Quem pode editar troca o status direto
 na caixa da lista (statusOrcHtml / mudarStatusOrc). Aprovado e Reprovado
 não são só etiqueta: escolhidos na caixa, ela volta ao valor antigo e
-abre o fluxo próprio (a caixa de aprovação, ou a confirmação de
-reprovar). Sair de Aprovado pede confirmação e avisa que o pedido, os
+abre o fluxo próprio (a caixa de aprovação, ou a caixa de reprovar,
+que pergunta o motivo numa lista — MOTIVOS_REPROVACAO — com um campo de
+comentário embaixo (opcional; obrigatório com "Outro") e grava "Motivo —
+comentário" na coluna motivo_reprovacao; o motivo aparece embaixo
+do status na lista e no orçamento aberto, enquanto ele estiver
+Reprovado. Sem a coluna no banco, a caixa mostra o SQL e reprova sem
+motivo). Sair de Aprovado pede confirmação e avisa que o pedido, os
 lançamentos e a OP continuam existindo. Os botões Aprovar e Reprovar só
 aparecem com ao menos um item e enquanto o status não é Aprovado,
 Reprovado nem Concluído; Concluído é marcado à mão. Os selects de lista
@@ -1872,4 +1877,4 @@ são as partes mais complexas do sistema.
 
 
 ---
-Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 27/11/2026.
+Fim do documento. Gerado automaticamente pelo ERP Estúdio Mabe em 28/11/2026.

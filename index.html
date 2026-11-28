@@ -85,6 +85,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 .fila-aviso.erro { border-color:rgba(181,64,64,0.45);background:rgba(181,64,64,0.1);color:var(--danger); }
 /* Avisos com comando de banco (SQL): o comando é assunto do Administrador; a equipe lê só uma frase simples */
 body:not(.eh-admin) .so-admin, body.eh-admin .so-equipe { display:none !important; }
+.motivo-rep { font-size:11px;line-height:1.35;color:var(--text-muted);margin-top:4px;max-width:220px;overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden; }
 /* erro de gravação fica na tela até a pessoa fechar no ✕ */
 .toast-txt { flex:1;min-width:0;overflow-wrap:anywhere;word-break:break-word; }
 .toast-x { flex:none;width:30px;height:30px;margin:-6px -8px -6px 0;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:none;color:var(--text-muted);font-family:var(--font);font-size:15px;cursor:pointer; }
@@ -2226,6 +2228,18 @@ body.sem-valores .pa-valor, body.sem-valores .pa-pago { display:none !important;
 <div class="form-group"><label class="form-label">Status</label><select class="form-control" id="cli-status"><option>Ativo</option><option>Inativo</option><option>Bloqueado</option></select></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-clientes')">Cancelar</button><button class="btn btn-primary" onclick="saveCliente()">Salvar</button></div></div></div>
 <div class="modal-overlay" id="modal-imprimir-pedido"><div class="modal" style="max-width:520px"><div class="modal-header"><div class="modal-title" id="imp-titulo">🖨️ Imprimir pedido (PCP)</div><button class="modal-close" onclick="closeModal('modal-imprimir-pedido')">✕</button></div><div class="modal-body"><div id="imp-explicacao" style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px">O pedido sempre é impresso. Marque os anexos que devem sair junto.</div><div id="imp-anexos-lista" style="display:flex;flex-direction:column;gap:8px"></div><label style="display:flex;align-items:center;gap:9px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;cursor:pointer"><input type="checkbox" id="imp-sem-valores" style="width:17px;height:17px;flex-shrink:0">Ocultar valores nesta impressão<span style="font-size:11px;color:var(--text-muted)">— para mandar à oficina</span></label><div id="imp-aviso-pdf" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:12px">Os arquivos em PDF não entram na mesma folha: cada um abre numa aba própria para você mandar imprimir.</div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-imprimir-pedido')">Cancelar</button><button class="btn btn-primary" onclick="confirmarImpressaoPedido()">🖨️ Imprimir</button></div></div></div>
 <div class="modal-overlay" id="modal-produtos"><div class="modal"><div class="modal-header"><div class="modal-title" id="mp-title">Novo Produto</div><button class="modal-close" onclick="closeModal('modal-produtos')">✕</button></div><div class="modal-body"><input type="hidden" id="prod-id"><div class="form-grid"><div class="form-group"><label class="form-label">Nome *</label><input type="text" class="form-control" id="prod-nome"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Tipo *</label><select class="form-control" id="prod-tipo" onchange="toggleProdMateriaisVisibility()"><option value="Portfólio">Portfólio</option><option value="Insumo">Insumo</option></select></div><div class="form-group"><label class="form-label">Unidade</label><select class="form-control" id="prod-un"><option>un</option><option>kg</option><option>m</option><option>L</option><option>cx</option><option>par</option></select></div></div><div class="form-group"><label class="form-label">Categoria</label><input type="text" class="form-control" id="prod-cat"></div><div class="form-grid form-2"><div class="form-group" id="prod-preco-wrap"><label class="form-label" id="prod-preco-label">Preço Venda (R$)</label><input type="number" class="form-control" id="prod-preco" step="0.01" min="0"></div><div class="form-group" id="prod-custo-wrap"><label class="form-label" id="prod-custo-label">Custo (R$)</label><input type="number" class="form-control" id="prod-custo" step="0.01" min="0" oninput="atualizarCustoFinalProduto()"></div><div class="form-group" id="prod-frete-wrap"><label class="form-label">Frete (R$)</label><input type="number" class="form-control" id="prod-frete" step="0.01" min="0" placeholder="0,00" oninput="atualizarCustoFinalProduto()"></div></div><div id="prod-custo-final" style="display:none;font-size:11.5px;color:var(--text-muted);margin-top:-6px"></div><div class="form-grid form-2"><div class="form-group"><label class="form-label">Estoque Atual</label><input type="number" class="form-control" id="prod-est" min="0"></div><div class="form-group"><label class="form-label">Estoque Mínimo</label><input type="number" class="form-control" id="prod-min" min="0"></div></div><div class="form-group" id="prod-link-wrap"><label class="form-label">Link do material</label><input type="url" class="form-control" id="prod-link" placeholder="https://site-do-fornecedor.com/produto" inputmode="url" autocomplete="off"><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Página do produto no site do fornecedor — abre pelo 🔗 na lista</div></div><div class="form-group" id="prod-tempo-wrap"><label class="form-label">Tempo de Produção (dias)</label><input type="number" class="form-control" id="prod-tempo" step="0.5" min="0" placeholder="Ex: 5"></div><div class="form-group" id="prod-materiais-wrap"><label class="form-label">Materiais Necessários (para fabricar 1 unidade)</label><div id="prod-materiais-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div><div style="display:flex;gap:6px"><input type="text" class="form-control" id="prod-mat-busca" list="dl-materiais" placeholder="Buscar madeira/insumo..." style="flex:1"><input type="number" class="form-control" id="prod-mat-qty" placeholder="Qtd" value="1" min="0.001" step="0.001" style="width:80px"><button class="btn btn-ghost btn-sm" onclick="addMaterialProduto()">+ Adicionar</button></div></div></div></div><div class="modal-footer"><button class="btn btn-ghost" id="prod-btn-ficha" style="margin-right:auto;display:none" onclick="fichaDoProdutoAberto()">🧮 Ficha de preço</button><button class="btn btn-ghost" onclick="closeModal('modal-produtos')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-reprovar-orc"><div class="modal" style="max-width:460px">
+  <div class="modal-header"><div class="modal-title" id="rep-titulo">✗ Reprovar orçamento</div><button class="modal-close" onclick="closeModal('modal-reprovar-orc')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label" for="rep-motivo">Qual foi o motivo da reprovação?</label>
+      <select class="form-control" id="rep-motivo" onchange="trocarMotivoRep()"></select>
+    </div>
+    <div class="form-group" style="margin-top:14px"><label class="form-label" for="rep-outro" id="rep-outro-rot">Comentário (opcional)</label>
+      <textarea class="form-control" id="rep-outro" rows="3" maxlength="500" placeholder="Conte mais sobre o motivo: o que o cliente disse, valor do concorrente..."></textarea></div>
+    <div id="rep-sem-coluna" style="display:none;font-size:12px;line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:4px"><div class="so-admin">Para guardar o motivo, falta uma coluna no banco. Rode esta linha no SQL Editor do Supabase e recarregue o ERP:<div class="mono" style="margin-top:6px;font-size:11px;background:var(--surface);border-radius:6px;padding:7px 9px;user-select:all">alter table public.orcamentos add column if not exists motivo_reprovacao text;</div>Por enquanto o orçamento é reprovado sem o motivo.</div><div class="so-equipe">O motivo ainda não pode ser guardado — avise o administrador. O orçamento é reprovado mesmo assim.</div></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-reprovar-orc')">Cancelar</button><button class="btn btn-danger" onclick="confirmarReprovarOrc()">✗ Reprovar</button></div>
+</div></div>
 <div class="modal-overlay" id="modal-nfe-info"><div class="modal" style="max-width:520px">
   <div class="modal-header"><div class="modal-title">📋 Nota Fiscal Eletrônica</div><button class="modal-close" onclick="closeModal('modal-nfe-info')">✕</button></div>
   <div class="modal-body" style="font-size:13px;line-height:1.7;color:var(--text)">
@@ -4238,7 +4252,7 @@ const FUNCOES_DE_GRAVAR=[
  'saveOP','saveEntrega','saveFinanceiro','confirmarImportacaoOfx','confirmarImportNf','saveCompra','lancarCompra',
  'saveCliente','saveProduto','saveMadeira','saveFerramenta','saveFornecedor','saveServico','saveComissionado','saveUsuario',
  /* mudam o que já existe: repetir avança de novo (etapa, status, estoque) ou grava igual duas vezes */
- 'moveOP','advEntrega','baixaMadeira','manutFeita','receberCompra','rejeitarOrcamento','recFinalizar','doLogin',
+ 'moveOP','advEntrega','baixaMadeira','manutFeita','receberCompra','rejeitarOrcamento','confirmarReprovarOrc','recFinalizar','doLogin',
  'saveCFConfig','saveCondPagto','saveEmpresaInfo','saveFolhaPagamento','saveMdoTipos',
  /* Conferir com o banco: mesclar e separar gravam dois lançamentos; o "todos" roda um par por vez */
  'mesclarFin','separarFin','naoJuntarFin','mesclarTodosSemDuvida','ajustarSaldoOfx','restaurarOrfaoFin','ajustarSaldoBancoFin','desfazerAjusteSaldo',
@@ -6509,13 +6523,14 @@ const comOrigem=(r,x)=>{if(ORIGEM_NO_BANCO)r.origem=x.origem||null;return r;};
 function orcParaSupabase(o){const r={id:o.id,cli_id:o.cliId||null,data:o.data||null,validade:o.validade||null,status:o.status||null,obs:o.obs||null,itens:o.itens||[],anexos:o.anexos||[],custo:o.custo||0,preco:o.preco||0,lucro:o.lucro||0,op_id:o.opId||null,links:undefined,tipo:null,cf:null,mdo:null,materiais:null,imposto:0,markup:0,prod_id:null,qty:null,desc_pct:0};if(o.num!==undefined&&o.num!==null)r.num=o.num;
  if(COLUNA_LINKS)r.links=o.links||[];else delete r.links;
  if(COLUNA_LIXEIRA)r.lixeira=o.lixeira||[];
+ if(COLUNA_MOTIVO_REP)r.motivo_reprovacao=o.motivoRep||null;
  return comOrigem(r,o);}
-function orcDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,links:row.links||[],lixeira:row.lixeira||[],desc:row.descricao||''};}
+function orcDeSupabase(row){return{origem:row.origem||'',id:row.id,num:row.num,cliId:row.cli_id,data:row.data,validade:row.validade,status:row.status,obs:row.obs||'',itens:row.itens||[],anexos:row.anexos||[],custo:row.custo,preco:row.preco,lucro:row.lucro,opId:row.op_id,links:row.links||[],lixeira:row.lixeira||[],desc:row.descricao||'',motivoRep:row.motivo_reprovacao||''};}
 async function carregarOrcamentosSupabase(){
  const {data,error}=await supa.from('orcamentos').select('*').order('num',{ascending:false});
  if(error){erroDeCarga('orçamentos',error);return;}
  DB.orcamentos=(data||[]).map(orcDeSupabase);saveDB();
- conferirColunaLinks();conferirColunaLixeira();
+ conferirColunaLinks();conferirColunaLixeira();conferirColunaMotivoRep();
  if(CUR==='orcamentos'&&$('orc-lista-view').style.display!=='none')renderOrcamentos();}
 function itensTodosOrc(o){return (o.itens&&o.itens.length)?o.itens:(o.desc?[{id:'legacy',tipo:o.tipo||'sob_medida',desc:o.desc,qty:o.qty||1,preco:o.preco||0,custo:o.custo||0,lucro:o.lucro||0}]:[]);}
 /* só os itens que valem (fora os "Não aprovado" de uma aprovação parcial): é o que vai para o pedido, o PDF e as contas */
@@ -6735,7 +6750,7 @@ function renderOrcamentos(){if(!orcEditandoItem())orcShow('lista');syncPerBar('o
   const chevron=itens.length?'<button class="btn btn-ghost btn-sm" style="padding:3px 7px;margin-right:4px" title="'+(colapsado?'Expandir itens':'Recolher itens')+'" onclick="event.stopPropagation();toggleItensOrc(\''+o.id+'\')">'+(colapsado?'▸':'▾')+'</button>':'<span style="display:inline-block;width:29px"></span>';
   const linhaHeader='<tr style="cursor:pointer;background:var(--surface2);border-left:3px solid '+(stB==='badge-success'?'var(--success)':stB==='badge-danger'?'var(--danger)':stB==='badge-info'?'var(--primary)':'transparent')+'" onclick="if(event.target.closest(\'button,select,label,a,.status-drop\'))return;abrirDetalheOrc(\''+o.id+'\')">'
    +'<td class="mono" style="white-space:nowrap;font-weight:700;color:var(--text)">'+chevron+'ORC-'+pad(o.num)+'</td>'
-   +'<td onclick="event.stopPropagation()">'+statusOrcHtml(o)+'</td>'
+   +'<td onclick="event.stopPropagation()">'+statusOrcHtml(o)+motivoRepHtml(o)+'</td>'
    +'<td class="mono" style="font-weight:600;color:var(--text)">'+fmtD(o.data)+'</td>'
    +'<td><strong style="color:var(--text)">'+esc(cliName(o.cliId))+'</strong></td>'
    +'<td class="mono" style="font-weight:600;color:var(--text)">'+fmtD(o.validade)+'</td>'
@@ -6790,6 +6805,7 @@ function renderOrcamentosCards(lista){
    +'<div class="pc-cliente">'+esc(cliName(o.cliId))+'</div>'
    +'<div class="pc-valor"><span class="pc-total">'+fmt(o.preco)+'</span><span class="oc-lucro">lucro '+fmt(o.lucro)+'</span></div>'
    +'<div class="pc-status">'+statusOrcHtml(o)+'<span class="oc-validade">entrega <strong>'+fmtD(o.validade)+'</strong></span></div>'
+   +motivoRepHtml(o)
    +btnItens+listaItens+decidir
    +(acoes?'<div class="pc-acoes">'+acoes+'</div>':'')
    +'</div>';}).join('');}
@@ -6937,7 +6953,7 @@ function renderOrcDetalhe(){const o=DB.orcamentos.find(x=>x.id===ORC_ATUAL_ID);i
    :'<span class="badge badge-success">✓ Aprovado</span>')+'</div>';
  $('orcd-title').textContent='Orçamento ORC-'+pad(o.num);
  $('orcd-badge').innerHTML=statusOrcHtml(o);
- $('orcd-info').innerHTML='<strong>Cliente:</strong> '+esc(cliName(o.cliId))+(o.origem?' · <strong>Origem:</strong> '+esc(o.origem):'')+'<br><strong>Data:</strong> '+fmtD(o.data)+' · <strong>Entrega:</strong> '+fmtD(o.validade)+textoPrazoOrc(o)+(o.obs?'<br><strong>Observações:</strong> '+esc(o.obs).replace(/\n/g,'<br>'):'');
+ $('orcd-info').innerHTML='<strong>Cliente:</strong> '+esc(cliName(o.cliId))+(o.origem?' · <strong>Origem:</strong> '+esc(o.origem):'')+'<br><strong>Data:</strong> '+fmtD(o.data)+' · <strong>Entrega:</strong> '+fmtD(o.validade)+textoPrazoOrc(o)+(o.status==='Reprovado'&&o.motivoRep?'<br><strong>Motivo da reprovação:</strong> '+esc(o.motivoRep):'')+(o.obs?'<br><strong>Observações:</strong> '+esc(o.obs).replace(/\n/g,'<br>'):'');
  const podeDecidir=canEdit()&&itens.length>0&&o.status!=='Aprovado'&&o.status!=='Reprovado'&&o.status!=='Concluído';
  const aprovarBtn=podeDecidir?'<button class="btn btn-primary btn-sm" onclick="abrirAprovarOrc(\''+o.id+'\')">✔ Aprovar</button>':'';
  const reprovarBtn=podeDecidir?'<button class="btn btn-danger btn-sm" onclick="rejeitarOrcamento(\''+o.id+'\')">✗ Reprovar</button>':'';
@@ -10413,13 +10429,48 @@ async function confirmarAprovarOrc(decisoes){const id=$('aprv-orc-id').value;con
  commit('editar','Orçamentos','Aprovado ORC-'+pad(o.num)+' ('+pagLabel+') → V-'+pad(novaVenda.num)+' + '+contas+' conta(s) a receber + OP em Planejamento'+(itensNaoAprovados?' · '+itensNaoAprovados+' item(ns) não aprovado(s) removido(s) do orçamento':''));
  if(!res||res.ok)toast(itensNaoAprovados?'Orçamento aprovado parcialmente! Pedido gerado com os itens aprovados. 🎉':semConferir?'Orçamento aprovado! Pedido e ordem de produção criados; as contas a receber entram no Financeiro em seguida. 🎉':'Orçamento aprovado! Pedido, contas a receber e ordem de produção criados. 🎉','success');
  if(veioDaDetalhe){orcShow('detalhe');renderOrcDetalhe();}}
+/* ================= MOTIVO DA REPROVAÇÃO =================
+   Reprovar abre uma caixa com a pergunta, a lista dos motivos mais comuns e, embaixo, um campo para
+   comentar (opcional; com "Outro" ele é obrigatório, porque passa a ser o próprio motivo). Fica tudo
+   num texto só, "Motivo — comentário", na coluna motivo_reprovacao do orçamento: aparece no orçamento
+   aberto e embaixo do status na lista (cortado em 3 linhas, inteiro ao passar o mouse).
+   Sem a coluna no banco, a caixa avisa e reprova sem guardar o motivo. */
+const MOTIVOS_REPROVACAO=['Preço acima do esperado','Fechou com outro fornecedor','Prazo de entrega longo','Projeto adiado ou cancelado','Cliente parou de responder','Mudou o projeto','Outro'];
+let COLUNA_MOTIVO_REP=false,ORC_REPROVAR_ID=null;
+async function conferirColunaMotivoRep(){
+ try{const {error}=await supa.from('orcamentos').select('motivo_reprovacao').limit(1);COLUNA_MOTIVO_REP=!error;}
+ catch(e){COLUNA_MOTIVO_REP=false;}}
+/* o motivo só aparece enquanto o orçamento está reprovado */
+function motivoRepHtml(o){return o.status==='Reprovado'&&o.motivoRep?'<div class="motivo-rep" title="'+esc(o.motivoRep)+'">Motivo: '+esc(o.motivoRep)+'</div>':'';}
 async function rejeitarOrcamento(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
+ ORC_REPROVAR_ID=id;
+ $('rep-titulo').textContent='✗ Reprovar ORC-'+pad(o.num);
+ $('rep-motivo').innerHTML=opcoesLista(MOTIVOS_REPROVACAO,'','— Escolha o motivo —');
+ $('rep-outro').value='';trocarMotivoRep();
+ $('rep-motivo').disabled=$('rep-outro').disabled=!COLUNA_MOTIVO_REP;
+ $('rep-sem-coluna').style.display=COLUNA_MOTIVO_REP?'none':'block';
+ openModal('modal-reprovar-orc');}
+/* com "Outro", o comentário vira o motivo: o rótulo e o texto de exemplo dizem isso */
+function trocarMotivoRep(){const outro=$('rep-motivo').value==='Outro';
+ $('rep-outro-rot').textContent=outro?'Qual foi o motivo?':'Comentário (opcional)';
+ $('rep-outro').placeholder=outro?'Escreva o motivo':'Conte mais sobre o motivo: o que o cliente disse, valor do concorrente...';
+ if(outro)$('rep-outro').focus();}
+async function confirmarReprovarOrc(){
+ const o=DB.orcamentos.find(x=>x.id===ORC_REPROVAR_ID);if(!o){closeModal('modal-reprovar-orc');return;}
+ if(!guard())return;
+ let motivo='';
+ if(COLUNA_MOTIVO_REP){const sel=$('rep-motivo').value;
+  if(!sel){toast('Escolha o motivo da reprovação.','error');$('rep-motivo').focus();return;}
+  const t=$('rep-outro').value.trim().replace(/s+/g,' ');
+  if(sel==='Outro'&&!t){toast('Escreva o motivo da reprovação.','error');$('rep-outro').focus();return;}
+  motivo=sel+(t?' — '+t:'');}
  const veioDaDetalhe=$('orc-detalhe-view').style.display!=='none';
- if(!confirm('Marcar orçamento ORC-'+pad(o.num)+' como reprovado?'))return;
- o.status='Reprovado';
- const {error}=await supa.from('orcamentos').update({status:'Reprovado'}).eq('id',id);
+ const mud={status:'Reprovado'};if(COLUNA_MOTIVO_REP)mud.motivo_reprovacao=motivo;
+ const {error}=await supa.from('orcamentos').update(mud).eq('id',o.id);
  if(error){toast('Erro ao atualizar no Supabase: '+error.message,'error');return;}
- commit('editar','Orçamentos','Reprovado ORC-'+pad(o.num));syncSheets('orcamentos','upsert',o);
+ o.status='Reprovado';if(COLUNA_MOTIVO_REP)o.motivoRep=motivo;
+ closeModal('modal-reprovar-orc');
+ commit('editar','Orçamentos','Reprovado ORC-'+pad(o.num)+(motivo?' — motivo: '+motivo:''));syncSheets('orcamentos','upsert',o);
  toast('Orçamento marcado como reprovado.','info');
  if(veioDaDetalhe){orcShow('detalhe');renderOrcDetalhe();}}
 async function orcParaProducao(id){if(!guard())return;const o=DB.orcamentos.find(x=>x.id===id);if(!o)return;
@@ -18387,8 +18438,13 @@ enviar, em azul e roxo; contam como enviados), Em ajuste, Aprovado,
 Reprovado e Concluído. Quem pode editar troca o status direto
 na caixa da lista (statusOrcHtml / mudarStatusOrc). Aprovado e Reprovado
 não são só etiqueta: escolhidos na caixa, ela volta ao valor antigo e
-abre o fluxo próprio (a caixa de aprovação, ou a confirmação de
-reprovar). Sair de Aprovado pede confirmação e avisa que o pedido, os
+abre o fluxo próprio (a caixa de aprovação, ou a caixa de reprovar,
+que pergunta o motivo numa lista — MOTIVOS_REPROVACAO — com um campo de
+comentário embaixo (opcional; obrigatório com "Outro") e grava "Motivo —
+comentário" na coluna motivo_reprovacao; o motivo aparece embaixo
+do status na lista e no orçamento aberto, enquanto ele estiver
+Reprovado. Sem a coluna no banco, a caixa mostra o SQL e reprova sem
+motivo). Sair de Aprovado pede confirmação e avisa que o pedido, os
 lançamentos e a OP continuam existindo. Os botões Aprovar e Reprovar só
 aparecem com ao menos um item e enquanto o status não é Aprovado,
 Reprovado nem Concluído; Concluído é marcado à mão. Os selects de lista
@@ -19135,13 +19191,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-27.12';
+const APP_VERSAO='2026-11-28.1';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=370;
+const APP_ATUALIZACAO=371;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

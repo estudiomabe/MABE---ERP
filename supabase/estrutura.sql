@@ -190,6 +190,7 @@ create table if not exists public.orcamentos (
   preco       numeric default 0,
   lucro       numeric default 0,
   op_id       text,
+  motivo_reprovacao text,                -- por que reprovou: motivo da lista + " — comentário"
   -- legado (orçamento de item único)
   tipo        text,
   descricao   text,
