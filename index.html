@@ -5873,8 +5873,8 @@ async function duplicarOrcamento(id){
  toast('Orçamento ORC-'+pad(novo.num)+' criado a partir de ORC-'+pad(o.num)+'.','success',6000);}
 
 function abrirInfoNotaFiscal(id){openModal('modal-nfe-info');}
-/* Recibo com a mesma estrutura e o mesmo espaçamento do PDF do orçamento: cabeçalho com logo e contato,
-   título + número, régua dourada, dados do pedido, tabela, total e assinaturas, rodapé numerado. */
+/* Pedido e recibo no mesmo desenho da proposta: cabeçalho com a marca e o contato, título em itálico
+   + número, filete dourado, dados do pedido, peças numeradas, total e assinaturas, rodapé numerado. */
 /* Imprime o recibo do pedido aberto — o mesmo PDF do botão 🧾 da lista.
    Pedido novo ainda não tem número: o botão só aparece depois de salvar. */
 /* Com anexos no pedido, pergunta antes o que sai junto: as imagens entram como
@@ -5922,6 +5922,7 @@ async function confirmarImpressaoPedido(){
  executarImpressaoPedido(v,imagens,semValores);}
 async function executarImpressaoPedido(v,imagens,semValores){
  if(!await libPronta('jspdf'))return;
+ await carregarFontesPdf();
  let refs=[];
  if(imagens&&imagens.length){
   toast('Preparando '+imagens.length+' imagem(ns)...','info');
@@ -5942,156 +5943,163 @@ function atualizarBotaoImprimirPedido(){
  ['vnd-btn-imprimir','vnd-btn-recibo'].forEach(id=>{const b=$(id);if(b)b.style.display=mostra;});}
 async function gerarReciboVenda(id){if(!guardValores())return;const v=DB.vendas.find(x=>x.id===id);if(!v)return;
  if(!await libPronta('jspdf'))return;
+ await carregarFontesPdf();
  const doc=montarPdfRecibo(v);
  const nomeArquivoCli=cliName(v.cliId).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/(^-|-$)/g,'');
  doc.save('Recibo-V-'+pad(v.num)+'-'+nomeArquivoCli+'.pdf');
  toast('Recibo em PDF gerado! Confira sua pasta de downloads.','success');}
 /* mesma montagem usada pela pré-visualização em Documentos */
 /* modo 'pedido' = a folha do pedido (o que foi combinado); modo 'recibo' = o comprovante.
-   Mesma diagramação: muda o título, o rótulo do número e o bloco de pagamento. */
-/* Capa da folha do pedido: a marca no centro, o número e para quem — a mesma
-   linguagem da capa do orçamento, sobre o creme do estúdio. */
-function capaPedido(doc,v,cores,ehPedido){
- const {DARK,ACCENT,MUTED}=cores;const CX=105;
- const centralizar=(txt,yy,esp)=>doc.text(txt,CX-esp*(txt.length-1)/2,yy,{align:'center',charSpace:esp});
+   Mesmo desenho da proposta ("editorial com filetes", EB Garamond + Josefin Sans): muda o título,
+   o rótulo do número e o bloco de pagamento. */
+/* Capa: a marca no centro, o nome do documento em itálico, o número e para quem — a mesma
+   linguagem da capa da proposta, sobre o creme do estúdio. */
+function capaPedido(doc,v,cores,ehPedido,F){
+ const {DARK,ACCENT,MUTED}=cores;F=F||{serif:'times',sans:'helvetica'};const CX=105;
+ /* o jsPDF não conta o espaçamento entre letras ao centralizar: a conta é feita aqui */
+ const centralizar=(txt,yy,esp)=>doc.text(txt,CX-(doc.getTextWidth(txt)+esp*(txt.length-1))/2,yy,{charSpace:esp});
  const largura=86,lado=largura/MARCA_PROP,topo=80;
  doc.addImage(MARCA_PNG,'PNG',CX-largura/2,topo,largura,lado,'marca','SLOW');
- doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(CX-20,topo+lado+13,CX+20,topo+lado+13);
- let y=topo+lado+33;
- doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...DARK);
- centralizar(ehPedido?'PEDIDO':'RECIBO',y,1.2);
- y+=9;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...MUTED);
- doc.text((ehPedido?'Nº V-':'Pedido Nº V-')+pad(v.num),CX,y,{align:'center'});
- y+=18;doc.setFontSize(7.5);doc.setTextColor(...MUTED);
- centralizar('CLIENTE',y,0.5);
- y+=9;doc.setFontSize(15);doc.setTextColor(...DARK);
- doc.splitTextToSize(cliName(v.cliId),150).forEach(l=>{doc.text(l,CX,y,{align:'center'});y+=7;});
+ doc.setDrawColor(...ACCENT);doc.setLineWidth(0.3);doc.line(CX-20,topo+lado+13,CX+20,topo+lado+13);
+ let y=topo+lado+35;
+ doc.setFont(F.serif,'italic');doc.setFontSize(34);doc.setTextColor(...DARK);
+ centralizar(ehPedido?'Pedido':'Recibo',y,0);
+ y+=9;doc.setFont(F.sans,'bold');doc.setFontSize(7);doc.setTextColor(...MUTED);
+ centralizar((ehPedido?'Nº V-':'PEDIDO Nº V-')+pad(v.num),y,0.9);
+ y+=17;centralizar('CLIENTE',y,0.9);
+ y+=11;doc.setFont(F.serif,'normal');doc.setFontSize(22);doc.setTextColor(...DARK);
+ doc.splitTextToSize(cliName(v.cliId),150).forEach(l=>{centralizar(l,y,0);y+=9;});
  const entrega=lerMarcaObs(v.obs,'Entrega combinada');
  const datas=[v.data?'Pedido '+fmtD(v.data):'',entrega?'Entrega '+fmtD(entrega):''].filter(Boolean).join('     ·     ');
- if(datas){y+=5;doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text(datas,CX,y,{align:'center'});}}
+ if(datas){y+=3;doc.setFont(F.sans,'normal');doc.setFontSize(9);doc.setTextColor(...MUTED);centralizar(datas,y,0.25);}}
 function montarPdfRecibo(v,refs,modo,semValores){
  const ehPedido=modo==='pedido';
- /* sem valores: a folha vai para a oficina sem preço nenhum — some o unitário,
-    o subtotal, a caixa do total e as condições de pagamento */
+ /* sem valores: a folha vai para a oficina sem preço nenhum — some a coluna de valor,
+    o total e o bloco de pagamento */
  const comValores=!semValores;
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF();
- const DARK=[26,23,20],ACCENT=[200,169,110],MUTED=[122,111,98],CREAM=[245,240,232],ZEBRA=[250,247,242],WHITE=[255,255,255];
+ const F=fontesPdfNoDoc(doc);
+ const DARK=[26,23,20],ACCENT=[200,169,110],OURO_ESC=[168,137,79],MUTED=[125,114,100],TEXTO2=[88,80,70],FILETE=[221,210,191],DESCR=[108,98,86],ASSIN=[185,168,136],CREAM=[245,240,232];
  const emp=DB.config.empresa||{};
- const M=18,R=192,RODAPE_Y=280;
+ const M=18,R=192,RODAPE_Y=280,LIMITE=RODAPE_Y-8;
+ const numero=(ehPedido?'Nº V-':'PEDIDO Nº V-')+pad(v.num);
  const fundo=()=>{doc.setFillColor(...CREAM);doc.rect(0,0,210,297,'F');};
  const novaPagina=()=>{doc.addPage();fundo();return 22;};
+ const serif=(st,tam,cor)=>{doc.setFont(F.serif,st||'normal');doc.setFontSize(tam);doc.setTextColor(...(cor||DARK));};
+ const sans=(st,tam,cor)=>{doc.setFont(F.sans,st||'normal');doc.setFontSize(tam);doc.setTextColor(...(cor||DARK));};
+ /* rótulo espaçado: o jsPDF não conta o charSpace ao alinhar, então a conta é feita aqui */
+ const esp=(t,x,yy,al,cs)=>{t=String(t);cs=cs==null?0.55:cs;const w=doc.getTextWidth(t)+cs*(t.length-1);
+  doc.text(t,al==='right'?x-w:al==='center'?x-w/2:x,yy,{charSpace:cs});};
+ const rot=(t,x,yy,al,cor)=>{sans('bold',6.8,cor||MUTED);esp(t,x,yy,al);};
+ const filete=(yy,x1,x2,cor,lw)=>{doc.setDrawColor(...(cor||ACCENT));doc.setLineWidth(lw||0.25);doc.line(x1==null?M:x1,yy,x2==null?R:x2,yy);};
+ const romano=n=>{let r='';[[1000,'m'],[900,'cm'],[500,'d'],[400,'cd'],[100,'c'],[90,'xc'],[50,'l'],[40,'xl'],[10,'x'],[9,'ix'],[5,'v'],[4,'iv'],[1,'i']]
+  .forEach(([v,s])=>{while(n>=v){r+=s;n-=v;}});return r;};
  fundo();
  /* os dois documentos abrem com capa */
- capaPedido(doc,v,{DARK,ACCENT,MUTED},ehPedido);novaPagina();
+ capaPedido(doc,v,{DARK,ACCENT,MUTED},ehPedido,F);novaPagina();
 
  // Marca: o arquivo do estúdio, nas proporções certas
- const logoY=17,larguraMarca=42,alturaMarca=larguraMarca/MARCA_PROP,ico=alturaMarca;
+ const logoY=17,larguraMarca=42,alturaMarca=larguraMarca/MARCA_PROP;
  doc.addImage(MARCA_PNG,'PNG',M,logoY,larguraMarca,alturaMarca,'marca','SLOW');
- doc.setFont('helvetica','normal');doc.setFontSize(6.8);doc.setTextColor(...MUTED);
- doc.text('MARCENARIA  ·  MADEIRA MACIÇA',M,logoY+alturaMarca+4.6,{charSpace:0.3});
+ sans('bold',6,MUTED);esp('MARCENARIA  ·  MADEIRA MACIÇA',M,logoY+alturaMarca+5,'',0.5);
 
  // Contato do estúdio à direita
  let cy=logoY+2.6;
- doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...DARK);doc.text('ESTÚDIO MABE',R,cy,{align:'right'});cy+=5;
- doc.setFont('helvetica','normal');doc.setFontSize(7.8);doc.setTextColor(...MUTED);
+ rot('ESTÚDIO MABE',R,cy,'right',DARK);cy+=5;
+ sans('normal',7.8,MUTED);
  [enderecoEstudio(emp),emp.telefone,emp.email,emp.site].filter(Boolean).forEach(t=>{
   doc.splitTextToSize(String(t),80).forEach(l=>{doc.text(l,R,cy,{align:'right'});cy+=4.1;});});
 
- // Título, número do pedido e régua dourada
- let y=Math.max(logoY+ico+22,cy+12);
- doc.setFont('helvetica','bold');doc.setFontSize(24);doc.setTextColor(...DARK);doc.text(ehPedido?'PEDIDO':'RECIBO',M,y);
- doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...MUTED);doc.text((ehPedido?'Nº V-':'Pedido Nº V-')+pad(v.num),R,y,{align:'right'});
- y+=6;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,y,R,y);
+ // Título em itálico, número à direita e o filete dourado
+ let y=Math.max(logoY+alturaMarca+28,cy+16);
+ serif('italic',38);doc.text(ehPedido?'Pedido':'Recibo',M,y);
+ rot(numero,R,y,'right');
+ y+=5;filete(y);
 
- // Cliente / Data / Pagamento
- y+=11;
- /* na folha sem valores, a forma de pagamento não interessa à oficina: entra a data de entrega */
+ // Cliente / Data / Entrega — nome longo quebra dentro da própria coluna
+ y+=10;
  const entregaCombinada=lerMarcaObs(v.obs,'Entrega combinada');
- const terceira=comValores?{rot:'PAGAMENTO',val:v.pag||'—'}
-  :{rot:'ENTREGA',val:entregaCombinada?fmtD(entregaCombinada):'—'};
- const meta=[{rot:'CLIENTE',val:cliName(v.cliId),x:M,w:98},{rot:'DATA',val:fmtD(v.data),x:124,w:32},{rot:terceira.rot,val:terceira.val,x:160,w:32}];
- let metaLinhas=1;
- meta.forEach(c=>{doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text(c.rot,c.x,y);
-  doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...DARK);
-  const l=doc.splitTextToSize(String(c.val),c.w);doc.text(l,c.x,y+6.5);metaLinhas=Math.max(metaLinhas,l.length);});
- y+=6.5+(metaLinhas-1)*4.8+12;
+ const meta=[{rot:'CLIENTE',val:cliName(v.cliId),x:M,w:100,tam:15},{rot:'DATA',val:fmtD(v.data),x:126,w:30,tam:12},
+  {rot:'ENTREGA',val:entregaCombinada?fmtD(entregaCombinada):'—',x:160,w:32,tam:12}];
+ let metaFim=y;
+ meta.forEach(c=>{rot(c.rot,c.x,y);serif('normal',c.tam);
+  const l=doc.splitTextToSize(String(c.val||'—'),c.w);doc.text(l,c.x,y+7,{lineHeightFactor:1.2});
+  metaFim=Math.max(metaFim,y+7+(l.length-1)*c.tam*0.3528*1.2);});
+ y=metaFim+15;
 
- // Itens: mesmas alturas e colunas da tabela do orçamento
+ // A lista das peças: na folha da oficina não há coluna de valor, e a peça ganha a largura
  const itens=v.itens||[];
- const linhas=itens.map((it,i)=>{const qty=it.qty||1;
-  const nome=String(it.desc||'—')+(ehPedido&&String(it.obs||'').trim()?'\n'+textoPdf(it.obs):'');
-  return comValores?[String(i+1),nome,String(qty),fmt(it.preco),fmt(qty*Number(it.preco||0))]
-                   :[String(i+1),nome,String(qty)];});
- const cab=(t,a)=>({content:t,styles:{halign:a}});
- let tabelaJaPassouPorUmaPagina=false;
- const entrelinhaAntes=doc.getLineHeightFactor();doc.setLineHeightFactor(1.35);
- doc.autoTable({startY:y,margin:{left:M,right:210-R,top:22,bottom:297-RODAPE_Y+4},
-  head:[comValores?[cab('#','center'),'Item',cab('Qtd','center'),cab('Unitário','right'),cab('Subtotal','right')]
-                  :[cab('#','center'),'Item',cab('Qtd','center')]],
-  body:linhas,theme:'plain',rowPageBreak:'avoid',
-  headStyles:{fillColor:DARK,textColor:WHITE,fontSize:8,fontStyle:'bold',cellPadding:{top:3.8,bottom:3.8,left:3.5,right:3.5}},
-  bodyStyles:{fontSize:9,textColor:DARK,valign:'top',cellPadding:{top:4.2,bottom:4.2,left:3.5,right:3.5}},
-  columnStyles:comValores?{0:{cellWidth:12,halign:'center',textColor:MUTED,cellPadding:{top:4.2,bottom:4.2,left:1,right:1}},2:{cellWidth:14,halign:'center'},3:{cellWidth:30,halign:'right'},4:{cellWidth:32,halign:'right',fontStyle:'bold'}}
-                          :{0:{cellWidth:12,halign:'center',textColor:MUTED,cellPadding:{top:4.2,bottom:4.2,left:1,right:1}},2:{cellWidth:20,halign:'center'}},
-  willDrawPage:()=>{if(tabelaJaPassouPorUmaPagina)fundo();tabelaJaPassouPorUmaPagina=true;},
-  /* pinta a linha inteira antes das células: sem isso o leitor de PDF mostra frestas finas entre as colunas */
-  willDrawCell:d=>{if(d.column.index!==0)return;const cor=d.cell.styles.fillColor;if(!cor)return;
-   doc.setFillColor(...cor);doc.rect(M,d.cell.y,R-M,d.row.height,'F');},
-  didParseCell:d=>{if(d.section==='body')d.cell.styles.fillColor=d.row.index%2?ZEBRA:WHITE;}});
- doc.setLineHeightFactor(entrelinhaAntes);
+ const xPeca=M+13,wPeca=comValores?96:136,xQtd=comValores?141:R-4;
+ const cabLista=yy=>{rot('Nº',M,yy);rot('PEÇA',xPeca,yy);rot('QTD',xQtd,yy,'center');if(comValores)rot('VALOR',R,yy,'right');
+  filete(yy+3.2);return yy+3.2;};
+ y=cabLista(y);
+ const LH_N=5.3,LH_D=4.1;
+ itens.forEach((it,idx)=>{
+  const qty=Number(it.qty)||1,nome=String(it.desc||'—');
+  serif('normal',12.5);const nomeL=doc.splitTextToSize(nome,wPeca);
+  /* a observação do item (medidas, madeira, acabamento) só sai na folha do pedido */
+  sans('normal',8.8);const det=ehPedido?textoPdf(it.obs):'',detL=det?doc.splitTextToSize(det,wPeca):[];
+  const cada=comValores&&qty>1?fmt(it.preco)+' cada':'';
+  const alt=8.6+(nomeL.length-1)*LH_N+(detL.length?4.6+(detL.length-1)*LH_D:(cada?4.4:0))+5.4;
+  /* a peça inteira vai para a página seguinte se não couber; só uma descrição maior que uma página se divide */
+  if(y+alt>LIMITE&&alt<=LIMITE-30)y=cabLista(novaPagina()+2);
+  let b=y+8.6;
+  serif('italic',12.5,OURO_ESC);doc.text(romano(idx+1),M,b);
+  serif('normal',11.5);doc.text(String(qty),xQtd,b,{align:'center'});
+  if(comValores){serif('normal',12);doc.text(fmt(qty*Number(it.preco||0)),R,b,{align:'right'});}
+  if(cada){sans('normal',7.6,MUTED);doc.text(cada,R,b+4.4,{align:'right'});}
+  serif('normal',12.5);nomeL.forEach((l,i)=>{if(i)b+=LH_N;doc.text(l,xPeca,b);});
+  sans('normal',8.8,DESCR);
+  detL.forEach((l,i)=>{b+=i?LH_D:4.6;
+   if(b>LIMITE){b=cabLista(novaPagina()+2)+6;sans('normal',8.8,DESCR);}
+   doc.text(l,xPeca,b);});
+  if(cada&&!detL.length)b+=4.4;
+  y=b+5.4;filete(y,M,R,FILETE,0.18);});
 
- // Observações à esquerda; subtotal, total e forma de pagamento à direita
- let fy=doc.lastAutoTable.finalY+12;
+ // Total à direita (com filete duplo) e observações à esquerda
  const obs=textoPdf(v.obs);
- doc.setFont('helvetica','normal');doc.setFontSize(8.5);
- const obsL=obs?doc.splitTextToSize(obs,96):[];
- const boxW=68,boxH=16,boxX=R-boxW,subH=10;
- const pagAlt=comValores?subH+boxH+9+5.2*(ehPedido?2:1)+1:(ehPedido?9+5.2:0);
- const blocoAlt=Math.max(obs?9.5+obsL.length*4.5:0,pagAlt);
- if(fy+blocoAlt>RODAPE_Y-6)fy=novaPagina();
- if(comValores){
- /* um bloco só: fundo escuro arredondado, faixa branca do subtotal por cima (cantos de cima arredondados) */
- doc.setFillColor(...DARK);doc.roundedRect(boxX,fy,boxW,subH+boxH,1.5,1.5,'F');
- doc.setFillColor(...WHITE);doc.roundedRect(boxX,fy,boxW,subH,1.5,1.5,'F');doc.rect(boxX,fy+subH-2,boxW,2,'F');
- doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text('SUBTOTAL',boxX+5,fy+subH/2+1.2);
- doc.setFontSize(9);doc.setTextColor(...DARK);doc.text(fmt(v.total),R-5,fy+subH/2+1.4,{align:'right'});
- const ty=fy+subH;
- doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...ACCENT);doc.text('TOTAL',boxX+5,ty+boxH/2+1.4);
- doc.setFontSize(13);doc.setTextColor(...WHITE);doc.text(fmt(v.total),R-5,ty+boxH/2+1.8,{align:'right'});
- let py=ty+boxH+9;
- doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text(ehPedido?'CONDIÇÕES':'VALOR PAGO',boxX+1,py);
- doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);py+=5.2;
- doc.text('Forma de pagamento: '+(v.pag||'—'),boxX+1,py);
- if(ehPedido){py+=5.2;doc.text('Situação: '+(v.status||'—'),boxX+1,py);}
- } else if(ehPedido){
-  /* sem valores, sobra o que a oficina precisa saber */
-  doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...MUTED);doc.text('SITUAÇÃO',boxX+1,fy);
-  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);doc.text(v.status||'—',boxX+1,fy+5.2);
- }
- if(obs){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...DARK);doc.text('OBSERVAÇÕES',M,fy+3);
-  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MUTED);doc.text(obsL,M,fy+9.5,{lineHeightFactor:1.5});}
+ sans('normal',8.6);const obsL=obs?doc.splitTextToSize(obs,96):[];
+ /* embaixo: no pedido, a forma de pagamento e a situação; no recibo, a forma e o valor pago.
+    Na folha sem valores fica só a situação do pedido. */
+ const cond=[];
+ if(comValores)cond.push(['FORMA DE PAGAMENTO',v.pag||'—']);
+ if(ehPedido)cond.push(['SITUAÇÃO',v.status||'—']);
+ else if(comValores)cond.push(['VALOR PAGO',fmt(v.total)]);
+ serif('normal',11);
+ const condL=cond.map(([r,t],i)=>doc.splitTextToSize(String(t),i?66:100));
+ const condLinhas=Math.max(0,...condL.map(l=>l.length));
+ const totalAlt=comValores?17:0,obsAlt=obs?6+obsL.length*4.3:0,topoAlt=Math.max(totalAlt,obsAlt);
+ const condAlt=cond.length?(topoAlt?14:0)+6+condLinhas*5.2:0;
+ const blocoAlt=10+topoAlt+condAlt;
+ let fy=y+10;
+ if(y+blocoAlt>RODAPE_Y-6)fy=novaPagina()+4;
+ if(comValores){rot('TOTAL',R,fy,'right');
+  serif('normal',26);doc.text(fmt(v.total),R,fy+11.5,{align:'right'});
+  filete(fy+15.2,R-80,R);filete(fy+16.3,R-80,R);}
+ if(obs){rot('OBSERVAÇÕES',M,fy);sans('normal',8.6,TEXTO2);doc.text(obsL,M,fy+6,{lineHeightFactor:1.45});}
 
- // Assinaturas perto do rodapé
- let sy=fy+blocoAlt+22;
+ // Pagamento e situação
+ let blocoFim=fy+topoAlt;
+ if(cond.length){const py=fy+(topoAlt?topoAlt+14:0);
+  cond.forEach(([r],i)=>{const x=i?126:M;rot(r,x,py);serif('normal',11);
+   condL[i].forEach((l,k)=>doc.text(l,x,py+6+k*5.2));});
+  blocoFim=py+6+(condLinhas-1)*5.2;}
+
+ // Assinaturas perto do rodapé; nunca por cima do bloco de cima
+ let sy=blocoFim+22;
  if(sy>RODAPE_Y-14){novaPagina();sy=RODAPE_Y-26;}else sy=Math.max(sy,RODAPE_Y-26);
- doc.setDrawColor(...MUTED);doc.setLineWidth(0.2);doc.line(M,sy,M+72,sy);doc.line(R-72,sy,R,sy);
- doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...MUTED);
- doc.text('Assinatura do Estúdio',M,sy+5);doc.text('Assinatura do Cliente',R-72,sy+5);
+ filete(sy,M,M+72,ASSIN,0.2);filete(sy,R-72,R,ASSIN,0.2);
+ rot('ESTÚDIO MABE',M,sy+5);rot('CLIENTE',R-72,sy+5);
 
- // Rodapé em todas as páginas, com numeração
- /* imagens escolhidas na hora de imprimir: entram depois do recibo, duas por página,
-    cada uma inteira no seu espaço — mesma regra usada no orçamento */
+ /* imagens escolhidas na hora de imprimir: entram depois do documento, duas por página,
+    cada uma inteira no seu espaço — mesma regra usada na proposta */
  if(refs&&refs.length){
-  const topo=()=>{novaPagina();
-   /* a marca acompanha o documento também nas páginas de referência */
-   const lm=30,am=lm/MARCA_PROP;
-   doc.addImage(MARCA_PNG,'PNG',M,13,lm,am,'marca','SLOW');
-   let ty=13+am+9;
-   doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...DARK);doc.text('REFERÊNCIAS',M,ty);
-   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text((ehPedido?'Pedido V-':'Recibo do pedido V-')+pad(v.num),R,ty,{align:'right'});
-   ty+=4;doc.setDrawColor(...ACCENT);doc.setLineWidth(0.8);doc.line(M,ty,R,ty);return ty+7;};
-  const areaW=R-M,alturaToda=RODAPE_Y-8-37,gap=8;
+  const topo=()=>{let ty=novaPagina()+6;
+   serif('italic',26);doc.text('Referências',M,ty);
+   rot(numero,R,ty,'right');
+   ty+=4.5;filete(ty);return ty+8;};
+  const areaW=R-M,alturaToda=RODAPE_Y-8-40,gap=8;
   const pos=(r,x,y,bw,bh,alinhaTopo)=>{const k=Math.min(bw/r.w,bh/r.h),w=r.w*k,h=r.h*k;
    doc.addImage(r.data,'JPEG',x+(bw-w)/2,alinhaTopo?y:y+(bh-h)/2,w,h,undefined,'FAST');};
   const emPe=r=>r.h>r.w*1.1;
@@ -6099,19 +6107,12 @@ function montarPdfRecibo(v,refs,modo,semValores){
    if(emPe(a)&&(!b||emPe(b))){const bw=b?(areaW-6)/2:areaW;
     pos(a,M,ry,bw,alturaToda,true);if(b)pos(b,M+bw+6,ry,bw,alturaToda,true);i+=b?2:1;}
    else{const bh=(alturaToda-gap)/2;pos(a,M,ry,areaW,bh);if(b)pos(b,M,ry+bh+gap,areaW,bh);i+=b?2:1;}}}
- doc.setFont('helvetica','normal');doc.setFontSize(7);
- let rodape='';
- for(const parte of [enderecoEstudio(emp),emp.telefone,emp.email].filter(Boolean)){
-  const tent=rodape?rodape+'   ·   '+parte:String(parte);
-  if(doc.getTextWidth(tent)<=(R-M)-24)rodape=tent;else break;}
- rodape=rodape||'Marcenaria de Madeira Maciça — feita à mão, com precisão.';
+
+ // Rodapé a partir da página 2: a frase do estúdio em itálico e a numeração (a capa fica limpa)
  const n=doc.internal.getNumberOfPages();
- /* a capa não leva faixa de rodapé */
  for(let pg=2;pg<=n;pg++){doc.setPage(pg);
-  doc.setDrawColor(...ACCENT);doc.setLineWidth(0.4);doc.line(M,RODAPE_Y,R,RODAPE_Y);
-  doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...MUTED);
-  doc.text(rodape,M,RODAPE_Y+5.5);
-  doc.text('Página '+pg+' de '+n,R,RODAPE_Y+5.5,{align:'right'});}
+  serif('italic',9.5,MUTED);doc.text('Marcenaria de madeira maciça — feita à mão, com precisão.',M,RODAPE_Y+5.5);
+  rot(pg+' / '+n,R,RODAPE_Y+5.5,'right');}
 
  return doc;}
 function prodOptions(sel){return '<option value="">— Produto —</option>'+DB.produtos.filter(p=>(p.tipo||'Portfólio')==='Portfólio').map(p=>'<option value="'+p.id+'" data-preco="'+(p.preco||p.custo||0)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.nome)+' ('+p.est+' '+esc(p.un||'un')+')</option>').join('');}
@@ -10517,8 +10518,8 @@ const MARCA_PROP=497/105; /* largura ÷ altura do recorte */
    Nada de tabela nem valores aqui — o documento começa na página seguinte. */
 /* ================= FONTES DA PROPOSTA =================
    EB Garamond (normal, itálico e médio) + Josefin Sans (fina e seminegrito), do Google Fonts (licença OFL,
-   uso comercial livre), guardadas em vendor/fontes/. Só a proposta usa: entram no primeiro PDF e ficam na
-   memória até fechar o ERP. Sem internet na primeira vez, a proposta sai em Times/Helvetica, com aviso. */
+   uso comercial livre), guardadas em vendor/fontes/. A proposta, o pedido e o recibo usam: entram no primeiro
+   PDF e ficam na memória até fechar o ERP. Sem internet na primeira vez, o PDF sai em Times/Helvetica, com aviso. */
 const FONTES_PDF_ARQS=[['EBGaramond-Regular','garamond','normal'],['EBGaramond-Italic','garamond','italic'],['EBGaramond-Medium','garamond','bold'],
  ['JosefinSans-Light','josefin','normal'],['JosefinSans-SemiBold','josefin','bold']];
 let FONTES_PDF=null,FONTES_PDF_CARGA=null;
@@ -10528,7 +10529,7 @@ function carregarFontesPdf(){
  FONTES_PDF_CARGA=Promise.all(FONTES_PDF_ARQS.map(([a])=>fetch('vendor/fontes/'+a+'.ttf').then(r=>{if(!r.ok)throw new Error(a);return r.arrayBuffer();})
    .then(b=>{const u=new Uint8Array(b);let s='';for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return s;})))
   .then(bins=>{FONTES_PDF=bins;return true;})
-  .catch(()=>{FONTES_PDF_CARGA=null;toast('As fontes da proposta não carregaram (sem internet?): o PDF saiu com a fonte padrão.','info',7000);return false;});
+  .catch(()=>{FONTES_PDF_CARGA=null;toast('As fontes do PDF não carregaram (sem internet?): o PDF saiu com a fonte padrão.','info',7000);return false;});
  return FONTES_PDF_CARGA;}
 /* registra as fontes no documento; sem elas, Times faz o papel do Garamond e Helvetica o do Josefin */
 function fontesPdfNoDoc(doc){
@@ -15464,7 +15465,7 @@ async function verModeloDocumento(){
    +', em branco, só para conferir o visual. Nenhum dado de cliente ou pedido aparece aqui.';
  aviso.textContent='Montando o modelo...';
  if(!await libPronta('jspdf')){aviso.textContent='Não consegui carregar o gerador de PDF.';return;}
- if(!ficha&&!contrato&&!recibo)await carregarFontesPdf();
+ if(!ficha&&!contrato)await carregarFontesPdf();
  const x=ficha?fichaModelo():contrato?contratoModelo():recibo?pedidoModelo():orcamentoModelo();
  const doc=ficha?montarPdfFichaTecnica(x,null):contrato?montarPdfContrato(x):recibo?montarPdfRecibo(x):montarPdfOrcamento(x,x.itens,[]);
  if(MODELO_URL)URL.revokeObjectURL(MODELO_URL);
@@ -16986,12 +16987,12 @@ e não em CDN externo: no celular a página ficava em branco esperando
 - jsPDF 2.5.1 + jspdf-autotable 3.8.2 (vendor/jspdf.umd.min.js e
   vendor/jspdf.plugin.autotable.min.js) — geração de PDFs (orçamentos,
   relatórios, backups).
-- Fontes da proposta (vendor/fontes/, Google Fonts, licença OFL): EB
-  Garamond normal, itálico e médio, e Josefin Sans fina e seminegrito.
-  carregarFontesPdf() busca os cinco .ttf no primeiro PDF de proposta e
-  guarda na memória; fontesPdfNoDoc(doc) registra no documento. Sem as
-  fontes, a proposta sai em Times/Helvetica com um aviso. Só a proposta
-  usa essas fontes; os outros PDFs seguem em Helvetica.
+- Fontes da proposta, do pedido e do recibo (vendor/fontes/, Google
+  Fonts, licença OFL): EB Garamond normal, itálico e médio, e Josefin
+  Sans fina e seminegrito. carregarFontesPdf() busca os cinco .ttf no
+  primeiro desses PDFs e guarda na memória; fontesPdfNoDoc(doc) registra
+  no documento. Sem as fontes, o PDF sai em Times/Helvetica com um
+  aviso. Os outros PDFs seguem em Helvetica.
 - xlsx-js-style 1.2.0 (vendor/xlsx.bundle.js; fork do SheetJS com suporte
   a estilos de célula) — exportação do backup em Excel com a identidade
   visual do estúdio.
@@ -18503,8 +18504,11 @@ O que cada um tem de particular:
   gravado no item, inclusive a cópia dos custos fixos do dia em que ele
   foi salvo. Com mais de um item, fecha com uma tabela de custo, preço,
   lucro e margem por item.
-- Pedido e recibo (montarPdfRecibo): mesma diagramação; mudam o título,
-  o rótulo do número e o bloco de pagamento. Na impressão escolhe-se,
+- Pedido e recibo (montarPdfRecibo): mesmo desenho editorial da proposta
+  (capa, título em itálico, peças numeradas com filetes, total com filete
+  duplo); mudam o título, o rótulo do número e o bloco de baixo (pedido:
+  forma de pagamento e situação; recibo: forma de pagamento e valor
+  pago). A observação de cada item só sai na folha do pedido. Na impressão escolhe-se,
   por caixa de seleção, quais anexos saem junto (as imagens entram no
   fim do PDF; os PDFs anexados abrem em outra aba) e se a folha sai sem
   valores, para a oficina: some preço, total e condições, e entra a data
@@ -19131,13 +19135,13 @@ function loadDemoData(){if(!guard())return;
 (function(){const sec=$('section-configuracoes');if(!sec)return;
  ['input','change'].forEach(ev=>sec.addEventListener(ev,()=>{CFG_EDITANDO=true;},true));})();
 /* ================= APP INSTALADO (service worker) ================= */
-const APP_VERSAO='2026-11-27.11';
+const APP_VERSAO='2026-11-27.12';
 /* Quantas vezes o ERP já foi atualizado. Sobe de um a cada publicação, junto de APP_VERSAO
    (e dos dois iguais no sw.js) — é o número que aparece no aviso e nas Configurações. */
 /* escrito aqui embaixo porque o número só existe depois das constantes */
 function escreverVersaoNoLogin(){const el=$('login-versao');
  if(el)el.textContent=rotuloAtualizacao(APP_ATUALIZACAO,APP_VERSAO);}
-const APP_ATUALIZACAO=369;
+const APP_ATUALIZACAO=370;
 /* o número da versão já carrega a data: 2026-10-03.6 vira 03/10/2026 */
 function dataDaVersao(v){
  const d=String(v||'').slice(0,10);

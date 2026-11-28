@@ -57,12 +57,12 @@ e não em CDN externo: no celular a página ficava em branco esperando
 - jsPDF 2.5.1 + jspdf-autotable 3.8.2 (vendor/jspdf.umd.min.js e
   vendor/jspdf.plugin.autotable.min.js) — geração de PDFs (orçamentos,
   relatórios, backups).
-- Fontes da proposta (vendor/fontes/, Google Fonts, licença OFL): EB
-  Garamond normal, itálico e médio, e Josefin Sans fina e seminegrito.
-  carregarFontesPdf() busca os cinco .ttf no primeiro PDF de proposta e
-  guarda na memória; fontesPdfNoDoc(doc) registra no documento. Sem as
-  fontes, a proposta sai em Times/Helvetica com um aviso. Só a proposta
-  usa essas fontes; os outros PDFs seguem em Helvetica.
+- Fontes da proposta, do pedido e do recibo (vendor/fontes/, Google
+  Fonts, licença OFL): EB Garamond normal, itálico e médio, e Josefin
+  Sans fina e seminegrito. carregarFontesPdf() busca os cinco .ttf no
+  primeiro desses PDFs e guarda na memória; fontesPdfNoDoc(doc) registra
+  no documento. Sem as fontes, o PDF sai em Times/Helvetica com um
+  aviso. Os outros PDFs seguem em Helvetica.
 - xlsx-js-style 1.2.0 (vendor/xlsx.bundle.js; fork do SheetJS com suporte
   a estilos de célula) — exportação do backup em Excel com a identidade
   visual do estúdio.
@@ -1574,8 +1574,11 @@ O que cada um tem de particular:
   gravado no item, inclusive a cópia dos custos fixos do dia em que ele
   foi salvo. Com mais de um item, fecha com uma tabela de custo, preço,
   lucro e margem por item.
-- Pedido e recibo (montarPdfRecibo): mesma diagramação; mudam o título,
-  o rótulo do número e o bloco de pagamento. Na impressão escolhe-se,
+- Pedido e recibo (montarPdfRecibo): mesmo desenho editorial da proposta
+  (capa, título em itálico, peças numeradas com filetes, total com filete
+  duplo); mudam o título, o rótulo do número e o bloco de baixo (pedido:
+  forma de pagamento e situação; recibo: forma de pagamento e valor
+  pago). A observação de cada item só sai na folha do pedido. Na impressão escolhe-se,
   por caixa de seleção, quais anexos saem junto (as imagens entram no
   fim do PDF; os PDFs anexados abrem em outra aba) e se a folha sai sem
   valores, para a oficina: some preço, total e condições, e entra a data
